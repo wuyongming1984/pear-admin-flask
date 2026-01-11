@@ -29,8 +29,8 @@ COPY pyproject.toml poetry.lock* ./
 # 配置 poetry 不创建虚拟环境（因为已经在容器中）
 RUN poetry config virtualenvs.create false
 
-# 安装项目依赖
-RUN poetry install --no-dev --no-interaction --no-ansi
+# 更新 lock 文件并安装项目依赖
+RUN poetry lock --no-update && poetry install --only main --no-interaction --no-ansi
 
 # 复制应用代码
 COPY . .

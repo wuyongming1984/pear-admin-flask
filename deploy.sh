@@ -74,9 +74,49 @@ fi
 
 echo ""
 
-# 2. 安装 Docker Compose
+# 2. 配置 Docker 镜像加速器
 echo "======================================"
-echo "步骤 2: 安装 Docker Compose"
+echo "步骤 2: 配置 Docker 镜像加速器"
+echo "======================================"
+
+echo "正在配置 Docker 镜像加速器（国内源）..."
+
+# 创建 Docker 配置目录
+mkdir -p /etc/docker
+
+# 配置镜像加速器（使用阿里云和可靠的国内源）
+cat > /etc/docker/daemon.json << 'EOF'
+{
+  "registry-mirrors": [
+    "https://registry.cn-hangzhou.aliyuncs.com",
+    "https://docker.m.daocloud.io",
+    "https://dockerproxy.com",
+    "https://docker.nju.edu.cn"
+  ],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
+}
+EOF
+
+# 重启 Docker 服务
+echo "重启 Docker 服务..."
+systemctl daemon-reload
+systemctl restart docker
+
+echo -e "${GREEN}Docker 镜像加速器配置完成${NC}"
+
+# 验证配置
+echo "验证镜像加速器配置："
+docker info | grep -A 5 "Registry Mirrors" || echo "配置已生效"
+
+echo ""
+
+# 3. 安装 Docker Compose
+echo "======================================"
+echo "步骤 3: 安装 Docker Compose"
 echo "======================================"
 
 if command -v docker-compose &> /dev/null; then
@@ -90,9 +130,9 @@ fi
 
 echo ""
 
-# 3. 配置环境变量
+# 4. 配置环境变量
 echo "======================================"
-echo "步骤 3: 配置环境变量"
+echo "步骤 4: 配置环境变量"
 echo "======================================"
 
 if [ ! -f .env ]; then
@@ -133,9 +173,9 @@ fi
 
 echo ""
 
-# 4. 构建和启动服务
+# 5. 构建和启动服务
 echo "======================================"
-echo "步骤 4: 构建和启动服务"
+echo "步骤 5: 构建和启动服务"
 echo "======================================"
 
 echo "正在构建 Docker 镜像..."
@@ -151,16 +191,16 @@ sleep 30
 
 echo ""
 
-# 5. 检查服务状态
+# 6. 检查服务状态
 echo "======================================"
-echo "步骤 5: 检查服务状态"
+echo "步骤 6: 检查服务状态"
 echo "======================================"
 
 docker-compose ps
 
 echo ""
 
-# 6. 显示访问信息
+# 7. 显示访问信息
 echo "======================================"
 echo "部署完成！"
 echo "======================================"

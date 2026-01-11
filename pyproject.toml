@@ -5,6 +5,8 @@ description = "flask + pear admin layui"
 authors = ["zhengxinonly <pyxxponly@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+packages = [{include = "pear_admin"}]
+
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -13,6 +15,8 @@ flask-sqlalchemy = "^3.1.1"
 flask-jwt-extended = "^4.5.2"
 flask-migrate = "^4.0.5"
 pymysql = "^1.1.0"
+gunicorn = "^21.2.0"
+cryptography = "^41.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

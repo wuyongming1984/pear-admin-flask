@@ -84,17 +84,25 @@ def get_list_as_treetable():
     page = request.args.get("page", type=int, default=1)
     per_page = request.args.get("per_page", type=int, default=10)
 
-    q = db.select(RightsORM).where(RightsORM.type == "menu")
+    # 查询所有顶级菜单（pid == 0 或 pid 为 None）
+    q = db.select(RightsORM).where(
+        (RightsORM.pid == 0) | (RightsORM.pid.is_(None))
+    ).order_by(RightsORM.sort, RightsORM.id)
     pages = db.paginate(q, page=page, per_page=per_page, error_out=False)
 
     ret = []
 
     # 构建树状表格的数据
-    for page in pages.items:
-        data = page.json()
+    for rights_item in pages.items:
+        data = rights_item.json()
         data["children"] = []
-        for child in page.children:
+        
+        # 加载子节点
+        for child in rights_item.children:
             child_data = child.json()
+            child_data["children"] = []
+            
+            # 加载子节点的子节点
             if child.children:
                 child_data["children"] = [
                     sub_child.json() for sub_child in child.children
@@ -102,6 +110,9 @@ def get_list_as_treetable():
                 child_data["isParent"] = True
 
             data["children"].append(child_data)
+        
+        if data["children"]:
             data["isParent"] = True
         ret.append(data)
+    
     return {"code": 0, "msg": "请求权限数据成功", "count": pages.total, "data": ret}

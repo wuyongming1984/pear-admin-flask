@@ -1,0 +1,208 @@
+============================================
+Pear Admin Flask 快速部署指南（阿里云）
+============================================
+
+服务器信息：
+- 实例 ID: i-uf6grczcwjr1t7f5efkv
+- 用户名: root
+
+============================================
+快速部署步骤
+============================================
+
+1. 连接到服务器
+   -------------
+   在本地 PowerShell 执行：
+   
+   ssh root@<服务器公网IP>
+   
+   # 输入密码后登录
+
+2. 上传项目文件
+   -------------
+   
+   方法 A：使用 Git（推荐）
+   ----------------------
+   在服务器上执行：
+   cd /root
+   git clone <你的仓库地址>
+   cd pear-admin-flask
+   
+   方法 B：使用 SCP
+   ---------------
+   在本地 PowerShell 执行：
+   
+   cd d:\pear_admin\pear-admin-flask
+   
+   # 创建压缩包（手动压缩项目文件夹）
+   # 然后上传
+   scp pear-admin-flask.zip root@<服务器IP>:/root/
+   
+   # 在服务器上解压
+   ssh root@<服务器IP>
+   cd /root
+   unzip pear-admin-flask.zip
+   cd pear-admin-flask
+
+3. 一键部署
+   ---------
+   在服务器上执行：
+   
+   chmod +x deploy.sh
+   ./deploy.sh
+   
+   脚本会自动完成：
+   ✓ 安装 Docker 和 Docker Compose
+   ✓ 创建环境变量文件
+   ✓ 构建镜像
+   ✓ 启动服务
+   
+   重要：脚本执行完成后会显示数据库密码，请保存！
+
+4. 配置安全组
+   ----------
+   登录阿里云控制台 → ECS 实例 → 安全组配置
+   
+   添加入方向规则：
+   - 端口 5050，协议 TCP，授权对象 0.0.0.0/0
+   - 端口 22，协议 TCP，授权对象 0.0.0.0/0
+
+5. 访问应用
+   --------
+   浏览器打开：
+   http://<服务器公网IP>:5050
+
+============================================
+手动部署步骤（如果一键脚本失败）
+============================================
+
+1. 安装 Docker
+   
+   # Ubuntu/Debian
+   apt-get update
+   apt-get install -y docker.io docker-compose
+   systemctl start docker
+   systemctl enable docker
+   
+   # CentOS
+   yum install -y docker
+   systemctl start docker
+   systemctl enable docker
+   
+   # 安装 Docker Compose
+   curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+   chmod +x /usr/local/bin/docker-compose
+
+2. 创建环境变量文件
+   
+   cd /root/pear-admin-flask
+   
+   cat > .env << 'EOF'
+   FLASK_ENV=production
+   SECRET_KEY=请改为随机字符串32位以上
+   MYSQL_ROOT_PASSWORD=强密码Root123!
+   MYSQL_DATABASE=pear_admin
+   MYSQL_USER=pear_admin
+   MYSQL_PASSWORD=强密码User123!
+   FLASK_RUN_HOST=0.0.0.0
+   FLASK_RUN_PORT=5050
+   EOF
+
+3. 启动服务
+   
+   docker-compose up -d
+   
+4. 查看日志
+   
+   docker-compose logs -f
+
+============================================
+常用管理命令
+============================================
+
+查看服务状态：
+docker-compose ps
+
+查看日志：
+docker-compose logs -f
+docker-compose logs -f web      # 只看应用日志
+docker-compose logs -f mysql    # 只看数据库日志
+
+重启服务：
+docker-compose restart
+
+停止服务：
+docker-compose stop
+
+启动服务：
+docker-compose start
+
+重新部署（更新代码后）：
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+
+进入容器：
+docker-compose exec web bash    # 进入应用容器
+docker-compose exec mysql bash  # 进入数据库容器
+
+备份数据库：
+docker-compose exec mysql mysqldump -u root -p密码 pear_admin > backup.sql
+
+============================================
+故障排查
+============================================
+
+问题 1：无法访问网站
+解决：
+1. 检查服务是否运行：docker-compose ps
+2. 检查安全组是否开放 5050 端口
+3. 检查日志：docker-compose logs web
+
+问题 2：数据库连接失败
+解决：
+1. 检查 MySQL 容器：docker-compose ps mysql
+2. 查看 MySQL 日志：docker-compose logs mysql
+3. 检查 .env 文件中的密码配置
+
+问题 3：端口被占用
+解决：
+1. 查看端口占用：netstat -tlnp | grep 5050
+2. 修改 docker-compose.yml 中的端口映射
+3. 或停止占用端口的程序
+
+============================================
+安全建议
+============================================
+
+1. 修改 SSH 密码
+   passwd
+   
+2. 修改 .env 中的所有密码为强密码
+
+3. 限制 SSH 访问 IP（在阿里云安全组中配置）
+
+4. 配置防火墙
+   ufw enable
+   ufw allow 22
+   ufw allow 5050
+
+5. 定期备份数据
+   crontab -e
+   # 添加每天凌晨 2 点备份
+   0 2 * * * cd /root/pear-admin-flask && docker-compose exec mysql mysqldump -u root -p密码 pear_admin > /root/backups/backup_$(date +\%Y\%m\%d).sql
+
+6. 配置 Nginx + HTTPS（推荐）
+   详见 DEPLOY.md 文档
+
+============================================
+需要帮助？
+============================================
+
+查看完整部署文档：
+cat DEPLOY.md
+
+或查看项目 README：
+cat README.md
+
+============================================

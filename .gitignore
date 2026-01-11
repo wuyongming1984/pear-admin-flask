@@ -1,6 +1,82 @@
-.idea/
-.venv/
+# Python
+__pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Flask
 instance/
-migrations/
-.ruff_cache
+.webassets-cache
+
+# 数据库（重要：不要上传数据库文件）
+*.db
+*.sqlite
+*.sqlite3
+
+# 环境变量（重要：不要上传敏感信息）
+.env
+.env.local
+.env.*.local
+.flaskenv.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+*.tmp
+
+# 日志
+*.log
+logs/
+
+# 上传文件（根据需要调整）
+uploads/*.jpg
+uploads/*.png
+uploads/*.jpeg
+uploads/*.gif
+uploads/*.pdf
+uploads/*.zip
+# 保留 uploads 目录本身
+!uploads/.gitkeep
+
+# Poetry
+# poetry.lock  # 如果需要锁定依赖版本，请注释这行
+
+# 测试
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# 临时文件
+temp/
+tmp/
+*.bak
+
+# Docker
+.dockerignore
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# 编译文件
+*.pyc
+*.pyo
+
+# 备份文件
+backup_*.sql
+*_backup.*

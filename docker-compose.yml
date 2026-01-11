@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库服务
+  mysql:
+    image: mysql:8.0
+    container_name: pear_admin_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-pear_admin}
+      MYSQL_USER: ${MYSQL_USER:-pear_admin}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-pear_admin123}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./static/data/databases.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - pear_network
+
+  # Flask 应用服务
+  web:
+    build: .
+    container_name: pear_admin_web
+    restart: always
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=pear_admin:create_app()
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=5050
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=${MYSQL_USER:-pear_admin}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-pear_admin123}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-pear_admin}
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - mysql
+    networks:
+      - pear_network
+    # 等待 MySQL 启动
+    command: >
+      sh -c "
+        echo 'Waiting for MySQL to start...'
+        sleep 15
+        echo 'Initializing database...'
+        flask init || echo 'Database already initialized'
+        echo 'Starting application...'
+        gunicorn --bind 0.0.0.0:5050 --workers 4 --timeout 120 'pear_admin:create_app()'
+      "
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  pear_network:
+    driver: bridge

@@ -1,9 +1,14 @@
 from pear_admin.extensions import db
 
+from .attachment import AttachmentORM
 from .department import DepartmentORM
+from .order import OrderORM
+from .pay import PayORM
 from .rights import RightsORM
 from .role import RoleORM
 from .user import UserORM
+from .supplier import SupplierORM
+from .project import ProjectORM
 
 user_role = db.Table(
     "ums_user_role",  # 用户-角色中间表名称
@@ -19,4 +24,4 @@ role_rights = db.Table(
     db.Column("role_id", db.Integer, db.ForeignKey("ums_role.id"), comment="角色编号"),
 )
 
-__all__ = ["DepartmentORM", "RightsORM", "RoleORM", "UserORM"]
+__all__ = ["DepartmentORM", "RightsORM", "RoleORM", "UserORM", "SupplierORM", "ProjectORM", "AttachmentORM", "OrderORM", "PayORM"]

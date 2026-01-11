@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <title>项目管理</title>
+    <meta name="renderer" content="webkit" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+<style>
+      /* 操作列按钮间距 */
+      .layui-table-cell .layui-btn-container {
+        display: flex;
+        gap: 5px;
+        justify-content: center;
+      }
+      /* 确保表头和表体的列宽一致 - 根据内容自动调整 */
+      .layui-table-view .layui-table-header table,
+      .layui-table-view .layui-table-body table {
+        table-layout: auto !important;
+        width: 100% !important;
+      }
+      /* 确保列宽根据内容自动调整 */
+      .layui-table-view .layui-table-header table colgroup col,
+      .layui-table-view .layui-table-body table colgroup col {
+        width: auto !important;
+      }
+      .layui-table-view .layui-table-header table thead th,
+      .layui-table-view .layui-table-body table tbody td {
+        padding: 9px 15px !important;
+        white-space: nowrap;
+      }
+      /* 确保筛选输入框不影响列宽 */
+      .filter-input-wrapper {
+        width: 100%;
+        box-sizing: border-box;
+        min-width: 0;
+      }
+      .filter-input {
+        width: 100%;
+        box-sizing: border-box;
+        min-width: 0;
+      }
+      /* 附件上传样式 */
+      .attachment-section {
+        margin-top: 15px;
+      }
+      .attachment-upload {
+        margin-bottom: 15px;
+      }
+      .attachment-list {
+        border: 1px solid #e6e6e6;
+        border-radius: 2px;
+        padding: 10px;
+        min-height: 100px;
+        background: #fafafa;
+      }
+      .attachment-item {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        margin-bottom: 10px;
+        background: #fff;
+        border: 1px solid #e6e6e6;
+        border-radius: 2px;
+      }
+      .attachment-item:last-child {
+        margin-bottom: 0;
+      }
+      .attachment-item .file-icon {
+        margin-right: 10px;
+        font-size: 20px;
+        color: #1E9FFF;
+      }
+      .attachment-item .file-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .attachment-item .file-code {
+        font-size: 12px;
+        color: #1E9FFF;
+        font-weight: bold;
+        margin-bottom: 3px;
+      }
+      .attachment-item .file-name {
+        font-size: 14px;
+        color: #333;
+        margin-bottom: 3px;
+      }
+      .attachment-item .file-size {
+        font-size: 12px;
+        color: #999;
+      }
+      .attachment-item .file-actions {
+        display: flex;
+        gap: 10px;
+      }
+      .attachment-item .file-download,
+      .attachment-item .file-delete {
+        cursor: pointer;
+        color: #1E9FFF;
+        font-size: 14px;
+      }
+      .attachment-item .file-delete {
+        color: #ff5722;
+      }
+      .attachment-item .file-download:hover {
+        color: #009688;
+      }
+      .attachment-item .file-delete:hover {
+        color: #f56c6c;
+      }
+      .attachment-empty {
+        text-align: center;
+        color: #999;
+        padding: 20px;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div style="padding: 16px">
+      <div class="layui-card">
+        <div class="layui-card-body">
+          <table
+            class="layui-hide"
+            id="project-table"
+            lay-filter="project-table"
+          ></table>
+        </div>
+      </div>
+    </div>
+    <form
+      class="layui-form"
+      lay-filter="project-form"
+      id="project-form"
+      action=""
+      style="padding: 15px; display: none"
+    >
+      <div class="layui-form-item">
+        <label class="layui-form-label">ID</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="id"
+            value="0"
+            lay-verify="required"
+            autocomplete="off"
+            class="layui-input"
+            disabled
+          />
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">项目名称</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="project_name"
+            placeholder="请输入项目名称"
+            lay-verify="required"
+            autocomplete="off"
+            class="layui-input"
+          />
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">项目全称</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="project_full_name"
+            placeholder="请输入项目全称"
+            autocomplete="off"
+            class="layui-input"
+          />
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">项目规模</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="project_scale"
+            placeholder="请输入项目规模"
+            autocomplete="off"
+            class="layui-input"
+          />
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">开始日期</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="start_date"
+            id="form_start_date"
+            placeholder="yyyy-MM-dd"
+            autocomplete="off"
+            class="layui-input"
+          />
+          </div>
+          </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">结束日期</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="end_date"
+            id="form_end_date"
+            placeholder="yyyy-MM-dd"
+            autocomplete="off"
+            class="layui-input"
+          />
+          </div>
+          </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">项目状态</label>
+        <div class="layui-input-block">
+          <select name="project_status" lay-verify="">
+            <option value="">请选择项目状态</option>
+            <option value="进行中">进行中</option>
+            <option value="已完成">已完成</option>
+            <option value="已暂停">已暂停</option>
+            <option value="已取消">已取消</option>
+          </select>
+          </div>
+          </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">项目金额</label>
+        <div class="layui-input-block">
+          <input
+            type="number"
+            name="project_amount"
+            placeholder="请输入项目金额"
+            step="0.01"
+            autocomplete="off"
+            class="layui-input"
+          />
+            </div>
+          </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">附件</label>
+        <div class="layui-input-block">
+          <div class="attachment-section">
+            <div class="attachment-upload">
+              <button type="button" class="layui-btn layui-btn-normal" id="upload-attachment">
+                <i class="layui-icon layui-icon-upload"></i> 添加附件
+              </button>
+            </div>
+            <div class="attachment-list" id="attachment-list">
+              <div class="attachment-empty">暂无附件</div>
+        </div>
+          </div>
+          <!-- 隐藏字段，用于存储附件JSON数据 -->
+          <input type="hidden" name="attachments" id="attachments-data" />
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <div class="layui-input-block">
+          <button
+            type="submit"
+            class="layui-btn"
+            lay-submit
+            lay-filter="project-form-btn"
+          >
+            立即提交
+          </button>
+          <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+      </div>
+    </form>
+    <script type="text/html" id="project-toolbar">
+      <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="project-toolbar-add">
+          新增项目
+        </button>
+      </div>
+    </script>
+    <script type="text/html" id="project-tool">
+      <div class="layui-btn-container">
+        <button
+          class="layui-btn layui-btn-sm layui-bg-blue"
+          lay-event="project-tool-edit"
+        >
+          编辑
+        </button>
+        <button
+          class="layui-btn layui-btn-sm layui-bg-red"
+          lay-event="project-tool-del"
+        >
+          删除
+        </button>
+      </div>
+    </script>
+    <script>
+      layui.use(["table", "form", "layer", "laydate", "upload"], function () {
+        var table = layui.table;
+        var form = layui.form;
+        var layer = layui.layer;
+        var laydate = layui.laydate;
+        var upload = layui.upload;
+        var $ = layui.$;
+
+        // 存储筛选条件
+        var filterParams = {};
+        
+        // 存储附件列表
+        var attachmentList = [];
+        // 附件流水号计数器
+        var attachmentSequence = 0;
+        // 当前项目名称（用于生成附件编号）
+        var currentProjectName = '';
+
+        // 初始化日期选择器
+        laydate.render({
+          elem: "#form_start_date",
+          type: "date"
+        });
+        laydate.render({
+          elem: "#form_end_date",
+          type: "date"
+        });
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+          if (bytes === 0) return '0 B';
+          var k = 1024;
+          var sizes = ['B', 'KB', 'MB', 'GB'];
+          var i = Math.floor(Math.log(bytes) / Math.log(k));
+          return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // 获取文件图标
+        function getFileIcon(fileName) {
+          var ext = fileName.split('.').pop().toLowerCase();
+          var iconMap = {
+            'pdf': 'layui-icon-file-pdf',
+            'doc': 'layui-icon-file',
+            'docx': 'layui-icon-file',
+            'xls': 'layui-icon-file-excel',
+            'xlsx': 'layui-icon-file-excel',
+            'ppt': 'layui-icon-file',
+            'pptx': 'layui-icon-file',
+            'jpg': 'layui-icon-picture',
+            'jpeg': 'layui-icon-picture',
+            'png': 'layui-icon-picture',
+            'gif': 'layui-icon-picture',
+            'zip': 'layui-icon-file',
+            'rar': 'layui-icon-file',
+            'txt': 'layui-icon-file',
+            'dwg': 'layui-icon-file',
+            'dgn': 'layui-icon-file',
+            'dwf': 'layui-icon-file',
+            'dxf': 'layui-icon-file'
+          };
+          return iconMap[ext] || 'layui-icon-file';
+        }
+
+        // 生成附件编号：项目名称 + F + 三位流水号
+        function generateAttachmentCode(projectName) {
+          if (!projectName) {
+            // 如果项目名称还未设置，返回临时编号
+            attachmentSequence++;
+            var sequenceStr = String(attachmentSequence).padStart(3, '0');
+            return 'TEMP' + 'F' + sequenceStr;
+          }
+          attachmentSequence++;
+          var sequenceStr = String(attachmentSequence).padStart(3, '0');
+          // 使用项目名称的前几个字符作为前缀（最多10个字符）
+          var prefix = projectName.substring(0, 10).replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
+          return prefix + 'F' + sequenceStr;
+        }
+
+        // 渲染附件列表
+        function renderAttachmentList() {
+          var $list = $('#attachment-list');
+          if (attachmentList.length === 0) {
+            $list.html('<div class="attachment-empty">暂无附件</div>');
+            return;
+          }
+          var html = '';
+          attachmentList.forEach(function(file, index) {
+            html += '<div class="attachment-item" data-index="' + index + '">';
+            html += '<i class="layui-icon ' + getFileIcon(file.name) + ' file-icon"></i>';
+            html += '<div class="file-info">';
+            // 显示附件编号
+            if (file.code) {
+              html += '<div class="file-code">附件编号：' + file.code + '</div>';
+            }
+            html += '<div class="file-name">' + (file.name || file.filename || '未知文件') + '</div>';
+            html += '<div class="file-size">' + formatFileSize(file.size || 0) + '</div>';
+            html += '</div>';
+            html += '<div class="file-actions">';
+            if (file.url) {
+              html += '<span class="file-download" onclick="downloadAttachment(' + index + ')">下载</span>';
+            }
+            html += '<span class="file-delete" onclick="deleteAttachment(' + index + ')">删除</span>';
+            html += '</div>';
+            html += '</div>';
+          });
+          $list.html(html);
+        }
+
+        // 删除附件
+        window.deleteAttachment = function(index) {
+          layer.confirm('确定要删除这个附件吗？', {icon: 3, title: '提示'}, function(confirmIndex) {
+            var file = attachmentList[index];
+            // 如果附件已保存到数据库，调用API删除
+            if (file.id) {
+              $.ajax({
+                url: `/api/v1/attachment/${file.id}`,
+                type: "DELETE",
+                headers: {
+                  Authorization: "Bearer " + localStorage.getItem("access_token"),
+                },
+                success: function (res) {
+                  if (res.code === 0) {
+                    attachmentList.splice(index, 1);
+                    renderAttachmentList();
+                    updateAttachmentsData();
+                    layer.msg('删除成功', {icon: 1});
+                  } else {
+                    layer.msg(res.msg || '删除失败', {icon: 2});
+                  }
+                  layer.close(confirmIndex);
+                },
+                error: function() {
+                  layer.msg('删除失败，请重试', {icon: 2});
+                  layer.close(confirmIndex);
+                }
+              });
+            } else {
+              // 如果附件还未保存，直接从列表中移除
+              attachmentList.splice(index, 1);
+              renderAttachmentList();
+              updateAttachmentsData();
+              layer.close(confirmIndex);
+            }
+          });
+        };
+
+        // 下载附件
+        window.downloadAttachment = function(index) {
+          var file = attachmentList[index];
+          if (file.url) {
+            window.open(file.url, '_blank');
+          } else if (file.blob) {
+            var url = URL.createObjectURL(file.blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = file.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }
+        };
+
+        // 更新隐藏字段中的附件数据
+        function updateAttachmentsData() {
+          var attachmentsData = attachmentList.map(function(file) {
+            return {
+              id: file.id || null,
+              code: file.code || '',
+              name: file.name,
+              url: file.url || '',
+              size: file.size || 0,
+              filename: file.filename || file.name
+            };
+          });
+          $('#attachments-data').val(JSON.stringify(attachmentsData));
+        }
+
+        // 初始化文件上传
+        upload.render({
+          elem: '#upload-attachment',
+          url: '/api/v1/upload',
+          accept: 'file',
+          multiple: true,
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("access_token")
+          },
+          data: function() {
+            // 动态获取项目ID和附件编号
+            var projectId = $('#project-form input[name="id"]').val();
+            projectId = (projectId && projectId != '0') ? projectId : null;
+            var projectName = $('#project-form input[name="project_name"]').val() || currentProjectName;
+            var attachmentCode = generateAttachmentCode(projectName);
+            return {
+              project_id: projectId,
+              attachment_code: attachmentCode
+            };
+          },
+          before: function(obj) {
+            // 预读本地文件
+            obj.preview(function(index, file, result) {
+              // 获取项目名称用于生成附件编号
+              var projectName = $('#project-form input[name="project_name"]').val() || currentProjectName;
+              // 生成附件编号
+              var attachmentCode = generateAttachmentCode(projectName);
+              
+              // 添加到附件列表
+              attachmentList.push({
+                code: attachmentCode,
+                name: file.name,
+                size: file.size,
+                blob: file,
+                url: null,
+                filename: null
+              });
+              renderAttachmentList();
+              updateAttachmentsData();
+            });
+          },
+          done: function(res, index, upload) {
+            // 上传成功后的回调
+            if (res.code === 0) {
+              // 更新附件URL和文件名
+              if (attachmentList[index]) {
+                attachmentList[index].id = res.data.id || null;
+                attachmentList[index].url = res.data.url || res.url;
+                attachmentList[index].filename = res.data.filename || res.data.original_filename;
+                attachmentList[index].size = res.data.size || attachmentList[index].size;
+                // 如果附件编号是临时的，更新为正式编号
+                if (attachmentList[index].code && attachmentList[index].code.startsWith('TEMP')) {
+                  var projectName = $('#project-form input[name="project_name"]').val() || currentProjectName;
+                  if (projectName) {
+                    attachmentList[index].code = generateAttachmentCode(projectName);
+                  }
+                }
+              }
+              renderAttachmentList();
+              updateAttachmentsData();
+              layer.msg('上传成功', {icon: 1});
+            } else {
+              layer.msg(res.msg || '上传失败', {icon: 2});
+              // 移除失败的附件
+              attachmentList.splice(index, 1);
+              renderAttachmentList();
+              updateAttachmentsData();
+            }
+          },
+          error: function(index, upload) {
+            // 上传失败的回调
+            layer.msg('上传失败，请重试', {icon: 2});
+            attachmentList.splice(index, 1);
+            renderAttachmentList();
+            updateAttachmentsData();
+          }
+        });
+
+        // 渲染表格
+        table.render({
+          elem: "#project-table",
+          id: "project-table",
+          url: "/api/v1/project",
+          height: "full-35",
+          toolbar: "#project-toolbar",
+          page: true,
+          defaultToolbar: ['exports', 'print'],
+          where: filterParams,
+          cols: [
+            [
+              { field: "id", title: "ID", sort: true },
+              { 
+                field: "project_name", 
+                title: "项目名称",
+                edit: 'text'
+              },
+              { 
+                field: "project_full_name", 
+                title: "项目全称",
+                edit: 'text'
+              },
+              { 
+                field: "project_scale", 
+                title: "项目规模",
+                edit: 'text'
+              },
+              { 
+                field: "start_date", 
+                title: "开始日期"
+              },
+              { 
+                field: "end_date", 
+                title: "结束日期"
+              },
+              { 
+                field: "project_status", 
+                title: "项目状态"
+              },
+              { 
+                field: "project_amount", 
+                title: "项目金额",
+                edit: 'text'
+              },
+              { 
+                field: "create_at", 
+                title: "创建时间",
+                sort: true
+              },
+              {
+                title: "操作",
+                align: "center",
+                toolbar: "#project-tool",
+              },
+            ],
+          ],
+          done: function(res, curr, count) {
+            // 表格渲染完成后，在表头添加筛选输入框
+            addFilterInputs();
+            // 多次同步列宽，确保完全同步
+            setTimeout(function() {
+              syncColumnWidths();
+              setTimeout(function() {
+                syncColumnWidths();
+              }, 100);
+            }, 200);
+          }
+        });
+
+        // 列宽配置 - 可以根据需要修改各列的初始宽度（单位：px）
+        var columnWidths = {
+          'ID': 60,                    // ID列
+          '项目名称': 150,             // 项目名称
+          '项目全称': 200,             // 项目全称
+          '项目规模': 120,             // 项目规模
+          '开始日期': 120,             // 开始日期
+          '结束日期': 120,             // 结束日期
+          '项目状态': 100,             // 项目状态
+          '项目金额': 120,             // 项目金额
+          '创建时间': 180,             // 创建时间
+          '操作': 180                  // 操作列
+        };
+
+        // 根据表头标题获取列宽配置
+        function getColumnWidthByTitle($th) {
+          // 从 .layui-table-cell 中获取纯文本，排除筛选输入框
+          var $cell = $th.find('.layui-table-cell');
+          var title;
+          if ($cell.length) {
+            // 克隆元素，移除所有子元素（包括筛选输入框），然后获取文本
+            title = $cell.clone().children().remove().end().text().trim();
+          } else {
+            // 如果没有 .layui-table-cell，直接获取文本，但排除筛选输入框
+            title = $th.clone().find('.filter-input-wrapper').remove().end().text().trim();
+          }
+          
+          // 调试输出（可以在浏览器控制台查看）
+          // console.log('列标题:', title, '配置宽度:', columnWidths[title]);
+          
+          return columnWidths[title] || null; // 返回配置的宽度，如果没有配置则返回null
+        }
+
+        // 同步表头和表体的列宽 - 根据内容自动调整
+        function syncColumnWidths() {
+          var $headerTable = $('.layui-table-view .layui-table-header table');
+          var $bodyTable = $('.layui-table-view .layui-table-body table');
+          
+          if ($headerTable.length && $bodyTable.length) {
+            var $headerThs = $headerTable.find('thead tr th');
+            var $headerCols = $headerTable.find('colgroup col');
+            var $bodyCols = $bodyTable.find('colgroup col');
+            
+            // 确保 colgroup 存在
+            if ($headerCols.length === 0) {
+              var headerColgroup = $('<colgroup></colgroup>');
+              $headerThs.each(function() {
+                headerColgroup.append('<col>');
+              });
+              $headerTable.prepend(headerColgroup);
+              $headerCols = $headerTable.find('colgroup col');
+            }
+            
+            if ($bodyCols.length === 0) {
+              var bodyColgroup = $('<colgroup></colgroup>');
+              $headerThs.each(function() {
+                bodyColgroup.append('<col>');
+              });
+              $bodyTable.prepend(bodyColgroup);
+              $bodyCols = $bodyTable.find('colgroup col');
+            }
+            
+            // 根据内容自动计算每列的最大宽度
+            $headerThs.each(function(index) {
+              var $headerTh = $(this);
+              var configuredWidth = getColumnWidthByTitle($headerTh); // 获取配置的宽度
+              var maxWidth;
+              
+              if (configuredWidth) {
+                // 如果配置了宽度，优先使用配置的宽度
+                maxWidth = configuredWidth;
+              } else {
+                // 如果没有配置，则根据内容自动计算
+                maxWidth = $headerTh.outerWidth() || $headerTh.width() || 0;
+                
+                // 遍历表体中的所有行，找出该列的最大宽度
+                $bodyTable.find('tbody tr').each(function() {
+                  var $td = $(this).find('td').eq(index);
+                  if ($td.length) {
+                    // 临时移除宽度限制，获取实际内容宽度
+                    var originalWidth = $td.css('width');
+                    $td.css('width', 'auto');
+                    var contentWidth = $td.outerWidth() || $td.width() || 0;
+                    $td.css('width', originalWidth);
+                    
+                    // 加上padding，确保有足够空间
+                    var padding = parseInt($td.css('padding-left')) + parseInt($td.css('padding-right')) || 30;
+                    var totalWidth = contentWidth + padding;
+                    
+                    if (totalWidth > maxWidth) {
+                      maxWidth = totalWidth;
+                    }
+                  }
+                });
+              }
+              
+              // 设置列宽（不设置min-width和max-width，允许自动调整）
+              if ($headerCols.length > index) {
+                $headerCols.eq(index).css('width', maxWidth + 'px').attr('width', maxWidth);
+              }
+              if ($bodyCols.length > index) {
+                $bodyCols.eq(index).css('width', maxWidth + 'px').attr('width', maxWidth);
+              }
+              
+              // 设置表头和表体的宽度
+              $headerTh.css('width', maxWidth + 'px');
+              $bodyTable.find('tbody tr td').eq(index).css('width', maxWidth + 'px');
+            });
+            
+            // 使用auto布局，让表格根据内容自动调整
+            $headerTable.css({
+              'table-layout': 'auto',
+              'width': '100%'
+            });
+            $bodyTable.css({
+              'table-layout': 'auto',
+              'width': '100%'
+            });
+          }
+        }
+
+        // 统一的表格重新加载函数，确保筛选输入框不消失
+        function reloadTable(options) {
+          options = options || {};
+          var defaultOptions = {
+            where: filterParams,
+            done: function() {
+              addFilterInputs();
+              setTimeout(function() {
+                syncColumnWidths();
+              }, 100);
+            }
+          };
+          // 合并选项
+          var finalOptions = $.extend({}, defaultOptions, options);
+          table.reload('project-table', finalOptions);
+        }
+
+        // 在表头添加筛选输入框
+        function addFilterInputs() {
+          // 延迟执行，确保表格DOM已渲染
+          setTimeout(function() {
+            var filterFields = ['project_name', 'project_full_name', 'project_scale', 'project_status', 'project_amount'];
+            filterFields.forEach(function(field) {
+              var $th = $('th[data-field="' + field + '"]');
+              if ($th.length && !$th.find('.filter-input').length) {
+                var $filterDiv = $('<div class="filter-input-wrapper" style="margin-top: 5px;"></div>');
+                var $input = $('<input type="text" class="layui-input filter-input" placeholder="筛选" data-field="' + field + '" style="height: 28px; font-size: 12px; padding: 0 8px;">');
+                // 如果有已保存的筛选值，恢复它
+                if (filterParams[field]) {
+                  $input.val(filterParams[field]);
+                }
+                $filterDiv.append($input);
+                $th.append($filterDiv);
+              }
+            });
+            // 添加筛选输入框后，重新同步列宽
+            setTimeout(function() {
+              syncColumnWidths();
+            }, 50);
+          }, 100);
+        }
+
+        // 监听项目名称变化，更新附件编号
+        $(document).on('input', '#project-form input[name="project_name"]', function() {
+          var projectName = $(this).val();
+          currentProjectName = projectName;
+          // 更新临时编号的附件
+          attachmentList.forEach(function(file, index) {
+            if (file.code && file.code.startsWith('TEMP') && projectName) {
+              file.code = generateAttachmentCode(projectName);
+            }
+          });
+          renderAttachmentList();
+          updateAttachmentsData();
+        });
+
+        // 监听表格筛选
+        table.on('toolbar(project-table)', function(obj){
+          if(obj.event === 'project-toolbar-add'){
+            $("#project-form")[0].reset();
+            $("#project-form input[name='id']").val(0);
+            // 清空附件列表和重置计数器
+            attachmentList = [];
+            attachmentSequence = 0;
+            currentProjectName = '';
+            renderAttachmentList();
+            updateAttachmentsData();
+            form.render('select');
+            layer.open({
+              type: 1,
+              shade: false,
+              content: $("#project-form"),
+              area: ["50%", "90%"],
+            });
+            form.render($("#project-form"));
+          }
+        });
+
+        // 监听行工具事件
+        table.on('tool(project-table)', function(obj){
+          var data = obj.data;
+          if(obj.event === 'project-tool-edit'){
+            form.val("project-form", data);
+            // 设置当前项目名称
+            currentProjectName = data.project_name || '';
+            // 重置附件计数器
+            attachmentSequence = 0;
+            
+            // 加载附件数据（优先使用数据库中的附件列表）
+            attachmentList = [];
+            var attachments = null;
+            
+            // 优先使用 attachments_list（从数据库加载）
+            if (data.attachments_list && Array.isArray(data.attachments_list) && data.attachments_list.length > 0) {
+              attachments = data.attachments_list;
+            } else if (data.attachments) {
+              // 兼容旧的 JSON 字符串格式
+              try {
+                attachments = JSON.parse(data.attachments);
+              } catch (e) {
+                console.error('解析附件数据失败:', e);
+              }
+            }
+            
+            if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+              attachmentList = attachments.map(function(file) {
+                // 确保每个附件都有完整的字段
+                return {
+                  id: file.id || null,
+                  code: file.code || generateAttachmentCode(currentProjectName),
+                  name: file.name || file.original_filename || file.filename || '未知文件',
+                  url: file.url || file.file_path || '',
+                  size: file.size || file.file_size || 0,
+                  filename: file.filename || file.name || ''
+                };
+              });
+              // 更新计数器到最大值
+              attachmentList.forEach(function(file) {
+                if (file.code && file.code.includes('F')) {
+                  var parts = file.code.split('F');
+                  if (parts.length > 1) {
+                    var seq = parseInt(parts[parts.length - 1]) || 0;
+                    if (seq > attachmentSequence) {
+                      attachmentSequence = seq;
+                    }
+                  }
+                }
+              });
+            }
+            renderAttachmentList();
+            updateAttachmentsData();
+            form.render('select');
+            layer.open({
+              type: 1,
+              shade: false,
+              content: $("#project-form"),
+              area: ["50%", "90%"],
+            });
+            form.render($("#project-form"));
+          } else if(obj.event === 'project-tool-del'){
+            layer.confirm('确定要删除这个项目吗？', {icon: 3, title: '提示'}, function(confirmIndex){
+              $.ajax({
+                url: `/api/v1/project/${data.id}`,
+                type: "DELETE",
+                contentType: "application/json",
+                headers: {
+                  Authorization: "Bearer " + localStorage.getItem("access_token"),
+                },
+                success: function (res) {
+                  if (res.code === 0) {
+                    layer.msg(res.msg, {icon: 1});
+                    reloadTable();
+                  } else {
+                    layer.msg(res.msg || '删除失败', {icon: 2});
+                  }
+                  layer.close(confirmIndex);
+                },
+                error: function() {
+                  layer.msg('删除失败，请重试', {icon: 2});
+                  layer.close(confirmIndex);
+                }
+              });
+            });
+          }
+        });
+
+        // 监听单元格编辑
+        table.on('edit(project-table)', function(obj){
+          var value = obj.value;
+          var data = obj.data;
+          var field = obj.field;
+          
+          // 更新数据
+          var updateData = {};
+          updateData[field] = value;
+          updateData.id = data.id;
+          
+          $.ajax({
+            url: `/api/v1/project/${data.id}`,
+            type: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify(updateData),
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("access_token"),
+            },
+            success: function (res) {
+              if (res.code === 0) {
+                layer.msg('更新成功', {icon: 1, time: 1000});
+              } else {
+                layer.msg(res.msg || '更新失败', {icon: 2});
+                reloadTable();
+              }
+            },
+            error: function() {
+              layer.msg('更新失败，请重试', {icon: 2});
+              reloadTable();
+            }
+          });
+        });
+
+        // 表单提交
+        form.on("submit(project-form-btn)", function (data) {
+          var field = data.field;
+          let method, url;
+          if (field.id == 0) {
+            field.id = null;
+            method = "POST";
+            url = "/api/v1/project";
+          } else {
+            method = "PUT";
+            url = `/api/v1/project/${field.id}`;
+          }
+          
+          // 处理项目金额
+          if (field.project_amount) {
+            field.project_amount = parseFloat(field.project_amount) || 0;
+          }
+          
+          // 处理附件数据，转换为JSON字符串
+          updateAttachmentsData();
+          field.attachments = $('#attachments-data').val() || JSON.stringify([]);
+          
+          $.ajax({
+            url: url,
+            type: method,
+            contentType: "application/json",
+            data: JSON.stringify(field),
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("access_token"),
+            },
+            success: function (res) {
+              if (res.code === 0) {
+                layer.msg(res.msg, {icon: 1});
+                layer.closeAll();
+                // 清空附件列表
+                attachmentList = [];
+                renderAttachmentList();
+                updateAttachmentsData();
+                reloadTable();
+            } else {
+                layer.msg(res.msg || '操作失败', {icon: 2});
+              }
+            },
+            error: function() {
+              layer.msg('操作失败，请重试', {icon: 2});
+            }
+          });
+          return false;
+        });
+
+        // 监听筛选栏输入，实现模糊搜索
+        var filterTimer = null;
+        $(document).on('input', '.filter-input', function() {
+          var $input = $(this);
+          var field = $input.data('field');
+          var value = $input.val().trim();
+          
+          // 更新筛选参数
+          if (value) {
+            filterParams[field] = value;
+          } else {
+            delete filterParams[field];
+          }
+          
+          // 防抖处理
+          clearTimeout(filterTimer);
+          filterTimer = setTimeout(function() {
+            // 重新加载表格数据，带上搜索参数
+            reloadTable({
+              page: {
+                curr: 1 // 重新从第 1 页开始
+              }
+            });
+          }, 500);
+        });
+      });
+    </script>
+  </body>
+</html>

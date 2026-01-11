@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <title>供应商管理</title>
+    <meta name="renderer" content="webkit" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+<style>
+      /* 操作列按钮间距 */
+      .layui-table-cell .layui-btn-container {
+        display: flex;
+        gap: 5px;
+        justify-content: center;
+      }
+      /* 确保表头和表体的列宽一致 - 根据内容自动调整 */
+      .layui-table-view .layui-table-header table,
+      .layui-table-view .layui-table-body table {
+        table-layout: auto !important;
+        width: 100% !important;
+      }
+      /* 确保列宽根据内容自动调整 */
+      .layui-table-view .layui-table-header table colgroup col,
+      .layui-table-view .layui-table-body table colgroup col {
+        width: auto !important;
+      }
+      .layui-table-view .layui-table-header table thead th,
+      .layui-table-view .layui-table-body table tbody td {
+        padding: 9px 15px !important;
+        white-space: nowrap;
+      }
+      /* 确保筛选输入框不影响列宽 */
+      .filter-input-wrapper {
+        width: 100%;
+        box-sizing: border-box;
+        min-width: 0;
+      }
+      .filter-input {
+        width: 100%;
+        box-sizing: border-box;
+        min-width: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div style="padding: 16px">
+      <div class="layui-card">
+        <div class="layui-card-body">
+          <table
+            class="layui-hide"
+            id="supplier-table"
+            lay-filter="supplier-table"
+          ></table>
+        </div>
+      </div>
+    </div>
+    <form
+      class="layui-form"
+      lay-filter="supplier-form"
+      id="supplier-form"
+      action=""
+      style="padding: 15px; display: none"
+    >
+      <div class="layui-form-item">
+        <label class="layui-form-label">ID</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="id"
+            value="0"
+            lay-verify="required"
+            autocomplete="off"
+            class="layui-input"
+            disabled
+          />
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">供应商类型</label>
+        <div class="layui-input-block">
+          <input
+            type="number"
+            name="type_id"
+            placeholder="请输入供应商类型"
+            lay-verify="required"
+            autocomplete="off"
+            class="layui-input"
+          />
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">供应商名称</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="name"
+            placeholder="请输入供应商名称"
+            lay-verify="required"
+            autocomplete="off"
+            class="layui-input"
+          />
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">联系人</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="contact_person"
+            placeholder="请输入联系人"
+            lay-verify="required"
+            autocomplete="off"
+            class="layui-input"
+          />
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">联系电话</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="phone"
+            placeholder="请输入联系电话"
+            lay-verify="required"
+            autocomplete="off"
+            class="layui-input"
+          />
+          </div>
+          </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">邮箱</label>
+        <div class="layui-input-block">
+          <input
+            type="email"
+            name="email"
+            placeholder="请输入邮箱"
+            autocomplete="off"
+            class="layui-input"
+          />
+          </div>
+          </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">开户行名称</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="bank_name"
+            placeholder="请输入开户行名称"
+            lay-verify="required"
+            autocomplete="off"
+            class="layui-input"
+          />
+          </div>
+          </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">银行账号</label>
+        <div class="layui-input-block">
+          <input
+            type="text"
+            name="account_number"
+            placeholder="请输入银行账号"
+            lay-verify="required"
+            autocomplete="off"
+            class="layui-input"
+          />
+            </div>
+          </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">地址</label>
+        <div class="layui-input-block">
+          <textarea
+            name="address"
+            placeholder="请输入地址"
+            class="layui-textarea"
+          ></textarea>
+        </div>
+          </div>
+      <div class="layui-form-item">
+        <label class="layui-form-label">备注</label>
+        <div class="layui-input-block">
+          <textarea
+            name="remark"
+            placeholder="请输入备注"
+            class="layui-textarea"
+          ></textarea>
+        </div>
+      </div>
+      <div class="layui-form-item">
+        <div class="layui-input-block">
+          <button
+            type="submit"
+            class="layui-btn"
+            lay-submit
+            lay-filter="supplier-form-btn"
+          >
+            立即提交
+          </button>
+          <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+      </div>
+    </form>
+    <script type="text/html" id="supplier-toolbar">
+      <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="supplier-toolbar-add">
+          新增供应商
+        </button>
+      </div>
+    </script>
+    <script type="text/html" id="supplier-tool">
+      <div class="layui-btn-container">
+        <button
+          class="layui-btn layui-btn-sm layui-bg-blue"
+          lay-event="supplier-tool-edit"
+        >
+          编辑
+        </button>
+        <button
+          class="layui-btn layui-btn-sm layui-bg-red"
+          lay-event="supplier-tool-del"
+        >
+          删除
+        </button>
+      </div>
+    </script>
+    <script>
+      layui.use(["table", "form", "layer"], function () {
+        var table = layui.table;
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.$;
+
+        // 存储筛选条件
+        var filterParams = {};
+
+        // 渲染表格
+        table.render({
+          elem: "#supplier-table",
+          id: "supplier-table",
+          url: "/api/v1/supplier",
+          height: "full-35",
+          toolbar: "#supplier-toolbar",
+          page: true,
+          defaultToolbar: ['exports', 'print'],
+          where: filterParams,
+          cols: [
+            [
+              { field: "id", title: "ID", sort: true },
+              { 
+                field: "name", 
+                title: "供应商名称",
+                edit: 'text'
+              },
+              { 
+                field: "contact_person", 
+                title: "联系人",
+                edit: 'text'
+              },
+              { 
+                field: "phone", 
+                title: "联系电话",
+                edit: 'text'
+              },
+              { 
+                field: "bank_name", 
+                title: "开户行名称",
+                edit: 'text'
+              },
+              { 
+                field: "account_number", 
+                title: "银行账号",
+                edit: 'text'
+              },
+              { 
+                field: "remark", 
+                title: "备注",
+                edit: 'text'
+              },
+              { 
+                field: "create_at", 
+                title: "创建时间",
+                sort: true
+              },
+              {
+                title: "操作",
+                align: "center",
+                toolbar: "#supplier-tool",
+              },
+            ],
+          ],
+          done: function(res, curr, count) {
+            // 表格渲染完成后，在表头添加筛选输入框
+            addFilterInputs();
+            // 多次同步列宽，确保完全同步
+            setTimeout(function() {
+              syncColumnWidths();
+              setTimeout(function() {
+                syncColumnWidths();
+              }, 100);
+            }, 200);
+          }
+        });
+
+        // 列宽配置 - 可以根据需要修改各列的初始宽度（单位：px）
+        var columnWidths = {
+          'ID': 60,                    // ID列
+          '供应商名称': 150,           // 供应商名称
+          '联系人': 120,               // 联系人
+          '联系电话': 140,             // 联系电话
+          '开户行名称': 180,           // 开户行名称
+          '银行账号': 150,             // 银行账号
+          '备注': 150,                 // 备注
+          '创建时间': 180,             // 创建时间
+          '操作': 180                  // 操作列
+        };
+
+        // 根据表头标题获取列宽配置
+        function getColumnWidthByTitle($th) {
+          // 从 .layui-table-cell 中获取纯文本，排除筛选输入框
+          var $cell = $th.find('.layui-table-cell');
+          var title;
+          if ($cell.length) {
+            // 克隆元素，移除所有子元素（包括筛选输入框），然后获取文本
+            title = $cell.clone().children().remove().end().text().trim();
+          } else {
+            // 如果没有 .layui-table-cell，直接获取文本，但排除筛选输入框
+            title = $th.clone().find('.filter-input-wrapper').remove().end().text().trim();
+          }
+          
+          // 调试输出（可以在浏览器控制台查看）
+          // console.log('列标题:', title, '配置宽度:', columnWidths[title]);
+          
+          return columnWidths[title] || null; // 返回配置的宽度，如果没有配置则返回null
+        }
+
+        // 同步表头和表体的列宽 - 根据内容自动调整
+        function syncColumnWidths() {
+          var $headerTable = $('.layui-table-view .layui-table-header table');
+          var $bodyTable = $('.layui-table-view .layui-table-body table');
+          
+          if ($headerTable.length && $bodyTable.length) {
+            var $headerThs = $headerTable.find('thead tr th');
+            var $headerCols = $headerTable.find('colgroup col');
+            var $bodyCols = $bodyTable.find('colgroup col');
+            
+            // 确保 colgroup 存在
+            if ($headerCols.length === 0) {
+              var headerColgroup = $('<colgroup></colgroup>');
+              $headerThs.each(function() {
+                headerColgroup.append('<col>');
+              });
+              $headerTable.prepend(headerColgroup);
+              $headerCols = $headerTable.find('colgroup col');
+            }
+            
+            if ($bodyCols.length === 0) {
+              var bodyColgroup = $('<colgroup></colgroup>');
+              $headerThs.each(function() {
+                bodyColgroup.append('<col>');
+              });
+              $bodyTable.prepend(bodyColgroup);
+              $bodyCols = $bodyTable.find('colgroup col');
+            }
+            
+            // 根据内容自动计算每列的最大宽度
+            $headerThs.each(function(index) {
+              var $headerTh = $(this);
+              var configuredWidth = getColumnWidthByTitle($headerTh); // 获取配置的宽度
+              var maxWidth;
+              
+              if (configuredWidth) {
+                // 如果配置了宽度，优先使用配置的宽度
+                maxWidth = configuredWidth;
+              } else {
+                // 如果没有配置，则根据内容自动计算
+                maxWidth = $headerTh.outerWidth() || $headerTh.width() || 0;
+                
+                // 遍历表体中的所有行，找出该列的最大宽度
+                $bodyTable.find('tbody tr').each(function() {
+                  var $td = $(this).find('td').eq(index);
+                  if ($td.length) {
+                    // 临时移除宽度限制，获取实际内容宽度
+                    var originalWidth = $td.css('width');
+                    $td.css('width', 'auto');
+                    var contentWidth = $td.outerWidth() || $td.width() || 0;
+                    $td.css('width', originalWidth);
+                    
+                    // 加上padding，确保有足够空间
+                    var padding = parseInt($td.css('padding-left')) + parseInt($td.css('padding-right')) || 30;
+                    var totalWidth = contentWidth + padding;
+                    
+                    if (totalWidth > maxWidth) {
+                      maxWidth = totalWidth;
+                    }
+                  }
+                });
+              }
+              
+              // 设置列宽（不设置min-width和max-width，允许自动调整）
+              if ($headerCols.length > index) {
+                $headerCols.eq(index).css('width', maxWidth + 'px').attr('width', maxWidth);
+              }
+              if ($bodyCols.length > index) {
+                $bodyCols.eq(index).css('width', maxWidth + 'px').attr('width', maxWidth);
+              }
+              
+              // 设置表头和表体的宽度
+              $headerTh.css('width', maxWidth + 'px');
+              $bodyTable.find('tbody tr td').eq(index).css('width', maxWidth + 'px');
+            });
+            
+            // 使用auto布局，让表格根据内容自动调整
+            $headerTable.css({
+              'table-layout': 'auto',
+              'width': '100%'
+            });
+            $bodyTable.css({
+              'table-layout': 'auto',
+              'width': '100%'
+            });
+          }
+        }
+
+        // 统一的表格重新加载函数，确保筛选输入框不消失
+        function reloadTable(options) {
+          options = options || {};
+          var defaultOptions = {
+            where: filterParams,
+            done: function() {
+              addFilterInputs();
+              setTimeout(function() {
+                syncColumnWidths();
+              }, 100);
+            }
+          };
+          // 合并选项
+          var finalOptions = $.extend({}, defaultOptions, options);
+          table.reload('supplier-table', finalOptions);
+        }
+
+        // 在表头添加筛选输入框
+        function addFilterInputs() {
+          // 延迟执行，确保表格DOM已渲染
+          setTimeout(function() {
+            var filterFields = ['name', 'contact_person', 'phone', 'bank_name', 'account_number', 'remark'];
+            filterFields.forEach(function(field) {
+              var $th = $('th[data-field="' + field + '"]');
+              if ($th.length && !$th.find('.filter-input').length) {
+                var $filterDiv = $('<div class="filter-input-wrapper" style="margin-top: 5px;"></div>');
+                var $input = $('<input type="text" class="layui-input filter-input" placeholder="筛选" data-field="' + field + '" style="height: 28px; font-size: 12px; padding: 0 8px;">');
+                // 如果有已保存的筛选值，恢复它
+                if (filterParams[field]) {
+                  $input.val(filterParams[field]);
+                }
+                $filterDiv.append($input);
+                $th.append($filterDiv);
+        }
+            });
+            // 添加筛选输入框后，重新同步列宽
+            setTimeout(function() {
+              syncColumnWidths();
+            }, 50);
+          }, 100);
+        }
+
+        // 监听表格筛选
+        table.on('toolbar(supplier-table)', function(obj){
+          if(obj.event === 'supplier-toolbar-add'){
+            $("#supplier-form")[0].reset();
+            $("#supplier-form input[name='id']").val(0);
+            layer.open({
+              type: 1,
+              shade: false,
+              content: $("#supplier-form"),
+              area: ["50%", "90%"],
+            });
+            form.render($("#supplier-form"));
+        }
+        });
+
+        // 监听行工具事件
+        table.on('tool(supplier-table)', function(obj){
+          var data = obj.data;
+          if(obj.event === 'supplier-tool-edit'){
+            form.val("supplier-form", data);
+            layer.open({
+              type: 1,
+              shade: false,
+              content: $("#supplier-form"),
+              area: ["50%", "90%"],
+            });
+            form.render($("#supplier-form"));
+          } else if(obj.event === 'supplier-tool-del'){
+            layer.confirm('确定要删除这个供应商吗？', {icon: 3, title: '提示'}, function(confirmIndex){
+              $.ajax({
+                url: `/api/v1/supplier/${data.id}`,
+                type: "DELETE",
+                contentType: "application/json",
+                headers: {
+                  Authorization: "Bearer " + localStorage.getItem("access_token"),
+                },
+                success: function (res) {
+                  if (res.code === 0) {
+                    layer.msg(res.msg, {icon: 1});
+                    reloadTable();
+                  } else {
+                    layer.msg(res.msg || '删除失败', {icon: 2});
+                  }
+                  layer.close(confirmIndex);
+                },
+                error: function() {
+                  layer.msg('删除失败，请重试', {icon: 2});
+            layer.close(confirmIndex);
+                }
+              });
+            });
+          }
+        });
+
+        // 监听单元格编辑
+        table.on('edit(supplier-table)', function(obj){
+          var value = obj.value;
+          var data = obj.data;
+          var field = obj.field;
+          
+          // 更新数据
+          var updateData = {};
+          updateData[field] = value;
+          updateData.id = data.id;
+          
+          $.ajax({
+            url: `/api/v1/supplier/${data.id}`,
+            type: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify(updateData),
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("access_token"),
+            },
+            success: function (res) {
+              if (res.code === 0) {
+                layer.msg('更新成功', {icon: 1, time: 1000});
+              } else {
+                layer.msg(res.msg || '更新失败', {icon: 2});
+                reloadTable();
+              }
+            },
+            error: function() {
+              layer.msg('更新失败，请重试', {icon: 2});
+              reloadTable();
+            }
+          });
+        });
+
+        // 表单提交
+        form.on("submit(supplier-form-btn)", function (data) {
+          var field = data.field;
+          let method, url;
+          if (field.id == 0) {
+            field.id = null;
+            method = "POST";
+            url = "/api/v1/supplier";
+          } else {
+            method = "PUT";
+            url = `/api/v1/supplier/${field.id}`;
+          }
+          
+          // 处理银行账号
+          if (field.account_number) {
+            field.account_number = parseInt(field.account_number) || field.account_number;
+          }
+          
+          $.ajax({
+            url: url,
+            type: method,
+            contentType: "application/json",
+            data: JSON.stringify(field),
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("access_token"),
+            },
+            success: function (res) {
+              if (res.code === 0) {
+                layer.msg(res.msg, {icon: 1});
+                layer.closeAll();
+                reloadTable();
+            } else {
+                layer.msg(res.msg || '操作失败', {icon: 2});
+              }
+            },
+            error: function() {
+              layer.msg('操作失败，请重试', {icon: 2});
+            }
+          });
+          return false;
+        });
+
+        // 监听筛选栏输入，实现模糊搜索
+        var filterTimer = null;
+        $(document).on('input', '.filter-input', function() {
+          var $input = $(this);
+          var field = $input.data('field');
+          var value = $input.val().trim();
+
+          // 更新筛选参数
+          if (value) {
+            filterParams[field] = value;
+          } else {
+            delete filterParams[field];
+          }
+          
+          // 防抖处理
+          clearTimeout(filterTimer);
+          filterTimer = setTimeout(function() {
+            // 重新加载表格数据，带上搜索参数
+            reloadTable({
+              page: {
+                curr: 1 // 重新从第 1 页开始
+              }
+            });
+          }, 500);
+        });
+      });
+    </script>
+  </body>
+</html>

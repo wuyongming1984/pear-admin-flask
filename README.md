@@ -20,6 +20,65 @@ flask init
 flask run
 ```
 
+## Docker 部署
+
+### 快速开始
+
+使用 Docker Compose 一键部署：
+
+```shell
+# 创建环境变量文件
+cp .env.example .env
+# 编辑 .env 文件，修改密码等配置
+
+# 启动服务
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f
+```
+
+### 阿里云服务器部署
+
+详细部署步骤请查看：
+
+- **快速指南**：[quick-deploy-guide.txt](./quick-deploy-guide.txt)
+- **完整文档**：[DEPLOY.md](./DEPLOY.md)
+
+一键部署脚本：
+
+```shell
+chmod +x deploy.sh
+./deploy.sh
+```
+
+访问地址：`http://<服务器IP>:5050`
+
+## 上传到 Git 仓库
+
+详细的 Git 上传指南请查看：[GIT_GUIDE.md](./GIT_GUIDE.md)
+
+### 快速上传步骤
+
+```shell
+# 配置 Git 用户信息
+git config --global user.name "你的用户名"
+git config --global user.email "your_email@example.com"
+
+# 初始化并提交
+git init
+git add .
+git commit -m "初始提交：完整项目包含 Docker 部署支持"
+
+# 添加远程仓库（替换为你的仓库地址）
+git remote add origin https://gitee.com/你的用户名/pear-admin-flask.git
+
+# 推送到远程仓库
+git push -u origin master
+```
+
+推荐使用 Gitee（国内访问速度快）：https://gitee.com
+
 ## 贡献指南
 
 如果想参与项目的贡献，提交代码之前需要启用 pre-commit、commitizen 对代码进行校验，运行以下指令即可。

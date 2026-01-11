@@ -77,6 +77,8 @@ tmp/
 *.pyc
 *.pyo
 
-# 备份文件
+# 备份文件和导出文件
 backup_*.sql
 *_backup.*
+*_export.sql
+mysql_export.sql

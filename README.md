@@ -58,7 +58,7 @@ chmod +x deploy.sh
 
 详细的 Git 上传指南请查看：[GIT_GUIDE.md](./GIT_GUIDE.md)
 
-### 快速上传步骤
+### 首次上传步骤
 
 ```shell
 # 配置 Git 用户信息
@@ -71,13 +71,26 @@ git add .
 git commit -m "初始提交：完整项目包含 Docker 部署支持"
 
 # 添加远程仓库（替换为你的仓库地址）
-git remote add origin https://gitee.com/你的用户名/pear-admin-flask.git
+git remote add origin https://github.com/你的用户名/pear-admin-flask.git
 
 # 推送到远程仓库
-git push -u origin master
+git push -u origin main
 ```
 
-推荐使用 Gitee（国内访问速度快）：https://gitee.com
+### 日常更新代码
+
+```shell
+# 三步推送流程
+git add .                          # 添加修改
+git commit -m "描述你的修改"        # 提交修改
+git push                           # 推送到远程
+```
+
+详细日常操作指南：[更新推送指南.md](./更新推送指南.md)
+
+推荐平台：
+- GitHub（国际）：https://github.com
+- Gitee（国内速度快）：https://gitee.com
 
 ## 贡献指南
 

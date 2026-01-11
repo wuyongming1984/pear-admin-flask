@@ -29,8 +29,8 @@
 cd d:\pear_admin\pear-admin-flask
 
 # 配置 Git 用户信息（首次使用需要配置）
-git config --global user.name "你的用户名"
-git config --global user.email "your_email@example.com"
+git config --global user.name "wuyongming1984"
+git config --global user.email "wuyongmingultra@gmail.com"
 
 # 初始化 Git 仓库（如果还没有初始化）
 git init
@@ -42,10 +42,10 @@ git add .
 git commit -m "初始提交：完整项目包含 Docker 部署支持"
 
 # 添加远程仓库（替换为你的仓库地址）
-git remote add origin https://github.com/你的用户名/pear-admin-flask.git
+git remote add origin https://github.com/wuyongming1984/pear-admin-flask.git
 
 # 推送到远程仓库
-git push -u origin master
+git push -u origin main
 # 或者如果是 main 分支
 # git push -u origin main
 ```

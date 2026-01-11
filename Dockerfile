@@ -4,12 +4,21 @@ FROM python:3.10-slim
 # 设置工作目录
 WORKDIR /app
 
+# 配置国内 Debian 镜像源（阿里云）
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources || \
+    (echo "deb http://mirrors.aliyun.com/debian/ bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list && \
+     echo "deb http://mirrors.aliyun.com/debian/ bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list && \
+     echo "deb http://mirrors.aliyun.com/debian-security/ bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list)
+
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
     gcc \
     default-libmysqlclient-dev \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
+
+# 配置 pip 使用国内镜像源
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 
 # 安装 poetry
 RUN pip install --no-cache-dir poetry==1.7.1

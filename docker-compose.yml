@@ -27,7 +27,7 @@ services:
     restart: always
     environment:
       - FLASK_ENV=production
-      - FLASK_APP=pear_admin:create_app('prod')
+      - FLASK_APP=pear_admin:create_app("prod")
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5050
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
@@ -36,15 +36,15 @@ services:
       - MYSQL_USER=${MYSQL_USER:-pear_admin}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-pear_admin123}
       - MYSQL_DATABASE=${MYSQL_DATABASE:-pear_admin}
-    ports:
-      - "5050:5050"
+    # ports:  # web 不再直接暴露端口，改由 nginx 代理
+    #   - "5050:5050"
     volumes:
       - ./uploads:/app/uploads
+      - ./static:/app/static # 映射静态文件以便共享给 nginx (虽然容器间共享更好，但这样简单)
     depends_on:
       - mysql
     networks:
       - pear_network
-    # 等待 MySQL 启动
     command: >
       sh -c "
         echo 'Waiting for MySQL to start...'
@@ -54,6 +54,21 @@ services:
         echo 'Starting application...'
         gunicorn --bind 0.0.0.0:5050 --workers 4 --timeout 120 'pear_admin:create_app(\"prod\")'
       "
+
+  nginx:
+    image: nginx:alpine
+    container_name: pear_admin_nginx
+    restart: always
+    ports:
+      - "5050:80" # 将主机 5050 映射到 Nginx 的 80
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./static:/app/static
+      - ./uploads:/app/uploads
+    depends_on:
+      - web
+    networks:
+      - pear_network
 
 volumes:
   mysql_data:

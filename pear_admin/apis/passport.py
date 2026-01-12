@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from copy import deepcopy
 
-from flask import Blueprint, make_response, request
+from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -31,12 +31,12 @@ def login_in():
     access_token = create_access_token(user)
     refresh_token = create_refresh_token(user)
 
-    return {
+    return jsonify({
         "code": 0,
         "msg": "登录成功",
         "access_token": access_token,
         "refresh_token": refresh_token,
-    }
+    })
 
 
 @passport_api.route("/logout", methods=["GET", "POST"])

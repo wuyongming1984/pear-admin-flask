@@ -903,7 +903,7 @@
       // 加载供应商列表和联系人列表
       function loadSuppliers() {
         $.ajax({
-          url: window.location.origin + "/api/v1/supplier",
+          url: window.location.origin + "/api/v1/supplier/",
           type: "GET",
           data: {
             limit: 1000  // 获取所有供应商，不分页
@@ -943,7 +943,7 @@
       // 加载供应商列表（用于付款单表单）
       function loadSuppliersForOrderPay() {
         $.ajax({
-          url: window.location.origin + "/api/v1/supplier",
+          url: window.location.origin + "/api/v1/supplier/",
           type: "GET",
           headers: {
             Authorization: "Bearer " + localStorage.getItem("access_token"),
@@ -2162,6 +2162,14 @@
 
           // 加载供应商列表
           loadSuppliersForOrderPay();
+
+          // 自动填充收款单位（为订单供应商）
+          setTimeout(function () {
+            if (data.supplier_id) {
+              $('#order-pay-info-form select[name="payee_supplier_id"]').val(data.supplier_id);
+              form.render('select');
+            }
+          }, 300);
 
           // 自动生成付款单编号
           var payNumber = 'P' + new Date().getFullYear() +

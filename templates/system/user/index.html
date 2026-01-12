@@ -186,7 +186,7 @@
           });
         } else if (obj.event === "user-tool-del") {
           $.ajax({
-            url: `/api/v1/user/${obj.data.id}`,
+            url: window.location.origin + `/api/v1/user/${obj.data.id}`,
             type: "DELETE",
             contentType: "application/json",
             headers: {
@@ -201,7 +201,7 @@
         } else if (obj.event === "user-tool-detail") {
           user_id = obj.data["id"];
           $.ajax({
-            url: "/api/v1/role?type=tree",
+            url: window.location.origin + "/api/v1/role/?type=tree",
             type: "get",
             success: function (ret) {
               let data = [];
@@ -216,7 +216,7 @@
               });
               // 请求获取当前用户的权限
               $.ajax({
-                url: `/api/v1/user/user_role/${user_id}`,
+                url: window.location.origin + `/api/v1/user/user_role/${user_id}`,
                 type: "get",
                 success: function (ret) {
                   tree.setChecked("user_role", ret.data);
@@ -241,10 +241,10 @@
         if (field.id == 0) {
           field.id = null;
           method = "POST";
-          url = "/api/v1/user";
+          url = window.location.origin + "/api/v1/user/";
         } else {
           method = "PUT";
-          url = `/api/v1/user/${field.id}`;
+          url = window.location.origin + `/api/v1/user/${field.id}`;
         }
         $.ajax({
           url: url,
@@ -286,7 +286,7 @@
         let param = tree.getChecked("user_role"); // 获取选中节点的数据
         let rights_ids = get_id(param).join();
         $.ajax({
-          url: `/api/v1/user/user_role/${user_id}`,
+          url: window.location.origin + `/api/v1/user/user_role/${user_id}`,
           data: JSON.stringify({ rights_ids: rights_ids }),
           dataType: "json",
           contentType: "application/json",

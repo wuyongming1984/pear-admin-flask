@@ -375,7 +375,7 @@
       // 加载供应商列表
       function loadSuppliers() {
         $.ajax({
-          url: window.location.origin + "/api/v1/supplier",
+          url: window.location.origin + "/api/v1/supplier/",
           type: "GET",
           headers: {
             Authorization: "Bearer " + localStorage.getItem("access_token"),
@@ -758,7 +758,7 @@
       // 加载供应商列表（用于付款单位和收款单位）
       function loadSuppliersForPay() {
         $.ajax({
-          url: window.location.origin + "/api/v1/supplier",
+          url: window.location.origin + "/api/v1/supplier/",
           type: "GET",
           headers: {
             Authorization: "Bearer " + localStorage.getItem("access_token"),

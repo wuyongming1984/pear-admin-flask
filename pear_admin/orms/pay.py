@@ -87,5 +87,5 @@ class PayORM(BaseORM):
             "invoice_amount": str(self.invoice_amount) if self.invoice_amount else None,
             "payment_status": self.payment_status,
             "handler": self.handler,
-            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S") if self.create_at else None,
         }

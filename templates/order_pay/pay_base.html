@@ -994,7 +994,7 @@
         if (field.id == 0) {
           // 创建付款单
           method = "POST";
-          url = window.location.origin + "/api/v1/pay";
+          url = window.location.origin + "/api/v1/pay/";
           delete field.id; // 删除id字段，让后端自动生成
         } else {
           // 编辑付款单
@@ -1045,7 +1045,7 @@
         if (field.id == 0) {
           field.id = null;
           method = "POST";
-          url = window.location.origin + "/api/v1/pay";
+          url = window.location.origin + "/api/v1/pay/";
         } else {
           method = "PUT";
           url = window.location.origin + `/api/v1/pay/${field.id}`;

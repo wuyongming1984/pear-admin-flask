@@ -98,5 +98,5 @@ class OrderORM(BaseORM):
             "pays_list": pays_list,  # 关联的付款单列表
             "pays_count": len(pays_list),  # 付款单数量
             "is_order": True,  # 标记这是订单行
-            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S") if self.create_at else None,
         }

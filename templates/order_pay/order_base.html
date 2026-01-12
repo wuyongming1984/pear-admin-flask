@@ -2265,7 +2265,7 @@
         if (field.id == 0 || field.id == '0') {
           field.id = null;
           method = "POST";
-          url = window.location.origin + "/api/v1/order";
+          url = window.location.origin + "/api/v1/order/";
         } else {
           method = "PUT";
           url = window.location.origin + `/api/v1/order/${field.id}`;

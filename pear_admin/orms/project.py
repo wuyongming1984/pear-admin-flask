@@ -46,5 +46,5 @@ class ProjectORM(BaseORM):
             "project_amount": str(self.project_amount) if self.project_amount else None,
             "attachments": json.dumps(attachments_data, ensure_ascii=False) if attachments_data else None,  # 保持向后兼容
             "attachments_list": attachments_data,  # 新增附件列表字段
-            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S") if self.create_at else None,
         }

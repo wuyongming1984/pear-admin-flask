@@ -180,9 +180,9 @@
       </div>
     </form>
     <script>
-      layui.use(function () {
+      layui.use(["table", "form", "jquery", "laydate", "tree"], function () {
         var table = layui.table;
-        var $ = layui.$;
+        var $ = layui.jquery;
         var form = layui.form;
         var laydate = layui.laydate;
         var tree = layui.tree;
@@ -196,6 +196,17 @@
           height: "full-35",
           toolbar: "#user-toolbar",
           page: true,
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("access_token"),
+          },
+          parseData: function (res) {
+            return {
+              code: res.code,
+              msg: res.msg,
+              count: res.count,
+              data: res.data,
+            };
+          },
           cols: [
             [
               { field: "id", title: "ID", width: 80, sort: true },

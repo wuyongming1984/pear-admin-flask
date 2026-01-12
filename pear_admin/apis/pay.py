@@ -99,21 +99,55 @@ def create_pay():
     if data.get("id"):
         del data["id"]
     
-    # 处理金额字段
-    if data.get("current_payment_amount"):
-        data["current_payment_amount"] = Decimal(str(data["current_payment_amount"]))
-    if data.get("invoice_amount"):
-        data["invoice_amount"] = Decimal(str(data["invoice_amount"]))
+    # 定义允许的字段 (白名单)
+    valid_fields = [
+        "pay_number", "order_id", "payer_supplier_id", "payee_supplier_id",
+        "payment_purpose", "current_payment_amount", "invoice_amount",
+        "payment_status", "handler", "create_at"
+    ]
     
-    # 处理日期字段（如果有）
-    if data.get("create_at") and isinstance(data["create_at"], str):
-        try:
-            data["create_at"] = datetime.strptime(data["create_at"], "%Y-%m-%d %H:%M:%S")
-        except ValueError:
-            pass
+    clean_data = {}
     
-    pay = PayORM(**data)
-    pay.save()
+    # 过滤和转换数据
+    for key, value in data.items():
+        if key not in valid_fields:
+            continue
+            
+        # 跳过空值，使用数据库默认值或NULL
+        if value == "" or value is None:
+            clean_data[key] = None
+            continue
+            
+        if key in ["current_payment_amount", "invoice_amount"]:
+            try:
+                clean_data[key] = Decimal(str(value))
+            except Exception:
+                return {"code": -1, "msg": f"{key} 格式错误，必须为数字"}
+        elif key in ["order_id", "payer_supplier_id", "payee_supplier_id"]:
+            try:
+                clean_data[key] = int(value)
+            except ValueError:
+                return {"code": -1, "msg": f"{key} 格式错误，必须为整数"}
+        elif key == "create_at":
+             try:
+                clean_data[key] = datetime.strptime(str(value), "%Y-%m-%d %H:%M:%S")
+             except ValueError:
+                 # 如果格式不对，或者不需要转换(已经是datetime)，则忽略或保留原值
+                 # 这里假设前端传字符串，如果传错，让数据库报错或忽略
+                 pass
+        else:
+            clean_data[key] = value
+
+    try:
+        pay = PayORM(**clean_data)
+        db.session.add(pay)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        # 记录具体错误
+        print(f"Create Pay Error: {e}") 
+        return {"code": -1, "msg": f"新增付款单失败: {str(e)}"}
+        
     return {"code": 0, "msg": "新增付款单成功"}
 
 

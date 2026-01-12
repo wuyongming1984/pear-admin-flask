@@ -39,6 +39,6 @@ class AttachmentORM(BaseORM):
             "filename": self.filename,
             "url": self.file_path,
             "size": self.file_size,
-            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S") if self.create_at else None,
         }
 

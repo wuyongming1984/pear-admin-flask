@@ -44,5 +44,5 @@ class SupplierORM(BaseORM):
             "account_number": str(self.account_number),  # 转为字符串避免精度丢失
             "address": self.address,
             "remark": self.remark,
-            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S") if self.create_at else None,
         }

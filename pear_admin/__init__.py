@@ -8,7 +8,12 @@ from pear_admin.views import register_views
 
 
 def create_app(config_name="dev"):
-    app = Flask("pear-admin-flask")
+    import os
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    template_dir = os.path.join(BASE_DIR, 'templates')
+    static_dir = os.path.join(BASE_DIR, 'static')
+
+    app = Flask("pear-admin-flask", template_folder=template_dir, static_folder=static_dir)
 
     app.config.from_object(config[config_name])
 

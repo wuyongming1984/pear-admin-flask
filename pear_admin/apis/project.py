@@ -54,60 +54,91 @@ def project_list():
 @project_api.post("/")
 @jwt_required()
 def create_project():
-    data = request.get_json()
-    if data.get("id"):
-        del data["id"]
+    try:
+        data = request.get_json()
+        if not data:
+            return {"code": -1, "msg": "请求数据为空"}
+
+        if "id" in data:
+            data.pop("id")
     
-    # 保存附件数据（如果有）
-    attachments_data = None
-    if "attachments" in data:
-        attachments_data = data.pop("attachments")
+        # 保存附件数据（如果有）
+        attachments_data = None
+        if "attachments" in data:
+            attachments_data = data.pop("attachments")
     
-    # 处理日期字段
-    if data.get("start_date"):
-        data["start_date"] = datetime.strptime(data["start_date"], "%Y-%m-%d").date()
-    if data.get("end_date"):
-        data["end_date"] = datetime.strptime(data["end_date"], "%Y-%m-%d").date()
+        # 处理日期字段
+        if data.get("start_date"):
+            try:
+                data["start_date"] = datetime.strptime(str(data["start_date"]).strip(), "%Y-%m-%d").date()
+            except ValueError:
+                return {"code": -1, "msg": "开始日期格式错误"}
+        else:
+            if "start_date" in data:
+                del data["start_date"]
+
+        if data.get("end_date"):
+            try:
+                data["end_date"] = datetime.strptime(str(data["end_date"]).strip(), "%Y-%m-%d").date()
+            except ValueError:
+                return {"code": -1, "msg": "结束日期格式错误"}
+        else:
+            if "end_date" in data:
+                del data["end_date"]
     
-    # 处理金额字段
-    if data.get("project_amount"):
-        data["project_amount"] = float(data["project_amount"])
+        # 处理金额字段
+        if data.get("project_amount"):
+            try:
+                data["project_amount"] = float(data["project_amount"])
+            except ValueError:
+                data["project_amount"] = 0
+
+        # 过滤掉非法字段
+        allowed_fields = {
+            'project_name', 'project_full_name', 'project_scale', 
+            'start_date', 'end_date', 'project_status', 
+            'project_amount', 'attachments', 'create_at'
+        }
+        project_data = {k: v for k, v in data.items() if k in allowed_fields}
     
-    # 创建项目
-    project = ProjectORM(**data)
-    project.save()
+        # 创建项目
+        project = ProjectORM(**project_data)
+        project.save()
     
-    # 处理附件数据
-    if attachments_data:
-      try:
-        attachments_list = json.loads(attachments_data) if isinstance(attachments_data, str) else attachments_data
-        if isinstance(attachments_list, list):
-          for att_data in attachments_list:
-            if att_data.get("code"):
-              attachment_id = att_data.get("id")
-              if attachment_id:
-                # 更新现有附件记录，关联到项目
-                attachment = AttachmentORM.query.get(attachment_id)
-                if attachment:
-                  attachment.project_id = project.id
-                  attachment.attachment_code = att_data.get("code", attachment.attachment_code)
-                  attachment.save()
-              elif att_data.get("filename") or att_data.get("url"):
-                # 创建新的附件记录
-                attachment = AttachmentORM(
-                  project_id=project.id,
-                  attachment_code=att_data.get("code", ""),
-                  filename=att_data.get("filename", att_data.get("name", "")),
-                  original_filename=att_data.get("name", att_data.get("filename", "")),
-                  file_path=att_data.get("url", ""),
-                  file_size=att_data.get("size", 0)
-                )
-                attachment.save()
-      except Exception as e:
-        # 附件处理失败不影响项目创建
-        pass
+        # 处理附件数据
+        if attachments_data:
+            try:
+                attachments_list = json.loads(attachments_data) if isinstance(attachments_data, str) else attachments_data
+                if isinstance(attachments_list, list):
+                    for att_data in attachments_list:
+                        if att_data.get("code"):
+                            attachment_id = att_data.get("id")
+                            if attachment_id:
+                                # 更新现有附件记录，关联到项目
+                                attachment = AttachmentORM.query.get(attachment_id)
+                                if attachment:
+                                    attachment.project_id = project.id
+                                    attachment.attachment_code = att_data.get("code", attachment.attachment_code)
+                                    attachment.save()
+                            elif att_data.get("filename") or att_data.get("url"):
+                                # 创建新的附件记录
+                                attachment = AttachmentORM(
+                                    project_id=project.id,
+                                    attachment_code=att_data.get("code", ""),
+                                    filename=att_data.get("filename", att_data.get("name", "")),
+                                    original_filename=att_data.get("name", att_data.get("filename", "")),
+                                    file_path=att_data.get("url", ""),
+                                    file_size=att_data.get("size", 0)
+                                )
+                                attachment.save()
+            except Exception as e:
+                # 附件处理失败不影响项目创建
+                pass
     
-    return {"code": 0, "msg": "新增项目成功"}
+        return {"code": 0, "msg": "新增项目成功", "data": {"id": project.id}}
+    except Exception as e:
+        db.session.rollback()
+        return {"code": -1, "msg": f"新增项目失败: {str(e)}"}
 
 
 @project_api.put("/<int:pid>")

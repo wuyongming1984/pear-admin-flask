@@ -31,16 +31,12 @@ def login_in():
     access_token = create_access_token(user)
     refresh_token = create_refresh_token(user)
 
-    response = make_response(
-        {
-            "code": 0,
-            "msg": "登录成功",
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-        }
-    )
-
-    return response
+    return {
+        "code": 0,
+        "msg": "登录成功",
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+    }
 
 
 @passport_api.route("/logout", methods=["GET", "POST"])

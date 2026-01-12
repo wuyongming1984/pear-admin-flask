@@ -40,7 +40,8 @@ services:
     #   - "5050:5050"
     volumes:
       - ./uploads:/app/uploads
-      - ./static:/app/static # 映射静态文件以便共享给 nginx (虽然容器间共享更好，但这样简单)
+      - ./static:/app/static
+      - .:/app  # 挂载当前目录代码，方便热更新和调试
     depends_on:
       - mysql
     networks:
@@ -52,7 +53,7 @@ services:
         echo 'Initializing database...'
         flask init || echo 'Database already initialized'
         echo 'Starting application...'
-        gunicorn --bind 0.0.0.0:5050 --workers 4 --timeout 120 'pear_admin:create_app(\"prod\")'
+        gunicorn --bind 0.0.0.0:5050 --workers 4 --timeout 120 --reload 'pear_admin:create_app(\"prod\")'
       "
 
   nginx:

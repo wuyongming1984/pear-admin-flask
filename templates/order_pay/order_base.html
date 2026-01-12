@@ -2418,7 +2418,7 @@
         } else {
           // 创建付款单
           method = "POST";
-          url = window.location.origin + "/api/v1/pay";
+          url = window.location.origin + "/api/v1/pay/";
           delete field.id; // 删除id字段，让后端自动生成
         }
 

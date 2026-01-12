@@ -52,7 +52,7 @@ services:
         echo 'Initializing database...'
         flask init || echo 'Database already initialized'
         echo 'Starting application...'
-        gunicorn --bind 0.0.0.0:5050 --workers 4 --timeout 120 'pear_admin:create_app("prod")'
+        gunicorn --bind 0.0.0.0:5050 --workers 4 --timeout 120 'pear_admin:create_app(\"prod\")'
       "
 
 volumes:

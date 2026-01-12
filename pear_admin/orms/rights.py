@@ -10,7 +10,7 @@ class RightsORM(BaseORM):
     name = db.Column(db.String(20), nullable=False, comment="权限名称")
     code = db.Column(db.String(30), comment="权限标识")
     type = db.Column(db.String(30), comment="权限类型")
-    url = db.Column(db.String(30), comment="路径地址")
+    url = db.Column(db.String(255), comment="路径地址")
 
     icon_sign = db.Column(db.String(128), comment="图标")
     status = db.Column(db.Boolean, default=True, comment="是否开启")

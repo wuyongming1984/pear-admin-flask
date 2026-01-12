@@ -13,7 +13,7 @@ class UserORM(BaseORM):
     id = db.Column(db.Integer, primary_key=True, comment="自增id")
     nickname = db.Column(db.String(128), nullable=False, comment="昵称")
     username = db.Column(db.String(128), nullable=False, comment="登录名")
-    password_hash = db.Column(db.String(102), nullable=False, comment="登录密码")
+    password_hash = db.Column(db.String(256), nullable=False, comment="登录密码")
     mobile = db.Column(db.String(32), nullable=False, comment="手机")
     email = db.Column(db.String(64), nullable=False, comment="邮箱")
     avatar = db.Column(db.Text, comment="头像地址")

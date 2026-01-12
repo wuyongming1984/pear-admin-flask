@@ -691,7 +691,7 @@
       // 加载订单列表（用于下拉选择）
       function loadOrders() {
         $.ajax({
-          url: window.location.origin + "/api/v1/order",
+          url: window.location.origin + "/api/v1/order/",
           type: "GET",
           headers: {
             Authorization: "Bearer " + localStorage.getItem("access_token"),

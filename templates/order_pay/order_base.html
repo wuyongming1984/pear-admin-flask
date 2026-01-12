@@ -794,7 +794,7 @@
       // 初始化文件上传
       upload.render({
         elem: '#upload-attachment',
-        url: window.location.origin + '/api/v1/upload',
+        url: window.location.origin + '/api/v1/upload/',
         accept: 'file',
         multiple: true,
         headers: {
@@ -879,7 +879,7 @@
       // 加载项目列表
       function loadProjects() {
         $.ajax({
-          url: window.location.origin + "/api/v1/project",
+          url: window.location.origin + "/api/v1/project/",
           type: "GET",
           data: {
             limit: 1000  // 获取所有项目，不分页

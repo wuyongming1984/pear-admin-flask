@@ -772,7 +772,17 @@
               $('#pay-info-form select[name="payer_supplier_id"]').html(html);
               $('#pay-info-form select[name="payee_supplier_id"]').html(html);
               form.render('select');
+
+              if (res.data.length === 0) {
+                console.warn("加载供应商成功，但列表为空");
+              }
+            } else {
+              layer.msg(res.msg || '加载供应商列表失败', { icon: 2 });
             }
+          },
+          error: function (xhr, status, error) {
+            console.error("加载供应商失败:", error);
+            layer.msg('加载供应商失败: ' + (xhr.status || 'Unknown'), { icon: 2 });
           }
         });
       }

@@ -15,7 +15,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./static/data/databases.sql:/docker-entrypoint-initdb.d/init.sql
+      # - ./static/data/databases.sql:/docker-entrypoint-initdb.d/init.sql
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     networks:
       - pear_network
@@ -27,7 +27,7 @@ services:
     restart: always
     environment:
       - FLASK_ENV=production
-      - FLASK_APP=pear_admin:create_app()
+      - FLASK_APP=pear_admin:create_app('prod')
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5050
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
@@ -52,7 +52,7 @@ services:
         echo 'Initializing database...'
         flask init || echo 'Database already initialized'
         echo 'Starting application...'
-        gunicorn --bind 0.0.0.0:5050 --workers 4 --timeout 120 'pear_admin:create_app()'
+        gunicorn --bind 0.0.0.0:5050 --workers 4 --timeout 120 'pear_admin:create_app("prod")'
       "
 
 volumes:

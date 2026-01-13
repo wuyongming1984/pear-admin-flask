@@ -37,7 +37,7 @@ def order_list():
     create_at = request.args.get("create_at", type=str)  # 创建时间筛选
     
     # 构建查询
-    q = db.select(OrderORM)
+    q = db.select(OrderORM).order_by(OrderORM.id.desc())
     
     # 模糊搜索条件
     if order_id:

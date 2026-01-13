@@ -177,7 +177,7 @@
         headers: {
           Authorization: "Bearer " + localStorage.getItem("access_token"),
         },
-        defaultToolbar: ['exports', 'print'],
+        defaultToolbar: ['filter', 'exports', 'print'],
         where: filterParams,
         cols: [
           [
@@ -221,6 +221,7 @@
               title: "操作",
               align: "center",
               toolbar: "#supplier-tool",
+              minWidth: 200
             },
           ],
         ],
@@ -254,8 +255,7 @@
         '开户行名称': 180,           // 开户行名称
         '银行账号': 150,             // 银行账号
         '备注': 150,                 // 备注
-        '创建时间': 180,             // 创建时间
-        '操作': 180                  // 操作列
+        '创建时间': 180              // 创建时间
       };
 
       // 根据表头标题获取列宽配置
@@ -338,6 +338,12 @@
                   }
                 }
               });
+            }
+
+            // 特殊处理:跳过"操作"列的宽度设置,让其自适应(弹性列)
+            var titleText = $headerTh.text().trim();
+            if (titleText.indexOf('操作') !== -1) {
+              return; // 直接跳过此列的设置
             }
 
             // 设置列宽（不设置min-width和max-width，允许自动调整）

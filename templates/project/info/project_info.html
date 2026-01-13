@@ -525,7 +525,7 @@
         headers: {
           Authorization: "Bearer " + localStorage.getItem("access_token"),
         },
-        defaultToolbar: ['exports', 'print'],
+        defaultToolbar: ['filter', 'exports', 'print'],
         where: filterParams,
         cols: [
           [
@@ -571,6 +571,7 @@
               title: "操作",
               align: "center",
               toolbar: "#project-tool",
+              minWidth: 200
             },
           ],
         ],
@@ -605,8 +606,7 @@
         '结束日期': 120,             // 结束日期
         '项目状态': 100,             // 项目状态
         '项目金额': 120,             // 项目金额
-        '创建时间': 180,             // 创建时间
-        '操作': 180                  // 操作列
+        '创建时间': 180              // 创建时间
       };
 
       // 根据表头标题获取列宽配置
@@ -689,6 +689,12 @@
                   }
                 }
               });
+            }
+
+            // 特殊处理:跳过"操作"列的宽度设置,让其自适应(弹性列)
+            var titleText = $headerTh.text().trim();
+            if (titleText.indexOf('操作') !== -1) {
+              return; // 直接跳过此列的设置
             }
 
             // 设置列宽（不设置min-width和max-width，允许自动调整）

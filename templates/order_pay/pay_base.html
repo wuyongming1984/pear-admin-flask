@@ -358,6 +358,16 @@
         </button>
       </div>
     </script>
+  <!-- 付款状态模板 -->
+  <script type="text/html" id="paymentStatusTpl">
+    {% raw %}
+    <select name="payment_status" lay-filter="payment_status_select" data-id="{{ d.id }}" data-status="{{ d.payment_status }}" class="layui-input">
+      <option value="pending">待付款</option>
+      <option value="partial">部分付款</option>
+      <option value="paid">已付款</option>
+    </select>
+    {% endraw %}
+  </script>
   <script>
     layui.use(["table", "form", "layer", "laydate", "upload"], function () {
       var table = layui.table;
@@ -399,14 +409,14 @@
         'ID': 60,                    // ID列
         '付款单编号': 150,           // 付款单编号
         '关联订单编号': 150,         // 关联订单编号
-        '付款单位': 150,             // 付款单位
-        '收款单位': 150,             // 收款单位
+        // '付款单位': 150,             // 付款单位 (make elastic)
+        // '收款单位': 150,             // 收款单位 (make elastic)
         '本次付款金额': 140,         // 本次付款金额
         '开票金额': 120,             // 开票金额
         '付款状态': 120,             // 付款状态
         '经办人': 120,               // 经办人
         '创建时间': 180,             // 创建时间
-        '操作': 180                  // 操作列
+        '操作': 200                  // 操作列 (fixed)
       };
 
       // 根据表头标题获取列宽配置
@@ -489,6 +499,15 @@
                   }
                 }
               });
+            }
+
+            // 特殊处理：跳过“付款单位”和“收款单位”列的宽度设置，让其自适应（弹性列）
+            // 为了准确判断，我们再次获取标题
+            var titleText = $headerTh.text().trim();
+            // console.log("Check title:", titleText);
+            if (titleText.indexOf('付款单位') !== -1 || titleText.indexOf('收款单位') !== -1) {
+              // console.log('跳过弹性列宽度设置');
+              return; // 直接跳过此列的设置
             }
 
             // 设置列宽（不设置min-width和max-width，允许自动调整）
@@ -613,65 +632,87 @@
         toolbar: "#pay-toolbar",
         page: true,
         limit: 90,
-        defaultToolbar: ['exports', 'print'],
+        defaultToolbar: ['filter', 'exports', 'print'],
         where: filterParams,
         cols: [
           [
-            { field: "id", title: "ID", sort: true },
+            { field: "id", title: "ID", sort: true, hide: true },
             {
               field: "pay_number",
               title: "付款单编号",
+              width: 150,
               edit: 'text'
             },
             {
               field: "order_number",
-              title: "关联订单编号"
+              title: "关联订单编号",
+              width: 150,
             },
             {
               field: "payer_supplier_name",
-              title: "付款单位"
+              title: "付款单位",
+              width: 150
             },
             {
               field: "payee_supplier_name",
-              title: "收款单位"
+              title: "收款单位",
+              width: 150
             },
             {
               field: "current_payment_amount",
               title: "本次付款金额",
-              edit: 'text'
+              width: 150,
             },
             {
               field: "invoice_amount",
               title: "开票金额",
-              edit: 'text'
+              edit: 'text',
+              hide: true
             },
             {
               field: "payment_status",
               title: "付款状态",
-              edit: 'text'
+              templet: '#paymentStatusTpl',
+              width: 120
             },
             {
               field: "handler",
               title: "经办人",
-              edit: 'text'
+              edit: 'text',
+              hide: true
+
             },
             {
               field: "create_at",
               title: "创建时间",
-              sort: true
+              sort: true,
+              hide: true
             },
             {
               title: "操作",
               align: "center",
               toolbar: "#pay-tool",
+              width: 200
             },
           ],
         ],
         done: function (res, curr, count) {
           addFilterInputs();
-          // 多次同步列宽，确保完全同步
+          // 多次同步列宽,确保完全同步
           setTimeout(function () {
             syncColumnWidths();
+
+            // 设置每个付款状态下拉框的值
+            $('select[name="payment_status"]').each(function () {
+              var $select = $(this);
+              var status = $select.attr('data-status');
+              if (status) {
+                $select.val(status);
+                console.log('设置付款状态:', status, '元素ID:', $select.attr('data-id'));
+              }
+            });
+
+            form.render('select'); // 渲染下拉框
             setTimeout(function () {
               syncColumnWidths();
             }, 100);
@@ -872,13 +913,17 @@
             $('#pay-order-amount').val('');
           }
 
-          // 设置供应商下拉框的值
+          // 设置供应商下拉框和付款状态的值
           setTimeout(function () {
             if (data.payer_supplier_id) {
               $('#pay-info-form select[name="payer_supplier_id"]').val(data.payer_supplier_id);
             }
             if (data.payee_supplier_id) {
               $('#pay-info-form select[name="payee_supplier_id"]').val(data.payee_supplier_id);
+            }
+            // 设置付款状态
+            if (data.payment_status) {
+              $('#pay-info-form select[name="payment_status"]').val(data.payment_status);
             }
             form.render('select');
           }, 400);
@@ -963,6 +1008,51 @@
           error: function () {
             layer.msg('更新失败，请重试', { icon: 2 });
             reloadTable();
+          }
+        });
+      });
+
+      // 监听付款状态下拉框修改
+      // 监听付款状态下拉框修改
+      form.on('select(payment_status_select)', function (data) {
+        var elem = data.elem; // 得到select原始DOM对象
+        var value = data.value; // 得到被选中的值
+        var id = $(elem).attr('data-id'); // 获取自定义属性data-id
+
+        console.log('Payment status changed:', { id: id, value: value });
+
+        if (!id) {
+          layer.msg('无法获取付款单ID', { icon: 2 });
+          return;
+        }
+
+        // 更新数据
+        var updateData = {
+          payment_status: value,
+          id: id
+        };
+
+        $.ajax({
+          url: window.location.origin + `/api/v1/pay/${id}`,
+          type: "PUT",
+          contentType: "application/json",
+          data: JSON.stringify(updateData),
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("access_token"),
+          },
+          success: function (res) {
+            console.log('Update response:', res);
+            if (res.code === 0) {
+              layer.msg('状态更新成功', { icon: 1, time: 1000 });
+            } else {
+              layer.msg(res.msg || '更新失败', { icon: 2 });
+              reloadTable(); // 失败还原
+            }
+          },
+          error: function (xhr, status, error) {
+            console.error('Update error:', error);
+            layer.msg('更新失败，请重试', { icon: 2 });
+            reloadTable(); // 失败还原
           }
         });
       });

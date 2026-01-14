@@ -31,6 +31,17 @@ class AttachmentORM(BaseORM):
     project = db.relationship("ProjectORM", backref="attachment_list")
 
     def json(self):
+        # 处理datetime字段 - 可能是datetime对象或bytes类型
+        def format_datetime(datetime_field):
+            if not datetime_field:
+                return None
+            if isinstance(datetime_field, bytes):
+                return datetime_field.decode('utf-8')
+            elif hasattr(datetime_field, 'strftime'):
+                return datetime_field.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                return str(datetime_field)
+        
         return {
             "id": self.id,
             "project_id": self.project_id,
@@ -39,6 +50,6 @@ class AttachmentORM(BaseORM):
             "filename": self.filename,
             "url": self.file_path,
             "size": self.file_size,
-            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S") if self.create_at else None,
+            "create_at": format_datetime(self.create_at),
         }
 

@@ -38,6 +38,28 @@ class OrderORM(BaseORM):
 
     def json(self):
         import json as json_lib
+        
+        # 处理日期字段 - 可能是date/datetime对象或bytes类型
+        def format_date(date_field):
+            if not date_field:
+                return None
+            if isinstance(date_field, bytes):
+                return date_field.decode('utf-8')
+            elif hasattr(date_field, 'strftime'):
+                return date_field.strftime("%Y-%m-%d")
+            else:
+                return str(date_field)
+        
+        def format_datetime(datetime_field):
+            if not datetime_field:
+                return None
+            if isinstance(datetime_field, bytes):
+                return datetime_field.decode('utf-8')
+            elif hasattr(datetime_field, 'strftime'):
+                return datetime_field.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                return str(datetime_field)
+        
         # 解析附件数据
         attachments_data = []
         if self.attachments:
@@ -67,7 +89,7 @@ class OrderORM(BaseORM):
                         "handler": pay.handler,
                         "payer_supplier_name": pay.payer_supplier.name if pay.payer_supplier else None,
                         "payee_supplier_name": pay.payee_supplier.name if pay.payee_supplier else None,
-                        "create_at": pay.create_at.strftime("%Y-%m-%d %H:%M:%S") if pay.create_at else None
+                        "create_at": format_datetime(pay.create_at)
                     })
         except Exception as e:
             # 如果关系未加载或出错，返回空列表
@@ -86,8 +108,8 @@ class OrderORM(BaseORM):
             "supplier_name": self.supplier.name if self.supplier else None,
             "supplier_contact_person": self.supplier.contact_person if self.supplier else None,
             "contact_phone": self.contact_phone,
-            "cutting_time": self.cutting_time.strftime("%Y-%m-%d") if self.cutting_time else None,
-            "estimated_arrival_time": self.estimated_arrival_time.strftime("%Y-%m-%d") if self.estimated_arrival_time else None,
+            "cutting_time": format_date(self.cutting_time),
+            "estimated_arrival_time": format_date(self.estimated_arrival_time),
             "material_details": self.material_details,
             "order_amount": str(self.order_amount) if self.order_amount else None,
             "order_balance": str(round(order_balance, 2)),  # 订单余额，保留两位小数
@@ -98,5 +120,5 @@ class OrderORM(BaseORM):
             "pays_list": pays_list,  # 关联的付款单列表
             "pays_count": len(pays_list),  # 付款单数量
             "is_order": True,  # 标记这是订单行
-            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S") if self.create_at else None,
+            "create_at": format_datetime(self.create_at),
         }

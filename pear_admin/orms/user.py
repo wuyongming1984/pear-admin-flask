@@ -35,13 +35,24 @@ class UserORM(BaseORM):
     )
 
     def json(self):
+        # 处理datetime字段 - 可能是datetime对象或bytes类型
+        def format_datetime(datetime_field):
+            if not datetime_field:
+                return None
+            if isinstance(datetime_field, bytes):
+                return datetime_field.decode('utf-8')
+            elif hasattr(datetime_field, 'strftime'):
+                return datetime_field.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                return str(datetime_field)
+        
         return {
             "id": self.id,
             "username": self.username,
             "nickname": self.nickname,
             "mobile": self.mobile,
             "email": self.email,
-            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "create_at": format_datetime(self.create_at),
         }
 
     @property

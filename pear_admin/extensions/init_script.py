@@ -28,8 +28,25 @@ def csv_to_databases(path, orm):
 def register_script(app: Flask):
     @app.cli.command()
     def init():
-        from sqlalchemy import text
+        from sqlalchemy import text, inspect
 
+        # 检查关键表是否已存在（避免覆盖已导入的数据）
+        inspector = inspect(db.engine)
+        existing_tables = inspector.get_table_names()
+        
+        # 如果ums_supplier表已存在且有数据，跳过初始化
+        if 'ums_supplier' in existing_tables:
+            try:
+                result = db.session.execute(text("SELECT COUNT(*) FROM ums_supplier")).scalar()
+                if result > 10:  # 如果有超过10条记录，认为是用户导入的数据
+                    print(f"✓ Database already initialized with {result} suppliers. Skipping initialization to preserve data.")
+                    print("  If you want to reset: docker-compose down -v && docker-compose up -d")
+                    return
+            except:
+                pass  # 如果查询失败，继续初始化
+
+        print("Initializing fresh database...")
+        
         # 1. 重置数据库结构
         db.drop_all()
         db.create_all()

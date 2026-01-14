@@ -47,6 +47,72 @@
       min-width: 0;
     }
 
+    /* 付款状态列特殊样式 - 允许下拉框溢出显示 */
+    td[data-field="payment_status"] {
+      overflow: visible !important;
+      position: relative;
+      z-index: 100;
+    }
+
+    td[data-field="payment_status"] .layui-table-cell {
+      overflow: visible !important;
+      position: relative;
+    }
+
+    /* 当下拉框激活时，提升整行的层级 */
+    .layui-table-body tr {
+      position: relative;
+    }
+
+    /* 使用CSS选择器提升包含打开的下拉框的行 */
+    .layui-table-body tr:has(.layui-form-selected) {
+      z-index: 1000 !important;
+    }
+
+    /* 确保下拉框在最上层显示，使用极高的z-index */
+    td[data-field="payment_status"] .layui-form-select {
+      position: relative;
+      z-index: 9999 !important;
+    }
+
+    td[data-field="payment_status"] .layui-form-select dl {
+      position: absolute !important;
+      z-index: 9999 !important;
+    }
+
+    /* 确保下拉框的下拉列表在绝对定位时正确显示 */
+    td[data-field="payment_status"] .layui-anim {
+      z-index: 9999 !important;
+    }
+
+    /* 确保layui-form-selected类的z-index更高 */
+    .layui-form-selected dl {
+      z-index: 9999 !important;
+    }
+
+    /* 允许表头和表格容器显示溢出的筛选下拉框 */
+    .layui-table-header,
+    .layui-table-box {
+      overflow: visible !important;
+    }
+
+    /* 确保表头单元格也允许溢出 */
+    .layui-table-header .layui-table-cell {
+      overflow: visible !important;
+    }
+
+    /* 提高表头筛选下拉框的z-index */
+    .layui-table-header .layui-form-select {
+      position: relative;
+      z-index: 9999 !important;
+    }
+
+    .layui-table-header .layui-form-select dl {
+      position: absolute !important;
+      z-index: 9999 !important;
+    }
+
+
     /* 表单容器样式（用于付款单弹窗） */
     .order-form-container {
       padding: 20px;
@@ -361,10 +427,10 @@
   <!-- 付款状态模板 -->
   <script type="text/html" id="paymentStatusTpl">
     {% raw %}
-    <select name="payment_status" lay-filter="payment_status_select" data-id="{{ d.id }}" data-status="{{ d.payment_status }}" class="layui-input">
-      <option value="pending">待付款</option>
-      <option value="partial">部分付款</option>
-      <option value="paid">已付款</option>
+    <select name="payment_status" lay-filter="payment_status_select" data-id="{{ d.id }}" class="layui-input" style="width: 100%; height: 32px;">
+      <option value="pending" {{ d.payment_status === 'pending' ? 'selected' : '' }}>待付款</option>
+      <option value="partial" {{ d.payment_status === 'partial' ? 'selected' : '' }}>部分付款</option>
+      <option value="paid" {{ d.payment_status === 'paid' ? 'selected' : '' }}>已付款</option>
     </select>
     {% endraw %}
   </script>
@@ -381,6 +447,28 @@
       var filterParams = {};
       // 筛选防抖定时器
       var filterTimer = null;
+
+      // 添加下拉框打开/关闭时的z-index管理
+      function setupDropdownZIndex() {
+        $(document).on('click', 'td[data-field="payment_status"] .layui-form-select', function (e) {
+          // 移除所有行的高z-index
+          $('.layui-table-body tr').css('z-index', '');
+
+          // 为当前行设置高z-index
+          var $row = $(this).closest('tr');
+          $row.css('z-index', '1000');
+        });
+
+        // 点击其他地方时，移除所有高z-index
+        $(document).on('click', function (e) {
+          if (!$(e.target).closest('td[data-field="payment_status"]').length) {
+            $('.layui-table-body tr').css('z-index', '');
+          }
+        });
+      }
+
+      // 初始化下拉框z-index管理
+      setupDropdownZIndex();
 
       // 加载供应商列表
       function loadSuppliers() {
@@ -563,7 +651,16 @@
             'payee_supplier_name': { type: 'text', placeholder: '筛选收款单位' },
             'current_payment_amount': { type: 'text', placeholder: '筛选本次付款金额' },
             'invoice_amount': { type: 'text', placeholder: '筛选开票金额' },
-            'payment_status': { type: 'text', placeholder: '筛选付款状态' },
+            'payment_status': {
+              type: 'select',
+              placeholder: '筛选付款状态',
+              options: [
+                { value: '', text: '全部状态' },
+                { value: 'pending', text: '待付款' },
+                { value: 'partial', text: '部分付款' },
+                { value: 'paid', text: '已付款' }
+              ]
+            },
             'handler': { type: 'text', placeholder: '筛选经办人' },
             'create_at': { type: 'date', placeholder: '筛选创建时间' }
           };
@@ -602,6 +699,34 @@
                     }
                   });
                 }, 50);
+              } else if (config.type === 'select') {
+                // 下拉框筛选
+                $input = $('<select class="layui-input filter-input" data-field="' + field + '" lay-filter="filter-' + field + '" style="height: 28px; font-size: 12px; padding: 0 8px;"></select>');
+
+                // 添加选项
+                config.options.forEach(function (option) {
+                  var selected = filterParams[field] === option.value ? ' selected' : '';
+                  $input.append('<option value="' + option.value + '"' + selected + '>' + option.text + '</option>');
+                });
+
+                $filterDiv.append($input);
+
+                // 监听下拉框变化
+                (function (currentField, currentInput) {
+                  setTimeout(function () {
+                    form.render('select');
+                    form.on('select(filter-' + currentField + ')', function (data) {
+                      if (data.value) {
+                        filterParams[currentField] = data.value;
+                      } else {
+                        delete filterParams[currentField];
+                      }
+                      reloadTable({
+                        page: { curr: 1 }
+                      });
+                    });
+                  }, 100);
+                })(field, $input);
               } else {
                 // 文本和数字字段
                 $input = $('<input type="' + config.type + '" class="layui-input filter-input" placeholder="' + config.placeholder + '" data-field="' + field + '" style="height: 28px; font-size: 12px; padding: 0 8px;">');
@@ -702,17 +827,8 @@
           setTimeout(function () {
             syncColumnWidths();
 
-            // 设置每个付款状态下拉框的值
-            $('select[name="payment_status"]').each(function () {
-              var $select = $(this);
-              var status = $select.attr('data-status');
-              if (status) {
-                $select.val(status);
-                console.log('设置付款状态:', status, '元素ID:', $select.attr('data-id'));
-              }
-            });
-
-            form.render('select'); // 渲染下拉框
+            // 渲染下拉框（模板已经设置了 selected 属性，不需要手动设置值）
+            form.render('select');
             setTimeout(function () {
               syncColumnWidths();
             }, 100);

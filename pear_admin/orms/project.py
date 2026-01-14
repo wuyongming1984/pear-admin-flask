@@ -26,6 +26,30 @@ class ProjectORM(BaseORM):
     )
 
     def json(self):
+        # 处理日期字段 - 可能是date/datetime对象或bytes类型
+        def format_date(date_field):
+            if not date_field:
+                return None
+            if isinstance(date_field, bytes):
+                # 如果是bytes，直接解码为字符串
+                return date_field.decode('utf-8')
+            elif hasattr(date_field, 'strftime'):
+                # 如果是date或datetime对象
+                return date_field.strftime("%Y-%m-%d")
+            else:
+                # 其他情况，尝试转为字符串
+                return str(date_field)
+        
+        def format_datetime(datetime_field):
+            if not datetime_field:
+                return None
+            if isinstance(datetime_field, bytes):
+                return datetime_field.decode('utf-8')
+            elif hasattr(datetime_field, 'strftime'):
+                return datetime_field.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                return str(datetime_field)
+        
         # 获取关联的附件列表
         attachments_data = []
         try:
@@ -40,11 +64,11 @@ class ProjectORM(BaseORM):
             "project_name": self.project_name,
             "project_full_name": self.project_full_name,
             "project_scale": self.project_scale,
-            "start_date": self.start_date.strftime("%Y-%m-%d") if self.start_date else None,
-            "end_date": self.end_date.strftime("%Y-%m-%d") if self.end_date else None,
+            "start_date": format_date(self.start_date),
+            "end_date": format_date(self.end_date),
             "project_status": self.project_status,
             "project_amount": str(self.project_amount) if self.project_amount else None,
             "attachments": json.dumps(attachments_data, ensure_ascii=False) if attachments_data else None,  # 保持向后兼容
             "attachments_list": attachments_data,  # 新增附件列表字段
-            "create_at": self.create_at.strftime("%Y-%m-%d %H:%M:%S") if self.create_at else None,
+            "create_at": format_datetime(self.create_at),
         }

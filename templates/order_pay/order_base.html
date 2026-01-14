@@ -1554,129 +1554,107 @@
         var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>订单打印</title>';
         printContent += '<style>';
         // 屏幕预览样式
-        printContent += 'body{font-family: "Microsoft YaHei", Arial, sans-serif; padding: 20px; background: #fff; max-width: 1200px; margin: 0 auto; line-height: 1.0;}';
+        printContent += 'body{font-family: "Microsoft YaHei", Arial, sans-serif; padding: 20px; background: #fff; max-width: 1200px; margin: 0 auto; line-height: 1.4;}';
         printContent += '.form-title{text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; padding-bottom: 10px; border-bottom: 2px solid #000;}';
-        printContent += '.order-details-section{border: 1px solid #000; padding: 15px; margin-bottom: 20px;}';
-        printContent += '.order-details-grid{display: grid; grid-template-columns: 1fr 1fr; gap: 15px 30px;}';
-        printContent += '.order-details-item{display: flex; align-items: center;}';
-        printContent += '.order-details-item label{min-width: 100px; text-align: right; margin-right: 10px; font-weight: normal;}';
-        printContent += '.order-details-item .value{flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px; line-height: 32px; background: #fff; display: flex; align-items: center;}';
-        printContent += '.section-title{text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0 15px 0; padding: 8px 0; border-top: 1px solid #000; border-bottom: 1px solid #000;}';
-        printContent += '.material-details-section{border: 1px solid #000; padding: 15px; margin-bottom: 20px;}';
-        printContent += '.material-description{display: flex; align-items: flex-start; margin-bottom: 15px;}';
-        printContent += '.material-description label{min-width: 100px; text-align: right; margin-right: 10px; padding-top: 5px;}';
-        printContent += '.material-description .value{flex: 1; border: 1px solid #000; padding: 8px; min-height: 200px; white-space: pre-wrap;}';
-        printContent += '.financial-section{border: 1px solid #000; padding: 15px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;}';
-        printContent += '.financial-item{display: flex; align-items: center;}';
-        printContent += '.financial-item label{min-width: 120px; text-align: right; margin-right: 10px;}';
-        printContent += '.financial-item .value{flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px; line-height: 32px; background: #fff; display: flex; align-items: center;}';
-        printContent += '.responsible-section{border: 1px solid #000; padding: 15px; margin-bottom: 20px;}';
-        printContent += '.responsible-grid{display: grid; grid-template-columns: 1fr 1fr; gap: 15px 30px; margin-top: 15px;}';
-        printContent += '.responsible-item{display: flex; align-items: center;}';
-        printContent += '.responsible-item label{min-width: 120px; text-align: right; margin-right: 10px;}';
-        printContent += '.responsible-item .value{flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px; line-height: 32px; background: #fff; display: flex; align-items: center;}';
+
+        // 表格样式
+        printContent += '.info-table{border-collapse: collapse; width: 100%; margin-bottom: 15px;}';
+        printContent += '.info-table th, .info-table td{border: 1px solid #000; padding: 8px; text-align: left;}';
+        printContent += '.info-table .section-header{background-color: #f0f0f0; font-weight: bold; font-size: 16px; text-align: center;}';
+        printContent += '.info-table .label{background-color: #f8f8f8; font-weight: bold; width: 120px; text-align: right; padding-right: 12px;}';
+        printContent += '.info-table .value{background-color: #fff; padding-left: 12px;}';
+
+        // 关联付款单表格样式（保留）
         printContent += 'table{border-collapse: collapse; width: 100%; margin-top: 10px;}';
         printContent += 'table th, table td{border: 1px solid #000; padding: 8px; text-align: left;}';
         printContent += 'table th{background-color: #f0f0f0; font-weight: bold;}';
+
         // 打印样式 - 竖向打印在A4纸上半部分
         printContent += '@media print{';
-        printContent += 'body{padding: 5mm; margin: 0; max-width: 100%; line-height: 1.0; height: 148.5mm; overflow: hidden;}';
+        printContent += 'body{padding: 5mm; margin: 0; max-width: 100%; line-height: 1.2; height: 148.5mm; overflow: hidden;}';
         printContent += '@page{size: A4 portrait; margin: 8mm 10mm 0 10mm;}';
-        printContent += '.form-title{font-size: 20px; margin-bottom: 4mm; padding-bottom: 2mm; line-height: 1.0;}';
-        printContent += '.order-details-section{padding: 2mm; margin-bottom: 2mm; line-height: 1.0;}';
-        printContent += '.order-details-grid{gap: 1mm 5mm; line-height: 1.0;}';
-        printContent += '.order-details-item label{min-width: 80px; font-size: 9px; margin-right: 2mm; line-height: 1.0;}';
-        printContent += '.order-details-item .value{font-size: 9px; padding: 0.5mm 1mm; height: 14px; line-height: 1.0;}';
-        printContent += '.section-title{font-size: 12px; margin: 2mm 0 1.5mm 0; padding: 1mm 0; line-height: 1.0;}';
-        printContent += '.material-details-section{padding: 2mm; margin-bottom: 2mm; line-height: 1.0;}';
-        printContent += '.material-description label{min-width: 80px; font-size: 9px; margin-right: 2mm; line-height: 1.0;}';
-        printContent += '.material-description .value{font-size: 9px; padding: 1mm; min-height: 30mm; line-height: 1.0;}';
-        printContent += '.financial-section{padding: 2mm; margin-bottom: 2mm; gap: 1mm 5mm; line-height: 1.0;}';
-        printContent += '.financial-item label{min-width: 100px; font-size: 9px; margin-right: 2mm; line-height: 1.0;}';
-        printContent += '.financial-item .value{font-size: 9px; padding: 0.5mm 1mm; height: 14px; line-height: 1.0;}';
-        printContent += '.responsible-section{padding: 2mm; margin-bottom: 2mm; line-height: 1.0;}';
-        printContent += '.responsible-grid{gap: 1mm 5mm; margin-top: 1mm; line-height: 1.0;}';
-        printContent += '.responsible-item label{min-width: 100px; font-size: 9px; margin-right: 2mm; line-height: 1.0;}';
-        printContent += '.responsible-item .value{font-size: 9px; padding: 0.5mm 1mm; height: 14px; line-height: 1.0;}';
-        printContent += 'table th, table td{font-size: 8px; padding: 1mm; line-height: 1.0;}';
+        printContent += '.form-title{font-size: 18px; margin-bottom: 3mm; padding-bottom: 2mm; line-height: 1.2;}';
+
+        // 打印时的表格样式
+        printContent += '.info-table{margin-bottom: 2mm;}';
+        printContent += '.info-table th, .info-table td{font-size: 9px; padding: 1mm 2mm; line-height: 1.2;}';
+        printContent += '.info-table .section-header{font-size: 10px; padding: 1.5mm 2mm;}';
+        printContent += '.info-table .label{width: 80px; font-size: 9px; padding-right: 2mm;}';
+        printContent += '.info-table .value{font-size: 9px; padding-left: 2mm;}';
+
+        printContent += 'table th, table td{font-size: 8px; padding: 1mm; line-height: 1.2;}';
         printContent += '}</style></head><body>';
 
         // 表单标题
         printContent += '<div class="form-title">订单信息录入</div>';
 
-        // 订单详情部分
-        printContent += '<div class="order-details-section">';
-        printContent += '<div class="order-details-grid">';
-        printContent += '<div class="order-details-item">';
-        printContent += '<label>订单编号：</label>';
-        printContent += '<div class="value">' + (orderData.order_number || '-') + '</div>';
-        printContent += '</div>';
-        printContent += '<div class="order-details-item">';
-        printContent += '<label>下料时间：</label>';
-        printContent += '<div class="value">' + (orderData.cutting_time || '-') + '</div>';
-        printContent += '</div>';
-        printContent += '<div class="order-details-item">';
-        printContent += '<label>材料名称：</label>';
-        printContent += '<div class="value">' + (orderData.material_name || '-') + '</div>';
-        printContent += '</div>';
-        printContent += '<div class="order-details-item">';
-        printContent += '<label>预计到场时间：</label>';
-        printContent += '<div class="value">' + (orderData.estimated_arrival_time || '-') + '</div>';
-        printContent += '</div>';
-        printContent += '<div class="order-details-item">';
-        printContent += '<label>项目名称：</label>';
-        printContent += '<div class="value">' + (orderData.project_name || '-') + '</div>';
-        printContent += '</div>';
-        printContent += '<div class="order-details-item">';
-        printContent += '<label>供应商联系人：</label>';
-        printContent += '<div class="value">' + (orderData.supplier_contact_person || '-') + '</div>';
-        printContent += '</div>';
-        printContent += '<div class="order-details-item">';
-        printContent += '<label>供应商：</label>';
-        printContent += '<div class="value">' + (orderData.supplier_name || '-') + '</div>';
-        printContent += '</div>';
-        printContent += '<div class="order-details-item">';
-        printContent += '<label>联系电话：</label>';
-        printContent += '<div class="value">' + (orderData.contact_phone || '-') + '</div>';
-        printContent += '</div>';
-        printContent += '</div>';
-        printContent += '</div>';
+        // 订单详情表格
+        printContent += '<table class="info-table">';
+        printContent += '<thead><tr><th colspan="4" class="section-header">订单详情</th></tr></thead>';
+        printContent += '<tbody>';
+        printContent += '<tr>';
+        printContent += '<td class="label">订单编号</td>';
+        printContent += '<td class="value">' + (orderData.order_number || '-') + '</td>';
+        printContent += '<td class="label">下料时间</td>';
+        printContent += '<td class="value">' + (orderData.cutting_time || '-') + '</td>';
+        printContent += '</tr>';
+        printContent += '<tr>';
+        printContent += '<td class="label">材料名称</td>';
+        printContent += '<td class="value">' + (orderData.material_name || '-') + '</td>';
+        printContent += '<td class="label">预计到场时间</td>';
+        printContent += '<td class="value">' + (orderData.estimated_arrival_time || '-') + '</td>';
+        printContent += '</tr>';
+        printContent += '<tr>';
+        printContent += '<td class="label">项目名称</td>';
+        printContent += '<td class="value">' + (orderData.project_name || '-') + '</td>';
+        printContent += '<td class="label">供应商联系人</td>';
+        printContent += '<td class="value">' + (orderData.supplier_contact_person || '-') + '</td>';
+        printContent += '</tr>';
+        printContent += '<tr>';
+        printContent += '<td class="label">供应商</td>';
+        printContent += '<td class="value">' + (orderData.supplier_name || '-') + '</td>';
+        printContent += '<td class="label">联系电话</td>';
+        printContent += '<td class="value">' + (orderData.contact_phone || '-') + '</td>';
+        printContent += '</tr>';
+        printContent += '</tbody>';
+        printContent += '</table>';
 
-        // 材料明细部分
-        printContent += '<div class="section-title">材料明细</div>';
-        printContent += '<div class="material-details-section">';
-        printContent += '<div class="material-description">';
-        printContent += '<label>内容描述：</label>';
-        printContent += '<div class="value">' + (orderData.material_details || '-') + '</div>';
-        printContent += '</div>';
-        printContent += '</div>';
+        // 材料明细表格
+        printContent += '<table class="info-table" style="margin-top: 15px;">';
+        printContent += '<thead><tr><th colspan="4" class="section-header">材料明细</th></tr></thead>';
+        printContent += '<tbody>';
+        printContent += '<tr>';
+        printContent += '<td class="label" style="width: 100px;">内容描述</td>';
+        printContent += '<td class="value" colspan="3" style="white-space: pre-wrap; min-height: 100px; vertical-align: top; padding: 8px;">' + (orderData.material_details || '-') + '</td>';
+        printContent += '</tr>';
+        printContent += '</tbody>';
+        printContent += '</table>';
 
-        // 财务信息部分
-        printContent += '<div class="financial-section">';
-        printContent += '<div class="financial-item">';
-        printContent += '<label>订单金额：</label>';
-        printContent += '<div class="value">¥' + (orderData.order_amount ? parseFloat(orderData.order_amount).toFixed(2) : '0.00') + '</div>';
-        printContent += '</div>';
-        printContent += '<div class="financial-item">';
-        printContent += '<label>订单余额：</label>';
-        printContent += '<div class="value">¥' + (orderData.order_balance ? parseFloat(orderData.order_balance).toFixed(2) : '0.00') + '</div>';
-        printContent += '</div>';
-        printContent += '</div>';
+        // 财务信息表格
+        printContent += '<table class="info-table" style="margin-top: 15px;">';
+        printContent += '<thead><tr><th colspan="4" class="section-header">财务信息</th></tr></thead>';
+        printContent += '<tbody>';
+        printContent += '<tr>';
+        printContent += '<td class="label">订单金额</td>';
+        printContent += '<td class="value">¥' + (orderData.order_amount ? parseFloat(orderData.order_amount).toFixed(2) : '0.00') + '</td>';
+        printContent += '<td class="label">订单余额</td>';
+        printContent += '<td class="value">¥' + (orderData.order_balance ? parseFloat(orderData.order_balance).toFixed(2) : '0.00') + '</td>';
+        printContent += '</tr>';
+        printContent += '</tbody>';
+        printContent += '</table>';
 
-        // 负责人信息部分
-        printContent += '<div class="section-title">负责人信息</div>';
-        printContent += '<div class="responsible-section">';
-        printContent += '<div class="responsible-grid">';
-        printContent += '<div class="responsible-item">';
-        printContent += '<label>材料负责人：</label>';
-        printContent += '<div class="value">' + (orderData.material_manager || '-') + '</div>';
-        printContent += '</div>';
-        printContent += '<div class="responsible-item">';
-        printContent += '<label>分项目负责人：</label>';
-        printContent += '<div class="value">' + (orderData.sub_project_manager || '-') + '</div>';
-        printContent += '</div>';
-        printContent += '</div>';
-        printContent += '</div>';
+        // 负责人信息表格
+        printContent += '<table class="info-table" style="margin-top: 15px;">';
+        printContent += '<thead><tr><th colspan="4" class="section-header">负责人信息</th></tr></thead>';
+        printContent += '<tbody>';
+        printContent += '<tr>';
+        printContent += '<td class="label">材料负责人</td>';
+        printContent += '<td class="value">' + (orderData.material_manager || '-') + '</td>';
+        printContent += '<td class="label">分项目负责人</td>';
+        printContent += '<td class="value">' + (orderData.sub_project_manager || '-') + '</td>';
+        printContent += '</tr>';
+        printContent += '</tbody>';
+        printContent += '</table>';
 
         // 关联付款单（如果有）
         if (orderData.pays_list && orderData.pays_list.length > 0) {
@@ -1714,111 +1692,62 @@
         var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>付款单打印</title>';
         printContent += '<style>';
         // 屏幕预览样式
-        printContent += 'body{font-family: "Microsoft YaHei", Arial, sans-serif; padding: 8px; background: #fff; max-width: 210mm; margin: 0 auto; line-height: 0.9;}';
-        printContent += '.form-title{text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 4px; line-height: 0.9; padding: 0;}';
-        printContent += '.order-summary-section{border: 1px solid #000; padding: 3px; margin-bottom: 4px; background: #f9f9f9;}';
-        printContent += '.order-summary-title{text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 3px; line-height: 0.9; padding: 0;}';
-        printContent += '.order-summary-grid{display: grid; grid-template-columns: 1fr 1fr; gap: 1px 12px;}';
-        printContent += '.order-summary-item{display: flex; align-items: center; line-height: 0.9; margin: 0; padding: 0;}';
-        printContent += '.order-summary-item.full-width{grid-column: 1 / -1; display: flex; align-items: flex-start; line-height: 0.9; margin: 0; padding: 0;}';
-        printContent += '.order-summary-item label{min-width: 100px; text-align: right; margin-right: 6px; font-weight: normal; font-size: 11px; line-height: 0.9; padding: 0; margin-top: 0; margin-bottom: 0;}';
-        printContent += '.order-summary-item input{flex: 1; border: 1px solid #000; padding: 1px 4px; height: 16px; background: #f5f5f5; font-size: 11px; line-height: 0.9; margin: 0;}';
-        printContent += '.section-title{text-align: center; font-size: 14px; font-weight: bold; margin: 4px 0 3px 0; padding: 2px 0; border-top: 1px solid #000; border-bottom: 1px solid #000; line-height: 0.9;}';
-        printContent += '.pay-info-section{border: 1px solid #000; padding: 3px; margin-bottom: 4px;}';
-        printContent += '.pay-info-grid{display: grid; grid-template-columns: 1fr 1fr; gap: 1px 12px;}';
-        printContent += '.pay-info-item{display: flex; align-items: center; line-height: 0.9; margin: 0; padding: 0;}';
-        printContent += '.pay-info-item.full-width{grid-column: 1 / -1; display: flex; align-items: flex-start; line-height: 0.9; margin: 0; padding: 0;}';
-        printContent += '.pay-info-item label{min-width: 100px; text-align: right; margin-right: 6px; font-weight: normal; font-size: 11px; line-height: 0.9; padding: 0; margin-top: 0; margin-bottom: 0;}';
-        printContent += '.pay-info-item .value{flex: 1; border: 1px solid #000; padding: 1px 4px; min-height: 16px; background: #fff; font-size: 11px; display: flex; align-items: center; line-height: 0.9; margin: 0;}';
-        printContent += '.pay-info-item textarea.value{min-height: 30px; padding: 2px; white-space: pre-wrap; line-height: 0.9; margin: 0;}';
-        // 打印样式 - 竖向打印在A4纸上半部分（210mm × 148.5mm，竖向），增加边距和行距
+        printContent += 'body{font-family: "Microsoft YaHei", Arial, sans-serif; padding: 20px; background: #fff; max-width: 1200px; margin: 0 auto; line-height: 1.4;}';
+        printContent += '.form-title{text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; padding-bottom: 10px; border-bottom: 2px solid #000;}';
+
+        // 表格样式
+        printContent += '.info-table{border-collapse: collapse; width: 100%; margin-bottom: 15px;}';
+        printContent += '.info-table th, .info-table td{border: 1px solid #000; padding: 8px; text-align: left;}';
+        printContent += '.info-table .section-header{background-color: #f0f0f0; font-weight: bold; font-size: 16px; text-align: center;}';
+        printContent += '.info-table .label{background-color: #f8f8f8; font-weight: bold; width: 120px; text-align: right; padding-right: 12px;}';
+        printContent += '.info-table .value{background-color: #fff; padding-left: 12px;}';
+
+        // 打印样式
         printContent += '@media print{';
-        printContent += 'body{padding: 5mm; margin: 0; max-width: 100%; line-height: 1.0; height: 148.5mm; overflow: hidden;}';
+        printContent += 'body{padding: 5mm; margin: 0; max-width: 100%; line-height: 1.2; height: 148.5mm; overflow: hidden;}';
         printContent += '@page{size: A4 portrait; margin: 8mm 10mm 0 10mm;}';
-        printContent += '.form-title{font-size: 14px; margin-bottom: 2mm; line-height: 1.0; padding: 0;}';
-        printContent += '.order-summary-section{padding: 2mm; margin-bottom: 2mm; line-height: 1.0;}';
-        printContent += '.order-summary-title{font-size: 11px; margin-bottom: 1.5mm; line-height: 1.0; padding: 0;}';
-        printContent += '.order-summary-grid{gap: 1mm 5mm; line-height: 1.0;}';
-        printContent += '.order-summary-item{line-height: 1.0; margin: 0; padding: 0;}';
-        printContent += '.order-summary-item label{min-width: 80px; font-size: 8px; margin-right: 2mm; line-height: 1.0; padding: 0; margin-top: 0; margin-bottom: 0;}';
-        printContent += '.order-summary-item input{font-size: 8px; padding: 0.5mm 1mm; height: 14px; line-height: 1.0; margin: 0;}';
-        printContent += '.section-title{font-size: 11px; margin: 2mm 0 1.5mm 0; padding: 0.8mm 0; line-height: 1.0;}';
-        printContent += '.pay-info-section{padding: 2mm; margin-bottom: 2mm; line-height: 1.0;}';
-        printContent += '.pay-info-grid{gap: 1mm 5mm; line-height: 1.0;}';
-        printContent += '.pay-info-item{line-height: 1.0; margin: 0; padding: 0;}';
-        printContent += '.pay-info-item label{min-width: 80px; font-size: 8px; margin-right: 2mm; line-height: 1.0; padding: 0; margin-top: 0; margin-bottom: 0;}';
-        printContent += '.pay-info-item .value{font-size: 8px; padding: 0.5mm 1mm; min-height: 14px; line-height: 1.0; margin: 0;}';
-        printContent += '.pay-info-item textarea.value{min-height: 20mm; padding: 1mm; font-size: 8px; line-height: 1.0; margin: 0;}';
+        printContent += '.form-title{font-size: 18px; margin-bottom: 3mm; padding-bottom: 2mm; line-height: 1.2;}';
+        printContent += '.info-table{margin-bottom: 2mm;}';
+        printContent += '.info-table th, .info-table td{font-size: 9px; padding: 1mm 2mm; line-height: 1.2;}';
+        printContent += '.info-table .section-header{font-size: 10px; padding: 1.5mm 2mm;}';
+        printContent += '.info-table .label{width: 80px; font-size: 9px; padding-right: 2mm;}';
+        printContent += '.info-table .value{font-size: 9px; padding-left: 2mm;}';
         printContent += '}</style></head><body>';
 
         // 表单标题
         printContent += '<div class="form-title">付款单</div>';
 
-        // 订单信息摘要部分
+        // 订单信息摘要表格（如果有）
         if (orderData) {
-          printContent += '<div class="order-summary-section">';
-          printContent += '<div class="order-summary-title">订单信息摘要</div>';
-          printContent += '<div class="order-summary-grid">';
-          printContent += '<div class="order-summary-item">';
-          printContent += '<label>关联订单编号：</label>';
-          printContent += '<input type="text" value="' + (orderData.order_number || '-') + '" readonly />';
-          printContent += '</div>';
-          printContent += '<div class="order-summary-item">';
-          printContent += '<label>项目名称：</label>';
-          printContent += '<input type="text" value="' + (orderData.project_name || '-') + '" readonly />';
-          printContent += '</div>';
-          printContent += '<div class="order-summary-item">';
-          printContent += '<label>材料名称：</label>';
-          printContent += '<input type="text" value="' + (orderData.material_name || '-') + '" readonly />';
-          printContent += '</div>';
-          printContent += '<div class="order-summary-item">';
-          printContent += '<label>供应商：</label>';
-          printContent += '<input type="text" value="' + (orderData.supplier_name || '-') + '" readonly />';
-          printContent += '</div>';
-          printContent += '<div class="order-summary-item full-width">';
-          printContent += '<label>订单金额：</label>';
-          printContent += '<input type="text" value="' + (orderData.order_amount ? '¥' + parseFloat(orderData.order_amount).toFixed(2) : '-') + '" readonly />';
-          printContent += '</div>';
-          printContent += '</div>';
-          printContent += '</div>';
+          printContent += '<table class="info-table">';
+          printContent += '<thead><tr><th colspan="4" class="section-header">订单信息摘要</th></tr></thead>';
+          printContent += '<tbody>';
+          printContent += '<tr>';
+          printContent += '<td class="label">关联订单编号</td>';
+          printContent += '<td class="value">' + (orderData.order_number || '-') + '</td>';
+          printContent += '<td class="label">项目名称</td>';
+          printContent += '<td class="value">' + (orderData.project_name || '-') + '</td>';
+          printContent += '</tr>';
+          printContent += '<tr>';
+          printContent += '<td class="label">材料名称</td>';
+          printContent += '<td class="value">' + (orderData.material_name || '-') + '</td>';
+          printContent += '<td class="label">供应商</td>';
+          printContent += '<td class="value">' + (orderData.supplier_name || '-') + '</td>';
+          printContent += '</tr>';
+          printContent += '<tr>';
+          printContent += '<td class="label">订单金额</td>';
+          printContent += '<td class="value" colspan="3">¥' + (orderData.order_amount ? parseFloat(orderData.order_amount).toFixed(2) : '0.00') + '</td>';
+          printContent += '</tr>';
+          printContent += '</tbody>';
+          printContent += '</table>';
         }
 
-        // 付款单信息部分
-        printContent += '<div class="section-title">付款单信息</div>';
-        printContent += '<div class="pay-info-section">';
-        printContent += '<div class="pay-info-grid">';
+        // 付款单信息表格
+        printContent += '<table class="info-table">';
+        printContent += '<thead><tr><th colspan="4" class="section-header">付款单信息</th></tr></thead>';
+        printContent += '<tbody>';
 
-        // 付款单编号
-        printContent += '<div class="pay-info-item">';
-        printContent += '<label>付款单编号：</label>';
-        printContent += '<div class="value">' + (payData.pay_number || '-') + '</div>';
-        printContent += '</div>';
-
-        // 付款单位
-        printContent += '<div class="pay-info-item">';
-        printContent += '<label>付款单位：</label>';
-        printContent += '<div class="value">' + (payData.payer_supplier_name || '-') + '</div>';
-        printContent += '</div>';
-
-        // 收款单位
-        printContent += '<div class="pay-info-item">';
-        printContent += '<label>收款单位：</label>';
-        printContent += '<div class="value">' + (payData.payee_supplier_name || '-') + '</div>';
-        printContent += '</div>';
-
-        // 本次付款金额
-        printContent += '<div class="pay-info-item">';
-        printContent += '<label>本次付款金额：</label>';
-        printContent += '<div class="value">¥' + (payData.current_payment_amount ? parseFloat(payData.current_payment_amount).toFixed(2) : '0.00') + '</div>';
-        printContent += '</div>';
-
-        // 开票金额
-        printContent += '<div class="pay-info-item">';
-        printContent += '<label>开票金额：</label>';
-        printContent += '<div class="value">¥' + (payData.invoice_amount ? parseFloat(payData.invoice_amount).toFixed(2) : '0.00') + '</div>';
-        printContent += '</div>';
-
-        // 付款状态
+        // 付款状态文本转换
         var paymentStatusText = '';
         if (payData.payment_status === 'paid') {
           paymentStatusText = '已付款';
@@ -1827,25 +1756,35 @@
         } else {
           paymentStatusText = '待付款';
         }
-        printContent += '<div class="pay-info-item">';
-        printContent += '<label>付款状态：</label>';
-        printContent += '<div class="value">' + paymentStatusText + '</div>';
-        printContent += '</div>';
 
-        // 经办人
-        printContent += '<div class="pay-info-item">';
-        printContent += '<label>经办人：</label>';
-        printContent += '<div class="value">' + (payData.handler || '-') + '</div>';
-        printContent += '</div>';
-
-        // 付款用途（全宽）
-        printContent += '<div class="pay-info-item full-width">';
-        printContent += '<label>付款用途：</label>';
-        printContent += '<div class="value" style="min-height: 80px; padding: 8px; white-space: pre-wrap;">' + (payData.payment_purpose || '-') + '</div>';
-        printContent += '</div>';
-
-        printContent += '</div>';
-        printContent += '</div>';
+        printContent += '<tr>';
+        printContent += '<td class="label">付款单编号</td>';
+        printContent += '<td class="value">' + (payData.pay_number || '-') + '</td>';
+        printContent += '<td class="label">付款单位</td>';
+        printContent += '<td class="value">' + (payData.payer_supplier_name || '-') + '</td>';
+        printContent += '</tr>';
+        printContent += '<tr>';
+        printContent += '<td class="label">收款单位</td>';
+        printContent += '<td class="value">' + (payData.payee_supplier_name || '-') + '</td>';
+        printContent += '<td class="label">本次付款金额</td>';
+        printContent += '<td class="value">¥' + (payData.current_payment_amount ? parseFloat(payData.current_payment_amount).toFixed(2) : '0.00') + '</td>';
+        printContent += '</tr>';
+        printContent += '<tr>';
+        printContent += '<td class="label">开票金额</td>';
+        printContent += '<td class="value">¥' + (payData.invoice_amount ? parseFloat(payData.invoice_amount).toFixed(2) : '0.00') + '</td>';
+        printContent += '<td class="label">付款状态</td>';
+        printContent += '<td class="value">' + paymentStatusText + '</td>';
+        printContent += '</tr>';
+        printContent += '<tr>';
+        printContent += '<td class="label">经办人</td>';
+        printContent += '<td class="value" colspan="3">' + (payData.handler || '-') + '</td>';
+        printContent += '</tr>';
+        printContent += '<tr>';
+        printContent += '<td class="label" style="vertical-align: top;">付款用途</td>';
+        printContent += '<td class="value" colspan="3" style="white-space: pre-wrap; min-height: 80px; vertical-align: top; padding: 8px;">' + (payData.payment_purpose || '-') + '</td>';
+        printContent += '</tr>';
+        printContent += '</tbody>';
+        printContent += '</table>';
 
         printContent += '</body></html>';
 

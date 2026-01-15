@@ -18,6 +18,7 @@ class OrderORM(BaseORM):
         nullable=True,
         comment="供应商ID"
     )
+    supplier_contact_person = db.Column(db.String(64), nullable=True, comment="供应商联系人")
     contact_phone = db.Column(db.String(32), nullable=True, comment="联系电话")
     cutting_time = db.Column(db.Date, nullable=True, comment="下料时间")
     estimated_arrival_time = db.Column(db.Date, nullable=True, comment="预计到场时间")
@@ -60,6 +61,15 @@ class OrderORM(BaseORM):
             else:
                 return str(datetime_field)
         
+        # 处理金额字段 - 可能是Decimal/float/bytes类型
+        def format_amount(amount_field):
+            if not amount_field:
+                return None
+            if isinstance(amount_field, bytes):
+                return amount_field.decode('utf-8')
+            else:
+                return str(amount_field)
+        
         # 解析附件数据
         attachments_data = []
         if self.attachments:
@@ -96,7 +106,11 @@ class OrderORM(BaseORM):
             pays_list = []
         
         # 计算订单余额 = 订单金额 - 付款单金额之和
-        order_amount_value = float(self.order_amount) if self.order_amount else 0
+        # 处理order_amount可能是bytes的情况
+        order_amount_raw = self.order_amount
+        if isinstance(order_amount_raw, bytes):
+            order_amount_raw = order_amount_raw.decode('utf-8')
+        order_amount_value = float(order_amount_raw) if order_amount_raw else 0
         order_balance = order_amount_value - total_payment_amount
         
         return {
@@ -106,12 +120,12 @@ class OrderORM(BaseORM):
             "project_name": self.project_name,
             "supplier_id": self.supplier_id,
             "supplier_name": self.supplier.name if self.supplier else None,
-            "supplier_contact_person": self.supplier.contact_person if self.supplier else None,
+            "supplier_contact_person": self.supplier_contact_person, # 使用新字段
             "contact_phone": self.contact_phone,
             "cutting_time": format_date(self.cutting_time),
             "estimated_arrival_time": format_date(self.estimated_arrival_time),
             "material_details": self.material_details,
-            "order_amount": str(self.order_amount) if self.order_amount else None,
+            "order_amount": format_amount(self.order_amount),
             "order_balance": str(round(order_balance, 2)),  # 订单余额，保留两位小数
             "material_manager": self.material_manager,
             "sub_project_manager": self.sub_project_manager,

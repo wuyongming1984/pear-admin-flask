@@ -5,7 +5,8 @@ import logging
 # Add current directory to path
 sys.path.append(os.getcwd())
 
-from pear_admin import create_app, db
+from pear_admin import create_app
+from pear_admin.extensions import db
 from sqlalchemy import text, inspect
 
 # Configure logging

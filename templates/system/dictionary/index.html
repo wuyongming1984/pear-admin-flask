@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8" />
+    <title>字典管理</title>
+    <meta name="renderer" content="webkit" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <style>
+        .dict-container {
+            padding: 16px;
+        }
+
+        .dict-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dict-left {
+            flex: 1;
+        }
+
+        .dict-right {
+            flex: 1;
+        }
+
+        .detail-toolbar {
+            margin-bottom: 10px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dict-container">
+        <div class="dict-row">
+            <!-- Left: Dictionary Types -->
+            <div class="dict-left">
+                <div class="layui-card">
+                    <div class="layui-card-body">
+                        <form class="layui-form" action="">
+                            <div class="layui-inline">
+                                <input type="text" name="code_desc" placeholder="代码/描述" class="layui-input"
+                                    style="width: 150px;">
+                            </div>
+                            <button class="layui-btn layui-btn-sm" lay-submit lay-filter="dict-type-query">查询</button>
+                            <button type="button" class="layui-btn layui-btn-sm layui-btn-normal"
+                                id="dict-type-add">新增</button>
+                        </form>
+                        <table class="layui-hide" id="dict-type-table" lay-filter="dict-type-table"></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Dictionary Details -->
+            <div class="dict-right">
+                <div class="layui-card">
+                    <div class="layui-card-body">
+                        <div id="dict-detail-toolbar" class="detail-toolbar">
+                            <button class="layui-btn layui-btn-sm layui-btn-normal" id="dict-detail-add">新增明细</button>
+                            <span id="current-dict-info"
+                                style="margin-left: 10px; font-weight: bold; color: #666;"></span>
+                        </div>
+                        <table class="layui-hide" id="dict-detail-table" lay-filter="dict-detail-table"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Type Edit Template -->
+    <script type="text/html" id="dict-type-bar">
+        <button class="layui-btn layui-btn-sm layui-btn-normal" lay-event="edit">编辑</button>
+        <button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="remove">删除</button>
+    </script>
+
+    <!-- Detail Edit Template -->
+    <script type="text/html" id="dict-detail-bar">
+        <button class="layui-btn layui-btn-sm layui-btn-normal" lay-event="edit">编辑</button>
+        <button class="layui-btn layui-btn-sm layui-btn-danger" lay-event="remove">删除</button>
+    </script>
+
+    <script>
+        layui.use(['table', 'form', 'jquery', 'layer'], function () {
+            var table = layui.table;
+            var form = layui.form;
+            var $ = layui.jquery;
+            var layer = layui.layer;
+
+            var MODULE_PATH = "/api/v1/dictionary/";
+            var currentDictId = null;
+            var currentDictName = "";
+
+            // --- Left: Dictionary Types ---
+            var typeTable = table.render({
+                elem: '#dict-type-table',
+                url: window.location.origin + MODULE_PATH + 'list',
+                page: true,
+                height: 'full-150',
+                headers: {
+                    Authorization: "Bearer " + localStorage.getItem("access_token")
+                },
+                cols: [[
+                    { type: 'numbers', title: '#' },
+                    { field: 'code', title: '代码', width: 120 },
+                    { field: 'name', title: '代码中文描述' },
+                    { title: '操作', toolbar: '#dict-type-bar', width: 150, align: 'center' }
+                ]]
+            });
+
+            // Row click event to load details
+            table.on('row(dict-type-table)', function (obj) {
+                obj.tr.addClass('layui-table-click').siblings().removeClass('layui-table-click');
+                currentDictId = obj.data.id;
+                currentDictName = obj.data.name;
+                $('#dict-detail-toolbar').show();
+                $('#current-dict-info').text('当前字典: ' + currentDictName);
+                loadDetailTable(currentDictId);
+            });
+
+            // Type Search
+            form.on('submit(dict-type-query)', function (data) {
+                typeTable.reload({
+                    where: data.field,
+                    page: { curr: 1 }
+                });
+                return false;
+            });
+
+            // Type Add
+            $('#dict-type-add').click(function () {
+                layer.prompt({
+                    title: '新增字典类型',
+                    formType: 0,
+                    yes: function (index, layero) {
+                        var value = layero.find(".layui-layer-input").val();
+                        if (!value) {
+                            layer.msg('请填写代码和名称，格式：代码,名称');
+                            return;
+                        }
+                        var arr = value.split(',');
+                        if (arr.length !== 2) {
+                            layer.msg('格式错误，应为：代码,名称');
+                            return;
+                        }
+                        $.ajax({
+                            url: window.location.origin + MODULE_PATH,
+                            type: 'POST',
+                            contentType: 'application/json',
+                            headers: {
+                                Authorization: "Bearer " + localStorage.getItem("access_token")
+                            },
+                            data: JSON.stringify({ code: arr[0].trim(), name: arr[1].trim() }),
+                            success: function (res) {
+                                if (res.success) {
+                                    layer.close(index);
+                                    layer.msg(res.msg, { icon: 1, time: 1000 });
+                                    typeTable.reload();
+                                } else {
+                                    layer.msg(res.msg, { icon: 2 });
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Type Toolbar Events
+            table.on('tool(dict-type-table)', function (obj) {
+                if (obj.event === 'remove') {
+                    layer.confirm('确定要删除吗？若存在明细将无法删除。', { icon: 3, title: '提示' }, function (index) {
+                        $.ajax({
+                            url: window.location.origin + MODULE_PATH + obj.data.id,
+                            type: 'DELETE',
+                            headers: {
+                                Authorization: "Bearer " + localStorage.getItem("access_token")
+                            },
+                            success: function (res) {
+                                if (res.success) {
+                                    obj.del();
+                                    layer.close(index);
+                                    layer.msg(res.msg, { icon: 1, time: 1000 });
+                                    if (currentDictId === obj.data.id) {
+                                        currentDictId = null;
+                                        $('#dict-detail-toolbar').hide();
+                                        table.reload('dict-detail-table', { url: '', data: [] });
+                                    }
+                                } else {
+                                    layer.msg(res.msg, { icon: 2 });
+                                }
+                            }
+                        });
+                    });
+                } else if (obj.event === 'edit') {
+                    layer.prompt({
+                        title: '修改字典名称',
+                        value: obj.data.name,
+                        yes: function (index, layero) {
+                            var name = layero.find(".layui-layer-input").val();
+                            if (!name) return;
+                            $.ajax({
+                                url: window.location.origin + MODULE_PATH + obj.data.id,
+                                type: 'PUT',
+                                contentType: 'application/json',
+                                headers: {
+                                    Authorization: "Bearer " + localStorage.getItem("access_token")
+                                },
+                                data: JSON.stringify({ name: name }),
+                                success: function (res) {
+                                    if (res.success) {
+                                        layer.close(index);
+                                        layer.msg(res.msg, { icon: 1, time: 1000 });
+                                        typeTable.reload();
+                                    } else {
+                                        layer.msg(res.msg, { icon: 2 });
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            // --- Right: Dictionary Details ---
+            function loadDetailTable(dicId) {
+                table.render({
+                    elem: '#dict-detail-table',
+                    url: window.location.origin + MODULE_PATH + 'detail/list?dic_id=' + dicId,
+                    page: true,
+                    height: 'full-150',
+                    headers: {
+                        Authorization: "Bearer " + localStorage.getItem("access_token")
+                    },
+                    cols: [[
+                        { type: 'numbers', title: '#' },
+                        { field: 'code', title: '代码', width: 100 },
+                        { field: 'value', title: '代码值' },
+                        { field: 'order_no', title: '排序', width: 80, sort: true },
+                        { title: '操作', toolbar: '#dict-detail-bar', width: 150, align: 'center' }
+                    ]]
+                });
+            }
+
+            // Detail Add
+            $('#dict-detail-add').click(function () {
+                if (!currentDictId) return;
+                layer.prompt({
+                    title: '新增字典明细（格式：代码,值,排序号）',
+                    formType: 0,
+                    yes: function (index, layero) {
+                        var value = layero.find(".layui-layer-input").val();
+                        if (!value) {
+                            layer.msg('请填写完整，格式：代码,值,排序号');
+                            return;
+                        }
+                        var arr = value.split(',');
+                        if (arr.length < 2) {
+                            layer.msg('格式错误，至少需要：代码,值');
+                            return;
+                        }
+                        $.ajax({
+                            url: window.location.origin + MODULE_PATH + 'detail',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            headers: {
+                                Authorization: "Bearer " + localStorage.getItem("access_token")
+                            },
+                            data: JSON.stringify({
+                                dic_id: currentDictId,
+                                code: arr[0].trim(),
+                                value: arr[1].trim(),
+                                order_no: arr[2] ? parseInt(arr[2].trim()) : 0
+                            }),
+                            success: function (res) {
+                                if (res.success) {
+                                    layer.close(index);
+                                    layer.msg(res.msg, { icon: 1 });
+                                    table.reload('dict-detail-table');
+                                } else {
+                                    layer.msg(res.msg, { icon: 2 });
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Detail Toolbar Events
+            table.on('tool(dict-detail-table)', function (obj) {
+                if (obj.event === 'remove') {
+                    layer.confirm('确定要删除吗？', { icon: 3, title: '提示' }, function (index) {
+                        $.ajax({
+                            url: window.location.origin + MODULE_PATH + 'detail/' + obj.data.id,
+                            type: 'DELETE',
+                            headers: {
+                                Authorization: "Bearer " + localStorage.getItem("access_token")
+                            },
+                            success: function (res) {
+                                if (res.success) {
+                                    obj.del();
+                                    layer.close(index);
+                                    layer.msg(res.msg, { icon: 1 });
+                                } else {
+                                    layer.msg(res.msg, { icon: 2 });
+                                }
+                            }
+                        });
+                    });
+                } else if (obj.event === 'edit') {
+                    layer.prompt({
+                        title: '修改字典明细值',
+                        value: obj.data.value,
+                        yes: function (index, layero) {
+                            var value = layero.find(".layui-layer-input").val();
+                            if (!value) return;
+                            $.ajax({
+                                url: window.location.origin + MODULE_PATH + 'detail/' + obj.data.id,
+                                type: 'PUT',
+                                contentType: 'application/json',
+                                headers: {
+                                    Authorization: "Bearer " + localStorage.getItem("access_token")
+                                },
+                                data: JSON.stringify({
+                                    code: obj.data.code,
+                                    value: value,
+                                    order_no: obj.data.order_no
+                                }),
+                                success: function (res) {
+                                    if (res.success) {
+                                        layer.close(index);
+                                        layer.msg(res.msg, { icon: 1 });
+                                        table.reload('dict-detail-table');
+                                    } else {
+                                        layer.msg(res.msg, { icon: 2 });
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

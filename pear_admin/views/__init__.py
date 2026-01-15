@@ -6,6 +6,7 @@ from .order_pay import order_pay_bp
 from .supplier import supplier_bp
 from .project import project_bp
 from .payer import payer_bp
+from .dictionary import dictionary_bp
 
 
 def register_views(app: Flask):
@@ -15,3 +16,4 @@ def register_views(app: Flask):
     app.register_blueprint(supplier_bp)
     app.register_blueprint(project_bp)
     app.register_blueprint(payer_bp)
+    app.register_blueprint(dictionary_bp)

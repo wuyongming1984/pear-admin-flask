@@ -42,7 +42,7 @@
     /* 有配置宽度时，colgroup col 的宽度由JavaScript通过内联样式设置，不使用CSS */
     .layui-table-view .layui-table-header table thead th,
     .layui-table-view .layui-table-body table tbody td {
-      padding: 9px 15px !important;
+      padding: 5px 15px !important;
       white-space: nowrap;
     }
 
@@ -62,7 +62,7 @@
     /* 订单行样式 - 加粗加大 */
     .layui-table-body table tbody tr:not(.pay-child-row) td {
       font-weight: bold !important;
-      font-size: 15px !important;
+      font-size: 14px !important;
       color: #333 !important;
     }
 
@@ -74,8 +74,8 @@
 
     /* 强制表格行高一致，解决固定列错位问题 */
     .layui-table-cell {
-      height: 45px !important;
-      line-height: 45px !important;
+      height: 32px !important;
+      line-height: 32px !important;
     }
 
     /* Sticky Operation Column */
@@ -394,7 +394,9 @@
           </div>
           <div class="order-details-item">
             <label>材料名称：</label>
-            <input type="text" name="material_name" placeholder="请输入材料名称" lay-verify="required" />
+            <select name="material_name" lay-search lay-verify="required">
+              <option value="">请选择材料名称</option>
+            </select>
           </div>
           <div class="order-details-item">
             <label>预计到场时间：</label>
@@ -905,6 +907,9 @@
       // 存储供应商数据，用于根据联系人查找供应商信息
       var suppliersData = [];
 
+      // 存储材料名称映射（ID -> 名称）
+      var materialNamesMap = {};
+
       // 加载项目列表
       function loadProjects() {
         $.ajax({
@@ -923,6 +928,37 @@
                 html += '<option value="' + project.project_name + '">' + project.project_name + '</option>';
               });
               $('select[name="project_name"]').html(html);
+              form.render('select');
+            }
+          }
+        });
+      }
+
+      // 加载材料名称列表（从字典表）
+      function loadMaterialNames() {
+        $.ajax({
+          url: window.location.origin + "/api/v1/dictionary/detail/list",
+          type: "GET",
+          data: {
+            dic_id: 35,  // 材料名称代码字典的ID (clmc)
+            limit: 1000  // 获取所有材料，不分页
+          },
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("access_token"),
+          },
+          success: function (res) {
+            if (res.code === 0 && res.data) {
+              // 构建ID到名称的映射
+              materialNamesMap = {};
+              var html = '<option value="">请选择材料名称</option>';
+              res.data.forEach(function (material) {
+                // 使用value作为option的value（材料名称文本）
+                html += '<option value="' + material.value + '">' + material.value + '</option>';
+                // 同时建立ID到名称的映射（用于显示旧数据）
+                materialNamesMap[material.id] = material.value;
+                materialNamesMap[material.code] = material.value;
+              });
+              $('select[name="material_name"]').html(html);
               form.render('select');
             }
           }
@@ -1003,12 +1039,14 @@
       }
 
       loadSuppliers();
+      loadMaterialNames();  // 加载材料名称列表
 
       // 列宽配置 - 可以根据需要修改各列的初始宽度（单位：px）
       var columnWidths = {
         'ID': 50,                    // ID列
         '订单编号': 50,             // 订单编号
         '材料名称': 150,             // 材料名称
+        '材料明细': 200,             // 材料明细
         '项目名称': 150,             // 项目名称
         '供应商': 120,               // 供应商
         '供应商联系人': 120,         // 供应商联系人
@@ -1417,7 +1455,38 @@
               title: "材料名称",
               width: 90,
               //minWidth: 90,
-              align: 'center'
+              align: 'center',
+              templet: function (d) {
+                var materialName = d.material_name;
+                if (!materialName) return '-';
+
+                // 检查是否为数字ID
+                if (/^\d+$/.test(materialName)) {
+                  // 尝试从映射表中查找
+                  return materialNamesMap[materialName] || materialName;
+                }
+
+                // 直接返回文本
+                return materialName;
+              }
+            },
+            {
+              field: "material_details",
+              title: "材料明细",
+              width: 200,
+              align: 'left',
+              hide: true,  // 默认隐藏，可在列显示设置中打开
+              templet: function (d) {
+                var details = d.material_details;
+                if (!details || details.trim() === '') {
+                  return '<span style="color: #999;">-</span>';
+                }
+                // 如果内容过长，截断显示并添加title提示
+                if (details.length > 50) {
+                  return '<span title="' + details + '">' + details.substring(0, 50) + '...</span>';
+                }
+                return details;
+              }
             },
             {
               field: "supplier_name",
@@ -2118,6 +2187,7 @@
           updateAttachmentsData();
           loadProjects();  // 加载项目列表
           loadSuppliers();  // 加载供应商列表和联系人列表
+          loadMaterialNames();  // 加载材料名称列表
 
           // 自动生成订单编号
           var orderNumber = generateOrderNumber();
@@ -2174,6 +2244,7 @@
           // 先加载项目列表和供应商列表
           loadProjects();
           loadSuppliers();
+          loadMaterialNames();  // 加载材料名称列表
 
           // 延迟设置表单值，确保下拉框已加载
           setTimeout(function () {

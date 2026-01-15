@@ -9,6 +9,7 @@ from .role import RoleORM
 from .user import UserORM
 from .supplier import SupplierORM
 from .project import ProjectORM
+from .dictionary import DictionaryORM, DictionaryDetailORM
 
 user_role = db.Table(
     "ums_user_role",  # 用户-角色中间表名称
@@ -26,4 +27,4 @@ role_rights = db.Table(
 
 from .payer import PayerORM
 
-__all__ = ["DepartmentORM", "RightsORM", "RoleORM", "UserORM", "SupplierORM", "ProjectORM", "AttachmentORM", "OrderORM", "PayORM", "PayerORM"]
+__all__ = ["DepartmentORM", "RightsORM", "RoleORM", "UserORM", "SupplierORM", "ProjectORM", "AttachmentORM", "OrderORM", "PayORM", "PayerORM", "DictionaryORM", "DictionaryDetailORM"]

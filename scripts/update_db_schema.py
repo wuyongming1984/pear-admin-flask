@@ -16,11 +16,8 @@ logger = logging.getLogger(__name__)
 # Force import of all ORMs to ensure they are registered with SQLAlchemy
 from pear_admin import orms
 
-# Set env to prod to match docker environment if not set
-if not os.getenv("FLASK_ENV"):
-    os.environ["FLASK_ENV"] = "prod"
-
-app = create_app()
+# Explicitly use production config
+app = create_app("prod")
 
 def table_exists(table_name, connection):
     inspector = inspect(connection)

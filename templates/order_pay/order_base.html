@@ -1290,7 +1290,8 @@
           };
 
           Object.keys(filterConfig).forEach(function (field) {
-            var $th = $('th[data-field="' + field + '"]');
+            var $view = $('.layui-table-view[lay-id="order-table"]');
+            var $th = $view.find('th[data-field="' + field + '"]');
             if ($th.length && !$th.find('.filter-input').length) {
               var config = filterConfig[field];
               var $filterDiv = $('<div class="filter-input-wrapper" style="margin-top: 5px;"></div>');

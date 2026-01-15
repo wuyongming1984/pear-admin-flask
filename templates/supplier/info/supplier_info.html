@@ -392,17 +392,105 @@
       function addFilterInputs() {
         // 延迟执行，确保表格DOM已渲染
         setTimeout(function () {
-          var filterFields = ['name', 'contact_person', 'phone', 'bank_name', 'account_number', 'remark'];
-          filterFields.forEach(function (field) {
+          var filterConfig = {
+            'name': {
+              type: 'text',
+              placeholder: '筛选供应商名称',
+              source: window.location.origin + "/api/v1/supplier/",
+              labelField: 'name',
+              valueField: 'name'
+            },
+            'contact_person': {
+              type: 'text',
+              placeholder: '筛选联系人',
+              source: window.location.origin + "/api/v1/supplier/",
+              labelField: 'contact_person',
+              valueField: 'contact_person',
+              unique: true
+            },
+            'phone': {
+              type: 'text',
+              placeholder: '筛选电话',
+              source: window.location.origin + "/api/v1/supplier/",
+              labelField: 'phone',
+              valueField: 'phone',
+              unique: true
+            },
+            'bank_name': {
+              type: 'text',
+              placeholder: '筛选开户行',
+              source: window.location.origin + "/api/v1/supplier/",
+              labelField: 'bank_name',
+              valueField: 'bank_name',
+              unique: true
+            },
+            'account_number': { type: 'text', placeholder: '筛选账号' },
+            'remark': { type: 'text', placeholder: '筛选备注' }
+          };
+
+          Object.keys(filterConfig).forEach(function (field) {
             var $th = $('th[data-field="' + field + '"]');
             if ($th.length && !$th.find('.filter-input').length) {
+              var config = filterConfig[field];
               var $filterDiv = $('<div class="filter-input-wrapper" style="margin-top: 5px;"></div>');
-              var $input = $('<input type="text" class="layui-input filter-input" placeholder="筛选" data-field="' + field + '" style="height: 28px; font-size: 12px; padding: 0 8px;">');
+              var $input;
+
+              // 检查是否需要 Autocomplete (Source)
+              var listId = config.source ? 'list-' + field : null;
+              var listAttr = listId ? ' list="' + listId + '"' : '';
+
+              $input = $('<input type="' + config.type + '" class="layui-input filter-input" placeholder="' + config.placeholder + '" data-field="' + field + '"' + listAttr + ' style="height: 28px; font-size: 12px; padding: 0 8px;">');
+
               // 如果有已保存的筛选值，恢复它
               if (filterParams[field]) {
                 $input.val(filterParams[field]);
               }
               $filterDiv.append($input);
+
+              // 如果有 source，添加 datalist 和事件
+              if (config.source) {
+                var $datalist = $('<datalist id="' + listId + '"></datalist>');
+                $filterDiv.append($datalist);
+
+                // 绑定 focus 事件加载数据
+                $input.on('focus', function () {
+                  var $thisDatalist = $('#' + listId);
+                  // 如果已经有数据，不再请求
+                  if ($thisDatalist.children().length > 0) return;
+
+                  $.ajax({
+                    url: config.source,
+                    type: 'GET',
+                    data: { limit: 1000 }, // 获取足够多的数据
+                    headers: {
+                      Authorization: "Bearer " + localStorage.getItem("access_token"),
+                    },
+                    success: function (res) {
+                      if (res.code === 0 && res.data) {
+                        $thisDatalist.empty();
+                        var items = res.data;
+                        var validValues = new Set();
+
+                        items.forEach(function (item) {
+                          var val = item[config.valueField];
+                          // 过滤空值
+                          if (val) {
+                            // 如果需要唯一性去重
+                            if (config.unique) {
+                              if (validValues.has(val)) return;
+                              validValues.add(val);
+                            }
+
+                            var label = item[config.labelField] || val;
+                            $thisDatalist.append('<option value="' + val + '">' + (label !== val ? label : '') + '</option>');
+                          }
+                        });
+                      }
+                    }
+                  });
+                });
+              }
+
               $th.append($filterDiv);
             }
           });
@@ -566,7 +654,7 @@
               curr: 1 // 重新从第 1 页开始
             }
           });
-        }, 500);
+        }, 1200);
       });
     });
   </script>

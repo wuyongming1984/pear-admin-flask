@@ -97,7 +97,7 @@ class OrderORM(BaseORM):
                         "current_payment_amount": str(pay.current_payment_amount) if pay.current_payment_amount else None,
                         "payment_status": pay.payment_status,
                         "handler": pay.handler,
-                        "payer_supplier_name": pay.payer_supplier.name if pay.payer_supplier else None,
+                        "payer_supplier_name": pay.payer.name if pay.payer else None,
                         "payee_supplier_name": pay.payee_supplier.name if pay.payee_supplier else None,
                         "create_at": format_datetime(pay.create_at)
                     })

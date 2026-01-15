@@ -542,30 +542,61 @@
           LOAD_FAILED: '加载数据失败',
           UPLOAD_SUCCESS: '上传成功',
           UPLOAD_FAILED: '上传失败'
-        },
-
-        // 筛选字段配置
-        FILTER_FIELDS: {
-          'id': { type: 'text', placeholder: '筛选ID' },
-          'pay_number': { type: 'text', placeholder: '筛选付款单编号' },
-          'order_number': { type: 'text', placeholder: '筛选关联订单编号' },
-          'payer_supplier_name': { type: 'text', placeholder: '筛选付款单位' },
-          'payee_supplier_name': { type: 'text', placeholder: '筛选收款单位' },
-          'current_payment_amount': { type: 'text', placeholder: '筛选本次付款金额' },
-          'invoice_amount': { type: 'text', placeholder: '筛选开票金额' },
-          'payment_status': {
-            type: 'select',
-            placeholder: '筛选付款状态',
-            options: [
-              { value: '', text: '全部状态' },
-              { value: 'pending', text: '待付款' },
-              { value: 'partial', text: '部分付款' },
-              { value: 'paid', text: '已付款' }
-            ]
-          },
-          'handler': { type: 'text', placeholder: '筛选经办人' },
-          'create_at': { type: 'date', placeholder: '筛选创建时间' }
         }
+      };
+
+      // 初始化筛选配置
+      CONFIG.FILTER_FIELDS = {
+        'id': { type: 'text', placeholder: '筛选ID' },
+        'pay_number': {
+          type: 'text',
+          placeholder: '筛选付款单编号',
+          source: CONFIG.API.PAY,
+          labelField: 'pay_number',
+          valueField: 'pay_number'
+        },
+        'order_number': {
+          type: 'text',
+          placeholder: '筛选关联订单编号',
+          source: CONFIG.API.ORDER,
+          labelField: 'order_number',
+          valueField: 'order_number'
+        },
+        'payer_supplier_name': {
+          type: 'text',
+          placeholder: '筛选付款单位',
+          source: window.location.origin + "/api/v1/payer/",
+          labelField: 'name',
+          valueField: 'name'
+        },
+        'payee_supplier_name': {
+          type: 'text',
+          placeholder: '筛选收款单位',
+          source: CONFIG.API.SUPPLIER,
+          labelField: 'name',
+          valueField: 'name'
+        },
+        'current_payment_amount': { type: 'text', placeholder: '筛选本次付款金额' },
+        'invoice_amount': { type: 'text', placeholder: '筛选开票金额' },
+        'payment_status': {
+          type: 'select',
+          placeholder: '筛选付款状态',
+          options: [
+            { value: '', text: '全部状态' },
+            { value: 'pending', text: '待付款' },
+            { value: 'partial', text: '部分付款' },
+            { value: 'paid', text: '已付款' }
+          ]
+        },
+        'handler': {
+          type: 'text',
+          placeholder: '筛选经办人',
+          source: CONFIG.API.PAY,
+          labelField: 'handler',
+          valueField: 'handler',
+          unique: true // 标记需要客户端去重
+        },
+        'create_at': { type: 'date', placeholder: '筛选创建时间' }
       };
 
       // ==================== 工具函数 ====================
@@ -889,12 +920,61 @@
                   }, 100);
                 })(field, $input);
               } else {
-                // 文本和数字字段
-                $input = $('<input type="' + config.type + '" class="layui-input filter-input" placeholder="' + config.placeholder + '" data-field="' + field + '" style="height: 28px; font-size: 12px; padding: 0 8px;">');
+                // 文本和数字字段，检查是否需要 Autocomplete (Source)
+                var listId = config.source ? 'list-' + field : null;
+                var listAttr = listId ? ' list="' + listId + '"' : '';
+
+                $input = $('<input type="' + config.type + '" class="layui-input filter-input" placeholder="' + config.placeholder + '" data-field="' + field + '"' + listAttr + ' style="height: 28px; font-size: 12px; padding: 0 8px;">');
+
                 if (filterParams[field]) {
                   $input.val(filterParams[field]);
                 }
                 $filterDiv.append($input);
+
+                // 如果有 source，添加 datalist 和事件
+                if (config.source) {
+                  var $datalist = $('<datalist id="' + listId + '"></datalist>');
+                  $filterDiv.append($datalist);
+
+                  // 绑定 focus 事件加载数据
+                  $input.on('focus', function () {
+                    var $thisDatalist = $('#' + listId);
+                    // 如果已经有数据，不再请求 (或者可以设置一个 flag 强制刷新)
+                    if ($thisDatalist.children().length > 0) return;
+
+                    $.ajax({
+                      url: config.source,
+                      type: 'GET',
+                      data: { limit: 1000 }, // 获取足够多的数据以供筛选
+                      headers: {
+                        Authorization: "Bearer " + localStorage.getItem("access_token"),
+                      },
+                      success: function (res) {
+                        if (res.code === 0 && res.data) {
+                          $thisDatalist.empty();
+                          var items = res.data;
+                          var validValues = new Set();
+
+                          items.forEach(function (item) {
+                            var val = item[config.valueField];
+                            // 过滤空值
+                            if (val) {
+                              // 如果需要唯一性去重
+                              if (config.unique) {
+                                if (validValues.has(val)) return;
+                                validValues.add(val);
+                              }
+
+                              var label = item[config.labelField] || val;
+                              // 避免重复 (datalist 本身不去重，但 Set 帮助我们在客户端去重)
+                              $thisDatalist.append('<option value="' + val + '">' + (label !== val ? label : '') + '</option>');
+                            }
+                          });
+                        }
+                      }
+                    });
+                  });
+                }
               }
 
               $th.append($filterDiv);
@@ -1132,32 +1212,43 @@
 
       // 加载供应商列表（用于付款单位和收款单位）
       function loadSuppliersForPay() {
+        // 1. 加载付款单位 (从 ums_payer)
+        $.ajax({
+          url: window.location.origin + "/api/v1/payer/",
+          type: "GET",
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("access_token"),
+          },
+          data: { limit: 1000 },
+          success: function (res) {
+            if (res.code === 0 && res.data) {
+              var html = '<option value="">请选择付款单位</option>';
+              res.data.forEach(function (payer) {
+                html += '<option value="' + payer.id + '">' + payer.name + '</option>';
+              });
+              $('#pay-info-form select[name="payer_supplier_id"]').html(html);
+              form.render('select');
+            }
+          }
+        });
+
+        // 2. 加载收款单位 (从 ums_supplier)
         $.ajax({
           url: window.location.origin + "/api/v1/supplier/",
           type: "GET",
           headers: {
             Authorization: "Bearer " + localStorage.getItem("access_token"),
           },
+          data: { limit: 1000 },
           success: function (res) {
             if (res.code === 0 && res.data) {
-              var html = '<option value="">请选择供应商</option>';
+              var html = '<option value="">请选择收款单位</option>';
               res.data.forEach(function (supplier) {
                 html += '<option value="' + supplier.id + '">' + supplier.name + '</option>';
               });
-              $('#pay-info-form select[name="payer_supplier_id"]').html(html);
               $('#pay-info-form select[name="payee_supplier_id"]').html(html);
               form.render('select');
-
-              if (res.data.length === 0) {
-                console.warn("加载供应商成功，但列表为空");
-              }
-            } else {
-              layer.msg(res.msg || '加载供应商列表失败', { icon: 2 });
             }
-          },
-          error: function (xhr, status, error) {
-            console.error("加载供应商失败:", error);
-            layer.msg('加载供应商失败: ' + (xhr.status || 'Unknown'), { icon: 2 });
           }
         });
       }
@@ -1679,7 +1770,7 @@
               curr: 1
             }
           });
-        }, 500);
+        }, 1200);
       });
 
     });

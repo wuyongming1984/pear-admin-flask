@@ -11,6 +11,7 @@ from .role import role_api
 from .supplier import supplier_api
 from .upload import upload_api
 from .user import user_api
+from .payer import payer_api
 
 def register_apis(app: Flask):
     apis = Blueprint("api", __name__, url_prefix="/api/v1")
@@ -26,5 +27,6 @@ def register_apis(app: Flask):
     apis.register_blueprint(pay_api)
     apis.register_blueprint(upload_api)
     apis.register_blueprint(attachment_api)
+    apis.register_blueprint(payer_api)
 
     app.register_blueprint(apis)

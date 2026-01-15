@@ -294,6 +294,76 @@ def import_orders(conn, content, mode='full'):
     return success
 
 
+def import_payers(conn, content, mode='full'):
+    print("\n📦 开始导入付款单位数据...")
+    cursor = conn.cursor()
+    
+    # 查找 base_payer_info 的 INSERT 语句
+    payer_inserts = []
+    lines = content.split('\n')
+    for line in lines:
+        if line.startswith("INSERT INTO `base_payer_info`"):
+            payer_inserts.append(line)
+            
+    if not payer_inserts:
+        print("⚠️ 未找到付款单位数据")
+        return
+
+    print(f"找到 {len(payer_inserts)} 条付款单位记录")
+    
+    # 获取现有付款单位ID
+    existing = set()
+    if mode == 'incremental':
+        cursor.execute("SELECT id FROM ums_payer")
+        existing = {row[0] for row in cursor.fetchall()}
+        
+    success = 0
+    errors = 0
+    skipped = 0
+    
+    for insert in payer_inserts:
+        values = parse_values(insert)
+        if not values or len(values) < 11:
+            errors += 1
+            continue
+            
+        # base_payer_info 字段顺序:
+        # 0:fkdwid, 1:fkdwlx, 2:fkdwmc, 3:fkdwyh, 4:fkdwyhzh, 
+        # 5:bz, 6:lrrydm, 7:lrsj, 8:xgrydm, 9:xgsj, 10:yxbz
+        
+        # 过滤无效记录
+        if values[10] == '0':
+             continue
+             
+        payer_id = int(values[0]) if values[0] else None
+        
+        if mode == 'incremental' and payer_id in existing:
+            skipped += 1
+            continue
+            
+        try:
+             cursor.execute("""
+                INSERT OR REPLACE INTO ums_payer
+                (id, type_id, name, bank_name, account_number, remark, create_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                payer_id,
+                int(values[1]) if values[1] and values[1].isdigit() else 1, # fkdwlx
+                values[2], # fkdwmc
+                values[3], # fkdwyh
+                values[4], # fkdwyhzh
+                values[5], # bz
+                values[7] or datetime.now().strftime("%Y-%m-%d %H:%M:%S") # lrsj
+            ))
+             success += 1
+        except Exception as e:
+            print(f"导入出错 ID {values[0]}: {e}")
+            errors += 1
+            
+    conn.commit()
+    print(f"✅ 付款单位导入完成: 成功 {success}, 跳过 {skipped}, 错误 {errors}")
+
+
 def import_pays(conn, content, mode='full'):
     """导入付款单数据"""
     print("\n" + "="*60)
@@ -333,6 +403,10 @@ def import_pays(conn, content, mode='full'):
     # 获取有效供应商
     cursor.execute("SELECT id FROM ums_supplier")
     supplier_ids = {row[0] for row in cursor.fetchall()}
+    
+    # 获取有效付款单位
+    cursor.execute("SELECT id FROM ums_payer")
+    payer_ids = {row[0] for row in cursor.fetchall()}
     
     success, errors, skipped = 0, 0, 0
     existing_numbers = set()
@@ -374,8 +448,10 @@ def import_pays(conn, content, mode='full'):
         
         new_order_id = order_mapping[order_number]
         
-        # 供应商ID
-        payer_id = int(values[7]) if values[7] and values[7].isdigit() and int(values[7]) in supplier_ids else None
+        # 付款单位ID (values[7]) -> 对应 ums_payer
+        payer_id = int(values[7]) if values[7] and values[7].isdigit() and int(values[7]) in payer_ids else None
+        
+        # 收款单位ID (values[8]) -> 对应 ums_supplier
         payee_id = int(values[8]) if values[8] and values[8].isdigit() and int(values[8]) in supplier_ids else None
         
         try:
@@ -432,13 +508,14 @@ def main():
     parser.add_argument('--suppliers', action='store_true', help='只导入供应商')
     parser.add_argument('--projects', action='store_true', help='只导入项目')
     parser.add_argument('--orders', action='store_true', help='只导入订单')
+    parser.add_argument('--payers', action='store_true', help='只导入付款单位')
     parser.add_argument('--pays', action='store_true', help='只导入付款单')
     parser.add_argument('--incremental', action='store_true', help='增量更新模式')
     
     args = parser.parse_args()
     
     # 默认全量导入
-    if not any([args.all, args.suppliers, args.projects, args.orders, args.pays]):
+    if not any([args.all, args.suppliers, args.projects, args.orders, args.payers, args.pays]):
         args.all = True
     
     mode = 'incremental' if args.incremental else 'full'
@@ -464,6 +541,9 @@ def main():
         if args.all or args.suppliers:
             import_suppliers(conn, content, mode)
         
+        if args.all or args.payers:
+            import_payers(conn, content, mode)
+
         if args.all or args.projects:
             import_projects(conn, content, mode)
         

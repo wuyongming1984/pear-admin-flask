@@ -19,12 +19,12 @@ class PayORM(BaseORM):
         comment="关联订单ID"
     )
     
-    # 付款单位 - 关联供应商ID
+    # 付款单位 - 关联付款单位表
     payer_supplier_id = db.Column(
         db.Integer,
-        db.ForeignKey("ums_supplier.id", ondelete="SET NULL"),
+        db.ForeignKey("ums_payer.id", ondelete="SET NULL"),
         nullable=True,
-        comment="付款单位（关联供应商ID）"
+        comment="付款单位（关联付款单位ID）"
     )
     
     # 收款单位 - 关联供应商ID
@@ -59,10 +59,10 @@ class PayORM(BaseORM):
 
     # 关系属性
     order = db.relationship("OrderORM", backref="pays", lazy="select")
-    payer_supplier = db.relationship(
-        "SupplierORM",
+    payer = db.relationship(
+        "PayerORM",
         foreign_keys=[payer_supplier_id],
-        backref="payer_pays",
+        backref="pays",
         lazy="select"
     )
     payee_supplier = db.relationship(
@@ -90,7 +90,7 @@ class PayORM(BaseORM):
             "order_id": self.order_id,
             "order_number": self.order.order_number if self.order else None,
             "payer_supplier_id": self.payer_supplier_id,
-            "payer_supplier_name": self.payer_supplier.name if self.payer_supplier else None,
+            "payer_supplier_name": self.payer.name if self.payer else None,
             "payee_supplier_id": self.payee_supplier_id,
             "payee_supplier_name": self.payee_supplier.name if self.payee_supplier else None,
             "payment_purpose": self.payment_purpose,

@@ -6,7 +6,7 @@ from flask_jwt_extended import jwt_required
 from flask_sqlalchemy.pagination import Pagination
 
 from pear_admin.extensions import db
-from pear_admin.orms import PayORM, OrderORM, SupplierORM
+from pear_admin.orms import PayORM, OrderORM, SupplierORM, PayerORM
 
 pay_api = Blueprint("pay", __name__, url_prefix="/pay")
 
@@ -47,8 +47,8 @@ def pay_list():
     if payer_supplier_id:
         q = q.where(PayORM.payer_supplier_id == payer_supplier_id)
     if payer_supplier_name:
-        # 通过付款单位名称筛选
-        subquery = db.select(SupplierORM.id).filter(SupplierORM.name.like(f"%{payer_supplier_name}%")).scalar_subquery()
+        # 通过付款单位名称筛选 (使用 PayerORM)
+        subquery = db.select(PayerORM.id).filter(PayerORM.name.like(f"%{payer_supplier_name}%")).scalar_subquery()
         q = q.where(PayORM.payer_supplier_id.in_(subquery))
     if payee_supplier_id:
         q = q.where(PayORM.payee_supplier_id == payee_supplier_id)

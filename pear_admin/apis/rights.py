@@ -19,9 +19,13 @@ def rights_list():
 @jwt_required()
 def create_rights():
     data = request.get_json()
-    if not data["pid"]:
+    if "id" in data:
+        del data["id"]
+    if not data.get("pid"):
         data["pid"] = 0
-    if not data["sort"]:
+    if not data.get("sort"):
+        data["sort"] = 0
+    else:
         data["sort"] = int(data["sort"])
     rights_obj = RightsORM(**data)
     rights_obj.save()

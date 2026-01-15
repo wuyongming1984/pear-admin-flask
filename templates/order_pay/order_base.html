@@ -1240,13 +1240,53 @@
           // 所有可筛选的字段配置
           var filterConfig = {
             'id': { type: 'text', placeholder: '筛选ID' },
-            'order_number': { type: 'text', placeholder: '筛选订单编号' },
-            'material_name': { type: 'text', placeholder: '筛选材料名称' },
-            'project_name': { type: 'text', placeholder: '筛选项目名称' },
-            'supplier_name': { type: 'text', placeholder: '筛选供应商' },
-            'supplier_contact_person': { type: 'text', placeholder: '筛选供应商联系人' },
+            'order_number': {
+              type: 'text',
+              placeholder: '筛选订单编号',
+              source: window.location.origin + "/api/v1/order/",
+              labelField: 'order_number',
+              valueField: 'order_number',
+              unique: true
+            },
+            'material_name': {
+              type: 'text',
+              placeholder: '筛选材料名称',
+              source: window.location.origin + "/api/v1/order/",
+              labelField: 'material_name',
+              valueField: 'material_name',
+              unique: true
+            },
+            'project_name': {
+              type: 'text',
+              placeholder: '筛选项目名称',
+              source: window.location.origin + "/api/v1/project/",
+              labelField: 'project_name',
+              valueField: 'project_name'
+            },
+            'supplier_name': {
+              type: 'text',
+              placeholder: '筛选供应商',
+              source: window.location.origin + "/api/v1/supplier/",
+              labelField: 'name',
+              valueField: 'name'
+            },
+            'supplier_contact_person': {
+              type: 'text',
+              placeholder: '筛选供应商联系人',
+              source: window.location.origin + "/api/v1/supplier/",
+              labelField: 'contact_person',
+              valueField: 'contact_person',
+              unique: true
+            },
             'order_amount': { type: 'text', placeholder: '筛选订单金额' },
-            'material_manager': { type: 'text', placeholder: '筛选材料负责人' }
+            'material_manager': {
+              type: 'text',
+              placeholder: '筛选材料负责人',
+              source: window.location.origin + "/api/v1/order/",
+              labelField: 'material_manager',
+              valueField: 'material_manager',
+              unique: true
+            }
           };
 
           Object.keys(filterConfig).forEach(function (field) {
@@ -1284,12 +1324,59 @@
                   });
                 }, 50);
               } else {
-                // 文本和数字字段
-                $input = $('<input type="' + config.type + '" class="layui-input filter-input" placeholder="' + config.placeholder + '" data-field="' + field + '" style="height: 28px; font-size: 12px; padding: 0 8px;">');
+                // 文本和数字字段，检查是否需要 Autocomplete (Source)
+                var listId = config.source ? 'list-' + field : null;
+                var listAttr = listId ? ' list="' + listId + '"' : '';
+
+                $input = $('<input type="' + config.type + '" class="layui-input filter-input" placeholder="' + config.placeholder + '" data-field="' + field + '"' + listAttr + ' style="height: 28px; font-size: 12px; padding: 0 8px;">');
                 if (filterParams[field]) {
                   $input.val(filterParams[field]);
                 }
                 $filterDiv.append($input);
+
+                // 如果有 source，添加 datalist 和事件
+                if (config.source) {
+                  var $datalist = $('<datalist id="' + listId + '"></datalist>');
+                  $filterDiv.append($datalist);
+
+                  // 绑定 focus 事件加载数据
+                  $input.on('focus', function () {
+                    var $thisDatalist = $('#' + listId);
+                    // 如果已经有数据，不再请求
+                    if ($thisDatalist.children().length > 0) return;
+
+                    $.ajax({
+                      url: config.source,
+                      type: 'GET',
+                      data: { limit: 1000 }, // 获取足够多的数据
+                      headers: {
+                        Authorization: "Bearer " + localStorage.getItem("access_token"),
+                      },
+                      success: function (res) {
+                        if (res.code === 0 && res.data) {
+                          $thisDatalist.empty();
+                          var items = res.data;
+                          var validValues = new Set();
+
+                          items.forEach(function (item) {
+                            var val = item[config.valueField];
+                            // 过滤空值
+                            if (val) {
+                              // 如果需要唯一性去重
+                              if (config.unique) {
+                                if (validValues.has(val)) return;
+                                validValues.add(val);
+                              }
+
+                              var label = item[config.labelField] || val;
+                              $thisDatalist.append('<option value="' + val + '">' + (label !== val ? label : '') + '</option>');
+                            }
+                          });
+                        }
+                      }
+                    });
+                  });
+                }
               }
 
               $th.append($filterDiv);
@@ -2420,7 +2507,7 @@
               curr: 1
             }
           });
-        }, 500);
+        }, 1200);
       });
 
       // 取消按钮事件

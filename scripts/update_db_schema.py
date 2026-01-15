@@ -13,6 +13,13 @@ from sqlalchemy import text, inspect
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Force import of all ORMs to ensure they are registered with SQLAlchemy
+from pear_admin import orms
+
+# Set env to prod to match docker environment if not set
+if not os.getenv("FLASK_ENV"):
+    os.environ["FLASK_ENV"] = "prod"
+
 app = create_app()
 
 def table_exists(table_name, connection):
@@ -30,6 +37,9 @@ def column_exists(table_name, column_name, connection):
 def migrate():
     logger.info("Starting database schema update...")
     with app.app_context():
+        # Log which DB we are connecting to
+        logger.info(f"Connecting to database: {app.config.get('SQLALCHEMY_DATABASE_URI')}")
+        
         # Get connection
         conn = db.engine.connect()
         try:

@@ -87,14 +87,17 @@ class OrderORM(BaseORM):
             # 通过 backref 获取关联的付款单
             if hasattr(self, 'pays') and self.pays:
                 for pay in self.pays:
-                    # 计算付款单金额合计
+                    # 计算付款单金额合计 - 处理可能的bytes类型
                     if pay.current_payment_amount:
-                        total_payment_amount += float(pay.current_payment_amount)
+                        amount_val = pay.current_payment_amount
+                        if isinstance(amount_val, bytes):
+                            amount_val = amount_val.decode('utf-8')
+                        total_payment_amount += float(amount_val)
                     
                     pays_list.append({
                         "id": pay.id,
                         "pay_number": pay.pay_number,
-                        "current_payment_amount": str(pay.current_payment_amount) if pay.current_payment_amount else None,
+                        "current_payment_amount": format_amount(pay.current_payment_amount),
                         "payment_status": pay.payment_status,
                         "handler": pay.handler,
                         "payer_supplier_name": pay.payer.name if pay.payer else None,

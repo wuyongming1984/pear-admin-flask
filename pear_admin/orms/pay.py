@@ -84,6 +84,15 @@ class PayORM(BaseORM):
             else:
                 return str(datetime_field)
         
+        # 处理数值字段 - 可能是Decimal、bytes或其他类型
+        def format_numeric(numeric_field):
+            if numeric_field is None:
+                return None
+            if isinstance(numeric_field, bytes):
+                return numeric_field.decode('utf-8')
+            else:
+                return str(numeric_field)
+        
         return {
             "id": self.id,
             "pay_number": self.pay_number,
@@ -94,8 +103,8 @@ class PayORM(BaseORM):
             "payee_supplier_id": self.payee_supplier_id,
             "payee_supplier_name": self.payee_supplier.name if self.payee_supplier else None,
             "payment_purpose": self.payment_purpose,
-            "current_payment_amount": str(self.current_payment_amount) if self.current_payment_amount else None,
-            "invoice_amount": str(self.invoice_amount) if self.invoice_amount else None,
+            "current_payment_amount": format_numeric(self.current_payment_amount),
+            "invoice_amount": format_numeric(self.invoice_amount),
             "payment_status": self.payment_status,
             "handler": self.handler,
             "create_at": format_datetime(self.create_at),

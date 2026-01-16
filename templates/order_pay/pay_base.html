@@ -355,140 +355,7 @@
   </div>
 
   <!-- 付款单弹窗容器（参照 pay_info.html 样式） -->
-  <div id="pay-info-wrapper" style="display: none;">
-    <div class="order-form-container" style="padding: 20px; background: #fff; max-width: 1200px; margin: 0 auto;">
-      <!-- 表单标题 -->
-      <div class="form-title">付款单</div>
-
-      <!-- 订单信息摘要部分 -->
-      <div class="order-summary-section"
-        style="border: 1px solid #000; padding: 15px; margin-bottom: 20px; background: #f9f9f9;">
-        <div class="order-summary-title"
-          style="text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 15px;">订单信息摘要</div>
-        <div style="margin-bottom: 15px;">
-          <label style="min-width: 120px; display: inline-block; text-align: right; margin-right: 10px;">选择订单：</label>
-          <select id="select-order-id" lay-search lay-filter="select-order"
-            style="width: 300px; border: 1px solid #000; padding: 5px 8px; height: 32px;">
-            <option value="">请选择订单</option>
-          </select>
-        </div>
-        <div class="order-summary-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px 30px;">
-          <div class="order-summary-item" style="display: flex; align-items: center;">
-            <label style="min-width: 120px; text-align: right; margin-right: 10px; font-weight: normal;">关联订单编号：</label>
-            <input type="text" class="layui-input" id="pay-order-number" readonly
-              style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px; background: #f5f5f5;" />
-          </div>
-          <div class="order-summary-item" style="display: flex; align-items: center;">
-            <label style="min-width: 120px; text-align: right; margin-right: 10px; font-weight: normal;">项目名称：</label>
-            <input type="text" class="layui-input" id="pay-project-name" readonly
-              style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px; background: #f5f5f5;" />
-          </div>
-          <div class="order-summary-item" style="display: flex; align-items: center;">
-            <label style="min-width: 120px; text-align: right; margin-right: 10px; font-weight: normal;">材料名称：</label>
-            <input type="text" class="layui-input" id="pay-material-name" readonly
-              style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px; background: #f5f5f5;" />
-          </div>
-          <div class="order-summary-item" style="display: flex; align-items: center;">
-            <label style="min-width: 120px; text-align: right; margin-right: 10px; font-weight: normal;">供应商：</label>
-            <input type="text" class="layui-input" id="pay-supplier-name" readonly
-              style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px; background: #f5f5f5;" />
-          </div>
-          <div class="order-summary-item full-width"
-            style="grid-column: 1 / -1; display: flex; align-items: flex-start;">
-            <label
-              style="min-width: 120px; text-align: right; margin-right: 10px; font-weight: normal; padding-top: 5px;">订单金额：</label>
-            <input type="text" class="layui-input" id="pay-order-amount" readonly
-              style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px; background: #f5f5f5;" />
-          </div>
-        </div>
-      </div>
-
-      <!-- 付款单表单 -->
-      <div class="section-title"
-        style="text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0 15px 0; padding: 8px 0; border-top: 1px solid #000; border-bottom: 1px solid #000;">
-        付款单信息</div>
-      <form class="layui-form" lay-filter="pay-info-form" id="pay-info-form">
-        <input type="hidden" name="id" value="0" />
-        <input type="hidden" name="order_id" id="pay-order-id" />
-        <div style="border: 1px solid #000; padding: 15px; margin-bottom: 20px;">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px 30px;">
-            <div style="display: flex; align-items: center;">
-              <label style="min-width: 120px; text-align: right; margin-right: 10px;">付款单编号：</label>
-              <input type="text" name="pay_number" placeholder="自动生成" lay-verify="required"
-                style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px;" />
-            </div>
-            <div style="display: flex; align-items: center;">
-              <label style="min-width: 120px; text-align: right; margin-right: 10px;">付款单位：</label>
-              <select name="payer_supplier_id" lay-search lay-verify="required"
-                style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px;">
-                <option value="">请选择付款单位</option>
-              </select>
-            </div>
-            <div style="display: flex; align-items: center;">
-              <label style="min-width: 120px; text-align: right; margin-right: 10px;">收款单位：</label>
-              <select name="payee_supplier_id" lay-filter="payee_supplier_change" lay-search lay-verify="required"
-                style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px;">
-                <option value="">请选择收款单位</option>
-              </select>
-            </div>
-            <div style="display: flex; align-items: center;">
-              <label style="min-width: 120px; text-align: right; margin-right: 10px;">联系人：</label>
-              <input type="text" id="payee-contact-person" readonly
-                style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px; background-color: #f5f5f5;" />
-            </div>
-            <div style="display: flex; align-items: center;">
-              <label style="min-width: 120px; text-align: right; margin-right: 10px;">联系电话：</label>
-              <input type="text" id="payee-phone" readonly
-                style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px; background-color: #f5f5f5;" />
-            </div>
-            <div style="display: flex; align-items: center;">
-              <label style="min-width: 120px; text-align: right; margin-right: 10px;">开户行名称：</label>
-              <input type="text" id="payee-bank-name" readonly
-                style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px; background-color: #f5f5f5;" />
-            </div>
-            <div style="display: flex; align-items: center;">
-              <label style="min-width: 120px; text-align: right; margin-right: 10px;">开户行账号：</label>
-              <input type="text" id="payee-account-number" readonly
-                style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px; background-color: #f5f5f5;" />
-            </div>
-            <div style="display: flex; align-items: center;">
-              <label style="min-width: 120px; text-align: right; margin-right: 10px;">本次付款金额：</label>
-              <input type="number" name="current_payment_amount" placeholder="请输入本次付款金额" step="0.01" min="0"
-                lay-verify="required" style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px;" />
-            </div>
-            <div style="display: flex; align-items: center;">
-              <label style="min-width: 120px; text-align: right; margin-right: 10px;">开票金额：</label>
-              <input type="number" name="invoice_amount" placeholder="请输入开票金额" step="0.01" min="0"
-                style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px;" />
-            </div>
-            <div style="display: flex; align-items: center;">
-              <label style="min-width: 120px; text-align: right; margin-right: 10px;">付款状态：</label>
-              <select name="payment_status" style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px;">
-                <option value="">请选择付款状态</option>
-              </select>
-            </div>
-            <div style="display: flex; align-items: center;">
-              <label style="min-width: 120px; text-align: right; margin-right: 10px;">经办人：</label>
-              <input type="text" name="handler" placeholder="请输入经办人"
-                style="flex: 1; border: 1px solid #000; padding: 5px 8px; height: 32px;" />
-            </div>
-            <div class="full-width" style="grid-column: 1 / -1; display: flex; align-items: flex-start;">
-              <label style="min-width: 120px; text-align: right; margin-right: 10px; padding-top: 5px;">付款用途：</label>
-              <textarea name="payment_purpose" placeholder="请输入付款用途"
-                style="flex: 1; border: 1px solid #000; padding: 8px; min-height: 80px; resize: vertical;"></textarea>
-            </div>
-          </div>
-        </div>
-
-        <!-- 表单操作按钮 -->
-        <div class="form-actions"
-          style="margin-top: 30px; padding: 20px 0; text-align: center; border-top: 1px solid #e6e6e6;">
-          <button type="button" class="layui-btn layui-btn-primary" id="pay-info-cancel-btn">取消</button>
-          <button type="submit" class="layui-btn" lay-submit lay-filter="pay-info-form-btn">确定</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <!-- 已替换为 iframe 加载 pay_info.html，不再需要 pay_form.html -->
 
   <script type="text/html" id="pay-toolbar">
       <div class="layui-btn-container">
@@ -1025,6 +892,24 @@
                     });
                   });
                 }
+
+                // 绑定 input 事件，更新 filterParams 并触发后端筛选
+                (function (currentField) {
+                  $input.on('input change', function () {
+                    var value = $(this).val().trim();
+                    if (value) {
+                      filterParams[currentField] = value;
+                    } else {
+                      delete filterParams[currentField];
+                    }
+                    clearTimeout(filterTimer);
+                    filterTimer = setTimeout(function () {
+                      reloadTable({
+                        page: { curr: 1 }
+                      });
+                    }, 500); // 500ms 防抖
+                  });
+                })(field);
               }
 
               $th.append($filterDiv);
@@ -1326,7 +1211,7 @@
       }
 
       // 打印付款单函数
-      function printPay(payData, orderData) {
+      function printPay(payData, orderData, supplierData) {
         // 创建打印内容，样式与订单维护中的打印付款单一致
         var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>付款单打印</title>';
         printContent += '<style>';
@@ -1405,14 +1290,35 @@
         printContent += '<tr>';
         printContent += '<td class="label">收款单位</td>';
         printContent += '<td class="value">' + (payData.payee_supplier_name || '-') + '</td>';
-        printContent += '<td class="label">本次付款金额</td>';
-        printContent += '<td class="value">¥' + (payData.current_payment_amount ? parseFloat(payData.current_payment_amount).toFixed(2) : '0.00') + '</td>';
-        printContent += '</tr>';
-        printContent += '<tr>';
-        printContent += '<td class="label">开票金额</td>';
-        printContent += '<td class="value">¥' + (payData.invoice_amount ? parseFloat(payData.invoice_amount).toFixed(2) : '0.00') + '</td>';
         printContent += '<td class="label">付款状态</td>';
         printContent += '<td class="value">' + paymentStatusText + '</td>';
+        printContent += '</tr>';
+
+        // 新增：联系人与电话
+        var contactPerson = supplierData ? (supplierData.contact_person || '-') : '-';
+        var contactPhone = supplierData ? (supplierData.phone || '-') : '-';
+        printContent += '<tr>';
+        printContent += '<td class="label">联系人</td>';
+        printContent += '<td class="value">' + contactPerson + '</td>';
+        printContent += '<td class="label">联系电话</td>';
+        printContent += '<td class="value">' + contactPhone + '</td>';
+        printContent += '</tr>';
+
+        // 新增：开户行与账号
+        var bankName = supplierData ? (supplierData.bank_name || '-') : '-';
+        var bankAccount = supplierData ? (supplierData.account_number || '-') : '-';
+        printContent += '<tr>';
+        printContent += '<td class="label">开户行名称</td>';
+        printContent += '<td class="value">' + bankName + '</td>';
+        printContent += '<td class="label">开户行账号</td>';
+        printContent += '<td class="value">' + bankAccount + '</td>';
+        printContent += '</tr>';
+
+        printContent += '<tr>';
+        printContent += '<td class="label">本次付款金额</td>';
+        printContent += '<td class="value">¥' + (payData.current_payment_amount ? parseFloat(payData.current_payment_amount).toFixed(2) : '0.00') + '</td>';
+        printContent += '<td class="label">开票金额</td>';
+        printContent += '<td class="value">¥' + (payData.invoice_amount ? parseFloat(payData.invoice_amount).toFixed(2) : '0.00') + '</td>';
         printContent += '</tr>';
         printContent += '<tr>';
         printContent += '<td class="label">经办人</td>';
@@ -1483,79 +1389,19 @@
         if (obj.event === 'pay-tool-edit') {
           console.log('编辑付款单按钮被点击', data);
 
-          // 重置表单
-          $('#pay-info-form')[0].reset();
+          // Build URL with payment_id and optional order_id
+          var payUrl = '/order_pay/info/pay_info.html?payment_id=' + data.id +
+            (data.order_id ? '&order_id=' + data.order_id : '');
 
-          // 填充付款单数据
-          form.val("pay-info-form", {
-            id: data.id,
-            pay_number: data.pay_number,
-            order_id: data.order_id,
-            payer_supplier_id: data.payer_supplier_id,
-            payee_supplier_id: data.payee_supplier_id,
-            current_payment_amount: data.current_payment_amount,
-            invoice_amount: data.invoice_amount,
-            payment_status: data.payment_status,
-            handler: data.handler,
-            payment_purpose: data.payment_purpose
-          });
-
-          // 设置订单ID
-          $('#pay-order-id').val(data.order_id || '');
-
-          // 加载订单和供应商列表
-          loadOrders();
-          loadSuppliersForPay();
-
-          // 如果有关联订单，加载订单信息
-          if (data.order_id) {
-            loadOrderInfoForPay(data.order_id);
-            // 设置订单选择框的值
-            setTimeout(function () {
-              $('#select-order-id').val(data.order_id);
-              form.render('select');
-            }, 300);
-          } else {
-            // 如果没有关联订单，显示订单编号（如果有）
-            $('#pay-order-number').val(data.order_number || '');
-            $('#pay-project-name').val('');
-            $('#pay-material-name').val('');
-            $('#pay-supplier-name').val('');
-            $('#pay-order-amount').val('');
-          }
-
-          // 加载付款状态列表，然后设置供应商下拉框和付款状态的值
-          loadPaymentStatuses();
-          loadSuppliersForPay();
-          setTimeout(function () {
-            if (data.payer_supplier_id) {
-              $('#pay-info-form select[name="payer_supplier_id"]').val(data.payer_supplier_id);
-            }
-            if (data.payee_supplier_id) {
-              $('#pay-info-form select[name="payee_supplier_id"]').val(data.payee_supplier_id);
-            }
-            // 设置付款状态
-            if (data.payment_status) {
-              $('#pay-info-form select[name="payment_status"]').val(data.payment_status);
-            }
-            form.render('select');
-          }, 400);
-
-          // 使用 layer 弹窗显示表单
           layer.open({
-            type: 1,
+            type: 2,
             title: '编辑付款单',
-            closeBtn: 1,
-            shadeClose: true,
-            shade: false,  // 不显示遮罩层
+            shade: 0.1,
             area: ['90%', '90%'],
-            content: $("#pay-info-wrapper"),
-            success: function (layero, index) {
-              $("#pay-info-wrapper").show();
-              form.render();
-            },
+            content: payUrl,
             end: function () {
-              $("#pay-info-wrapper").hide();
+              // Reload table when the iframe closes (in case of changes)
+              reloadTable();
             }
           });
         } else if (obj.event === 'order-tool-pay') {
@@ -1568,32 +1414,55 @@
         } else if (obj.event === 'pay-tool-print') {
           // 打印付款单
           var payData = data;
+          var orderData = null;
+          var supplierData = null;
 
-          // 如果有关联订单ID，加载订单信息
-          if (payData.order_id) {
-            $.ajax({
-              url: window.location.origin + `/api/v1/order/${payData.order_id}`,
-              type: 'GET',
-              headers: {
-                Authorization: "Bearer " + localStorage.getItem("access_token"),
-              },
-              success: function (orderRes) {
-                if (orderRes.code === 0 && orderRes.data) {
-                  printPay(payData, orderRes.data);
-                } else {
-                  // 如果获取订单信息失败，仍然打印付款单（不显示订单信息摘要）
-                  printPay(payData, null);
+          // 使用 Promise 链式调用，以便支持 fallback 逻辑
+          var fetchOrder = function () {
+            var def = $.Deferred();
+            if (payData.order_id) {
+              $.ajax({
+                url: window.location.origin + `/api/v1/order/${payData.order_id}`,
+                type: 'GET',
+                headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+                success: function (res) {
+                  if (res.code === 0) orderData = res.data;
+                  def.resolve();
+                },
+                error: function () { def.resolve(); }
+              });
+            } else {
+              def.resolve();
+            }
+            return def.promise();
+          };
+
+          fetchOrder().then(function () {
+            var supplierId = payData.payee_supplier_id;
+            // Fallback: 如果付款单没有记录收款单位，尝试使用订单的供应商
+            if (!supplierId && orderData && orderData.supplier_id) {
+              console.log('Using Order Supplier ID as fallback:', orderData.supplier_id);
+              supplierId = orderData.supplier_id;
+            }
+
+            if (supplierId) {
+              $.ajax({
+                url: window.location.origin + `/api/v1/supplier/${supplierId}`,
+                type: 'GET',
+                headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+                success: function (res) {
+                  if (res.code === 0) supplierData = res.data;
+                  printPay(payData, orderData, supplierData);
+                },
+                error: function () {
+                  // 即使获取失败，也尝试打印（没有供应商详情）
+                  printPay(payData, orderData, null);
                 }
-              },
-              error: function () {
-                // 如果获取订单信息失败，仍然打印付款单（不显示订单信息摘要）
-                printPay(payData, null);
-              }
-            });
-          } else {
-            // 没有订单ID，直接打印付款单
-            printPay(payData, null);
-          }
+              });
+            } else {
+              printPay(payData, orderData, null);
+            }
+          });
         } else if (obj.event === 'pay-tool-del') {
           layer.confirm('确定要删除这个付款单吗？', { icon: 3, title: '提示' }, function (confirmIndex) {
             $.ajax({

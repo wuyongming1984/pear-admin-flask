@@ -57,11 +57,8 @@ def order_list():
         )
         q = q.where(OrderORM.supplier_id.in_(supplier_subquery))
     if supplier_contact_person:
-        # 通过供应商联系人关联查询
-        supplier_contact_subquery = db.select(SupplierORM.id).where(
-            SupplierORM.contact_person.like(f"%{supplier_contact_person}%")
-        )
-        q = q.where(OrderORM.supplier_id.in_(supplier_contact_subquery))
+        # 直接查询订单表的供应商联系人字段
+        q = q.where(OrderORM.supplier_contact_person.like(f"%{supplier_contact_person}%"))
     if contact_phone:
         q = q.where(OrderORM.contact_phone.like(f"%{contact_phone}%"))
     if cutting_time:

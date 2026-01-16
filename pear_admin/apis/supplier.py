@@ -62,6 +62,15 @@ def supplier_list():
     }
 
 
+@supplier_api.get("/<int:sid>")
+@jwt_required()
+def get_supplier(sid):
+    supplier = SupplierORM.query.get(sid)
+    if not supplier:
+        return {"code": -1, "msg": "供应商不存在"}
+    return {"code": 0, "msg": "获取供应商成功", "data": supplier.json()}
+
+
 @supplier_api.post("/")
 @jwt_required()
 def create_supplier():
@@ -105,4 +114,3 @@ def del_supplier(sid):
     
     supplier_obj.delete()
     return {"code": 0, "msg": "删除供应商成功"}
-

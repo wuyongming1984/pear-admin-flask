@@ -1,6 +1,20 @@
 from datetime import datetime
 from pear_admin.extensions import db
 
+
+def format_datetime(dt_field):
+    """格式化日期时间字段，兼容 SQLite 和 MySQL"""
+    if dt_field is None:
+        return None
+    if isinstance(dt_field, bytes):
+        # MySQL 有时返回 bytes 类型
+        return dt_field.decode('utf-8')
+    elif hasattr(dt_field, 'strftime'):
+        return dt_field.strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        return str(dt_field)
+
+
 class DictionaryORM(db.Model):
     __tablename__ = 'base_dic'
     
@@ -22,8 +36,8 @@ class DictionaryORM(db.Model):
             'code': self.code,
             'name': self.name,
             'valid_mark': self.valid_mark,
-            'create_time': self.create_time.strftime('%Y-%m-%d %H:%M:%S') if self.create_time else None,
-            'update_time': self.update_time.strftime('%Y-%m-%d %H:%M:%S') if self.update_time else None
+            'create_time': format_datetime(self.create_time),
+            'update_time': format_datetime(self.update_time)
         }
 
 class DictionaryDetailORM(db.Model):
@@ -48,6 +62,7 @@ class DictionaryDetailORM(db.Model):
             'value': self.value,
             'order_no': self.order_no,
             'valid_mark': self.valid_mark,
-            'create_time': self.create_time.strftime('%Y-%m-%d %H:%M:%S') if self.create_time else None,
-            'update_time': self.update_time.strftime('%Y-%m-%d %H:%M:%S') if self.update_time else None
+            'create_time': format_datetime(self.create_time),
+            'update_time': format_datetime(self.update_time)
         }
+

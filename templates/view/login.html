@@ -6,70 +6,336 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>SF订单管理系统</title>
   <link rel="stylesheet" href="/static/component/pear/css/pear.css" />
-  <link rel="stylesheet" href="/static/admin/css/other/login.css" />
-  <link rel="stylesheet" href="/static/admin/css/variables.css" />
+  <!-- Removed old login.css and variables.css to avoid conflicts -->
+  <style>
+    /* ==================== Luminous Depth Design System ==================== */
+    :root {
+      --primary-600: #2563eb;
+      --primary-500: #3b82f6;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-400: #94a3b8;
+      --white: #ffffff;
+      --radius-lg: 12px;
+      --radius-md: 8px;
+      --error-color: #ef4444;
+      --success-color: #22c55e;
+    }
+
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+    }
+
+    .login-container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Left Panel - Brand Aesthetic */
+    .brand-section {
+      flex: 1;
+      background: linear-gradient(135deg, var(--slate-900) 0%, #1e1b4b 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px;
+      position: relative;
+      overflow: hidden;
+      color: var(--white);
+    }
+
+    /* Abstract Shapes Decor */
+    .brand-section::before {
+      content: '';
+      position: absolute;
+      top: -10%;
+      left: -10%;
+      width: 50%;
+      height: 50%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+      filter: blur(60px);
+      z-index: 1;
+    }
+
+    .brand-section::after {
+      content: '';
+      position: absolute;
+      bottom: -10%;
+      right: -10%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
+      filter: blur(80px);
+      z-index: 1;
+    }
+
+    .brand-content {
+      position: relative;
+      z-index: 10;
+      max-width: 600px;
+    }
+
+    .brand-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      margin-bottom: 32px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .brand-title {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      background: linear-gradient(to right, #ffffff, #94a3b8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-desc {
+      font-size: 18px;
+      color: var(--slate-400);
+      line-height: 1.6;
+      max-width: 80%;
+    }
+
+    /* Right Panel - Login Form */
+    .form-section {
+      flex: 1;
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .login-wrapper {
+      width: 100%;
+      max-width: 440px;
+      padding: 40px;
+      /* Optional: Card effect on large screens if desired, but clean split is better */
+    }
+
+    .form-header {
+      margin-bottom: 40px;
+      text-align: left;
+    }
+
+    .form-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: 8px;
+    }
+
+    .form-subtitle {
+      color: var(--slate-400);
+      font-size: 14px;
+    }
+
+    /* Form Elements Override */
+    .layui-form-item {
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .layui-input-wrap {
+      position: relative;
+    }
+
+    .layui-input-prefix {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--slate-400);
+      z-index: 10;
+    }
+
+    .layui-input-prefix i {
+      font-size: 18px;
+    }
+
+    .layui-input {
+      height: 48px !important;
+      line-height: 48px !important;
+      padding-left: 48px !important;
+      /* Space for icon */
+      padding-right: 16px !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: var(--radius-md) !important;
+      font-size: 15px !important;
+      color: var(--slate-800) !important;
+      transition: all 0.2s ease;
+      background-color: #f8fafc;
+    }
+
+    .layui-input:focus {
+      border-color: var(--primary-500) !important;
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      outline: none;
+    }
+
+    .layui-input::placeholder {
+      color: #94a3b8;
+    }
+
+    .layui-btn {
+      height: 48px !important;
+      line-height: 48px !important;
+      border-radius: var(--radius-md) !important;
+      font-size: 16px !important;
+      font-weight: 600 !important;
+      background: var(--primary-600) !important;
+      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+      transition: all 0.2s;
+    }
+
+    .layui-btn:hover {
+      background: var(--primary-500) !important;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+    }
+
+    /* Checkbox Customization */
+    .remember-passsword {
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+    }
+
+    .layui-form-checkbox[lay-skin=primary] span {
+      color: var(--slate-400);
+      font-size: 14px;
+    }
+
+    .other-login {
+      margin-top: 32px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--slate-400);
+    }
+
+    .other-login a {
+      color: var(--primary-600);
+      font-weight: 500;
+      text-decoration: none;
+      margin-left: 8px;
+    }
+
+    .other-login a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .brand-section {
+        display: none;
+      }
+
+      .form-section {
+        padding: 24px;
+      }
+    }
+
+    /* Shake animation for error feedback */
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      10%,
+      30%,
+      50%,
+      70%,
+      90% {
+        transform: translateX(-5px);
+      }
+
+      20%,
+      40%,
+      60%,
+      80% {
+        transform: translateX(5px);
+      }
+    }
+  </style>
 </head>
 
 <body>
-  <div class="login-page">
-    <div class="layui-row">
-      <div class="layui-col-sm6 login-bg">
-        <img class="login-bg-img" src="/static/admin/images/banner.png" alt="" />
+  <div class="login-container">
+    <!-- Left Panel: Brand -->
+    <div class="brand-section">
+      <div class="brand-content">
+        <img class="brand-logo" src="http://www.layui-vue.com/assets/logo.685dda16.jpg" alt="Logo" />
+        <h1 class="brand-title">SF 订单管理系统</h1>
+        <p class="brand-desc">以超乎想象的速度构建内部高效工具，简化流程，赋能业务增长。</p>
       </div>
-      <div class="layui-col-sm6 login-form">
+    </div>
+
+    <!-- Right Panel: Form -->
+    <div class="form-section">
+      <div class="login-wrapper">
+        <div class="form-header">
+          <img src="/static/admin/images/company_logo.png" alt="SUNFUN Logo"
+            style="height: 40px; margin-bottom: 24px; display: block;">
+          <h2 class="form-title">欢迎回来</h2>
+          <p class="form-subtitle">请输入您的账户凭据以登录系统</p>
+        </div>
+
         <div class="layui-form">
-          <div class="form-center">
-            <div class="form-center-box">
-              <div class="top-log-title">
-                <img class="top-log" src="http://www.layui-vue.com/assets/logo.685dda16.jpg" alt="" />
-                <span>SF订单管理系统</span>
+          <div class="layui-form-item">
+            <div class="layui-input-wrap">
+              <div class="layui-input-prefix">
+                <i class="layui-icon layui-icon-username"></i>
               </div>
-              <div class="top-desc">
-                以 超 乎 想 象 的 速 度 构 建 内 部 工 具
-              </div>
-              <div style="margin-top: 30px">
-                <div class="layui-form-item">
-                  <div class="layui-input-wrap">
-                    <div class="layui-input-prefix">
-                      <i class="layui-icon layui-icon-username"></i>
-                    </div>
-                    <input lay-verify="required" placeholder="账户" autocomplete="off" name="username" value=""
-                      class="layui-input" />
-                  </div>
-                </div>
-                <div class="layui-form-item">
-                  <div class="layui-input-wrap">
-                    <div class="layui-input-prefix">
-                      <i class="layui-icon layui-icon-password"></i>
-                    </div>
-                    <input type="password" name="password" value="" lay-verify="required" placeholder="密码"
-                      autocomplete="off" class="layui-input" lay-affix="eye" />
-                  </div>
-                </div>
-                <div class="layui-form-item">
-                  <div class="remember-passsword">
-                    <div class="remember-cehcked">
-                      <input type="checkbox" name="like1[write]" lay-skin="primary" title="自动登录" />
-                    </div>
-                  </div>
-                </div>
-                <div class="login-btn">
-                  <button type="button" lay-submit lay-filter="login-in" class="layui-btn login">
-                    登 录
-                  </button>
-                </div>
-                <div class="other-login">
-                  <div class="other-login-methods">其他方式</div>
-                  <a class="greenText" href="/view/register.html">注册账号</a>
-                </div>
-              </div>
+              <input lay-verify="required" placeholder="请输入账户" autocomplete="off" name="username" class="layui-input" />
             </div>
+          </div>
+
+          <div class="layui-form-item">
+            <div class="layui-input-wrap">
+              <div class="layui-input-prefix">
+                <i class="layui-icon layui-icon-password"></i>
+              </div>
+              <input type="password" name="password" lay-verify="required" placeholder="请输入密码" autocomplete="off"
+                class="layui-input" lay-affix="eye" />
+            </div>
+          </div>
+
+          <div class="layui-form-item">
+            <div class="remember-passsword">
+              <input type="checkbox" name="rememberUsername" id="rememberUsername" lay-skin="primary" title="记住用户名" />
+            </div>
+          </div>
+
+          <div class="login-btn">
+            <button type="button" lay-submit lay-filter="login-in" class="layui-btn layui-btn-fluid login">
+              立即登录
+            </button>
+          </div>
+
+          <div class="other-login">
+            还没有账号? <a href="/view/register.html">立即注册</a>
           </div>
         </div>
       </div>
     </div>
   </div>
-  <!-- 资 源 引 入 -->
+
+  <!-- Scripts -->
   <script src="/static/component/layui/layui.js"></script>
   <script src="/static/component/pear/pear.js"></script>
   <script>
@@ -79,20 +345,71 @@
       var popup = layui.popup;
       var $ = layui.jquery;
 
-      // 登 录 提 交
-      form.on("submit(login-in)", function (data) {
-        /// 验证
+      // ==================== Remember Username ====================
+      var STORAGE_KEY = 'sf_remembered_username';
 
-        /// 动画
+      // Load remembered username on page load
+      var rememberedUsername = localStorage.getItem(STORAGE_KEY);
+      if (rememberedUsername) {
+        $('input[name="username"]').val(rememberedUsername);
+        // Check the checkbox since we have a remembered username
+        $('#rememberUsername').prop('checked', true);
+        form.render('checkbox');
+      }
+
+      // ==================== Client-side Validation ====================
+      function validateField($input) {
+        var value = $input.val().trim();
+        var $wrap = $input.closest('.layui-input-wrap');
+
+        if (!value) {
+          $input.css('border-color', 'var(--error-color)');
+          return false;
+        } else {
+          $input.css('border-color', '#e2e8f0');
+          return true;
+        }
+      }
+
+      // Real-time validation on blur
+      $('input[name="username"], input[name="password"]').on('blur', function () {
+        validateField($(this));
+      });
+
+      // Clear error state on focus
+      $('input[name="username"], input[name="password"]').on('focus', function () {
+        $(this).css('border-color', 'var(--primary-500)');
+      });
+
+      // ==================== Login Submit ====================
+      form.on("submit(login-in)", function (data) {
+        var username = data.field.username;
+        var password = data.field.password;
+
+        // Client-side validation
+        var usernameValid = validateField($('input[name="username"]'));
+        var passwordValid = validateField($('input[name="password"]'));
+
+        if (!usernameValid || !passwordValid) {
+          popup.failure('请填写用户名和密码');
+          return false;
+        }
+
         let btn = button.load({ elem: ".login" });
 
-        /// 登录
         $.ajax({
           url: "/api/v1/login",
           type: "POST",
-          data: JSON.stringify(data.field),
+          data: JSON.stringify({ username: username, password: password }),
           contentType: "application/json",
           success: function (res) {
+            // Remember username if checkbox is checked
+            if ($('#rememberUsername').is(':checked')) {
+              localStorage.setItem(STORAGE_KEY, username);
+            } else {
+              localStorage.removeItem(STORAGE_KEY);
+            }
+
             localStorage.setItem("access_token", res.access_token);
             localStorage.setItem("refresh_token", res.refresh_token);
             btn.stop(function () {
@@ -103,7 +420,19 @@
           },
           error: function (XMLHttpRequest, textStatus, errorThrown) {
             btn.stop(function () {
-              popup.failure(XMLHttpRequest.responseJSON.msg);
+              // Handle error response
+              var msg = '登录失败';
+              if (XMLHttpRequest.responseJSON) {
+                msg = XMLHttpRequest.responseJSON.msg || XMLHttpRequest.responseJSON.message || msg;
+              }
+
+              // Shake animation for login wrapper
+              $('.login-wrapper').css('animation', 'shake 0.5s');
+              setTimeout(function () {
+                $('.login-wrapper').css('animation', '');
+              }, 500);
+
+              popup.failure(msg);
             });
           },
         });

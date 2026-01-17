@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8" />
+    <title>财务概览</title>
+    <meta name="renderer" content="webkit" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="stylesheet" href="/static/component/pear/css/pear.css" />
+    <style>
+        .dashboard-container {
+            padding: 16px;
+            background: #f0f2f5;
+            min-height: calc(100vh - 32px);
+        }
+
+        /* 指标卡片样式 */
+        .stat-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+        }
+
+        .stat-icon i {
+            font-size: 28px;
+            color: #fff;
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 26px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .stat-unit {
+            font-size: 14px;
+            color: #999;
+            margin-left: 4px;
+        }
+
+        /* 图表卡片 */
+        .chart-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-top: 16px;
+        }
+
+        .chart-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .chart-card-body {
+            padding: 20px;
+        }
+
+        /* 颜色主题 */
+        .bg-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .bg-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .bg-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .bg-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .bg-danger {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .bg-purple {
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+        }
+
+        /* 加载动画 */
+        .loading-mask {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            color: #999;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- 核心指标卡片 -->
+        <div class="layui-row layui-col-space16">
+            <div class="layui-col-md4 layui-col-sm6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary">
+                        <i class="layui-icon layui-icon-rmb"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-title">订单总金额</div>
+                        <div class="stat-value" id="total-order-amount">--</div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md4 layui-col-sm6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success">
+                        <i class="layui-icon layui-icon-ok-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-title">已付款总额</div>
+                        <div class="stat-value" id="total-paid-amount">--</div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md4 layui-col-sm6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning">
+                        <i class="layui-icon layui-icon-flag"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-title">待付款余额</div>
+                        <div class="stat-value" id="pending-amount">--</div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md3 layui-col-sm6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-info">
+                        <i class="layui-icon layui-icon-list"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-title">订单数量</div>
+                        <div class="stat-value" id="order-count">--<span class="stat-unit">笔</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md3 layui-col-sm6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-danger">
+                        <i class="layui-icon layui-icon-note"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-title">付款单数量</div>
+                        <div class="stat-value" id="pay-count">--<span class="stat-unit">笔</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md3 layui-col-sm6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-purple">
+                        <i class="layui-icon layui-icon-group"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-title">供应商数量</div>
+                        <div class="stat-value" id="supplier-count">--<span class="stat-unit">家</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md3 layui-col-sm6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary">
+                        <i class="layui-icon layui-icon-user"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-title">付款单位</div>
+                        <div class="stat-value" id="payer-count">--<span class="stat-unit">个</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="layui-row layui-col-space16">
+            <div class="layui-col-md8">
+                <div class="chart-card">
+                    <div class="chart-card-header">月度付款趋势</div>
+                    <div class="chart-card-body">
+                        <div id="chart-trend" style="height: 350px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md4">
+                <div class="chart-card">
+                    <div class="chart-card-header">付款状态分布</div>
+                    <div class="chart-card-body">
+                        <div id="chart-status" style="height: 350px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOP供应商 -->
+        <div class="layui-row layui-col-space16">
+            <div class="layui-col-md12">
+                <div class="chart-card">
+                    <div class="chart-card-header">TOP10 供应商（按订单金额）</div>
+                    <div class="chart-card-body">
+                        <div id="chart-suppliers" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        layui.use(['jquery', 'echarts', 'layer'], function () {
+            var $ = layui.jquery;
+            var echarts = layui.echarts;
+            var layer = layui.layer;
+
+            var accessToken = localStorage.getItem('access_token');
+
+            // 格式化金额
+            function formatAmount(num) {
+                if (num >= 10000) {
+                    return (num / 10000).toFixed(2) + ' 万';
+                }
+                return num.toFixed(2);
+            }
+
+            // 加载概览数据
+            $.ajax({
+                url: '/api/v1/dashboard/overview',
+                type: 'GET',
+                headers: { 'Authorization': 'Bearer ' + accessToken },
+                success: function (res) {
+                    if (res.code === 0) {
+                        var data = res.data;
+                        $('#total-order-amount').text('¥' + formatAmount(data.total_order_amount));
+                        $('#total-paid-amount').text('¥' + formatAmount(data.total_paid_amount));
+                        $('#pending-amount').text('¥' + formatAmount(data.pending_amount));
+                        $('#order-count').html(data.order_count + '<span class="stat-unit">笔</span>');
+                        $('#pay-count').html(data.pay_count + '<span class="stat-unit">笔</span>');
+                        $('#supplier-count').html(data.supplier_count + '<span class="stat-unit">家</span>');
+                        $('#payer-count').html(data.payer_count + '<span class="stat-unit">个</span>');
+                    }
+                }
+            });
+
+            // 付款状态分布图
+            var chartStatus = echarts.init(document.getElementById('chart-status'));
+            $.ajax({
+                url: '/api/v1/dashboard/payment-status',
+                type: 'GET',
+                headers: { 'Authorization': 'Bearer ' + accessToken },
+                success: function (res) {
+                    if (res.code === 0) {
+                        var data = res.data.status_distribution;
+                        var pieData = data.map(function (item) {
+                            return { name: item.status, value: item.count };
+                        });
+
+                        chartStatus.setOption({
+                            tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+                            color: ['#667eea', '#38ef7d', '#f5576c', '#4facfe', '#fee140'],
+                            series: [{
+                                type: 'pie',
+                                radius: ['40%', '70%'],
+                                avoidLabelOverlap: false,
+                                itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
+                                label: { show: true, formatter: '{b}\n{c}笔' },
+                                data: pieData
+                            }]
+                        });
+                    }
+                }
+            });
+
+            // 月度趋势图
+            var chartTrend = echarts.init(document.getElementById('chart-trend'));
+            $.ajax({
+                url: '/api/v1/dashboard/monthly-trend',
+                type: 'GET',
+                headers: { 'Authorization': 'Bearer ' + accessToken },
+                success: function (res) {
+                    if (res.code === 0) {
+                        var orderData = res.data.order_trend;
+                        var payData = res.data.pay_trend;
+
+                        var months = orderData.map(function (item) { return item.month; });
+                        var orderAmounts = orderData.map(function (item) { return item.amount; });
+                        var payAmounts = payData.map(function (item) { return item.amount; });
+
+                        chartTrend.setOption({
+                            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                            legend: { data: ['订单金额', '付款金额'], top: 10 },
+                            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                            xAxis: { type: 'category', data: months },
+                            yAxis: { type: 'value', name: '金额 (元)' },
+                            series: [
+                                {
+                                    name: '订单金额',
+                                    type: 'bar',
+                                    data: orderAmounts,
+                                    itemStyle: { color: '#667eea', borderRadius: [4, 4, 0, 0] }
+                                },
+                                {
+                                    name: '付款金额',
+                                    type: 'line',
+                                    data: payAmounts,
+                                    smooth: true,
+                                    itemStyle: { color: '#38ef7d' },
+                                    areaStyle: { color: 'rgba(56, 239, 125, 0.2)' }
+                                }
+                            ]
+                        });
+                    }
+                }
+            });
+
+            // TOP供应商图
+            var chartSuppliers = echarts.init(document.getElementById('chart-suppliers'));
+            $.ajax({
+                url: '/api/v1/dashboard/top-suppliers',
+                type: 'GET',
+                headers: { 'Authorization': 'Bearer ' + accessToken },
+                success: function (res) {
+                    if (res.code === 0) {
+                        var suppliers = res.data.top_suppliers;
+                        var names = suppliers.map(function (item) { return item.name; });
+                        var amounts = suppliers.map(function (item) { return item.total_amount; });
+
+                        chartSuppliers.setOption({
+                            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+                            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                            xAxis: { type: 'value', name: '金额 (元)' },
+                            yAxis: { type: 'category', data: names.reverse(), axisLabel: { width: 120, overflow: 'truncate' } },
+                            series: [{
+                                type: 'bar',
+                                data: amounts.reverse(),
+                                itemStyle: {
+                                    color: function (params) {
+                                        var colors = ['#667eea', '#764ba2', '#11998e', '#38ef7d', '#4facfe', '#00f2fe', '#f093fb', '#f5576c', '#fa709a', '#fee140'];
+                                        return colors[params.dataIndex % colors.length];
+                                    },
+                                    borderRadius: [0, 4, 4, 0]
+                                }
+                            }]
+                        });
+                    }
+                }
+            });
+
+            // 响应式
+            window.onresize = function () {
+                chartStatus.resize();
+                chartTrend.resize();
+                chartSuppliers.resize();
+            };
+        });
+    </script>
+</body>
+
+</html>

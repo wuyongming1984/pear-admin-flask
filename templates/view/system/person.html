@@ -1,10 +1,330 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <title>个人资料</title>
-  </head>
-  <body class="pear-container">
-    个人资料页
-  </body>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>个人资料</title>
+  <link rel="stylesheet" href="/static/component/pear/css/pear.css" />
+  <style>
+    :root {
+      --primary-600: #2563eb;
+      --primary-500: #3b82f6;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-400: #94a3b8;
+      --slate-600: #475569;
+      --slate-800: #1e293b;
+      --error-color: #ef4444;
+      --success-color: #22c55e;
+    }
+
+    body {
+      background: var(--slate-100);
+      padding: 24px;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    .profile-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      max-width: 600px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: var(--slate-50);
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--slate-200);
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--slate-800);
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--slate-600);
+    }
+
+    .form-group input {
+      width: 100%;
+      height: 44px;
+      padding: 0 16px;
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      font-size: 14px;
+      box-sizing: border-box;
+      transition: all 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--primary-500);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-group input:disabled {
+      background: var(--slate-50);
+      color: var(--slate-400);
+    }
+
+    .form-group .error-text {
+      color: var(--error-color);
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .form-group.has-error input {
+      border-color: var(--error-color);
+    }
+
+    .form-group.has-error .error-text {
+      display: block;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--slate-800);
+      margin: 24px 0 16px 0;
+      padding-top: 16px;
+      border-top: 1px solid var(--slate-200);
+    }
+
+    .btn-primary {
+      background: var(--primary-600);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-500);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      background: var(--slate-400);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .user-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .user-info {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="profile-card">
+    <div class="card-header">
+      <h2>个人资料</h2>
+    </div>
+    <div class="card-body">
+      <!-- User Info Section -->
+      <div class="user-info">
+        <div class="form-group">
+          <label>用户名</label>
+          <input type="text" id="username" disabled />
+        </div>
+        <div class="form-group">
+          <label>昵称</label>
+          <input type="text" id="nickname" disabled />
+        </div>
+        <div class="form-group">
+          <label>邮箱</label>
+          <input type="email" id="email" disabled />
+        </div>
+        <div class="form-group">
+          <label>手机</label>
+          <input type="text" id="mobile" disabled />
+        </div>
+      </div>
+
+      <!-- Password Change Section -->
+      <h3 class="section-title">修改密码</h3>
+      <form id="password-form">
+        <div class="form-group" id="old-password-group">
+          <label>原密码 <span style="color: var(--error-color);">*</span></label>
+          <input type="password" id="old-password" name="old_password" placeholder="请输入原密码" />
+          <div class="error-text">请输入原密码</div>
+        </div>
+        <div class="form-group" id="new-password-group">
+          <label>新密码 <span style="color: var(--error-color);">*</span></label>
+          <input type="password" id="new-password" name="new_password" placeholder="请输入新密码（至少6位）" />
+          <div class="error-text">新密码长度不能少于6位</div>
+        </div>
+        <div class="form-group" id="confirm-password-group">
+          <label>确认新密码 <span style="color: var(--error-color);">*</span></label>
+          <input type="password" id="confirm-password" placeholder="请再次输入新密码" />
+          <div class="error-text">两次输入的密码不一致</div>
+        </div>
+        <button type="submit" class="btn-primary" id="submit-btn">保存修改</button>
+      </form>
+    </div>
+  </div>
+
+
+  <script>
+    layui.use(['jquery', 'layer'], function () {
+      var $ = layui.jquery;
+      var layer = layui.layer;
+
+      // Get access token - try current window first, then parent (for iframe context)
+      function getAccessToken() {
+        var token = localStorage.getItem('access_token');
+        if (!token && window.parent !== window) {
+          try {
+            token = window.parent.localStorage.getItem('access_token');
+          } catch (e) {
+            console.log('Cannot access parent localStorage:', e);
+          }
+        }
+        return token;
+      }
+
+      // Load user profile
+      var accessToken = getAccessToken();
+      if (accessToken) {
+        $.ajax({
+          url: '/api/v1/user/profile',
+          type: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + accessToken
+          },
+          success: function (res) {
+            if (res.code === 0 && res.data) {
+              $('#username').val(res.data.username || '');
+              $('#nickname').val(res.data.nickname || '');
+              $('#email').val(res.data.email || '');
+              $('#mobile').val(res.data.mobile || '');
+            }
+          },
+          error: function (xhr) {
+            console.log('Failed to load profile:', xhr.status, xhr.responseText);
+          }
+        });
+      } else {
+        console.log('No access token found');
+      }
+
+      // Form validation helpers
+      function validateField(fieldId, groupId, condition, errorText) {
+        var $group = $('#' + groupId);
+        var $errorDiv = $group.find('.error-text');
+
+        if (!condition) {
+          $group.addClass('has-error');
+          if (errorText) $errorDiv.text(errorText);
+          return false;
+        } else {
+          $group.removeClass('has-error');
+          return true;
+        }
+      }
+
+      // Password form submission
+      $('#password-form').on('submit', function (e) {
+        e.preventDefault();
+
+        var oldPassword = $('#old-password').val().trim();
+        var newPassword = $('#new-password').val().trim();
+        var confirmPassword = $('#confirm-password').val().trim();
+
+        // Validate
+        var isValid = true;
+
+        if (!validateField('old-password', 'old-password-group', oldPassword.length > 0, '请输入原密码')) {
+          isValid = false;
+        }
+
+        if (!validateField('new-password', 'new-password-group', newPassword.length >= 6, '新密码长度不能少于6位')) {
+          isValid = false;
+        }
+
+        if (!validateField('confirm-password', 'confirm-password-group', newPassword === confirmPassword, '两次输入的密码不一致')) {
+          isValid = false;
+        }
+
+        if (!isValid) return;
+
+        // Submit
+        var $btn = $('#submit-btn');
+        $btn.prop('disabled', true).text('保存中...');
+
+        $.ajax({
+          url: '/api/v1/user/change-password',
+          type: 'POST',
+          contentType: 'application/json',
+          headers: {
+            'Authorization': 'Bearer ' + getAccessToken()
+          },
+          data: JSON.stringify({
+            old_password: oldPassword,
+            new_password: newPassword
+          }),
+          success: function (res) {
+            $btn.prop('disabled', false).text('保存修改');
+            if (res.code === 0) {
+              layer.msg('密码修改成功', { icon: 1, time: 2000 }, function () {
+                // Clear form
+                $('#old-password').val('');
+                $('#new-password').val('');
+                $('#confirm-password').val('');
+              });
+            } else {
+              layer.msg(res.msg || '修改失败', { icon: 2 });
+            }
+          },
+          error: function (xhr) {
+            $btn.prop('disabled', false).text('保存修改');
+            var msg = '修改失败';
+            if (xhr.responseJSON) {
+              msg = xhr.responseJSON.msg || msg;
+            }
+            layer.msg(msg, { icon: 2 });
+          }
+        });
+      });
+
+      // Clear error on input
+      $('input').on('focus', function () {
+        $(this).closest('.form-group').removeClass('has-error');
+      });
+    });
+  </script>
+</body>
+
 </html>

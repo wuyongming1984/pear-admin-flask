@@ -8,346 +8,267 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <style>
-    /* ==================== CSS变量 - 统一配色方案 ==================== */
+    /* ==================== Modern Refined Design System ==================== */
     :root {
-      --primary-color: #16baaa;
-      --primary-hover: #13a999;
-      --primary-light: rgba(22, 186, 170, 0.1);
-      --border-color: #e6e6e6;
-      --bg-light: #f9f9f9;
-      --bg-hover: #f5f5f5;
-      --text-secondary: #666;
-      --text-muted: #999;
-      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 8px rbga(0, 0, 0, 0.1);
-      --radius-sm: 4px;
+      /* Palette - Blue & Slate */
+      --primary-50: #eff6ff;
+      --primary-100: #dbeafe;
+      --primary-500: #3b82f6;
+      --primary-600: #2563eb;
+
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+
+      --white: #ffffff;
+
+      /* Semantic Colors */
+      --bg-body: var(--slate-100);
+      --bg-card: var(--white);
+      --text-main: var(--slate-800);
+      --text-muted: var(--slate-500);
+      --border-color: var(--slate-200);
+
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --ring-primary: 0 0 0 3px rgba(59, 130, 246, 0.2);
+
       --radius-md: 8px;
+      --radius-lg: 12px;
+
+      /* Spacing */
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
     }
 
-    /* 表格行悬停效果 */
-    .layui-table-body tr:hover {
-      background-color: var(--bg-hover);
-      transition: background-color 0.2s;
+    body {
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      padding: var(--spacing-lg);
     }
 
-    /* 操作列按钮间距 */
-    .layui-table-cell .layui-btn-container {
+    /* Card Container */
+    .layui-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      /* For rounded corners */
+      margin-bottom: 0;
+      /* Remove default margin */
+    }
+
+    .layui-card-header {
+      border-bottom: 1px solid var(--border-color);
+      padding: var(--spacing-md) var(--spacing-lg);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--slate-900);
+      background: var(--white);
       display: flex;
-      gap: 5px;
-      justify-content: center;
+      align-items: center;
+      height: auto;
+      /* Allow auto height */
+      line-height: normal;
     }
 
-    /* 确保表头和表体的列宽一致 - 根据内容自动调整 */
-    .layui-table-view .layui-table-header table,
-    .layui-table-view .layui-table-body table {
-      table-layout: auto !important;
-      width: 100% !important;
+    .layui-card-body {
+      padding: var(--spacing-lg);
     }
 
-    /* 确保列宽根据内容自动调整 */
-    .layui-table-view .layui-table-header table colgroup col,
-    .layui-table-view .layui-table-body table colgroup col {
-      width: auto !important;
-    }
-
-    .layui-table-view .layui-table-header table thead th,
-    .layui-table-view .layui-table-body table tbody td {
-      padding: 9px 15px !important;
-      white-space: nowrap;
-    }
-
-    /* 确保筛选输入框不影响列宽 */
+    /* ==================== Modern Filter Inputs ==================== */
     .filter-input-wrapper {
-      width: 100%;
-      box-sizing: border-box;
-      min-width: 0;
+      margin-top: 6px;
     }
 
     .filter-input {
       width: 100%;
-      height: 32px !important;
-      padding: 0 10px !important;
+      height: 36px !important;
+      padding: 0 12px !important;
       font-size: 13px !important;
+      color: var(--slate-800);
       border: 1px solid var(--border-color) !important;
-      border-radius: var(--radius-sm);
-      transition: all 0.3s;
-      background: #fff;
+      border-radius: var(--radius-md);
+      background: var(--slate-50);
+      transition: all 0.2s ease;
       box-sizing: border-box;
-      min-width: 0;
+    }
+
+    .filter-input:hover {
+      background: var(--white);
+      border-color: var(--slate-300) !important;
     }
 
     .filter-input:focus {
-      border-color: var(--primary-color) !important;
-      box-shadow: 0 0 0 3px var(--primary-light);
+      background: var(--white);
+      border-color: var(--primary-500) !important;
+      box-shadow: var(--ring-primary);
       outline: none;
     }
 
     .filter-input::placeholder {
-      color: var(--text-muted);
-      font-size: 12px;
+      color: var(--slate-400);
     }
 
-    /* 按钮优化 */
-    .layui-btn {
-      border-radius: var(--radius-sm);
-      transition: all 0.3s;
+    /* ==================== Table Styling Overrides ==================== */
+    /* Header */
+    .layui-table-header {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .layui-table-header th {
+      background-color: var(--slate-50) !important;
+      color: var(--slate-600);
+      font-weight: 600;
       font-size: 13px;
+      border-color: var(--border-color) !important;
+      height: 48px;
+      padding: 12px 16px !important;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
     }
 
-    .layui-btn:hover {
-      transform: translateY(-1px);
+    /* Rows */
+    .layui-table-view .layui-table td {
+      border-color: var(--border-color);
+      color: var(--slate-600);
+      padding: 12px 16px !important;
+      font-size: 14px;
+      height: 52px;
+      /* Taller rows */
+    }
+
+    .layui-table-view {
+      border: 1px solid var(--border-color) !important;
+      border-radius: var(--radius-md);
+      box-shadow: none;
+    }
+
+    .layui-table-box {
+      border-radius: var(--radius-md);
+    }
+
+    /* Hover State */
+    .layui-table-hover,
+    .layui-table-body tr:hover,
+    .layui-table-click {
+      background-color: var(--primary-50) !important;
+    }
+
+    /* Remove vertical borders for cleaner look */
+    .layui-table-view .layui-table td,
+    .layui-table-view .layui-table th {
+      border-right: none;
+      border-left: none;
+    }
+
+    /* Fix header top border */
+    .layui-table-header {
+      border-top: none;
+    }
+
+    /* ==================== Buttons ==================== */
+    .layui-btn {
+      height: 32px;
+      line-height: 32px;
+      padding: 0 16px;
+      border-radius: 6px;
+      /* Slightly rounded */
+      font-weight: 500;
+      font-size: 13px;
       box-shadow: var(--shadow-sm);
+      border: 1px solid transparent;
+      transition: all 0.2s;
     }
 
-    .layui-btn-sm {
+    /* Primary Action */
+    .layui-btn-container .layui-btn {
+      background-color: var(--primary-500);
+    }
+
+    .layui-btn-container .layui-btn:hover {
+      background-color: var(--primary-600);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Action Column Buttons */
+    .layui-table-cell .layui-btn-container .layui-btn {
+      height: 28px;
+      line-height: 28px;
+      padding: 0 12px;
       font-size: 12px;
+      margin: 0 2px;
     }
 
-    /* 付款状态列特殊样式 - 允许下拉框溢出显示 */
+    .layui-bg-blue {
+      background-color: var(--primary-500) !important;
+    }
+
+    .layui-bg-orange {
+      background-color: #f59e0b !important;
+      /* Amber 500 */
+    }
+
+    .layui-bg-red {
+      background-color: #ef4444 !important;
+      /* Red 500 */
+    }
+
+    /* ==================== Utilities & Fixes ==================== */
+    /* Select Overflows */
     td[data-field="payment_status"] {
       overflow: visible !important;
-      position: relative;
-      z-index: 100;
     }
 
-    td[data-field="payment_status"] .layui-table-cell {
-      overflow: visible !important;
-      position: relative;
+    .layui-table-cell {
+      overflow: visible;
+      height: auto;
+      line-height: 24px;
     }
 
-    /* 当下拉框激活时，提升整行的层级 */
-    .layui-table-body tr {
-      position: relative;
+    .layui-table-view .layui-table-body {
+      overflow-x: auto;
+      overflow-y: auto;
     }
 
-    /* 使用CSS选择器提升包含打开的下拉框的行 */
-    .layui-table-body tr:has(.layui-form-selected) {
-      z-index: 1000 !important;
+    /* Custom Scrollbar for Webkit */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
     }
 
-    /* 确保下拉框在最上层显示，使用极高的z-index */
-    td[data-field="payment_status"] .layui-form-select {
-      position: relative;
-      z-index: 9999 !important;
+    ::-webkit-scrollbar-track {
+      background: transparent;
     }
 
-    td[data-field="payment_status"] .layui-form-select dl {
-      position: absolute !important;
-      z-index: 9999 !important;
+    ::-webkit-scrollbar-thumb {
+      background: var(--slate-300);
+      border-radius: 4px;
     }
 
-    /* 确保下拉框的下拉列表在绝对定位时正确显示 */
-    td[data-field="payment_status"] .layui-anim {
-      z-index: 9999 !important;
-    }
-
-    /* 确保layui-form-selected类的z-index更高 */
-    .layui-form-selected dl {
-      z-index: 9999 !important;
-    }
-
-    /* 允许表头和表格容器显示溢出的筛选下拉框 */
-    .layui-table-header,
-    .layui-table-box {
-      overflow: visible !important;
-    }
-
-    /* 确保表头单元格也允许溢出 */
-    .layui-table-header .layui-table-cell {
-      overflow: visible !important;
-    }
-
-    /* 提高表头筛选下拉框的z-index */
-    .layui-table-header .layui-form-select {
-      position: relative;
-      z-index: 9999 !important;
-    }
-
-    .layui-table-header .layui-form-select dl {
-      position: absolute !important;
-      z-index: 9999 !important;
-    }
-
-
-    /* 表单容器样式（用于付款单弹窗） */
-    .order-form-container {
-      padding: 20px;
-      background: #fff;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .form-title {
-      text-align: center;
-      font-size: 24px;
-      font-weight: 600;
-      margin-bottom: 30px;
-      padding-bottom: 15px;
-      color: #333;
-      border-bottom: 2px solid var(--border-color);
-    }
-
-    .order-details-section {
-      background: var(--bg-light);
-      padding: 20px;
-      margin-bottom: 20px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-color);
-    }
-
-    .order-details-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px 30px;
-    }
-
-    .order-details-item {
-      display: flex;
-      align-items: center;
-    }
-
-    .order-details-item label {
-      min-width: 100px;
-      text-align: right;
-      margin-right: 10px;
-      font-weight: normal;
-    }
-
-    .order-details-item input,
-    .order-details-item select {
-      flex: 1;
-      border: 1px solid #000;
-      padding: 5px 8px;
-      height: 32px;
-      line-height: 32px;
-    }
-
-    .section-title {
-      text-align: center;
-      font-size: 18px;
-      font-weight: 600;
-      margin: 25px 0 20px 0;
-      padding: 12px 0;
-      color: #333;
-      border-top: 2px solid var(--border-color);
-      border-bottom: 2px solid var(--border-color);
-    }
-
-    .material-details-section {
-      background: var(--bg-light);
-      padding: 20px;
-      margin-bottom: 20px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-color);
-    }
-
-    .material-description {
-      display: flex;
-      align-items: flex-start;
-      margin-bottom: 15px;
-    }
-
-    .material-description label {
-      min-width: 100px;
-      text-align: right;
-      margin-right: 10px;
-      padding-top: 5px;
-    }
-
-    .material-description textarea {
-      flex: 1;
-      border: 1px solid #000;
-      padding: 8px;
-      min-height: 200px;
-      resize: vertical;
-    }
-
-    .financial-section {
-      border: 1px solid #000;
-      padding: 15px;
-      margin-bottom: 20px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
-    .financial-item {
-      display: flex;
-      align-items: center;
-    }
-
-    .financial-item label {
-      min-width: 120px;
-      text-align: right;
-      margin-right: 10px;
-    }
-
-    .financial-item input {
-      flex: 1;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      padding: 8px 12px;
-      height: 38px;
-      transition: all 0.3s;
-    }
-
-    .financial-item input:focus {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px var(--primary-light);
-      outline: none;
-    }
-
-    .responsible-section {
-      background: var(--bg-light);
-      padding: 20px;
-      margin-bottom: 20px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-color);
-    }
-
-    .responsible-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px 30px;
-      margin-top: 15px;
-    }
-
-    .responsible-item {
-      display: flex;
-      align-items: center;
-    }
-
-    .responsible-item label {
-      min-width: 120px;
-      text-align: right;
-      margin-right: 10px;
-    }
-
-    .responsible-item input {
-      flex: 1;
-      border: 1px solid #000;
-      padding: 5px 8px;
-      height: 32px;
-      line-height: 32px;
-    }
-
-    .form-actions {
-      margin-top: 30px;
-      padding: 20px 0;
-      text-align: center;
-      border-top: 1px solid #e6e6e6;
-    }
-
-    .form-actions .layui-btn {
-      margin: 0 10px;
-      min-width: 100px;
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--slate-400);
     }
   </style>
 </head>
 
 <body>
-  <div style="padding: 16px">
+  <div>
     <div class="layui-card">
+      <div class="layui-card-header">付款单管理</div>
       <div class="layui-card-body">
         <table class="layui-hide" id="pay-table" lay-filter="pay-table"></table>
       </div>
@@ -360,7 +281,7 @@
   <script type="text/html" id="pay-toolbar">
       <div class="layui-btn-container">
         <button class="layui-btn layui-btn-sm" lay-event="pay-toolbar-add">
-          新增付款单
+          <i class="layui-icon layui-icon-add-1"></i> 新增付款单
         </button>
       </div>
     </script>
@@ -788,12 +709,12 @@
             var $th = $view.find('th[data-field="' + field + '"]');
             if ($th.length && !$th.find('.filter-input').length) {
               var config = filterConfig[field];
-              var $filterDiv = $('<div class="filter-input-wrapper" style="margin-top: 5px;"></div>');
+              var $filterDiv = $('<div class="filter-input-wrapper"></div>');
               var $input;
 
               if (config.type === 'date') {
                 // 日期字段使用日期选择器
-                $input = $('<input type="text" class="layui-input filter-input filter-date" placeholder="' + config.placeholder + '" data-field="' + field + '" style="height: 28px; font-size: 12px; padding: 0 8px;">');
+                $input = $('<input type="text" class="layui-input filter-input filter-date" placeholder="' + config.placeholder + '" data-field="' + field + '">');
                 if (filterParams[field]) {
                   $input.val(filterParams[field]);
                 }
@@ -820,7 +741,7 @@
                 }, 50);
               } else if (config.type === 'select') {
                 // 下拉框筛选
-                $input = $('<select class="layui-input filter-input" data-field="' + field + '" lay-filter="filter-' + field + '" style="height: 28px; font-size: 12px; padding: 0 8px;"></select>');
+                $input = $('<select class="layui-input filter-input" data-field="' + field + '" lay-filter="filter-' + field + '"></select>');
 
                 // 添加选项
                 config.options.forEach(function (option) {
@@ -851,7 +772,7 @@
                 var listId = config.source ? 'list-' + field : null;
                 var listAttr = listId ? ' list="' + listId + '"' : '';
 
-                $input = $('<input type="' + config.type + '" class="layui-input filter-input" placeholder="' + config.placeholder + '" data-field="' + field + '"' + listAttr + ' style="height: 28px; font-size: 12px; padding: 0 8px;">');
+                $input = $('<input type="' + config.type + '" class="layui-input filter-input" placeholder="' + config.placeholder + '" data-field="' + field + '"' + listAttr + '>');
 
                 if (filterParams[field]) {
                   $input.val(filterParams[field]);

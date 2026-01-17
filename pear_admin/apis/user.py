@@ -102,3 +102,30 @@ def user_profile():
         "msg": "获取个人数据成功",
         "data": current_user.json(),
     }
+
+
+@user_api.post("/change-password")
+@jwt_required()
+def change_password():
+    """修改当前用户密码"""
+    data = request.get_json()
+    old_password = data.get("old_password")
+    new_password = data.get("new_password")
+    
+    # 验证必填字段
+    if not old_password or not new_password:
+        return {"code": -1, "msg": "请填写原密码和新密码"}, 400
+    
+    # 验证新密码长度
+    if len(new_password) < 6:
+        return {"code": -1, "msg": "新密码长度不能少于6位"}, 400
+    
+    # 验证原密码
+    if not current_user.check_password(old_password):
+        return {"code": -1, "msg": "原密码错误"}, 400
+    
+    # 设置新密码
+    current_user.password = new_password
+    current_user.save()
+    
+    return {"code": 0, "msg": "密码修改成功"}

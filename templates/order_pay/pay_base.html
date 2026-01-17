@@ -465,11 +465,9 @@
           type: 'select',
           placeholder: '筛选付款状态',
           options: [
-            { value: '', text: '全部状态' },
-            { value: 'pending', text: '待付款' },
-            { value: 'partial', text: '部分付款' },
-            { value: 'paid', text: '已付款' }
-          ]
+            { value: '', text: '全部状态' }
+          ],
+          dynamicSource: 'paymentStatus' // 标记需要从字典动态加载
         },
         'handler': {
           type: 'text',
@@ -602,15 +600,27 @@
               // 构建code到value的映射
               paymentStatusMap = {};
               var html = '<option value="">请选择付款状态</option>';
+
+              // 更新筛选下拉框选项
+              var filterOptions = [{ value: '', text: '全部状态' }];
+
               res.data.forEach(function (status) {
                 // 使用code作为option的value，value作为显示文本
                 html += '<option value="' + status.code + '">' + status.value + '</option>';
                 // 建立映射
                 paymentStatusMap[status.code] = status.value;
                 paymentStatusMap[status.value] = status.value; // 兼容旧数据
+
+                // 添加到筛选选项
+                filterOptions.push({ value: status.code, text: status.value });
               });
               $('select[name="payment_status"]').html(html);
               form.render('select');
+
+              // 更新筛选配置中的选项
+              if (CONFIG.FILTER_FIELDS && CONFIG.FILTER_FIELDS.payment_status) {
+                CONFIG.FILTER_FIELDS.payment_status.options = filterOptions;
+              }
             }
           },
           errorMsg: '加载付款状态列表失败'

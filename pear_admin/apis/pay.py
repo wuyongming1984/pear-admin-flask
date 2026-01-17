@@ -30,8 +30,8 @@ def pay_list():
     handler = request.args.get("handler", type=str)
     create_at = request.args.get("create_at", type=str)
     
-    # 构建查询
-    q = db.select(PayORM)
+    # 构建查询（按ID倒序，新的在前）
+    q = db.select(PayORM).order_by(PayORM.id.desc())
     
     # 模糊搜索条件
     if pay_id:

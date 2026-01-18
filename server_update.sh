@@ -79,6 +79,18 @@ docker-compose exec -T web flask init || {
 }
 
 echo
+echo -e "${GREEN}[7/8] 更新数据库结构...${NC}"
+docker-compose exec -T web python scripts/update_db_schema.py || {
+    echo -e "${YELLOW}数据库结构更新可能有警告，请检查日志${NC}"
+}
+
+echo
+echo -e "${GREEN}[8/8] 同步权限与字典数据...${NC}"
+docker-compose exec -T web python scripts/import_data.py || {
+    echo -e "${RED}数据同步失败，请检查日志${NC}"
+}
+
+echo
 echo "=================================================="
 echo -e "${GREEN}✅ 服务更新完成！${NC}"
 echo "=================================================="

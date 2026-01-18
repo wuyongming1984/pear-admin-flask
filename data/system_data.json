@@ -1,0 +1,2093 @@
+{
+  "ums_rights": [
+    {
+      "id": 100,
+      "name": "系统管理",
+      "code": "ums:rights",
+      "type": "menu",
+      "url": null,
+      "icon_sign": "layui-icon layui-icon-set-fill",
+      "status": true,
+      "sort": 2,
+      "open_type": null,
+      "pid": 0
+    },
+    {
+      "id": 101,
+      "name": "权限管理",
+      "code": "ums:rights:list",
+      "type": "path",
+      "url": "/system/rights/index.html",
+      "icon_sign": "layui-icon layui-icon-console",
+      "status": true,
+      "sort": 1,
+      "open_type": null,
+      "pid": 100
+    },
+    {
+      "id": 102,
+      "name": "新增权限",
+      "code": "ums:rights:create",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 101
+    },
+    {
+      "id": 103,
+      "name": "修改权限",
+      "code": "ums:rights:update",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 101
+    },
+    {
+      "id": 104,
+      "name": "获取权限",
+      "code": "ums:rights:read",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 101
+    },
+    {
+      "id": 105,
+      "name": "删除权限",
+      "code": "ums:rights:delete",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 101
+    },
+    {
+      "id": 106,
+      "name": "角色管理",
+      "code": "ums:role",
+      "type": "path",
+      "url": "/system/role/index.html",
+      "icon_sign": "layui-icon layui-icon-console",
+      "status": true,
+      "sort": 2,
+      "open_type": null,
+      "pid": 100
+    },
+    {
+      "id": 107,
+      "name": "新增角色",
+      "code": "ums:role:create",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 106
+    },
+    {
+      "id": 108,
+      "name": "查询角色",
+      "code": "ums:role:read",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 106
+    },
+    {
+      "id": 109,
+      "name": "修改角色",
+      "code": "ums:role:update",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 106
+    },
+    {
+      "id": 110,
+      "name": "删除角色",
+      "code": "ums:role:delete",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 106
+    },
+    {
+      "id": 111,
+      "name": "部门管理",
+      "code": "ums:department",
+      "type": "path",
+      "url": "/system/department/index.html",
+      "icon_sign": "layui-icon layui-icon-console",
+      "status": true,
+      "sort": 3,
+      "open_type": null,
+      "pid": 100
+    },
+    {
+      "id": 112,
+      "name": "新建部门",
+      "code": "ums:department:create",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 111
+    },
+    {
+      "id": 113,
+      "name": "修改部门",
+      "code": "ums:department:update",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 111
+    },
+    {
+      "id": 114,
+      "name": "删除部门",
+      "code": "ums:department:delete",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 111
+    },
+    {
+      "id": 115,
+      "name": "查询部门",
+      "code": "ums:department:read",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 111
+    },
+    {
+      "id": 116,
+      "name": "用户管理",
+      "code": "ums:user",
+      "type": "path",
+      "url": "/system/user/index.html",
+      "icon_sign": "layui-icon layui-icon-console",
+      "status": true,
+      "sort": 4,
+      "open_type": null,
+      "pid": 100
+    },
+    {
+      "id": 117,
+      "name": "新增用户",
+      "code": "ums:user:create",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 116
+    },
+    {
+      "id": 118,
+      "name": "修改用户",
+      "code": "ums:user:update",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 116
+    },
+    {
+      "id": 119,
+      "name": "查询用户",
+      "code": "ums:user:read",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 116
+    },
+    {
+      "id": 120,
+      "name": "查询用户",
+      "code": "ums:user:read",
+      "type": "auth",
+      "url": null,
+      "icon_sign": null,
+      "status": true,
+      "sort": 0,
+      "open_type": null,
+      "pid": 116
+    },
+    {
+      "id": 124,
+      "name": "工作空间",
+      "code": null,
+      "type": "menu",
+      "url": null,
+      "icon_sign": "layui-icon layui-icon-console",
+      "status": true,
+      "sort": 1,
+      "open_type": null,
+      "pid": 0
+    },
+    {
+      "id": 125,
+      "name": "工作台",
+      "code": null,
+      "type": "path",
+      "url": "/view/console/index.html",
+      "icon_sign": "layui-icon layui-icon-console",
+      "status": true,
+      "sort": 2,
+      "open_type": "_component",
+      "pid": 124
+    },
+    {
+      "id": 126,
+      "name": "首页",
+      "code": null,
+      "type": "path",
+      "url": "/view/analysis/index.html",
+      "icon_sign": "layui-icon layui-icon-console",
+      "status": true,
+      "sort": 1,
+      "open_type": "_component",
+      "pid": 124
+    },
+    {
+      "id": 127,
+      "name": "订单付款管理",
+      "code": "ums:order",
+      "type": "menu",
+      "url": "",
+      "icon_sign": "",
+      "status": true,
+      "sort": 3,
+      "open_type": "_component",
+      "pid": 0
+    },
+    {
+      "id": 130,
+      "name": "供应商管理",
+      "code": "ums:supplier",
+      "type": "path",
+      "url": "/supplier/info/supplier_info.html",
+      "icon_sign": "",
+      "status": true,
+      "sort": 4,
+      "open_type": "_component",
+      "pid": 0
+    },
+    {
+      "id": 131,
+      "name": "项目信息管理",
+      "code": "ums:project",
+      "type": "path",
+      "url": "/project/info/project_info.html",
+      "icon_sign": "",
+      "status": true,
+      "sort": 5,
+      "open_type": "_component",
+      "pid": 0
+    },
+    {
+      "id": 132,
+      "name": "订单维护",
+      "code": "ums:order",
+      "type": "path",
+      "url": "/order_pay/base/order_base.html",
+      "icon_sign": "",
+      "status": true,
+      "sort": 1,
+      "open_type": "_component",
+      "pid": 127
+    },
+    {
+      "id": 133,
+      "name": "付款单维护",
+      "code": "mus:pay",
+      "type": "path",
+      "url": "/order_pay/base/pay_base.html",
+      "icon_sign": "",
+      "status": true,
+      "sort": 2,
+      "open_type": "_component",
+      "pid": 127
+    },
+    {
+      "id": 134,
+      "name": "付款单位管理",
+      "code": "ums:payer",
+      "type": "path",
+      "url": "/payer/info/payer_info.html",
+      "icon_sign": "",
+      "status": true,
+      "sort": 6,
+      "open_type": "_component",
+      "pid": 0
+    },
+    {
+      "id": 135,
+      "name": "字典管理",
+      "code": "ums:dictionary",
+      "type": "path",
+      "url": "/system/dictionary/",
+      "icon_sign": "layui-icon-template",
+      "status": true,
+      "sort": 5,
+      "open_type": "_component",
+      "pid": 100
+    },
+    {
+      "id": 136,
+      "name": "个人中心",
+      "code": "ums:person",
+      "type": "path",
+      "url": "/view/system/person.html",
+      "icon_sign": "",
+      "status": true,
+      "sort": 6,
+      "open_type": "_component",
+      "pid": 100
+    }
+  ],
+  "ums_role": [
+    {
+      "id": 1,
+      "name": "超级管理员",
+      "code": "super_admin",
+      "desc": null,
+      "rights_ids": "100:101:102:103:104:105:106:107:109:108:110:111:112:113:114:115:116:117:118:119:120:124:125:126"
+    },
+    {
+      "id": 2,
+      "name": "普通管理员",
+      "code": "admin",
+      "desc": null,
+      "rights_ids": "106:107:109:108:110:111:112:113:114:115:116:117:118:119:120"
+    },
+    {
+      "id": 3,
+      "name": "普通用户",
+      "code": "user",
+      "desc": null,
+      "rights_ids": "111:112:113:114:115:116:117:118:119:120"
+    }
+  ],
+  "ums_role_rights": [
+    {
+      "role_id": 1,
+      "rights_id": 126
+    },
+    {
+      "role_id": 2,
+      "rights_id": 102
+    },
+    {
+      "role_id": 3,
+      "rights_id": 103
+    },
+    {
+      "role_id": 4,
+      "rights_id": 104
+    },
+    {
+      "role_id": 5,
+      "rights_id": 105
+    },
+    {
+      "role_id": 6,
+      "rights_id": 106
+    },
+    {
+      "role_id": 7,
+      "rights_id": 107
+    },
+    {
+      "role_id": 8,
+      "rights_id": 108
+    },
+    {
+      "role_id": 9,
+      "rights_id": 109
+    },
+    {
+      "role_id": 10,
+      "rights_id": 110
+    },
+    {
+      "role_id": 11,
+      "rights_id": 111
+    },
+    {
+      "role_id": 12,
+      "rights_id": 112
+    },
+    {
+      "role_id": 13,
+      "rights_id": 113
+    },
+    {
+      "role_id": 14,
+      "rights_id": 114
+    },
+    {
+      "role_id": 15,
+      "rights_id": 115
+    },
+    {
+      "role_id": 16,
+      "rights_id": 116
+    },
+    {
+      "role_id": 17,
+      "rights_id": 117
+    },
+    {
+      "role_id": 18,
+      "rights_id": 118
+    },
+    {
+      "role_id": 19,
+      "rights_id": 119
+    },
+    {
+      "role_id": 20,
+      "rights_id": 120
+    },
+    {
+      "role_id": 21,
+      "rights_id": 124
+    },
+    {
+      "role_id": 22,
+      "rights_id": 100
+    },
+    {
+      "role_id": 23,
+      "rights_id": 125
+    },
+    {
+      "role_id": 24,
+      "rights_id": 101
+    },
+    {
+      "role_id": 25,
+      "rights_id": 111
+    },
+    {
+      "role_id": 26,
+      "rights_id": 119
+    },
+    {
+      "role_id": 27,
+      "rights_id": 114
+    },
+    {
+      "role_id": 28,
+      "rights_id": 120
+    },
+    {
+      "role_id": 29,
+      "rights_id": 118
+    },
+    {
+      "role_id": 30,
+      "rights_id": 115
+    },
+    {
+      "role_id": 31,
+      "rights_id": 108
+    },
+    {
+      "role_id": 32,
+      "rights_id": 116
+    },
+    {
+      "role_id": 33,
+      "rights_id": 106
+    },
+    {
+      "role_id": 34,
+      "rights_id": 113
+    },
+    {
+      "role_id": 35,
+      "rights_id": 117
+    },
+    {
+      "role_id": 36,
+      "rights_id": 109
+    },
+    {
+      "role_id": 37,
+      "rights_id": 112
+    },
+    {
+      "role_id": 38,
+      "rights_id": 110
+    },
+    {
+      "role_id": 39,
+      "rights_id": 107
+    },
+    {
+      "role_id": 40,
+      "rights_id": 119
+    },
+    {
+      "role_id": 41,
+      "rights_id": 120
+    },
+    {
+      "role_id": 42,
+      "rights_id": 114
+    },
+    {
+      "role_id": 43,
+      "rights_id": 111
+    },
+    {
+      "role_id": 44,
+      "rights_id": 117
+    },
+    {
+      "role_id": 45,
+      "rights_id": 118
+    },
+    {
+      "role_id": 46,
+      "rights_id": 116
+    },
+    {
+      "role_id": 47,
+      "rights_id": 112
+    },
+    {
+      "role_id": 48,
+      "rights_id": 113
+    },
+    {
+      "role_id": 49,
+      "rights_id": 115
+    },
+    {
+      "role_id": 50,
+      "rights_id": 127
+    },
+    {
+      "role_id": 53,
+      "rights_id": 130
+    },
+    {
+      "role_id": 54,
+      "rights_id": 131
+    },
+    {
+      "role_id": 55,
+      "rights_id": 132
+    },
+    {
+      "role_id": 56,
+      "rights_id": 133
+    },
+    {
+      "role_id": 57,
+      "rights_id": 134
+    },
+    {
+      "role_id": 58,
+      "rights_id": 135
+    },
+    {
+      "role_id": 59,
+      "rights_id": 136
+    }
+  ],
+  "base_dic": [
+    {
+      "id": 25,
+      "code": "gyslx",
+      "name": "供应商类型",
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:40",
+      "update_time": "2026-01-15 22:40:40"
+    },
+    {
+      "id": 26,
+      "code": "xmgm",
+      "name": "项目规模",
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 27,
+      "code": "xmzt",
+      "name": "项目状态",
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 28,
+      "code": "fkzt",
+      "name": "付款状态",
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 29,
+      "code": "fkyxj",
+      "name": "付款优先级",
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 31,
+      "code": "spzt",
+      "name": "付款信息-审批状态",
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 32,
+      "code": "ryssbm",
+      "name": "人员所属部门",
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 34,
+      "code": "ddlx",
+      "name": "订单类型",
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 35,
+      "code": "clmc",
+      "name": "材料名称代码",
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 38,
+      "code": "987",
+      "name": "艺术座椅",
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 39,
+      "code": "clcg",
+      "name": "材料采购",
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    }
+  ],
+  "base_dic_detail": [
+    {
+      "id": 106,
+      "dic_id": 25,
+      "code": "1",
+      "value": "单位",
+      "order_no": 1,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 107,
+      "dic_id": 25,
+      "code": "2",
+      "value": "个人",
+      "order_no": 2,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 108,
+      "dic_id": 26,
+      "code": "1",
+      "value": "总包施工项目",
+      "order_no": 1,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 109,
+      "dic_id": 26,
+      "code": "2",
+      "value": "公司施工项目",
+      "order_no": 2,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 110,
+      "dic_id": 27,
+      "code": "01",
+      "value": "未开工",
+      "order_no": 1,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 111,
+      "dic_id": 27,
+      "code": "02",
+      "value": "已开工",
+      "order_no": 2,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 112,
+      "dic_id": 27,
+      "code": "03",
+      "value": "已开工未竣工",
+      "order_no": 3,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 113,
+      "dic_id": 27,
+      "code": "04",
+      "value": "已竣工未结算",
+      "order_no": 4,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 114,
+      "dic_id": 28,
+      "code": "1",
+      "value": "待付款-未开票",
+      "order_no": 1,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 115,
+      "dic_id": 28,
+      "code": "2",
+      "value": "已付款-已传回单-未开票",
+      "order_no": 2,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 116,
+      "dic_id": 28,
+      "code": "3",
+      "value": "已付款-已传回单-已开票",
+      "order_no": 3,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 117,
+      "dic_id": 29,
+      "code": "1",
+      "value": "立即支付",
+      "order_no": 1,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 118,
+      "dic_id": 29,
+      "code": "2",
+      "value": "尽快支付",
+      "order_no": 2,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 119,
+      "dic_id": 31,
+      "code": "1",
+      "value": "已审批",
+      "order_no": 1,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 121,
+      "dic_id": 31,
+      "code": "2",
+      "value": "未审批",
+      "order_no": 2,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 122,
+      "dic_id": 32,
+      "code": "01",
+      "value": "工程技术部",
+      "order_no": 1,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 123,
+      "dic_id": 32,
+      "code": "02",
+      "value": "经营管理部",
+      "order_no": 2,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 124,
+      "dic_id": 32,
+      "code": "03",
+      "value": "财务管理部",
+      "order_no": 3,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 125,
+      "dic_id": 32,
+      "code": "04",
+      "value": "后勤保障部",
+      "order_no": 4,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 126,
+      "dic_id": 32,
+      "code": "05",
+      "value": "综合部",
+      "order_no": 5,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 127,
+      "dic_id": 32,
+      "code": "06",
+      "value": "副总经理",
+      "order_no": 6,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 128,
+      "dic_id": 32,
+      "code": "07",
+      "value": "总经理",
+      "order_no": 7,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 131,
+      "dic_id": 34,
+      "code": "01",
+      "value": "材料-土建",
+      "order_no": 1,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 132,
+      "dic_id": 34,
+      "code": "02",
+      "value": "材料-绿化苗木",
+      "order_no": 1,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 133,
+      "dic_id": 34,
+      "code": "03",
+      "value": "人工-绿化分包",
+      "order_no": 4,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 134,
+      "dic_id": 34,
+      "code": "04",
+      "value": "人工-土建分包",
+      "order_no": 4,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 135,
+      "dic_id": 29,
+      "code": "3",
+      "value": "稍晚支付",
+      "order_no": 3,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 136,
+      "dic_id": 29,
+      "code": "4",
+      "value": "已完成",
+      "order_no": 4,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 138,
+      "dic_id": 35,
+      "code": "001",
+      "value": "水泥",
+      "order_no": 1,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 139,
+      "dic_id": 35,
+      "code": "002",
+      "value": "黄沙",
+      "order_no": 2,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 140,
+      "dic_id": 35,
+      "code": "003",
+      "value": "树苗",
+      "order_no": 3,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 141,
+      "dic_id": 35,
+      "code": "004",
+      "value": "石子",
+      "order_no": 4,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 142,
+      "dic_id": 34,
+      "code": "05",
+      "value": "人工-点工劳务费",
+      "order_no": 4,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 143,
+      "dic_id": 35,
+      "code": "005",
+      "value": "木头",
+      "order_no": 5,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 144,
+      "dic_id": 26,
+      "code": "5",
+      "value": "展会及服务类项目",
+      "order_no": 5,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 145,
+      "dic_id": 26,
+      "code": "8",
+      "value": "其他类型项目",
+      "order_no": 8,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 146,
+      "dic_id": 27,
+      "code": "05",
+      "value": "已结算未收到全款",
+      "order_no": 5,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 147,
+      "dic_id": 28,
+      "code": "4",
+      "value": "未付款-已开票",
+      "order_no": 4,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 148,
+      "dic_id": 34,
+      "code": "06",
+      "value": "采购zz",
+      "order_no": 99,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 149,
+      "dic_id": 27,
+      "code": "06",
+      "value": "已全部完成",
+      "order_no": 6,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 150,
+      "dic_id": 26,
+      "code": "7",
+      "value": "设计项目",
+      "order_no": 7,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 151,
+      "dic_id": 26,
+      "code": "99",
+      "value": "采购zz",
+      "order_no": 99,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 152,
+      "dic_id": 34,
+      "code": "07",
+      "value": "材料-绿化资材",
+      "order_no": 1,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 153,
+      "dic_id": 34,
+      "code": "08",
+      "value": "项目部-报销",
+      "order_no": 8,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 154,
+      "dic_id": 34,
+      "code": "09",
+      "value": "项目部-食堂",
+      "order_no": 9,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 155,
+      "dic_id": 34,
+      "code": "10",
+      "value": "项目部-津贴",
+      "order_no": 10,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 156,
+      "dic_id": 34,
+      "code": "11",
+      "value": "人工-施工员及养护人员",
+      "order_no": 4,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 157,
+      "dic_id": 34,
+      "code": "12",
+      "value": "项目部-商务",
+      "order_no": 12,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 158,
+      "dic_id": 35,
+      "code": "006",
+      "value": "房租",
+      "order_no": 6,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 159,
+      "dic_id": 35,
+      "code": "007",
+      "value": "草坪",
+      "order_no": 7,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 160,
+      "dic_id": 35,
+      "code": "008",
+      "value": "人工费",
+      "order_no": 8,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 161,
+      "dic_id": 35,
+      "code": "009",
+      "value": "金属制品",
+      "order_no": 9,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 162,
+      "dic_id": 35,
+      "code": "010",
+      "value": "排水板",
+      "order_no": 10,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 163,
+      "dic_id": 35,
+      "code": "011",
+      "value": "盲管",
+      "order_no": 11,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 164,
+      "dic_id": 35,
+      "code": "012",
+      "value": "苗木",
+      "order_no": 12,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 165,
+      "dic_id": 34,
+      "code": "13",
+      "value": "项目部-机械设备",
+      "order_no": 13,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 166,
+      "dic_id": 35,
+      "code": "013",
+      "value": "机械设备",
+      "order_no": 13,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 167,
+      "dic_id": 34,
+      "code": "14",
+      "value": "项目部-押金",
+      "order_no": 14,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 168,
+      "dic_id": 35,
+      "code": "014",
+      "value": "集装箱",
+      "order_no": 14,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 170,
+      "dic_id": 34,
+      "code": "17",
+      "value": "人工-机械分包",
+      "order_no": 17,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 171,
+      "dic_id": 35,
+      "code": "015",
+      "value": "水电费",
+      "order_no": 15,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 172,
+      "dic_id": 35,
+      "code": "016",
+      "value": "土壤改良剂",
+      "order_no": 16,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 173,
+      "dic_id": 34,
+      "code": "16",
+      "value": "工程部-房租",
+      "order_no": 16,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 174,
+      "dic_id": 34,
+      "code": "18",
+      "value": "人工-水电分包",
+      "order_no": 18,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 175,
+      "dic_id": 34,
+      "code": "35",
+      "value": "防疫专项",
+      "order_no": 35,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 176,
+      "dic_id": 35,
+      "code": "17",
+      "value": "防疫物资",
+      "order_no": 17,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 177,
+      "dic_id": 34,
+      "code": "19",
+      "value": "水电系统",
+      "order_no": 19,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 178,
+      "dic_id": 34,
+      "code": "20",
+      "value": "服务费",
+      "order_no": 20,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 179,
+      "dic_id": 35,
+      "code": "18",
+      "value": "服务费",
+      "order_no": 18,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 180,
+      "dic_id": 35,
+      "code": "19",
+      "value": "服装",
+      "order_no": 19,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 181,
+      "dic_id": 34,
+      "code": "21",
+      "value": "服装",
+      "order_no": 21,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 182,
+      "dic_id": 35,
+      "code": "20",
+      "value": "灯具",
+      "order_no": 20,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 183,
+      "dic_id": 35,
+      "code": "21",
+      "value": "覆盖物",
+      "order_no": 21,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 184,
+      "dic_id": 35,
+      "code": "22",
+      "value": "材料运费",
+      "order_no": 22,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 185,
+      "dic_id": 34,
+      "code": "22",
+      "value": "运费",
+      "order_no": 22,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 186,
+      "dic_id": 35,
+      "code": "23",
+      "value": "文字板",
+      "order_no": 23,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 187,
+      "dic_id": 34,
+      "code": "23",
+      "value": "审计费",
+      "order_no": 23,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 188,
+      "dic_id": 35,
+      "code": "24",
+      "value": "农药",
+      "order_no": 24,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 189,
+      "dic_id": 35,
+      "code": "25",
+      "value": "水电管材配件",
+      "order_no": 25,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 190,
+      "dic_id": 35,
+      "code": "26",
+      "value": "垃圾清运",
+      "order_no": 26,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 191,
+      "dic_id": 35,
+      "code": "27",
+      "value": "保险费",
+      "order_no": 27,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 192,
+      "dic_id": 35,
+      "code": "28",
+      "value": "石材",
+      "order_no": 28,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 193,
+      "dic_id": 35,
+      "code": "29",
+      "value": "透水混凝土",
+      "order_no": 29,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 194,
+      "dic_id": 35,
+      "code": "30",
+      "value": "杉木桩",
+      "order_no": 30,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 195,
+      "dic_id": 35,
+      "code": "31",
+      "value": "税金",
+      "order_no": 31,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 196,
+      "dic_id": 34,
+      "code": "24",
+      "value": "农药",
+      "order_no": 24,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 197,
+      "dic_id": 35,
+      "code": "32",
+      "value": "五金",
+      "order_no": 32,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 198,
+      "dic_id": 34,
+      "code": "25",
+      "value": "人工-管理人员",
+      "order_no": 7,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 199,
+      "dic_id": 34,
+      "code": "26",
+      "value": "人工-后勤等其他",
+      "order_no": 8,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 200,
+      "dic_id": 35,
+      "code": "33",
+      "value": "健身设施",
+      "order_no": 33,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 201,
+      "dic_id": 35,
+      "code": "34",
+      "value": "导视牌",
+      "order_no": 34,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 202,
+      "dic_id": 35,
+      "code": "35",
+      "value": "设计费",
+      "order_no": 35,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 203,
+      "dic_id": 34,
+      "code": "35",
+      "value": "设计费",
+      "order_no": 3,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 204,
+      "dic_id": 35,
+      "code": "020",
+      "value": "门头",
+      "order_no": 25,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 205,
+      "dic_id": 26,
+      "code": "4",
+      "value": "设计、施工一体化项目",
+      "order_no": 4,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 206,
+      "dic_id": 35,
+      "code": "37",
+      "value": "分包工程款",
+      "order_no": 37,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 207,
+      "dic_id": 34,
+      "code": "27",
+      "value": "保险",
+      "order_no": 20,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 208,
+      "dic_id": 35,
+      "code": "38",
+      "value": "预制桩",
+      "order_no": 38,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 209,
+      "dic_id": 35,
+      "code": "39",
+      "value": "商砼",
+      "order_no": 39,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 210,
+      "dic_id": 35,
+      "code": "40",
+      "value": "采购zz",
+      "order_no": 40,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 211,
+      "dic_id": 35,
+      "code": "41",
+      "value": "防腐木",
+      "order_no": 41,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 212,
+      "dic_id": 35,
+      "code": "042",
+      "value": "艺术座椅",
+      "order_no": 42,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 213,
+      "dic_id": 35,
+      "code": "043",
+      "value": "EPDM地坪",
+      "order_no": 43,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 214,
+      "dic_id": 34,
+      "code": "29",
+      "value": "人工-劳务分包",
+      "order_no": 29,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 215,
+      "dic_id": 35,
+      "code": "44",
+      "value": "保采费-苗木",
+      "order_no": 44,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 216,
+      "dic_id": 34,
+      "code": "30",
+      "value": "招投标费用",
+      "order_no": 30,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 217,
+      "dic_id": 35,
+      "code": "45",
+      "value": "标书费",
+      "order_no": 45,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 218,
+      "dic_id": 35,
+      "code": "46",
+      "value": "招标代理费",
+      "order_no": 46,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 219,
+      "dic_id": 35,
+      "code": "47",
+      "value": "专家评审费",
+      "order_no": 47,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 220,
+      "dic_id": 26,
+      "code": "6",
+      "value": "养护项目",
+      "order_no": 6,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 221,
+      "dic_id": 35,
+      "code": "48",
+      "value": "管理费",
+      "order_no": 48,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 222,
+      "dic_id": 34,
+      "code": "31",
+      "value": "人工-绿化分包",
+      "order_no": 31,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 223,
+      "dic_id": 34,
+      "code": "32",
+      "value": "人工-其他",
+      "order_no": 32,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 224,
+      "dic_id": 35,
+      "code": "49",
+      "value": "审价费",
+      "order_no": 49,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 225,
+      "dic_id": 34,
+      "code": "33",
+      "value": "分包",
+      "order_no": 33,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 226,
+      "dic_id": 34,
+      "code": "34",
+      "value": "挂靠项目",
+      "order_no": 34,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 228,
+      "dic_id": 35,
+      "code": "50",
+      "value": "材料",
+      "order_no": 50,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 229,
+      "dic_id": 34,
+      "code": "36",
+      "value": "专业分包-铁艺",
+      "order_no": 36,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 230,
+      "dic_id": 35,
+      "code": "51",
+      "value": "标识标牌",
+      "order_no": 51,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 231,
+      "dic_id": 34,
+      "code": "37",
+      "value": "专业分包-标识",
+      "order_no": 37,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 232,
+      "dic_id": 26,
+      "code": "3",
+      "value": "专业分包施工项目",
+      "order_no": 3,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 236,
+      "dic_id": 34,
+      "code": "38",
+      "value": "设计费",
+      "order_no": 1,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 237,
+      "dic_id": 34,
+      "code": "40",
+      "value": "专业分包",
+      "order_no": 40,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 238,
+      "dic_id": 35,
+      "code": "52",
+      "value": "设施设备",
+      "order_no": 52,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 239,
+      "dic_id": 35,
+      "code": "53",
+      "value": "文创",
+      "order_no": 53,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 240,
+      "dic_id": 26,
+      "code": "9",
+      "value": "自有投资项目",
+      "order_no": 9,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 241,
+      "dic_id": 35,
+      "code": "54",
+      "value": "软件费",
+      "order_no": 54,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 243,
+      "dic_id": 34,
+      "code": "39",
+      "value": "住宿费",
+      "order_no": 38,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 244,
+      "dic_id": 35,
+      "code": "55",
+      "value": "归档费",
+      "order_no": 55,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 245,
+      "dic_id": 35,
+      "code": "56",
+      "value": "广告费",
+      "order_no": 56,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 246,
+      "dic_id": 34,
+      "code": "41",
+      "value": "人工-管理人员津贴",
+      "order_no": 41,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 248,
+      "dic_id": 34,
+      "code": "42",
+      "value": "租赁",
+      "order_no": 42,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 249,
+      "dic_id": 35,
+      "code": "57",
+      "value": "租赁",
+      "order_no": 57,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 250,
+      "dic_id": 35,
+      "code": "58",
+      "value": "保证金",
+      "order_no": 58,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 251,
+      "dic_id": 26,
+      "code": "11",
+      "value": "工程设计",
+      "order_no": 11,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    },
+    {
+      "id": 252,
+      "dic_id": 35,
+      "code": "59",
+      "value": "养护费",
+      "order_no": 59,
+      "valid_mark": "Y",
+      "create_time": "2026-01-15 22:40:41",
+      "update_time": "2026-01-15 22:40:41"
+    }
+  ]
+}

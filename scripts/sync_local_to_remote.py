@@ -112,7 +112,14 @@ def main():
         return
 
     # 要同步的表列表
-    tables = ['ums_supplier']
+    # 核心权限和字典表
+    tables = [
+        'ums_rights',       # 菜单和权限定义 (关键：决定首页显示什么)
+        'ums_role',         # 角色
+        'ums_role_rights',  # 角色-权限关联
+        'ums_dictionary',   # 数据字典 (下拉框选项等)
+        'ums_supplier'      # 之前已有的
+    ]
     
     # 询问是否同步所有表
     print(f"\n默认同步表: {', '.join(tables)}")

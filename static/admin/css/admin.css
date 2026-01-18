@@ -641,3 +641,62 @@ body,
     transform: scale(1.2, 1);
   }
 }
+
+/** 移动端适配增强 */
+@media screen and (max-width: 768px) {
+    /* 表格横向滚动 */
+    .layui-card-body {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* 表单垂直堆叠 */
+    .layui-form-item .layui-form-label {
+        width: 100%;
+        text-align: left;
+        padding-left: 0;
+        float: none;
+        box-sizing: border-box;
+    }
+    
+    .layui-form-item .layui-input-block {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    /* 调整搜索表单布局 */
+    .pear-container .layui-form-item {
+        margin-bottom: 10px;
+    }
+    
+    .pear-container .layui-inline {
+        margin-bottom: 5px;
+        margin-right: 0;
+        display: block;
+        width: 100%;
+    }
+    
+    .pear-container .layui-inline .layui-form-label {
+        width: auto;
+        display: inline-block;
+    }
+    .pear-container .layui-inline .layui-input-inline {
+        width: calc(100% - 100px);
+        display: inline-block;
+        margin-right: 0;
+    }
+    
+    /* 弹窗样式优化 */
+    .layui-layer {
+        max-width: 100% !important;
+        left: 0 !important;
+    }
+    
+    /* 数据表格Toolbar按钮适配 */
+    .layui-table-tool-temp {
+        padding-right: 0;
+    }
+    .layui-btn-container .layui-btn {
+        margin-bottom: 5px;
+    }
+}

@@ -17,10 +17,11 @@ from sqlalchemy import text
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
-# Use 'prod' config typically for server, but 'default' or env var logic applies.
-# We will rely on FLASK_ENV or default to prod if running on server usually implies prod.
-# But for safety, let's use os.getenv
-env = os.getenv("FLASK_ENV", "production")
+# Use 'prod' config for server (matches configs.py)
+# Map common env names to our config keys
+env = os.getenv("FLASK_ENV", "prod")
+env_map = {"production": "prod", "development": "dev", "testing": "test"}
+env = env_map.get(env, env)  # Convert if needed
 app = create_app(env)
 
 DATA_FILE = os.path.join(os.path.dirname(__file__), '../data/system_data.json')

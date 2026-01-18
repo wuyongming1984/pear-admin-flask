@@ -805,98 +805,116 @@
       // 存储材料名称映射（ID -> 名称）
       var materialNamesMap = {};
 
-      // 加载项目列表
+      // 加载项目列表（返回 Promise，用于等待加载完成）
       function loadProjects() {
-        $.ajax({
-          url: window.location.origin + "/api/v1/project/",
-          type: "GET",
-          data: {
-            limit: 1000  // 获取所有项目，不分页
-          },
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("access_token"),
-          },
-          success: function (res) {
-            if (res.code === 0 && res.data) {
-              var html = '<option value="">请选择项目名称</option>';
-              res.data.forEach(function (project) {
-                html += '<option value="' + project.project_name + '">' + project.project_name + '</option>';
-              });
-              $('select[name="project_name"]').html(html);
-              form.render('select');
+        return new Promise(function (resolve) {
+          $.ajax({
+            url: window.location.origin + "/api/v1/project/",
+            type: "GET",
+            data: {
+              limit: 1000  // 获取所有项目，不分页
+            },
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("access_token"),
+            },
+            success: function (res) {
+              if (res.code === 0 && res.data) {
+                var html = '<option value="">请选择项目名称</option>';
+                res.data.forEach(function (project) {
+                  html += '<option value="' + project.project_name + '">' + project.project_name + '</option>';
+                });
+                $('select[name="project_name"]').html(html);
+                form.render('select');
+              }
+              resolve();
+            },
+            error: function () {
+              resolve();
             }
-          }
+          });
         });
       }
 
-      // 加载材料名称列表（从字典表）
+      // 加载材料名称列表（从字典表，返回 Promise）
       function loadMaterialNames() {
-        $.ajax({
-          url: window.location.origin + "/api/v1/dictionary/detail/list",
-          type: "GET",
-          data: {
-            dic_id: 35,  // 材料名称代码字典的ID (clmc)
-            limit: 1000  // 获取所有材料，不分页
-          },
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("access_token"),
-          },
-          success: function (res) {
-            if (res.code === 0 && res.data) {
-              // 构建ID到名称的映射
-              materialNamesMap = {};
-              var html = '<option value="">请选择材料名称</option>';
-              res.data.forEach(function (material) {
-                // 使用value作为option的value（材料名称文本）
-                html += '<option value="' + material.value + '">' + material.value + '</option>';
-                // 同时建立ID到名称的映射（用于显示旧数据）
-                materialNamesMap[material.id] = material.value;
-                materialNamesMap[material.code] = material.value;
-              });
-              $('select[name="material_name"]').html(html);
-              form.render('select');
+        return new Promise(function (resolve) {
+          $.ajax({
+            url: window.location.origin + "/api/v1/dictionary/detail/list",
+            type: "GET",
+            data: {
+              dic_id: 35,  // 材料名称代码字典的ID (clmc)
+              limit: 1000  // 获取所有材料，不分页
+            },
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("access_token"),
+            },
+            success: function (res) {
+              if (res.code === 0 && res.data) {
+                // 构建ID到名称的映射
+                materialNamesMap = {};
+                var html = '<option value="">请选择材料名称</option>';
+                res.data.forEach(function (material) {
+                  // 使用value作为option的value（材料名称文本）
+                  html += '<option value="' + material.value + '">' + material.value + '</option>';
+                  // 同时建立ID到名称的映射（用于显示旧数据）
+                  materialNamesMap[material.id] = material.value;
+                  materialNamesMap[material.code] = material.value;
+                });
+                $('select[name="material_name"]').html(html);
+                form.render('select');
+              }
+              resolve();
+            },
+            error: function () {
+              resolve();
             }
-          }
+          });
         });
       }
 
-      // 加载供应商列表和联系人列表
+      // 加载供应商列表和联系人列表（返回 Promise）
       function loadSuppliers() {
-        $.ajax({
-          url: window.location.origin + "/api/v1/supplier/",
-          type: "GET",
-          data: {
-            limit: 1000  // 获取所有供应商，不分页
-          },
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("access_token"),
-          },
-          success: function (res) {
-            if (res.code === 0 && res.data) {
-              // 存储供应商数据
-              suppliersData = res.data;
+        return new Promise(function (resolve) {
+          $.ajax({
+            url: window.location.origin + "/api/v1/supplier/",
+            type: "GET",
+            data: {
+              limit: 1000  // 获取所有供应商，不分页
+            },
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("access_token"),
+            },
+            success: function (res) {
+              if (res.code === 0 && res.data) {
+                // 存储供应商数据
+                suppliersData = res.data;
 
-              // 加载供应商下拉框
-              var supplierHtml = '<option value="">请选择供应商</option>';
-              res.data.forEach(function (supplier) {
-                supplierHtml += '<option value="' + supplier.id + '" data-name="' + supplier.name + '" data-phone="' + supplier.phone + '">' + supplier.name + '</option>';
-              });
-              $('#supplier_id').html(supplierHtml);
+                // 加载供应商下拉框
+                var supplierHtml = '<option value="">请选择供应商</option>';
+                res.data.forEach(function (supplier) {
+                  supplierHtml += '<option value="' + supplier.id + '" data-name="' + supplier.name + '" data-phone="' + supplier.phone + '">' + supplier.name + '</option>';
+                });
+                $('#supplier_id').html(supplierHtml);
 
-              // 加载供应商联系人下拉框（去重）
-              var contactPersonMap = {};
-              var contactPersonHtml = '<option value="">请选择供应商联系人</option>';
-              res.data.forEach(function (supplier) {
-                if (supplier.contact_person && !contactPersonMap[supplier.contact_person]) {
-                  contactPersonMap[supplier.contact_person] = supplier;
-                  contactPersonHtml += '<option value="' + supplier.contact_person + '" data-supplier-id="' + supplier.id + '" data-supplier-name="' + supplier.name + '" data-phone="' + supplier.phone + '">' + supplier.contact_person + '</option>';
-                }
-              });
-              $('#supplier_contact_person').html(contactPersonHtml);
+                // 加载供应商联系人下拉框（去重）
+                var contactPersonMap = {};
+                var contactPersonHtml = '<option value="">请选择供应商联系人</option>';
+                res.data.forEach(function (supplier) {
+                  if (supplier.contact_person && !contactPersonMap[supplier.contact_person]) {
+                    contactPersonMap[supplier.contact_person] = supplier;
+                    contactPersonHtml += '<option value="' + supplier.contact_person + '" data-supplier-id="' + supplier.id + '" data-supplier-name="' + supplier.name + '" data-phone="' + supplier.phone + '">' + supplier.contact_person + '</option>';
+                  }
+                });
+                $('#supplier_contact_person').html(contactPersonHtml);
 
-              form.render('select');
+                form.render('select');
+              }
+              resolve();
+            },
+            error: function () {
+              resolve();
             }
-          }
+          });
         });
       }
 
@@ -2150,13 +2168,8 @@
         if (obj.event === 'order-tool-edit') {
           console.log('编辑订单按钮被点击', data);
 
-          // 先加载项目列表和供应商列表
-          loadProjects();
-          loadSuppliers();
-          loadMaterialNames();  // 加载材料名称列表
-
-          // 延迟设置表单值，确保下拉框已加载
-          setTimeout(function () {
+          // 使用 Promise.all 等待所有下拉框数据加载完成后再设置表单值
+          Promise.all([loadProjects(), loadSuppliers(), loadMaterialNames()]).then(function () {
             form.val("order-form", data);
 
             // 设置供应商联系人（如果存在）
@@ -2180,7 +2193,7 @@
               $('#supplier_id').val(data.supplier_id);
               form.render('select');
             }
-          }, 300);
+          });
 
           // 设置当前订单编号
           currentOrderNumber = data.order_number || '';

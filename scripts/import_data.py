@@ -73,48 +73,20 @@ def import_data():
             logger.info("  Syncing Role-Permissions...")
             # We truncate/delete all role-rights to ensure 1:1 sync with local config
             # This handles "removed permissions" correctly.
-            db.session.execute(text("TRUNCATE TABLE ums_role_rights"))
+            db.session.execute(text("DELETE FROM ums_role_rights"))
+            db.session.commit()  # Commit the delete first
             
-            # Re-insert
+            # Re-insert using raw SQL to handle the id column
             role_rights = data.get('ums_role_rights', [])
             if role_rights:
-                # Batch insert is faster
-                # Assuming simple structure: {'role_id': 1, 'rights_id': 2}
-                # Check column names in table. Usually `role_id` and `rights_id` or `permission_id`
-                # Let's inspect the table to be sure or use the ORM association if possible. 
-                # Raw SQL insert is safest if we know col names.
-                # From 'pear_admin/orms/role.py':
-                # rights_list = db.relationship("RightsORM", secondary="ums_role_rights", ...)
-                # Default sqlalchemy columns for secondary table are generally `ums_role_id` and `rights_orm_id` if not specified?
-                # Or `role_id` and `rights_id`?
-                # The export script used `row[0]` and `row[1]`.
-                # Let's try to deduce from existing data or schema. 
-                # `scripts/grant_dictionary_permission.py` might show how it's done. 
-                # Wait, to be safe, let's use the ORM to add.
-                pass 
-
-            # Re-process using ORM to be safe about column names
-            # But we cleared the table. 
-            # We can re-build relationships via RoleORM objects.
-            # This is slower but safer than guessing column names.
-            
-            # Group by role_id
-            role_map = {}
-            for rr in role_rights:
-                rid = rr['role_id']
-                if rid not in role_map:
-                    role_map[rid] = []
-                role_map[rid].append(rr['rights_id'])
-            
-            for role_id, right_ids in role_map.items():
-                role = RoleORM.query.get(role_id)
-                if role:
-                    # Fetch all rights objects
-                    rights_objs = RightsORM.query.filter(RightsORM.id.in_(right_ids)).all()
-                    role.rights_list = rights_objs
-                    db.session.add(role)
-            
-            db.session.flush()
+                # Insert with explicit id (auto-increment workaround)
+                for idx, rr in enumerate(role_rights, start=1):
+                    db.session.execute(
+                        text("INSERT INTO ums_role_rights (id, role_id, rights_id) VALUES (:id, :role_id, :rights_id)"),
+                        {"id": idx, "role_id": rr['role_id'], "rights_id": rr['rights_id']}
+                    )
+                db.session.commit()
+                logger.info(f"    已导入 {len(role_rights)} 条角色-权限关联")
 
 
             # 4. Import Dictionary (Upsert)

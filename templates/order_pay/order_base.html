@@ -2170,6 +2170,13 @@
 
           // 使用 Promise.all 等待所有下拉框数据加载完成后再设置表单值
           Promise.all([loadProjects(), loadSuppliers(), loadMaterialNames()]).then(function () {
+            // 处理材料名称：如果是ID，则转换为对应的名称
+            if (data.material_name && /^\d+$/.test(data.material_name)) {
+              var mappedName = materialNamesMap[data.material_name];
+              if (mappedName) {
+                data.material_name = mappedName;
+              }
+            }
             form.val("order-form", data);
 
             // 设置供应商联系人（如果存在）

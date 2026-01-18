@@ -76,17 +76,30 @@ def import_data():
             db.session.execute(text("DELETE FROM ums_role_rights"))
             db.session.commit()  # Commit the delete first
             
+            # Get existing role and rights IDs to validate foreign keys
+            existing_role_ids = {r.id for r in RoleORM.query.all()}
+            existing_rights_ids = {r.id for r in RightsORM.query.all()}
+            
             # Re-insert using raw SQL to handle the id column
             role_rights = data.get('ums_role_rights', [])
             if role_rights:
+                # Filter to only valid foreign keys
+                valid_role_rights = [
+                    rr for rr in role_rights 
+                    if rr['role_id'] in existing_role_ids and rr['rights_id'] in existing_rights_ids
+                ]
+                skipped = len(role_rights) - len(valid_role_rights)
+                if skipped > 0:
+                    logger.info(f"    跳过 {skipped} 条无效关联（角色或权限不存在）")
+                
                 # Insert with explicit id (auto-increment workaround)
-                for idx, rr in enumerate(role_rights, start=1):
+                for idx, rr in enumerate(valid_role_rights, start=1):
                     db.session.execute(
                         text("INSERT INTO ums_role_rights (id, role_id, rights_id) VALUES (:id, :role_id, :rights_id)"),
                         {"id": idx, "role_id": rr['role_id'], "rights_id": rr['rights_id']}
                     )
                 db.session.commit()
-                logger.info(f"    已导入 {len(role_rights)} 条角色-权限关联")
+                logger.info(f"    已导入 {len(valid_role_rights)} 条角色-权限关联")
 
 
             # 4. Import Dictionary (Upsert)

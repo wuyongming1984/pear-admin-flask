@@ -8,6 +8,7 @@ from .project import project_bp
 from .payer import payer_bp
 from .dictionary import dictionary_bp
 from .dashboard import dashboard_bp
+from .nursery import nursery_bp
 
 
 def register_views(app: Flask):
@@ -19,3 +20,4 @@ def register_views(app: Flask):
     app.register_blueprint(payer_bp)
     app.register_blueprint(dictionary_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(nursery_bp)

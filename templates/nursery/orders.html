@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="utf-8" />
+    <title>出库单管理</title>
+    <meta name="renderer" content="webkit" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="stylesheet" href="/static/component/layui/css/layui.css" />
+    <link rel="stylesheet" href="/static/nursery/nursery.css" />
+    <script src="/static/component/layui/layui.js"></script>
+    <style>
+        .n-order-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 2fr 1fr 1.2fr 1fr;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .edit-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .edit-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .edit-modal__content {
+            background: #fff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .edit-modal__header {
+            padding: 24px;
+            border-bottom: 1px solid var(--n-slate-100);
+        }
+
+        .edit-modal__body {
+            padding: 24px;
+        }
+
+        .edit-modal__footer {
+            padding: 24px;
+            border-top: 1px solid var(--n-slate-100);
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 12px;
+            padding: 12px;
+            background: var(--n-slate-50);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .action-btn {
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: transparent;
+        }
+
+        .action-btn:hover {
+            background: var(--n-slate-100);
+        }
+
+        .action-btn--edit:hover {
+            color: #2563eb;
+            background: #dbeafe;
+        }
+
+        .action-btn--delete:hover {
+            color: #dc2626;
+            background: #fee2e2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="n-page">
+        <header class="n-header"
+            style="display: flex; justify-content: space-between; align-items: flex-end; text-align: left; max-width: 1100px; margin: 0 auto 24px;">
+            <div>
+                <h1 class="n-title">出库单管理</h1>
+                <p class="n-subtitle">查看历史出库记录，修改价格、数量或回退单据。</p>
+            </div>
+            <div class="n-search" style="width: 280px;">
+                <i class="n-search__icon layui-icon layui-icon-search"></i>
+                <input type="text" class="n-search__input" id="search-input" placeholder="搜索单号、经办人、去向...">
+            </div>
+        </header>
+
+        <div class="n-table-wrapper" style="max-width: 1100px; margin: 0 auto;">
+            <div class="n-table-header n-order-grid">
+                <span>单号信息</span>
+                <span>包含产品</span>
+                <span style="text-align: right;">总金额</span>
+                <span>去向/备注</span>
+                <span style="text-align: center;">操作</span>
+            </div>
+            <div id="orders-list">
+                <div class="n-empty">
+                    <div class="n-empty__text">加载中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="edit-modal" id="edit-modal">
+        <div class="edit-modal__content">
+            <div class="edit-modal__header">
+                <h3 class="n-card__title" style="font-size: 18px;">修改订单 (<span id="edit-order-no"></span>)</h3>
+            </div>
+            <div class="edit-modal__body">
+                <h4 class="n-text-muted" style="font-size: 12px; text-transform: uppercase; margin-bottom: 16px;">基础信息
+                </h4>
+                <div class="n-form-row">
+                    <div class="n-form-group">
+                        <label class="n-label">业务日期</label>
+                        <input type="text" class="n-input" id="edit-date" readonly>
+                    </div>
+                    <div class="n-form-group">
+                        <label class="n-label">操作员</label>
+                        <input type="text" class="n-input" id="edit-operator">
+                    </div>
+                </div>
+                <div class="n-form-group">
+                    <label class="n-label">去向 / 工程</label>
+                    <input type="text" class="n-input" id="edit-destination">
+                </div>
+                <div class="n-form-group">
+                    <label class="n-label">备注</label>
+                    <input type="text" class="n-input" id="edit-remark">
+                </div>
+
+                <h4 class="n-text-muted"
+                    style="font-size: 12px; text-transform: uppercase; margin: 24px 0 16px; display: flex; justify-content: space-between;">
+                    <span>订单明细</span>
+                    <span style="color: #f97316;"><i class="layui-icon layui-icon-tips"></i> 修改数量会同步调整库存</span>
+                </h4>
+                <div id="edit-items"></div>
+                <div style="text-align: right; padding-top: 12px; border-top: 1px solid var(--n-slate-100);">
+                    <span class="n-font-bold">总计: ¥<span id="edit-total">0.00</span></span>
+                </div>
+            </div>
+            <div class="edit-modal__footer">
+                <button class="n-btn n-btn--secondary" onclick="closeEditModal()">取消</button>
+                <button class="n-btn n-btn--primary" onclick="saveEdit()">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        layui.use(['jquery', 'layer'], function () {
+            var $ = layui.$;
+            var layer = layui.layer;
+            var allOrders = [];
+            var editingOrder = null;
+
+            function loadOrders() {
+                $.ajax({
+                    url: '/api/v1/nursery/orders',
+                    success: function (res) {
+                        if (res.code === 0) {
+                            allOrders = res.data;
+                            renderOrders();
+                        }
+                    }
+                });
+            }
+
+            function renderOrders() {
+                var term = $('#search-input').val().toLowerCase();
+                var filtered = allOrders.filter(function (o) {
+                    return !term ||
+                        (o.order_no && o.order_no.toLowerCase().includes(term)) ||
+                        (o.operator && o.operator.toLowerCase().includes(term)) ||
+                        (o.destination && o.destination.toLowerCase().includes(term));
+                });
+
+                if (filtered.length === 0) {
+                    $('#orders-list').html('<div class="n-empty"><div class="n-empty__text" style="padding: 60px;">暂无出库单记录</div></div>');
+                    return;
+                }
+
+                var html = '';
+                filtered.forEach(function (order) {
+                    html += '<div class="n-table-row n-order-grid">';
+
+                    // 单号信息
+                    html += '<div style="display: flex; align-items: center; gap: 12px;">';
+                    html += '<div style="padding: 10px; background: var(--n-primary-light); color: var(--n-primary); border-radius: 12px;"><i class="layui-icon layui-icon-file"></i></div>';
+                    html += '<div>';
+                    html += '<div class="n-font-bold" style="font-size: 13px;">' + order.order_no + '</div>';
+                    html += '<div class="n-text-muted" style="font-size: 11px;"><i class="layui-icon layui-icon-date" style="font-size: 11px;"></i> ' + order.create_at + '</div>';
+                    html += '</div></div>';
+
+                    // 包含产品
+                    html += '<div style="min-width: 200px;">';
+                    order.items.slice(0, 3).forEach(function (item) {
+                        html += '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">';
+                        html += '<span class="n-font-bold" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + (item.plant_name || '-') + '</span>';
+                        html += '<span class="n-text-muted" style="font-size: 11px; background: var(--n-slate-100); padding: 2px 6px; border-radius: 4px;">x' + item.quantity + ' • ¥' + (item.price || 0) + '</span>';
+                        html += '</div>';
+                    });
+                    if (order.items.length > 3) {
+                        html += '<div class="n-text-muted" style="font-size: 11px;">... 还有 ' + (order.items.length - 3) + ' 个品种</div>';
+                    }
+                    html += '</div>';
+
+                    // 总金额
+                    html += '<div style="text-align: right;"><span class="n-font-bold" style="font-size: 16px;">¥ ' + order.total.toLocaleString() + '</span></div>';
+
+                    // 去向/备注
+                    html += '<div>';
+                    html += '<div style="display: flex; align-items: center; gap: 6px; font-size: 13px;" class="n-font-bold"><i class="layui-icon layui-icon-user n-text-muted" style="font-size: 14px;"></i> ' + (order.operator || '-') + '</div>';
+                    html += '<div style="display: flex; align-items: center; gap: 6px; font-size: 12px;" class="n-text-muted"><i class="layui-icon layui-icon-location" style="font-size: 14px;"></i> ' + (order.destination || '未登记') + '</div>';
+                    html += '</div>';
+
+                    // 操作
+                    html += '<div style="text-align: center; display: flex; justify-content: center; gap: 8px;">';
+                    html += '<button class="action-btn action-btn--edit" title="修改信息" onclick="openEditModal(\'' + order.order_no + '\')"><i class="layui-icon layui-icon-edit"></i></button>';
+                    html += '<button class="action-btn action-btn--delete" title="删除并退回库存" onclick="deleteOrder(\'' + order.order_no + '\')"><i class="layui-icon layui-icon-delete"></i></button>';
+                    html += '</div>';
+
+                    html += '</div>';
+                });
+                $('#orders-list').html(html);
+            }
+
+            $('#search-input').on('input', renderOrders);
+
+            // Edit Modal Functions
+            window.openEditModal = function (orderNo) {
+                editingOrder = allOrders.find(function (o) { return o.order_no === orderNo; });
+                if (!editingOrder) return;
+
+                $('#edit-order-no').text(orderNo);
+                $('#edit-date').val(editingOrder.create_at ? editingOrder.create_at.split(' ')[0] : '');
+                $('#edit-operator').val(editingOrder.operator || '');
+                $('#edit-destination').val(editingOrder.destination || '');
+                $('#edit-remark').val(editingOrder.remark || '');
+
+                renderEditItems();
+                $('#edit-modal').addClass('show');
+            };
+
+            function renderEditItems() {
+                var html = '';
+                var total = 0;
+
+                html += '<div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; padding: 8px 12px; font-size: 11px; color: var(--n-slate-400); font-weight: 600;">';
+                html += '<div>品名</div><div style="text-align: right;">数量</div><div style="text-align: right;">单价(¥)</div><div style="text-align: right;">小计</div>';
+                html += '</div>';
+
+                editingOrder.items.forEach(function (item, idx) {
+                    var subtotal = (item.quantity || 0) * (item.price || 0);
+                    total += subtotal;
+
+                    html += '<div class="item-row" data-idx="' + idx + '">';
+                    html += '<div><div class="n-font-bold">' + (item.plant_name || '-') + '</div><div class="n-text-muted" style="font-size: 11px;">' + (item.spec || '-') + '</div></div>';
+                    html += '<div><input type="number" class="n-input edit-qty" style="text-align: right; padding: 6px 8px;" value="' + item.quantity + '" data-id="' + item.id + '"></div>';
+                    html += '<div><input type="number" class="n-input edit-price" style="text-align: right; padding: 6px 8px;" value="' + (item.price || 0) + '" step="0.01" data-id="' + item.id + '"></div>';
+                    html += '<div style="text-align: right;" class="n-font-bold item-subtotal">' + subtotal.toFixed(0) + '</div>';
+                    html += '</div>';
+                });
+
+                $('#edit-items').html(html);
+                $('#edit-total').text(total.toFixed(2));
+
+                // Bind change events
+                $('.edit-qty, .edit-price').on('input', function () {
+                    var idx = $(this).closest('.item-row').data('idx');
+                    var qty = parseFloat($('.item-row[data-idx="' + idx + '"] .edit-qty').val()) || 0;
+                    var price = parseFloat($('.item-row[data-idx="' + idx + '"] .edit-price').val()) || 0;
+                    var subtotal = qty * price;
+                    $('.item-row[data-idx="' + idx + '"] .item-subtotal').text(subtotal.toFixed(0));
+
+                    // Update total
+                    var total = 0;
+                    $('.item-row').each(function () {
+                        var q = parseFloat($(this).find('.edit-qty').val()) || 0;
+                        var p = parseFloat($(this).find('.edit-price').val()) || 0;
+                        total += q * p;
+                    });
+                    $('#edit-total').text(total.toFixed(2));
+                });
+            }
+
+            window.closeEditModal = function () {
+                $('#edit-modal').removeClass('show');
+                editingOrder = null;
+            };
+
+            window.saveEdit = function () {
+                if (!editingOrder) return;
+
+                var items = [];
+                $('.item-row').each(function () {
+                    var id = $(this).find('.edit-qty').data('id');
+                    var qty = parseFloat($(this).find('.edit-qty').val()) || 0;
+                    var price = parseFloat($(this).find('.edit-price').val()) || 0;
+                    items.push({ id: id, quantity: qty, price: price });
+                });
+
+                $.ajax({
+                    url: '/api/v1/nursery/order/' + editingOrder.order_no,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        operator: $('#edit-operator').val(),
+                        destination: $('#edit-destination').val(),
+                        remark: $('#edit-remark').val(),
+                        items: items
+                    }),
+                    success: function (res) {
+                        if (res.success) {
+                            layer.msg('订单更新成功', { icon: 1 });
+                            closeEditModal();
+                            loadOrders();
+                        } else {
+                            layer.msg(res.msg || '更新失败', { icon: 2 });
+                        }
+                    },
+                    error: function () { layer.msg('网络请求失败', { icon: 2 }); }
+                });
+            };
+
+            window.deleteOrder = function (orderNo) {
+                layer.confirm('确定要删除出库单 ' + orderNo + ' 吗？<br><br><span style="color: #f97316;">⚠ 删除后，该订单中的库存数量将自动退回至库存中。</span>', {
+                    title: '确认删除',
+                    btn: ['确定删除', '取消']
+                }, function (idx) {
+                    $.ajax({
+                        url: '/api/v1/nursery/order/' + orderNo,
+                        type: 'DELETE',
+                        success: function (res) {
+                            if (res.success) {
+                                layer.msg('订单已删除，库存已回退', { icon: 1 });
+                                layer.close(idx);
+                                loadOrders();
+                            } else {
+                                layer.msg(res.msg || '删除失败', { icon: 2 });
+                            }
+                        },
+                        error: function () { layer.msg('网络请求失败', { icon: 2 }); }
+                    });
+                });
+            };
+
+            loadOrders();
+        });
+    </script>
+</body>
+
+</html>

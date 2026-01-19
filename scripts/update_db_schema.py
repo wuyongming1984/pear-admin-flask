@@ -17,8 +17,9 @@ logger = logging.getLogger(__name__)
 # Force import of all ORMs to ensure they are registered with SQLAlchemy
 from pear_admin import orms
 
-# Explicitly use production config
-app = create_app("prod")
+# Allow setting config via env var or default to dev
+config_name = os.getenv('FLASK_CONFIG', 'dev')
+app = create_app(config_name)
 
 
 def get_column_type_sql(column):

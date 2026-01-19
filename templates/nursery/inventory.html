@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="utf-8" />
+    <title>库存明细</title>
+    <meta name="renderer" content="webkit" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="stylesheet" href="/static/component/layui/css/layui.css" />
+    <link rel="stylesheet" href="/static/nursery/nursery.css" />
+    <script src="/static/component/layui/layui.js"></script>
+</head>
+
+<body>
+    <div class="n-page">
+        <header class="n-header">
+            <h1 class="n-title">库存明细</h1>
+            <p class="n-subtitle">查看所有苗木库存，支持按分类筛选和搜索。</p>
+        </header>
+
+        <!-- Stats -->
+        <div class="n-stats" style="max-width: 900px; margin: 0 auto 24px;">
+            <div class="n-stat-card">
+                <div class="n-stat-label"><i class="layui-icon layui-icon-template-1"></i> 库存总量</div>
+                <div class="n-stat-value n-stat-value--primary" id="stat-total">0</div>
+            </div>
+            <div class="n-stat-card">
+                <div class="n-stat-label"><i class="layui-icon layui-icon-app"></i> 产品种类</div>
+                <div class="n-stat-value" id="stat-types">0</div>
+            </div>
+            <div class="n-stat-card">
+                <div class="n-stat-label"><i class="layui-icon layui-icon-rmb"></i> 库存总值</div>
+                <div class="n-stat-value n-stat-value--info" id="stat-value">¥0</div>
+            </div>
+        </div>
+
+        <!-- Search & Tabs -->
+        <div
+            style="max-width: 900px; margin: 0 auto 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div class="n-search" style="flex: 1; max-width: 320px;">
+                <i class="n-search__icon layui-icon layui-icon-search"></i>
+                <input type="text" class="n-search__input" id="search-input" placeholder="搜索苗木名称或规格...">
+            </div>
+            <div class="n-tabs" id="category-tabs">
+                <div class="n-tab n-tab--active" data-category="">全部</div>
+            </div>
+        </div>
+
+        <!-- Inventory Grid -->
+        <div class="n-grid" id="inventory-grid" style="max-width: 900px; margin: 0 auto;">
+            <div class="n-empty">
+                <div class="n-empty__icon"><i
+                        class="layui-icon layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop"></i></div>
+                <div class="n-empty__text">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        layui.use(['jquery'], function () {
+            var $ = layui.$;
+            var allData = [];
+            var currentCategory = '';
+            var searchTerm = '';
+
+            function loadInventory() {
+                $.ajax({
+                    url: '/api/v1/nursery/inventory',
+                    success: function (res) {
+                        if (res.code === 0) {
+                            allData = res.data;
+                            updateStats();
+                            loadCategories();
+                            renderGrid();
+                        }
+                    }
+                });
+            }
+
+            function updateStats() {
+                var totalQty = 0, totalValue = 0;
+                allData.forEach(function (item) {
+                    totalQty += item.quantity || 0;
+                    totalValue += (item.quantity || 0) * (item.price || 0);
+                });
+                $('#stat-total').text(totalQty.toLocaleString());
+                $('#stat-types').text(allData.length);
+                $('#stat-value').text('¥' + totalValue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }));
+            }
+
+            function loadCategories() {
+                var categories = [...new Set(allData.map(function (item) { return item.category; }).filter(Boolean))];
+                var html = '<div class="n-tab n-tab--active" data-category="">全部</div>';
+                categories.forEach(function (cat) {
+                    html += '<div class="n-tab" data-category="' + cat + '">' + cat + '</div>';
+                });
+                $('#category-tabs').html(html);
+
+                $('#category-tabs').on('click', '.n-tab', function () {
+                    $('.n-tab').removeClass('n-tab--active');
+                    $(this).addClass('n-tab--active');
+                    currentCategory = $(this).data('category');
+                    renderGrid();
+                });
+
+                // 默认选中"养殖"分类
+                if (categories.includes('养殖')) {
+                    $('.n-tab[data-category="养殖"]').click();
+                }
+            }
+
+            function renderGrid() {
+                var filtered = allData.filter(function (item) {
+                    var matchCategory = !currentCategory || item.category === currentCategory;
+                    var matchSearch = !searchTerm ||
+                        (item.name && item.name.toLowerCase().includes(searchTerm)) ||
+                        (item.spec && item.spec.toLowerCase().includes(searchTerm));
+                    return matchCategory && matchSearch;
+                });
+
+                if (filtered.length === 0) {
+                    $('#inventory-grid').html('<div class="n-empty"><div class="n-empty__icon"><i class="layui-icon layui-icon-face-cry"></i></div><div class="n-empty__text">暂无数据</div></div>');
+                    return;
+                }
+
+                var html = '';
+                filtered.forEach(function (item) {
+                    html += '<div class="n-plant-card">';
+                    html += '<div class="n-plant-card__header">';
+                    html += '<h3 class="n-plant-card__name">' + (item.name || '-') + '</h3>';
+                    if (item.category) {
+                        html += '<span class="n-plant-card__category">' + item.category + '</span>';
+                    }
+                    html += '</div>';
+                    html += '<div class="n-plant-card__spec">' + (item.spec || '统货') + '</div>';
+                    html += '<div class="n-plant-card__stats">';
+                    html += '<div><span class="n-plant-card__qty">' + (item.quantity || 0) + '</span><span class="n-plant-card__unit">' + (item.unit || '株') + '</span></div>';
+                    html += '<div class="n-plant-card__price">¥' + parseFloat(item.price || 0).toFixed(2) + '</div>';
+                    html += '</div>';
+                    if (item.location) {
+                        html += '<div class="n-plant-card__location" style="margin-top: 12px;"><i class="layui-icon layui-icon-location"></i> ' + item.location + '</div>';
+                    }
+                    html += '</div>';
+                });
+                $('#inventory-grid').html(html);
+            }
+
+            $('#search-input').on('input', function () {
+                searchTerm = $(this).val().toLowerCase().trim();
+                renderGrid();
+            });
+
+            loadInventory();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="utf-8" />
+    <title>基础数据管理</title>
+    <meta name="renderer" content="webkit" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="stylesheet" href="/static/component/layui/css/layui.css" />
+    <link rel="stylesheet" href="/static/nursery/nursery.css" />
+    <script src="/static/component/layui/layui.js"></script>
+</head>
+
+<body>
+    <div class="n-page">
+        <header class="n-header">
+            <h1 class="n-title">基础数据管理</h1>
+            <p class="n-subtitle">管理系统基础字典、存放位置及非入库商品目录。</p>
+        </header>
+
+        <div class="n-dual-panel" style="max-width: 1000px; margin: 0 auto;">
+            <!-- Left: Add Form -->
+            <div style="width: 400px; flex-shrink: 0;">
+                <div class="n-card">
+                    <div class="n-card__body">
+                        <h3 class="n-card__title n-mb-4"><i class="layui-icon layui-icon-add-1"></i> 添加新数据</h3>
+
+                        <div class="n-tabs n-mb-4">
+                            <div class="n-tab n-tab--active" data-type="category">产品大类</div>
+                            <div class="n-tab" data-type="location">存放位置</div>
+                            <div class="n-tab" data-type="non-inventory">非入库商品</div>
+                        </div>
+
+                        <div class="n-form-group" id="form-simple">
+                            <label class="n-label" id="input-label">大类名称</label>
+                            <input type="text" class="n-input" id="add-input" placeholder="例如：苗木、蔬菜">
+                        </div>
+
+                        <!-- 非入库商品专用表单 -->
+                        <div id="form-non-inventory" style="display: none;">
+                            <div class="n-form-group">
+                                <label class="n-label">商品名称</label>
+                                <input type="text" class="n-input" id="ni-name" placeholder="例如：肥料、农药">
+                            </div>
+                            <div class="n-form-row">
+                                <div class="n-form-group">
+                                    <label class="n-label">单位</label>
+                                    <input type="text" class="n-input" id="ni-unit" placeholder="例如：包" value="包">
+                                </div>
+                                <div class="n-form-group">
+                                    <label class="n-label">出库指导价(元)</label>
+                                    <input type="number" class="n-input" id="ni-price" placeholder="0.00" step="0.01"
+                                        min="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="n-btn n-btn--primary n-btn--block" onclick="addItem()">
+                            <i class="layui-icon layui-icon-ok"></i> 添加数据
+                        </button>
+
+                        <div
+                            style="margin-top: 20px; padding: 16px; background: var(--n-slate-50); border-radius: var(--n-radius-sm); font-size: 13px; color: var(--n-slate-600);">
+                            <strong>说明：</strong><br>
+                            产品大类用于区分不同的库存类型，如"苗木"、"蔬菜"、"养殖"等。
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Lists -->
+            <div class="n-dual-panel__left">
+                <div class="n-card n-mb-4">
+                    <div class="n-card__header">
+                        <h3 class="n-card__title"><i class="layui-icon layui-icon-tabs"
+                                style="color: var(--n-primary);"></i> 产品大类列表</h3>
+                        <span class="n-tag n-tag--success" id="category-count">0个</span>
+                    </div>
+                    <div class="n-card__body" id="category-list" style="min-height: 60px;">
+                        <div class="n-empty">
+                            <div class="n-empty__text" style="padding: 16px 0;">暂无分类数据</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="n-card n-mb-4">
+                    <div class="n-card__header">
+                        <h3 class="n-card__title"><i class="layui-icon layui-icon-location"
+                                style="color: var(--n-info);"></i> 存放位置列表</h3>
+                        <span class="n-tag n-tag--info" id="location-count">0个</span>
+                    </div>
+                    <div class="n-card__body" id="location-list" style="min-height: 60px;">
+                        <div class="n-empty">
+                            <div class="n-empty__text" style="padding: 16px 0;">暂无位置数据</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="n-card">
+                    <div class="n-card__header">
+                        <h3 class="n-card__title"><i class="layui-icon layui-icon-app" style="color: #f97316;"></i>
+                            非入库商品列表</h3>
+                        <span class="n-tag n-tag--warning" id="non-inventory-count">0个</span>
+                    </div>
+                    <div class="n-card__body" id="non-inventory-list" style="min-height: 60px;">
+                        <div class="n-empty">
+                            <div class="n-empty__text" style="padding: 16px 0;">暂无非入库商品</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        layui.use(['jquery', 'layer'], function () {
+            var $ = layui.$;
+            var layer = layui.layer;
+
+            var currentType = 'category';
+            var data = { category: [], location: [], 'non-inventory': [] };
+
+            var saved = localStorage.getItem('nursery_settings');
+            if (saved) { try { data = JSON.parse(saved); } catch (e) { } }
+
+            $('.n-tab').on('click', function () {
+                $('.n-tab').removeClass('n-tab--active');
+                $(this).addClass('n-tab--active');
+                currentType = $(this).data('type');
+
+                // 切换表单显示
+                if (currentType === 'non-inventory') {
+                    $('#form-simple').hide();
+                    $('#form-non-inventory').show();
+                } else {
+                    $('#form-simple').show();
+                    $('#form-non-inventory').hide();
+                    var labels = { 'category': '大类名称', 'location': '位置名称' };
+                    var placeholders = { 'category': '例如：苗木、蔬菜', 'location': '例如：A区、B区' };
+                    $('#input-label').text(labels[currentType]);
+                    $('#add-input').attr('placeholder', placeholders[currentType]);
+                }
+            });
+
+            window.addItem = function () {
+                if (currentType === 'non-inventory') {
+                    // 非入库商品 - 使用对象格式
+                    var name = $('#ni-name').val().trim();
+                    var unit = $('#ni-unit').val().trim();
+                    var price = parseFloat($('#ni-price').val()) || 0;
+
+                    if (!name) { layer.msg('请输入商品名称'); return; }
+
+                    // 检查是否已存在
+                    var exists = data[currentType].find(function (item) {
+                        return typeof item === 'object' ? item.name === name : item === name;
+                    });
+                    if (exists) { layer.msg('该商品已存在'); return; }
+
+                    data[currentType].push({ name: name, unit: unit, guide_price: price });
+                    $('#ni-name').val('');
+                    $('#ni-unit').val('包');
+                    $('#ni-price').val('');
+                } else {
+                    // 普通项目 - 使用字符串格式
+                    var value = $('#add-input').val().trim();
+                    if (!value) { layer.msg('请输入名称'); return; }
+                    if (data[currentType].includes(value)) { layer.msg('该项已存在'); return; }
+                    data[currentType].push(value);
+                    $('#add-input').val('');
+                }
+                saveAndRender();
+                layer.msg('添加成功', { icon: 1 });
+            };
+
+            window.deleteItem = function (type, idx) {
+                layer.confirm('确定要删除这个项目吗？', { btn: ['确定', '取消'] }, function (i) {
+                    data[type].splice(idx, 1);
+                    saveAndRender();
+                    layer.close(i);
+                    layer.msg('删除成功', { icon: 1 });
+                });
+            };
+
+            // 编辑功能
+            window.editItem = function (type, idx) {
+                var item = data[type][idx];
+
+                if (type === 'non-inventory' && typeof item === 'object') {
+                    // 非入库商品 - 使用表单编辑
+                    layer.prompt({
+                        formType: 0,
+                        title: '编辑商品名称',
+                        value: item.name
+                    }, function (name, layerIdx) {
+                        if (!name.trim()) {
+                            layer.msg('名称不能为空');
+                            return;
+                        }
+
+                        layer.prompt({
+                            formType: 0,
+                            title: '编辑单位',
+                            value: item.unit || '株'
+                        }, function (unit, unitIdx) {
+                            layer.prompt({
+                                formType: 0,
+                                title: '编辑指导价',
+                                value: item.guide_price || 0
+                            }, function (price, priceIdx) {
+                                data[type][idx] = {
+                                    name: name.trim(),
+                                    unit: unit.trim() || '株',
+                                    guide_price: parseFloat(price) || 0
+                                };
+                                saveAndRender();
+                                layer.close(layerIdx);
+                                layer.close(unitIdx);
+                                layer.close(priceIdx);
+                                layer.msg('更新成功', { icon: 1 });
+                            });
+                        });
+                    });
+                } else {
+                    // 普通项目 - 直接编辑
+                    var currentValue = typeof item === 'object' ? item.name : item;
+                    layer.prompt({
+                        formType: 0,
+                        title: '编辑名称',
+                        value: currentValue
+                    }, function (value, idx2) {
+                        if (!value.trim()) {
+                            layer.msg('名称不能为空');
+                            return;
+                        }
+                        data[type][idx] = value.trim();
+                        saveAndRender();
+                        layer.close(idx2);
+                        layer.msg('更新成功', { icon: 1 });
+                    });
+                }
+            };
+
+            function saveAndRender() {
+                localStorage.setItem('nursery_settings', JSON.stringify(data));
+                renderLists();
+            }
+
+            // 数据迁移函数 - 将旧格式转为新格式
+            function migrateData() {
+                if (data['non-inventory'] && data['non-inventory'].length > 0) {
+                    var needMigrate = data['non-inventory'].some(function (item) {
+                        return typeof item === 'string';
+                    });
+
+                    if (needMigrate) {
+                        data['non-inventory'] = data['non-inventory'].map(function (item) {
+                            if (typeof item === 'string') {
+                                return { name: item, unit: '株', guide_price: 0 };
+                            }
+                            return item;
+                        });
+                        localStorage.setItem('nursery_settings', JSON.stringify(data));
+                    }
+                }
+            }
+
+            function renderLists() {
+                ['category', 'location', 'non-inventory'].forEach(function (type) {
+                    var list = data[type];
+                    var containerId = '#' + type + '-list';
+                    var countId = '#' + type + '-count';
+
+                    $(countId).text(list.length + '个');
+
+                    if (list.length === 0) {
+                        $(containerId).html('<div class="n-empty"><div class="n-empty__text" style="padding: 16px 0;">暂无数据</div></div>');
+                        return;
+                    }
+
+                    var html = '';
+
+                    if (type === 'category') {
+                        // 产品大类 - 标签式布局
+                        html += '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
+                        list.forEach(function (item, idx) {
+                            var name = typeof item === 'object' ? item.name : item;
+                            html += '<div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--n-primary-light); color: var(--n-primary); border-radius: 20px; font-size: 13px;">';
+                            html += '<span onclick="editItem(\x27category\x27, ' + idx + ')" style="cursor: pointer;">' + name + '</span>';
+                            html += '<span style="cursor: pointer; opacity: 0.7;" onclick="deleteItem(\x27category\x27, ' + idx + ')">×</span>';
+                            html += '</div>';
+                        });
+                        html += '</div>';
+                    } else if (type === 'location') {
+                        // 存放位置 - 卡片网格布局
+                        html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px;">';
+                        list.forEach(function (item, idx) {
+                            var name = typeof item === 'object' ? item.name : item;
+                            html += '<div style="padding: 12px; background: var(--n-slate-50); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">';
+                            html += '<span onclick="editItem(\x27location\x27, ' + idx + ')" style="cursor: pointer; font-weight: 500;">' + name + '</span>';
+                            html += '<span style="cursor: pointer; color: var(--n-danger); padding: 4px;" onclick="deleteItem(\x27location\x27, ' + idx + ')"><i class="layui-icon layui-icon-delete"></i></span>';
+                            html += '</div>';
+                        });
+                        html += '</div>';
+                    } else {
+                        // 非入库商品 - 卡片网格布局
+                        html += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;">';
+                        list.forEach(function (item, idx) {
+                            var name = typeof item === 'object' ? item.name : item;
+                            var unit = typeof item === 'object' ? item.unit : '株';
+                            var price = typeof item === 'object' ? (item.guide_price || 0) : 0;
+
+                            html += '<div style="padding: 12px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px;">';
+                            html += '<div style="display: flex; justify-content: space-between; align-items: flex-start;">';
+                            html += '<div onclick="editItem(\x27non-inventory\x27, ' + idx + ')" style="cursor: pointer; flex: 1;">';
+                            html += '<div style="font-weight: 600; color: #c2410c; margin-bottom: 4px;">' + name + '</div>';
+                            html += '<div style="font-size: 11px; color: #9a3412;">指导价: ¥' + price.toFixed(2) + ' / ' + unit + '</div>';
+                            html += '</div>';
+                            html += '<span style="cursor: pointer; color: var(--n-danger); padding: 4px;" onclick="deleteItem(\x27non-inventory\x27, ' + idx + ')"><i class="layui-icon layui-icon-delete"></i></span>';
+                            html += '</div>';
+                            html += '</div>';
+                        });
+                        html += '</div>';
+                    }
+
+                    $(containerId).html(html);
+                });
+            }
+
+            migrateData();
+            renderLists();
+        });
+    </script>
+</body>
+
+</html>

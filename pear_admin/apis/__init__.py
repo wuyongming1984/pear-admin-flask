@@ -14,6 +14,7 @@ from .user import user_api
 from .payer import payer_api
 from .dictionary import dictionary_api_bp
 from .dashboard import dashboard_api
+from .nursery import nursery_api
 
 def register_apis(app: Flask):
     apis = Blueprint("api", __name__, url_prefix="/api/v1")
@@ -32,5 +33,6 @@ def register_apis(app: Flask):
     apis.register_blueprint(payer_api)
     apis.register_blueprint(dictionary_api_bp)
     apis.register_blueprint(dashboard_api)
+    apis.register_blueprint(nursery_api)
 
     app.register_blueprint(apis)

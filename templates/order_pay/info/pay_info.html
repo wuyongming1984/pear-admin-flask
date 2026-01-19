@@ -6,16 +6,46 @@
   <title>付款单</title>
   <link rel="stylesheet" href="/static/component/pear/css/pear.css" />
   <style>
+    /* ==================== 统一设计规范 ==================== */
+    :root {
+      --primary-50: #eff6ff;
+      --primary-500: #3b82f6;
+      --primary-600: #2563eb;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+      --white: #ffffff;
+      --bg-body: var(--slate-100);
+      --bg-card: var(--white);
+      --border-color: var(--slate-200);
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --ring-primary: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+    }
+
     body {
-      background-color: #fff;
+      background-color: var(--bg-body);
       padding: 20px;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
     .order-form-container {
-      padding: 20px;
-      background: #fff;
+      padding: var(--spacing-lg);
+      background: var(--bg-card);
       max-width: 1200px;
       margin: 0 auto;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
     }
 
     .main-title {
@@ -23,15 +53,17 @@
       font-size: 24px;
       font-weight: bold;
       margin-bottom: 30px;
-      color: #333;
+      color: var(--slate-900);
     }
 
     /* 通用区块样式 */
     .info-section {
-      border: 2px solid #333;
-      padding: 20px 40px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-lg);
       margin-bottom: 30px;
       position: relative;
+      background: var(--slate-50);
     }
 
     .section-header {
@@ -41,18 +73,18 @@
 
     .section-title {
       font-size: 18px;
-      font-weight: bold;
+      font-weight: 600;
       display: inline-block;
-      background: #fff;
-      padding: 0 10px;
+      background: var(--slate-50);
+      padding: 0 15px;
+      color: var(--slate-800);
     }
 
     /* 网格布局 */
     .info-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px 80px;
-      /* 行间距20px，列间距80px */
+      gap: 20px 60px;
     }
 
     .form-item {
@@ -62,10 +94,9 @@
 
     .form-item label {
       width: 110px;
-      /* 固定标签宽度 */
       text-align: right;
       margin-right: 10px;
-      color: #333;
+      color: var(--slate-600);
       font-size: 14px;
       white-space: nowrap;
     }
@@ -80,17 +111,24 @@
       width: 100%;
       height: 38px;
       line-height: 38px;
-      border: 1px solid #333;
-      padding: 0 10px;
+      border: 1px solid var(--border-color);
+      padding: 0 12px;
       box-sizing: border-box;
-      border-radius: 0;
-      /* 直角边框 */
+      border-radius: var(--radius-sm);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-item input:focus,
+    .form-item select:focus {
+      border-color: var(--primary-500);
+      box-shadow: var(--ring-primary);
+      outline: none;
     }
 
     /* 针对只读输入框的样式微调 */
     .form-item input[readonly] {
-      background-color: #f2f2f2;
-      border-color: #333;
+      background-color: var(--slate-100);
+      border-color: var(--border-color);
     }
 
     /* 特殊：订单金额独占一行 */
@@ -102,23 +140,31 @@
     .form-item textarea {
       width: 100%;
       min-height: 100px;
-      border: 1px solid #333;
-      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
       box-sizing: border-box;
       resize: vertical;
-      border-radius: 0;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-item textarea:focus {
+      border-color: var(--primary-500);
+      box-shadow: var(--ring-primary);
+      outline: none;
     }
 
     /* layui select 覆盖 */
     .layui-form-select .layui-input {
-      border: 1px solid #333;
-      border-radius: 0;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
       height: 38px;
     }
 
     .layui-form-select dl {
-      border: 1px solid #333;
-      border-radius: 0;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-md);
     }
 
     /* 底部按钮 */
@@ -126,29 +172,44 @@
       text-align: center;
       margin-top: 40px;
       padding-top: 20px;
-      border-top: 1px solid #eee;
+      border-top: 1px solid var(--border-color);
     }
 
     .form-actions .layui-btn {
       min-width: 100px;
       height: 38px;
       line-height: 38px;
-      border-radius: 2px;
+      border-radius: var(--radius-md);
       margin: 0 10px;
       font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .form-actions .layui-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
     }
 
     .btn-cancel {
-      background-color: #fff;
-      color: #333;
-      border: 1px solid #ccc;
+      background-color: var(--white);
+      color: var(--slate-600);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-cancel:hover {
+      background-color: var(--slate-50);
+      border-color: var(--slate-300);
     }
 
     .btn-confirm {
-      background-color: #009688;
-      /* 这里的绿色接近截图 */
-      color: #fff;
+      background-color: var(--primary-500);
+      color: var(--white);
       border: none;
+    }
+
+    .btn-confirm:hover {
+      background-color: var(--primary-600);
     }
   </style>
 </head>

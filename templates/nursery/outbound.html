@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="utf-8" />
+    <title>批量出库</title>
+    <meta name="renderer" content="webkit" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="stylesheet" href="/static/component/layui/css/layui.css" />
+    <link rel="stylesheet" href="/static/nursery/nursery.css" />
+    <script src="/static/component/layui/layui.js"></script>
+</head>
+
+<body>
+    <div class="n-page">
+        <header class="n-header">
+            <h1 class="n-title">批量出库</h1>
+            <p class="n-subtitle">建立出库清单，设定销售单价并进行批量处理。</p>
+        </header>
+
+        <div style="display: flex; gap: 24px; max-width: 1200px; margin: 0 auto;">
+            <!-- Left Panel: Select Products -->
+            <div style="width: 420px; flex-shrink: 0;">
+                <div class="n-card">
+                    <div class="n-card__body">
+                        <!-- Mode Switcher -->
+                        <div class="n-tabs n-mb-4"
+                            style="background: var(--n-slate-50); padding: 4px; border-radius: var(--n-radius-lg);">
+                            <div class="n-tab n-tab--active" id="tab-search" onclick="switchMode('search')"
+                                style="flex: 1; text-align: center;">库存查找</div>
+                            <div class="n-tab" id="tab-manual" onclick="switchMode('manual')"
+                                style="flex: 1; text-align: center; color: #f97316;">
+                                <i class="layui-icon layui-icon-edit"></i> 非入库录入
+                            </div>
+                        </div>
+
+                        <!-- Search Mode -->
+                        <div id="search-panel">
+                            <h3 class="n-card__title n-mb-4"><i class="layui-icon layui-icon-search"
+                                    style="color: var(--n-primary);"></i> 选择库存产品</h3>
+                            <div class="n-search n-mb-4" style="max-width: 100%;">
+                                <i class="n-search__icon layui-icon layui-icon-search"></i>
+                                <input type="text" class="n-search__input" id="search-input"
+                                    placeholder="搜索名称、品种、或存放位置..." style="border-radius: var(--n-radius-md);">
+                            </div>
+                            <div id="search-results" style="max-height: 180px; overflow-y: auto;"></div>
+
+                            <!-- Selected Item Config -->
+                            <div id="search-config" style="display: none;">
+                                <div
+                                    style="padding: 16px; background: var(--n-primary-light); border-radius: var(--n-radius-md); margin-top: 16px;">
+                                    <div
+                                        style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                        <div>
+                                            <div
+                                                style="font-size: 10px; color: var(--n-primary); font-weight: 700; text-transform: uppercase;">
+                                                已选库存</div>
+                                            <div id="selected-name" class="n-font-bold" style="font-size: 16px;"></div>
+                                        </div>
+                                        <span style="cursor: pointer; color: var(--n-slate-400);"
+                                            onclick="clearSelection()">✕</span>
+                                    </div>
+                                    <div class="n-form-row">
+                                        <div class="n-form-group">
+                                            <label class="n-label">出库数量</label>
+                                            <input type="number" class="n-input" id="sel-qty" min="1">
+                                            <div id="sel-max"
+                                                style="font-size: 10px; color: var(--n-slate-400); text-align: right; margin-top: 4px;">
+                                            </div>
+                                        </div>
+                                        <div class="n-form-group">
+                                            <label class="n-label">指导/销售单价</label>
+                                            <input type="number" class="n-input" id="sel-price" step="0.01">
+                                        </div>
+                                    </div>
+                                    <div
+                                        style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.1);">
+                                        <span style="font-size: 12px; color: var(--n-slate-500);">预计小计</span>
+                                        <span id="sel-subtotal" class="n-font-bold"
+                                            style="font-size: 16px;">¥0.00</span>
+                                    </div>
+                                    <button class="n-btn n-btn--primary n-btn--block" style="margin-top: 16px;"
+                                        onclick="addToCart()">
+                                        <i class="layui-icon layui-icon-add-1"></i> 加入清单
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Manual Mode -->
+                        <div id="manual-panel" style="display: none;">
+                            <h3 class="n-card__title n-mb-4"><i class="layui-icon layui-icon-edit"
+                                    style="color: #f97316;"></i> 录入非库存产品</h3>
+
+                            <!-- 商品选择器 -->
+                            <div class="n-form-group">
+                                <label class="n-label">从商品目录选择 <span
+                                        style="font-size: 11px; color: var(--n-slate-400);">(可选)</span></label>
+                                <select class="n-input" id="ni-selector" onchange="loadNonInventoryProduct()">
+                                    <option value="">-- 手动输入或从目录选择 --</option>
+                                </select>
+                            </div>
+
+                            <div class="n-form-group">
+                                <label class="n-label">产品名称</label>
+                                <input type="text" class="n-input" id="manual-name" placeholder="输入产品名称">
+                            </div>
+                            <div class="n-form-row">
+                                <div class="n-form-group">
+                                    <label class="n-label">单位</label>
+                                    <input type="text" class="n-input" id="manual-unit" placeholder="例如:株" value="株">
+                                </div>
+                                <div class="n-form-group">
+                                    <label class="n-label">规格</label>
+                                    <input type="text" class="n-input" id="manual-spec" placeholder="例如:H2.0m">
+                                </div>
+                            </div>
+                            <div
+                                style="padding: 16px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: var(--n-radius-md); margin-top: 16px;">
+                                <div class="n-form-row">
+                                    <div class="n-form-group">
+                                        <label class="n-label">出库数量</label>
+                                        <input type="number" class="n-input" id="manual-qty" min="1">
+                                    </div>
+                                    <div class="n-form-group">
+                                        <label class="n-label">指导/销售单价</label>
+                                        <input type="number" class="n-input" id="manual-price" step="0.01">
+                                    </div>
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.1);">
+                                    <span style="font-size: 12px; color: var(--n-slate-500);">预计小计</span>
+                                    <span id="manual-subtotal" class="n-font-bold" style="font-size: 16px;">¥0.00</span>
+                                </div>
+                                <button class="n-btn n-btn--secondary n-btn--block"
+                                    style="margin-top: 16px; border-color: #f97316; color: #f97316;"
+                                    onclick="addManualToCart()">
+                                    <i class="layui-icon layui-icon-next"></i> 添加到临时清单
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Cart (Wider) -->
+            <div style="flex: 1; min-width: 0;">
+                <div class="n-card n-card--bordered">
+                    <div class="n-card__header">
+                        <h3 class="n-card__title"><i class="layui-icon layui-icon-list"
+                                style="color: var(--n-primary);"></i> 2. 待出库清单 (<span id="cart-count">0</span>)</h3>
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <span class="n-font-bold" style="font-size: 18px; color: var(--n-primary);">整单合计 ¥<span
+                                    id="order-total">0.00</span></span>
+                        </div>
+                    </div>
+                    <div class="n-card__body">
+                        <div id="cart-list"
+                            style="min-height: 160px; max-height: 240px; overflow-y: auto; margin-bottom: 24px;">
+                            <div class="n-empty">
+                                <div class="n-empty__text" style="padding: 40px;">清单为空</div>
+                            </div>
+                        </div>
+
+                        <!-- Confirmation Section -->
+                        <div style="border-top: 2px dashed var(--n-slate-100); padding-top: 24px;">
+                            <h3 class="n-card__title n-mb-4"><i class="layui-icon layui-icon-ok-circle"
+                                    style="color: var(--n-primary);"></i> 3. 确认信息</h3>
+
+                            <div class="n-form-row">
+                                <div class="n-form-group">
+                                    <label class="n-label">出库日期</label>
+                                    <input type="text" class="n-input" id="out-date" readonly>
+                                </div>
+                                <div class="n-form-group">
+                                    <label class="n-label">操作员</label>
+                                    <input type="text" class="n-input" id="out-operator" value="管理员">
+                                </div>
+                            </div>
+                            <div class="n-form-group">
+                                <label class="n-label">去向/工程名称</label>
+                                <input type="text" class="n-input" id="out-dest" placeholder="选填">
+                            </div>
+                            <div class="n-form-group">
+                                <label class="n-label">备注</label>
+                                <input type="text" class="n-input" id="out-remark" placeholder="例如：订单号 #123">
+                            </div>
+
+                            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                                <button class="n-btn n-btn--secondary" onclick="clearCart()" style="width: 120px;">
+                                    <i class="layui-icon layui-icon-refresh"></i> 清空重置
+                                </button>
+                                <button class="n-btn n-btn--primary"
+                                    style="flex: 1; background: #f87171; padding: 14px;" onclick="confirmOutbound()">
+                                    确认批量出库
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        layui.use(['jquery', 'laydate', 'layer'], function () {
+            var $ = layui.$;
+            var laydate = layui.laydate;
+            var layer = layui.layer;
+
+            var allProducts = [];
+            var cart = [];
+            var selectedItem = null;
+            var mode = 'search';
+
+            var today = new Date().toISOString().split('T')[0];
+            $('#out-date').val(today);
+            laydate.render({ elem: '#out-date', type: 'date', value: today });
+
+            // Load products
+            function loadProducts() {
+                $.ajax({
+                    url: '/api/v1/nursery/inventory',
+                    success: function (res) {
+                        if (res.code === 0) {
+                            allProducts = res.data.filter(function (p) { return p.quantity > 0; });
+                        }
+                    }
+                });
+            }
+
+            // Load non-inventory products from localStorage
+            function loadNonInventoryOptions() {
+                try {
+                    var saved = localStorage.getItem('nursery_settings');
+                    if (saved) {
+                        var data = JSON.parse(saved);
+                        var niProducts = data['non-inventory'] || [];
+
+                        var html = '<option value="">-- 手动输入或从目录选择 --</option>';
+                        niProducts.forEach(function (item, idx) {
+                            if (typeof item === 'object') {
+                                html += '<option value="' + idx + '">' + item.name + ' (' + item.unit + ', ¥' + (item.guide_price || 0) + ')</option>';
+                            } else {
+                                html += '<option value="' + idx + '">' + item + '</option>';
+                            }
+                        });
+                        $('#ni-selector').html(html);
+                    }
+                } catch (e) {
+                    console.error('Failed to load non-inventory products:', e);
+                }
+            }
+
+            // Load selected non-inventory product
+            window.loadNonInventoryProduct = function () {
+                var idx = $('#ni-selector').val();
+                if (!idx) return;
+
+                try {
+                    var saved = localStorage.getItem('nursery_settings');
+                    if (saved) {
+                        var data = JSON.parse(saved);
+                        var niProducts = data['non-inventory'] || [];
+                        var item = niProducts[parseInt(idx)];
+
+                        if (typeof item === 'object') {
+                            $('#manual-name').val(item.name);
+                            $('#manual-unit').val(item.unit || '株');
+                            $('#manual-price').val(item.guide_price || 0);
+                        } else {
+                            $('#manual-name').val(item);
+                            $('#manual-unit').val('株');
+                            $('#manual-price').val(0);
+                        }
+
+                        // 计算小计
+                        var qty = parseFloat($('#manual-qty').val()) || 0;
+                        var price = parseFloat($('#manual-price').val()) || 0;
+                        $('#manual-subtotal').text('¥' + (qty * price).toFixed(2));
+                    }
+                } catch (e) {
+                    console.error('Failed to load product:', e);
+                }
+            };
+
+            // Mode switch
+            window.switchMode = function (m) {
+                mode = m;
+                if (m === 'search') {
+                    $('#tab-search').addClass('n-tab--active');
+                    $('#tab-manual').removeClass('n-tab--active');
+                    $('#search-panel').show();
+                    $('#manual-panel').hide();
+                } else {
+                    $('#tab-manual').addClass('n-tab--active');
+                    $('#tab-search').removeClass('n-tab--active');
+                    $('#search-panel').hide();
+                    $('#manual-panel').show();
+                    // 加载非入库商品选项
+                    loadNonInventoryOptions();
+                }
+            };
+
+            // Search
+            $('#search-input').on('input', function () {
+                var term = $(this).val().toLowerCase().trim();
+                if (!term) {
+                    $('#search-results').html('');
+                    return;
+                }
+
+                var filtered = allProducts.filter(function (p) {
+                    return (p.name && p.name.toLowerCase().includes(term)) ||
+                        (p.spec && p.spec.toLowerCase().includes(term)) ||
+                        (p.location && p.location.toLowerCase().includes(term));
+                }).slice(0, 5);
+
+                if (filtered.length === 0) {
+                    $('#search-results').html('<div class="n-text-muted" style="padding: 16px; text-align: center;">无匹配结果</div>');
+                    return;
+                }
+
+                var html = '';
+                filtered.forEach(function (p) {
+                    html += '<div class="n-plant-card" style="margin-bottom: 8px; cursor: pointer; padding: 12px;" onclick="selectProduct(' + p.id + ')">';
+                    html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
+                    html += '<span class="n-font-bold">' + p.name + '</span>';
+                    html += '<i class="layui-icon layui-icon-right" style="color: var(--n-slate-300);"></i>';
+                    html += '</div>';
+                    html += '<div class="n-text-muted" style="font-size: 11px; margin-top: 4px;">可用: ' + p.quantity + ' ' + (p.unit || '株') + ' • ' + (p.spec || '-') + ' • 成本: ¥' + (p.price || 0) + '</div>';
+                    html += '</div>';
+                });
+                $('#search-results').html(html);
+            });
+
+            // Select product
+            window.selectProduct = function (id) {
+                selectedItem = allProducts.find(function (p) { return p.id === id; });
+                if (!selectedItem) return;
+
+                $('#selected-name').text(selectedItem.name);
+                $('#sel-qty').val('').attr('max', selectedItem.quantity);
+                $('#sel-max').text('Max: ' + selectedItem.quantity);
+                $('#sel-price').val(selectedItem.price || 0);
+                $('#sel-subtotal').text('¥0.00');
+                $('#search-config').show();
+                $('#search-results').html('');
+                $('#search-input').val('');
+            };
+
+            window.clearSelection = function () {
+                selectedItem = null;
+                $('#search-config').hide();
+            };
+
+            // Calculate subtotals
+            $('#sel-qty, #sel-price').on('input', function () {
+                var qty = parseFloat($('#sel-qty').val()) || 0;
+                var price = parseFloat($('#sel-price').val()) || 0;
+                $('#sel-subtotal').text('¥' + (qty * price).toFixed(2));
+            });
+
+            $('#manual-qty, #manual-price').on('input', function () {
+                var qty = parseFloat($('#manual-qty').val()) || 0;
+                var price = parseFloat($('#manual-price').val()) || 0;
+                $('#manual-subtotal').text('¥' + (qty * price).toFixed(2));
+            });
+
+            // Add to cart
+            window.addToCart = function () {
+                if (!selectedItem) return;
+                var qty = parseFloat($('#sel-qty').val()) || 0;
+                var price = parseFloat($('#sel-price').val()) || 0;
+
+                if (qty <= 0) { layer.msg('请输入数量'); return; }
+                if (qty > selectedItem.quantity) { layer.msg('超出库存'); return; }
+
+                if (cart.find(function (c) { return c.id === selectedItem.id; })) {
+                    layer.msg('该产品已在清单中'); return;
+                }
+
+                cart.push({
+                    id: selectedItem.id,
+                    name: selectedItem.name,
+                    spec: selectedItem.spec || '-',
+                    unit: selectedItem.unit || '株',
+                    qty: qty,
+                    price: price,
+                    costPrice: selectedItem.price || 0,
+                    isNonInventory: false
+                });
+
+                renderCart();
+                clearSelection();
+                layer.msg('已加入清单', { icon: 1 });
+            };
+
+            window.addManualToCart = function () {
+                var name = $('#manual-name').val().trim();
+                var qty = parseFloat($('#manual-qty').val()) || 0;
+                var price = parseFloat($('#manual-price').val()) || 0;
+                var unit = $('#manual-unit').val() || '株';
+                var spec = $('#manual-spec').val() || '-';
+
+                if (!name) { layer.msg('请输入产品名称'); return; }
+                if (qty <= 0) { layer.msg('请输入数量'); return; }
+
+                cart.push({
+                    id: 'manual_' + Date.now(),
+                    name: name,
+                    spec: spec,
+                    unit: unit,
+                    qty: qty,
+                    price: price,
+                    costPrice: 0,
+                    isNonInventory: true
+                });
+
+                renderCart();
+                $('#manual-name').val('');
+                $('#manual-qty').val('');
+                $('#manual-price').val('');
+                $('#manual-spec').val('');
+                $('#manual-unit').val('株');
+                $('#manual-subtotal').text('¥0.00');
+                $('#ni-selector').val('');
+                layer.msg('已加入清单', { icon: 1 });
+            };
+
+            function renderCart() {
+                if (cart.length === 0) {
+                    $('#cart-list').html('<div class="n-empty"><div class="n-empty__text" style="padding: 40px;">清单为空</div></div>');
+                    $('#cart-count').text('0');
+                    $('#order-total').text('0.00');
+                    return;
+                }
+
+                var total = 0;
+                var html = '';
+                cart.forEach(function (item, idx) {
+                    var subtotal = item.qty * item.price;
+                    total += subtotal;
+
+                    var tagStyle = item.isNonInventory ? 'background: #fff7ed; border-color: #fed7aa;' : '';
+                    var tagLabel = item.isNonInventory ? '<span class="n-tag n-tag--warning" style="font-size: 10px; padding: 2px 6px;">非入库</span>' : '';
+
+                    html += '<div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--n-slate-50); border-radius: var(--n-radius-md); margin-bottom: 8px; ' + tagStyle + '">';
+
+                    // Qty badge
+                    html += '<div style="width: 50px; text-align: center; background: ' + (item.isNonInventory ? '#fed7aa' : '#fff') + '; padding: 8px 4px; border-radius: 8px;">';
+                    html += '<div class="n-font-bold" style="font-size: 16px; color: ' + (item.isNonInventory ? '#c2410c' : 'var(--n-primary)') + ';">' + item.qty + '</div>';
+                    html += '<div style="font-size: 10px; color: var(--n-slate-400);">' + item.unit + '</div>';
+                    html += '</div>';
+
+                    // Info
+                    html += '<div style="flex: 1;">';
+                    html += '<div style="display: flex; align-items: center; gap: 6px;"><span class="n-font-bold">' + item.name + '</span> ' + tagLabel + '</div>';
+                    html += '<div class="n-text-muted" style="font-size: 11px;">' + item.spec + '</div>';
+                    html += '</div>';
+
+                    // Price input
+                    html += '<div style="text-align: right; width: 160px;">';
+                    html += '<div style="display: flex; align-items: center; gap: 4px; justify-content: flex-end;">';
+                    html += '<span class="n-text-muted" style="font-size: 12px;">单价 ¥</span>';
+                    html += '<input type="number" class="n-input" style="width: 80px; padding: 4px 8px; text-align: right;" value="' + item.price + '" step="0.01" onchange="updateCartPrice(' + idx + ', this.value)">';
+                    html += '</div>';
+                    html += '<div style="font-size: 12px; margin-top: 4px;" class="n-font-bold">小计: ¥' + subtotal.toFixed(2) + '</div>';
+                    html += '</div>';
+
+                    // Delete
+                    html += '<span style="cursor: pointer; color: var(--n-slate-300); padding: 8px;" onclick="removeFromCart(' + idx + ')"><i class="layui-icon layui-icon-close"></i></span>';
+
+                    html += '</div>';
+                });
+
+                $('#cart-list').html(html);
+                $('#cart-count').text(cart.length);
+                $('#order-total').text(total.toFixed(2));
+            }
+
+            window.updateCartPrice = function (idx, val) {
+                cart[idx].price = parseFloat(val) || 0;
+                renderCart();
+            };
+
+            window.removeFromCart = function (idx) {
+                cart.splice(idx, 1);
+                renderCart();
+            };
+
+            window.clearCart = function () {
+                if (cart.length === 0) return;
+                layer.confirm('确定要清空当前清单吗？', function (i) {
+                    cart = [];
+                    renderCart();
+                    layer.close(i);
+                });
+            };
+
+            window.confirmOutbound = function () {
+                if (cart.length === 0) {
+                    layer.msg('请先添加出库产品', { icon: 2 });
+                    return;
+                }
+
+                var operator = $('#out-operator').val();
+                var destination = $('#out-dest').val();
+                var remark = $('#out-remark').val();
+
+                var items = cart.map(function (c) {
+                    return {
+                        plant_id: c.isNonInventory ? null : c.id,
+                        name: c.name,
+                        quantity: c.qty,
+                        price: c.price,
+                        is_non_inventory: c.isNonInventory
+                    };
+                });
+
+                $.ajax({
+                    url: '/api/v1/nursery/outbound',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ items: items, operator: operator, destination: destination, remark: remark }),
+                    success: function (res) {
+                        if (res.success) {
+                            layer.msg('出库成功！单号: ' + res.order_no, { icon: 1, time: 2000 });
+                            cart = [];
+                            renderCart();
+                            loadProducts();
+                        } else {
+                            layer.msg(res.msg || '出库失败', { icon: 2 });
+                        }
+                    },
+                    error: function () { layer.msg('网络请求失败', { icon: 2 }); }
+                });
+            };
+
+            loadProducts();
+        });
+    </script>
+</body>
+
+</html>

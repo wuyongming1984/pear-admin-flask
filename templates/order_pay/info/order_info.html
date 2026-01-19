@@ -1,664 +1,789 @@
 <style>
-      .order-form-container {
-        padding: 20px;
-        background: #fff;
-        max-width: 1200px;
-        margin: 0 auto;
-      }
-      .form-title {
-        text-align: center;
-        font-size: 24px;
-        font-weight: bold;
-        margin-bottom: 30px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #000;
-      }
-      .order-details-section {
-        border: 1px solid #000;
-        padding: 15px;
-        margin-bottom: 20px;
-      }
-      .order-details-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px 30px;
-      }
-      .order-details-item {
-        display: flex;
-        align-items: center;
-      }
-      .order-details-item label {
-        min-width: 100px;
-        text-align: right;
-        margin-right: 10px;
-        font-weight: normal;
-      }
-      .order-details-item input {
-        flex: 1;
-        border: 1px solid #000;
-        padding: 5px 8px;
-        height: 32px;
-        line-height: 32px;
-      }
-      .section-title {
-        text-align: center;
-        font-size: 18px;
-        font-weight: bold;
-        margin: 20px 0 15px 0;
-        padding: 8px 0;
-        border-top: 1px solid #000;
-        border-bottom: 1px solid #000;
-      }
-      .material-details-section {
-        border: 1px solid #000;
-        padding: 15px;
-        margin-bottom: 20px;
-      }
-      .material-description {
-        display: flex;
-        align-items: flex-start;
-        margin-bottom: 15px;
-      }
-      .material-description label {
-        min-width: 100px;
-        text-align: right;
-        margin-right: 10px;
-        padding-top: 5px;
-      }
-      .material-description textarea {
-        flex: 1;
-        border: 1px solid #000;
-        padding: 8px;
-        min-height: 200px;
-        resize: vertical;
-      }
-      .attachment-section {
-        margin-top: 15px;
-      }
-      .attachment-upload {
-        margin-bottom: 15px;
-      }
-      .attachment-list {
-        border: 1px solid #e6e6e6;
-        border-radius: 3px;
-        padding: 10px;
-        min-height: 50px;
-        background: #fafafa;
-      }
-      .attachment-item {
-        display: flex;
-        align-items: center;
-        padding: 8px;
-        margin-bottom: 8px;
-        background: #fff;
-        border: 1px solid #e6e6e6;
-        border-radius: 3px;
-      }
-      .attachment-item:last-child {
-        margin-bottom: 0;
-      }
-      .attachment-item .file-icon {
-        margin-right: 10px;
-        font-size: 20px;
-        color: #1E9FFF;
-      }
-      .attachment-item .file-info {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-      }
-      .attachment-item .file-code {
-        font-size: 12px;
-        color: #1E9FFF;
-        font-weight: bold;
-        margin-bottom: 3px;
-      }
-      .attachment-item .file-name {
-        font-size: 14px;
-        color: #333;
-        margin-bottom: 3px;
-      }
-      .attachment-item .file-size {
-        font-size: 12px;
-        color: #999;
-      }
-      .attachment-item .file-actions {
-        display: flex;
-        gap: 10px;
-      }
-      .attachment-item .file-download,
-      .attachment-item .file-delete {
-        cursor: pointer;
-        color: #1E9FFF;
-        font-size: 14px;
-      }
-      .attachment-item .file-delete {
-        color: #ff5722;
-      }
-      .attachment-item .file-download:hover {
-        color: #009688;
-      }
-      .attachment-item .file-delete:hover {
-        color: #f56c6c;
-      }
-      .attachment-empty {
-        text-align: center;
-        color: #999;
-        padding: 20px;
-        font-size: 14px;
-      }
-      .financial-section {
-        border: 1px solid #000;
-        padding: 15px;
-        margin-bottom: 20px;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-      }
-      .financial-item {
-        display: flex;
-        align-items: center;
-      }
-      .financial-item label {
-        min-width: 120px;
-        text-align: right;
-        margin-right: 10px;
-      }
-      .financial-item input {
-        flex: 1;
-        border: 1px solid #000;
-        padding: 5px 8px;
-        height: 32px;
-        line-height: 32px;
-      }
-      .responsible-section {
-        border: 1px solid #000;
-        padding: 15px;
-      }
-      .responsible-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px 30px;
-        margin-top: 15px;
-      }
-      .responsible-item {
-        display: flex;
-        align-items: center;
-      }
-      .responsible-item label {
-        min-width: 120px;
-        text-align: right;
-        margin-right: 10px;
-      }
-      .responsible-item input {
-        flex: 1;
-        border: 1px solid #000;
-        padding: 5px 8px;
-        height: 32px;
-        line-height: 32px;
-      }
-      .form-actions {
-        margin-top: 30px;
-        padding: 20px 0;
-        text-align: center;
-        border-top: 1px solid #e6e6e6;
-      }
-      .form-actions .layui-btn {
-        margin: 0 10px;
-        min-width: 100px;
-      }
-      .form-actions .print-btn {
-        display: none;
-      }
-      /* 打印样式 */
-      @media print {
-        .form-actions {
-          display: none;
-        }
-        .attachment-upload {
-          display: none;
-        }
-        .attachment-item .file-actions {
-          display: none;
-        }
-        body {
-          background: #fff;
-        }
-        .order-form-container {
-          padding: 0;
-          max-width: 100%;
-        }
-      }
-    </style>
-    <div class="order-form-container">
-      <!-- 表单标题 -->
-      <div class="form-title">订单信息录入</div>
+  /* ==================== 统一设计规范 ==================== */
+  :root {
+    --primary-50: #eff6ff;
+    --primary-500: #3b82f6;
+    --primary-600: #2563eb;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --white: #ffffff;
+    --bg-card: var(--white);
+    --border-color: var(--slate-200);
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --ring-primary: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+  }
 
-      <!-- 订单详情部分 -->
-      <div class="order-details-section">
-        <div class="order-details-grid">
-          <div class="order-details-item">
-            <label>订单编号：</label>
-            <input type="text" class="layui-input" name="order_number" id="order-number" readonly />
-          </div>
-          <div class="order-details-item">
-            <label>下料时间：</label>
-            <input type="text" class="layui-input" name="cutting_time" />
-          </div>
-          <div class="order-details-item">
-            <label>材料名称：</label>
-            <input type="text" class="layui-input" name="material_name" />
-          </div>
-          <div class="order-details-item">
-            <label>预计到场时间：</label>
-            <input type="text" class="layui-input" name="arrival_time" />
-          </div>
-          <div class="order-details-item">
-            <label>项目名称：</label>
-            <input type="text" class="layui-input" name="project_name" />
-          </div>
-          <div class="order-details-item">
-            <label>联系电话：</label>
-            <input type="text" class="layui-input" name="contact_phone" />
-          </div>
-          <div class="order-details-item">
-            <label>供应商：</label>
-            <input type="text" class="layui-input" name="supplier" />
-          </div>
-        </div>
+  .order-form-container {
+    padding: var(--spacing-lg);
+    background: var(--bg-card);
+    max-width: 1200px;
+    margin: 0 auto;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+  }
+
+  .form-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--slate-900);
+  }
+
+  .order-details-section {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: 20px;
+    background: var(--slate-50);
+  }
+
+  .order-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 30px;
+  }
+
+  .order-details-item {
+    display: flex;
+    align-items: center;
+  }
+
+  .order-details-item label {
+    min-width: 100px;
+    text-align: right;
+    margin-right: 10px;
+    font-weight: normal;
+    color: var(--slate-600);
+  }
+
+  .order-details-item input {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 5px 10px;
+    height: 36px;
+    line-height: 36px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .order-details-item input:focus {
+    border-color: var(--primary-500);
+    box-shadow: var(--ring-primary);
+    outline: none;
+  }
+
+  .section-title {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 20px 0 15px 0;
+    padding: 10px 0;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--slate-800);
+  }
+
+  .material-details-section {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: 20px;
+    background: var(--slate-50);
+  }
+
+  .material-description {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 15px;
+  }
+
+  .material-description label {
+    min-width: 100px;
+    text-align: right;
+    margin-right: 10px;
+    padding-top: 5px;
+    color: var(--slate-600);
+  }
+
+  .material-description textarea {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    min-height: 200px;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .material-description textarea:focus {
+    border-color: var(--primary-500);
+    box-shadow: var(--ring-primary);
+    outline: none;
+  }
+
+  .attachment-section {
+    margin-top: 15px;
+  }
+
+  .attachment-upload {
+    margin-bottom: 15px;
+  }
+
+  .attachment-list {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    min-height: 50px;
+    background: var(--white);
+  }
+
+  .attachment-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: var(--slate-50);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: box-shadow 0.2s;
+  }
+
+  .attachment-item:hover {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .attachment-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .attachment-item .file-icon {
+    margin-right: 10px;
+    font-size: 20px;
+    color: var(--primary-500);
+  }
+
+  .attachment-item .file-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .attachment-item .file-code {
+    font-size: 12px;
+    color: var(--primary-500);
+    font-weight: bold;
+    margin-bottom: 3px;
+  }
+
+  .attachment-item .file-name {
+    font-size: 14px;
+    color: var(--slate-800);
+    margin-bottom: 3px;
+  }
+
+  .attachment-item .file-size {
+    font-size: 12px;
+    color: var(--slate-500);
+  }
+
+  .attachment-item .file-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .attachment-item .file-download,
+  .attachment-item .file-delete {
+    cursor: pointer;
+    color: var(--primary-500);
+    font-size: 14px;
+    transition: color 0.2s;
+  }
+
+  .attachment-item .file-delete {
+    color: #ef4444;
+  }
+
+  .attachment-item .file-download:hover {
+    color: var(--primary-600);
+  }
+
+  .attachment-item .file-delete:hover {
+    color: #dc2626;
+  }
+
+  .attachment-empty {
+    text-align: center;
+    color: var(--slate-500);
+    padding: 20px;
+    font-size: 14px;
+  }
+
+  .financial-section {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    background: var(--slate-50);
+  }
+
+  .financial-item {
+    display: flex;
+    align-items: center;
+  }
+
+  .financial-item label {
+    min-width: 120px;
+    text-align: right;
+    margin-right: 10px;
+    color: var(--slate-600);
+  }
+
+  .financial-item input {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 5px 10px;
+    height: 36px;
+    line-height: 36px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .financial-item input:focus {
+    border-color: var(--primary-500);
+    box-shadow: var(--ring-primary);
+    outline: none;
+  }
+
+  .responsible-section {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    background: var(--slate-50);
+  }
+
+  .responsible-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 30px;
+    margin-top: 15px;
+  }
+
+  .responsible-item {
+    display: flex;
+    align-items: center;
+  }
+
+  .responsible-item label {
+    min-width: 120px;
+    text-align: right;
+    margin-right: 10px;
+    color: var(--slate-600);
+  }
+
+  .responsible-item input {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 5px 10px;
+    height: 36px;
+    line-height: 36px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .responsible-item input:focus {
+    border-color: var(--primary-500);
+    box-shadow: var(--ring-primary);
+    outline: none;
+  }
+
+  .form-actions {
+    margin-top: 30px;
+    padding: 20px 0;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .form-actions .layui-btn {
+    margin: 0 10px;
+    min-width: 100px;
+    border-radius: var(--radius-md);
+  }
+
+  .form-actions .print-btn {
+    display: none;
+  }
+
+  /* 打印样式 */
+  @media print {
+    .form-actions {
+      display: none;
+    }
+
+    .attachment-upload {
+      display: none;
+    }
+
+    .attachment-item .file-actions {
+      display: none;
+    }
+
+    body {
+      background: #fff;
+    }
+
+    .order-form-container {
+      padding: 0;
+      max-width: 100%;
+      box-shadow: none;
+    }
+  }
+</style>
+<div class="order-form-container">
+  <!-- 表单标题 -->
+  <div class="form-title">订单信息录入</div>
+
+  <!-- 订单详情部分 -->
+  <div class="order-details-section">
+    <div class="order-details-grid">
+      <div class="order-details-item">
+        <label>订单编号：</label>
+        <input type="text" class="layui-input" name="order_number" id="order-number" readonly />
       </div>
-
-      <!-- 材料明细部分 -->
-      <div class="section-title">材料明细</div>
-      <div class="material-details-section">
-        <div class="material-description">
-          <label>内容描述：</label>
-          <textarea name="content_description" class="layui-textarea" placeholder="请输入材料内容描述"></textarea>
-        </div>
-        <div class="attachment-section">
-          <div class="attachment-upload">
-            <button type="button" class="layui-btn layui-btn-normal" id="upload-attachment">
-              <i class="layui-icon layui-icon-upload"></i> 添加附件
-            </button>
-          </div>
-          <div class="attachment-list" id="attachment-list">
-            <div class="attachment-empty">暂无附件</div>
-          </div>
-        </div>
+      <div class="order-details-item">
+        <label>下料时间：</label>
+        <input type="text" class="layui-input" name="cutting_time" />
       </div>
-
-      <!-- 财务信息部分 -->
-      <div class="financial-section">
-        <div class="financial-item">
-          <label>订单金额：</label>
-          <input type="text" class="layui-input" name="order_amount" id="order-amount" />
-        </div>
-        <div class="financial-item">
-          <label>人民币(大写)：</label>
-          <input type="text" class="layui-input" name="amount_in_words" id="amount-in-words" readonly />
-        </div>
+      <div class="order-details-item">
+        <label>材料名称：</label>
+        <input type="text" class="layui-input" name="material_name" />
       </div>
-
-      <!-- 负责人信息部分 -->
-      <div class="section-title">负责人信息</div>
-      <div class="responsible-section">
-        <div class="responsible-grid">
-          <div class="responsible-item">
-            <label>材料负责人：</label>
-            <input type="text" class="layui-input" name="material_manager" />
-          </div>
-          <div class="responsible-item">
-            <label>分项目负责人：</label>
-            <input type="text" class="layui-input" name="sub_project_manager" />
-          </div>
-          <div class="responsible-item">
-            <label>采购人员：</label>
-            <input type="text" class="layui-input" name="purchasing_staff" />
-          </div>
-          <div class="responsible-item">
-            <label>采购负责人：</label>
-            <input type="text" class="layui-input" name="purchasing_manager" />
-          </div>
-          <div class="responsible-item">
-            <label>验收人员：</label>
-            <input type="text" class="layui-input" name="acceptance_staff" />
-          </div>
-        </div>
+      <div class="order-details-item">
+        <label>预计到场时间：</label>
+        <input type="text" class="layui-input" name="arrival_time" />
       </div>
-
-      <!-- 表单操作按钮 -->
-      <div class="form-actions">
-        <button type="button" class="layui-btn layui-btn-primary" id="cancel-btn">取消</button>
-        <button type="button" class="layui-btn" id="confirm-btn">确定</button>
-        <button type="button" class="layui-btn layui-btn-normal print-btn" id="print-btn">打印</button>
+      <div class="order-details-item">
+        <label>项目名称：</label>
+        <input type="text" class="layui-input" name="project_name" />
+      </div>
+      <div class="order-details-item">
+        <label>联系电话：</label>
+        <input type="text" class="layui-input" name="contact_phone" />
+      </div>
+      <div class="order-details-item">
+        <label>供应商：</label>
+        <input type="text" class="layui-input" name="supplier" />
       </div>
     </div>
+  </div>
 
-    <script>
-      layui.use(['form', 'layer', 'jquery', 'upload'], function() {
-        var form = layui.form;
-        var $ = layui.$;
-        var upload = layui.upload;
-        var layer = layui.layer;
+  <!-- 材料明细部分 -->
+  <div class="section-title">材料明细</div>
+  <div class="material-details-section">
+    <div class="material-description">
+      <label>内容描述：</label>
+      <textarea name="content_description" class="layui-textarea" placeholder="请输入材料内容描述"></textarea>
+    </div>
+    <div class="attachment-section">
+      <div class="attachment-upload">
+        <button type="button" class="layui-btn layui-btn-normal" id="upload-attachment">
+          <i class="layui-icon layui-icon-upload"></i> 添加附件
+        </button>
+      </div>
+      <div class="attachment-list" id="attachment-list">
+        <div class="attachment-empty">暂无附件</div>
+      </div>
+    </div>
+  </div>
 
-        // 存储附件列表
-        var attachmentList = [];
-        // 附件流水号计数器
-        var attachmentSequence = 0;
-        // 订单编号（从后端获取）
-        var orderNumber = '';
+  <!-- 财务信息部分 -->
+  <div class="financial-section">
+    <div class="financial-item">
+      <label>订单金额：</label>
+      <input type="text" class="layui-input" name="order_amount" id="order-amount" />
+    </div>
+    <div class="financial-item">
+      <label>人民币(大写)：</label>
+      <input type="text" class="layui-input" name="amount_in_words" id="amount-in-words" readonly />
+    </div>
+  </div>
 
-        // 生成附件编号：订单编号 + F + 三位流水号
-        function generateAttachmentNumber(orderNumber) {
-          if (!orderNumber) {
-            // 如果订单编号还未生成，返回临时编号
-            attachmentSequence++;
-            var sequenceStr = String(attachmentSequence).padStart(3, '0');
-            return 'TEMP' + 'F' + sequenceStr;
-          }
-          attachmentSequence++;
-          var sequenceStr = String(attachmentSequence).padStart(3, '0');
-          return orderNumber + 'F' + sequenceStr;
+  <!-- 负责人信息部分 -->
+  <div class="section-title">负责人信息</div>
+  <div class="responsible-section">
+    <div class="responsible-grid">
+      <div class="responsible-item">
+        <label>材料负责人：</label>
+        <input type="text" class="layui-input" name="material_manager" />
+      </div>
+      <div class="responsible-item">
+        <label>分项目负责人：</label>
+        <input type="text" class="layui-input" name="sub_project_manager" />
+      </div>
+      <div class="responsible-item">
+        <label>采购人员：</label>
+        <input type="text" class="layui-input" name="purchasing_staff" />
+      </div>
+      <div class="responsible-item">
+        <label>采购负责人：</label>
+        <input type="text" class="layui-input" name="purchasing_manager" />
+      </div>
+      <div class="responsible-item">
+        <label>验收人员：</label>
+        <input type="text" class="layui-input" name="acceptance_staff" />
+      </div>
+    </div>
+  </div>
+
+  <!-- 表单操作按钮 -->
+  <div class="form-actions">
+    <button type="button" class="layui-btn layui-btn-primary" id="cancel-btn">取消</button>
+    <button type="button" class="layui-btn" id="confirm-btn">确定</button>
+    <button type="button" class="layui-btn layui-btn-normal print-btn" id="print-btn">打印</button>
+  </div>
+</div>
+
+<script>
+  layui.use(['form', 'layer', 'jquery', 'upload'], function () {
+    var form = layui.form;
+    var $ = layui.$;
+    var upload = layui.upload;
+    var layer = layui.layer;
+
+    // 存储附件列表
+    var attachmentList = [];
+    // 附件流水号计数器
+    var attachmentSequence = 0;
+    // 订单编号（从后端获取）
+    var orderNumber = '';
+
+    // 生成附件编号：订单编号 + F + 三位流水号
+    function generateAttachmentNumber(orderNumber) {
+      if (!orderNumber) {
+        // 如果订单编号还未生成，返回临时编号
+        attachmentSequence++;
+        var sequenceStr = String(attachmentSequence).padStart(3, '0');
+        return 'TEMP' + 'F' + sequenceStr;
+      }
+      attachmentSequence++;
+      var sequenceStr = String(attachmentSequence).padStart(3, '0');
+      return orderNumber + 'F' + sequenceStr;
+    }
+
+    // 设置订单编号（由后端返回后调用）
+    window.setOrderNumber = function (number) {
+      orderNumber = number;
+      $('#order-number').val(orderNumber);
+      // 更新已有附件的编号
+      attachmentList.forEach(function (file, index) {
+        if (file.code && file.code.startsWith('TEMP')) {
+          var newCode = orderNumber + file.code.substring(4);
+          file.code = newCode;
         }
+      });
+      renderAttachmentList();
+    };
 
-        // 设置订单编号（由后端返回后调用）
-        window.setOrderNumber = function(number) {
-          orderNumber = number;
-          $('#order-number').val(orderNumber);
-          // 更新已有附件的编号
-          attachmentList.forEach(function(file, index) {
-            if (file.code && file.code.startsWith('TEMP')) {
-              var newCode = orderNumber + file.code.substring(4);
-              file.code = newCode;
-            }
+    // 格式化文件大小
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 B';
+      var k = 1024;
+      var sizes = ['B', 'KB', 'MB', 'GB'];
+      var i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    // 获取文件图标
+    function getFileIcon(fileName) {
+      var ext = fileName.split('.').pop().toLowerCase();
+      var iconMap = {
+        'pdf': 'layui-icon-file-pdf',
+        'doc': 'layui-icon-file',
+        'docx': 'layui-icon-file',
+        'xls': 'layui-icon-file-excel',
+        'xlsx': 'layui-icon-file-excel',
+        'ppt': 'layui-icon-file',
+        'pptx': 'layui-icon-file',
+        'jpg': 'layui-icon-picture',
+        'jpeg': 'layui-icon-picture',
+        'png': 'layui-icon-picture',
+        'gif': 'layui-icon-picture',
+        'zip': 'layui-icon-file',
+        'rar': 'layui-icon-file',
+        'txt': 'layui-icon-file'
+      };
+      return iconMap[ext] || 'layui-icon-file';
+    }
+
+    // 渲染附件列表
+    function renderAttachmentList() {
+      var $list = $('#attachment-list');
+      if (attachmentList.length === 0) {
+        $list.html('<div class="attachment-empty">暂无附件</div>');
+        return;
+      }
+      var html = '';
+      attachmentList.forEach(function (file, index) {
+        html += '<div class="attachment-item" data-index="' + index + '">';
+        html += '<i class="layui-icon ' + getFileIcon(file.name) + ' file-icon"></i>';
+        html += '<div class="file-info">';
+        html += '<div class="file-code">附件编号：' + file.code + '</div>';
+        html += '<div class="file-name">' + file.name + '</div>';
+        html += '<div class="file-size">' + formatFileSize(file.size) + '</div>';
+        html += '</div>';
+        html += '<div class="file-actions">';
+        if (file.url) {
+          html += '<span class="file-download" onclick="downloadAttachment(' + index + ')">下载</span>';
+        }
+        html += '<span class="file-delete" onclick="deleteAttachment(' + index + ')">删除</span>';
+        html += '</div>';
+        html += '</div>';
+      });
+      $list.html(html);
+    }
+
+    // 删除附件
+    window.deleteAttachment = function (index) {
+      layer.confirm('确定要删除这个附件吗？', { icon: 3, title: '提示' }, function (confirmIndex) {
+        attachmentList.splice(index, 1);
+        renderAttachmentList();
+        layer.close(confirmIndex);
+      });
+    };
+
+    // 下载附件
+    window.downloadAttachment = function (index) {
+      var file = attachmentList[index];
+      if (file.url) {
+        window.open(file.url, '_blank');
+      } else if (file.blob) {
+        var url = URL.createObjectURL(file.blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    };
+
+    // 初始化文件上传
+    upload.render({
+      elem: '#upload-attachment',
+      url: '/api/v1/upload', // 需要根据实际后端接口修改
+      accept: 'file',
+      multiple: true,
+      before: function (obj) {
+        // 预读本地文件，如果是图片则显示预览
+        obj.preview(function (index, file, result) {
+          // 生成附件编号
+          var attachmentCode = generateAttachmentNumber(orderNumber);
+
+          // 添加到附件列表
+          attachmentList.push({
+            code: attachmentCode,
+            name: file.name,
+            size: file.size,
+            blob: file,
+            url: null
           });
           renderAttachmentList();
-        };
-
-        // 格式化文件大小
-        function formatFileSize(bytes) {
-          if (bytes === 0) return '0 B';
-          var k = 1024;
-          var sizes = ['B', 'KB', 'MB', 'GB'];
-          var i = Math.floor(Math.log(bytes) / Math.log(k));
-          return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-        }
-
-        // 获取文件图标
-        function getFileIcon(fileName) {
-          var ext = fileName.split('.').pop().toLowerCase();
-          var iconMap = {
-            'pdf': 'layui-icon-file-pdf',
-            'doc': 'layui-icon-file',
-            'docx': 'layui-icon-file',
-            'xls': 'layui-icon-file-excel',
-            'xlsx': 'layui-icon-file-excel',
-            'ppt': 'layui-icon-file',
-            'pptx': 'layui-icon-file',
-            'jpg': 'layui-icon-picture',
-            'jpeg': 'layui-icon-picture',
-            'png': 'layui-icon-picture',
-            'gif': 'layui-icon-picture',
-            'zip': 'layui-icon-file',
-            'rar': 'layui-icon-file',
-            'txt': 'layui-icon-file'
-          };
-          return iconMap[ext] || 'layui-icon-file';
-        }
-
-        // 渲染附件列表
-        function renderAttachmentList() {
-          var $list = $('#attachment-list');
-          if (attachmentList.length === 0) {
-            $list.html('<div class="attachment-empty">暂无附件</div>');
-            return;
-          }
-          var html = '';
-          attachmentList.forEach(function(file, index) {
-            html += '<div class="attachment-item" data-index="' + index + '">';
-            html += '<i class="layui-icon ' + getFileIcon(file.name) + ' file-icon"></i>';
-            html += '<div class="file-info">';
-            html += '<div class="file-code">附件编号：' + file.code + '</div>';
-            html += '<div class="file-name">' + file.name + '</div>';
-            html += '<div class="file-size">' + formatFileSize(file.size) + '</div>';
-            html += '</div>';
-            html += '<div class="file-actions">';
-            if (file.url) {
-              html += '<span class="file-download" onclick="downloadAttachment(' + index + ')">下载</span>';
-            }
-            html += '<span class="file-delete" onclick="deleteAttachment(' + index + ')">删除</span>';
-            html += '</div>';
-            html += '</div>';
-          });
-          $list.html(html);
-        }
-
-        // 删除附件
-        window.deleteAttachment = function(index) {
-          layer.confirm('确定要删除这个附件吗？', {icon: 3, title: '提示'}, function(confirmIndex) {
-            attachmentList.splice(index, 1);
-            renderAttachmentList();
-            layer.close(confirmIndex);
-          });
-        };
-
-        // 下载附件
-        window.downloadAttachment = function(index) {
-          var file = attachmentList[index];
-          if (file.url) {
-            window.open(file.url, '_blank');
-          } else if (file.blob) {
-            var url = URL.createObjectURL(file.blob);
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = file.name;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-          }
-        };
-
-        // 初始化文件上传
-        upload.render({
-          elem: '#upload-attachment',
-          url: '/api/v1/upload', // 需要根据实际后端接口修改
-          accept: 'file',
-          multiple: true,
-          before: function(obj) {
-            // 预读本地文件，如果是图片则显示预览
-            obj.preview(function(index, file, result) {
-              // 生成附件编号
-              var attachmentCode = generateAttachmentNumber(orderNumber);
-              
-              // 添加到附件列表
-              attachmentList.push({
-                code: attachmentCode,
-                name: file.name,
-                size: file.size,
-                blob: file,
-                url: null
-              });
-              renderAttachmentList();
-            });
-          },
-          done: function(res, index, upload) {
-            // 上传成功后的回调
-            if (res.code === 0) {
-              // 更新附件URL
-              if (attachmentList[index]) {
-                attachmentList[index].url = res.data.url || res.url;
-                attachmentList[index].id = res.data.id || res.id;
-              }
-              renderAttachmentList();
-              layer.msg('上传成功', {icon: 1});
-            } else {
-              layer.msg(res.msg || '上传失败', {icon: 2});
-              // 移除失败的附件
-              attachmentList.splice(index, 1);
-              renderAttachmentList();
-            }
-          },
-          error: function(index, upload) {
-            // 上传失败的回调
-            layer.msg('上传失败，请重试', {icon: 2});
-            attachmentList.splice(index, 1);
-            renderAttachmentList();
-          }
         });
+      },
+      done: function (res, index, upload) {
+        // 上传成功后的回调
+        if (res.code === 0) {
+          // 更新附件URL
+          if (attachmentList[index]) {
+            attachmentList[index].url = res.data.url || res.url;
+            attachmentList[index].id = res.data.id || res.id;
+          }
+          renderAttachmentList();
+          layer.msg('上传成功', { icon: 1 });
+        } else {
+          layer.msg(res.msg || '上传失败', { icon: 2 });
+          // 移除失败的附件
+          attachmentList.splice(index, 1);
+          renderAttachmentList();
+        }
+      },
+      error: function (index, upload) {
+        // 上传失败的回调
+        layer.msg('上传失败，请重试', { icon: 2 });
+        attachmentList.splice(index, 1);
+        renderAttachmentList();
+      }
+    });
 
-        // 数字转中文大写
-        function numberToChinese(num) {
-          var cnNums = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
-          var cnIntRadice = ['', '拾', '佰', '仟'];
-          var cnIntUnits = ['', '万', '亿', '兆'];
-          var cnDecUnits = ['角', '分', '毫', '厘'];
-          var cnInteger = '整';
-          var cnIntLast = '元';
-          var maxNum = 999999999999999.9999;
-          var IntegerNum;
-          var StringNum;
-          var parts;
-          var zeroCount;
-          var IntLen;
-          var n;
-          var p;
-          var q;
-          var m;
-          var isNegative = '';
+    // 数字转中文大写
+    function numberToChinese(num) {
+      var cnNums = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+      var cnIntRadice = ['', '拾', '佰', '仟'];
+      var cnIntUnits = ['', '万', '亿', '兆'];
+      var cnDecUnits = ['角', '分', '毫', '厘'];
+      var cnInteger = '整';
+      var cnIntLast = '元';
+      var maxNum = 999999999999999.9999;
+      var IntegerNum;
+      var StringNum;
+      var parts;
+      var zeroCount;
+      var IntLen;
+      var n;
+      var p;
+      var q;
+      var m;
+      var isNegative = '';
 
-          if (num === 0) {
-            return cnNums[0] + cnIntLast + cnInteger;
-          }
-          if (num < 0) {
-            isNegative = '负';
-            num = -num;
-          }
-          if (num > maxNum) {
-            return '';
-          }
-          StringNum = num.toString().toUpperCase();
-          if (StringNum.indexOf('E') === -1 && StringNum.indexOf('.') === -1) {
-            IntegerNum = num;
-            StringNum = IntegerNum.toString();
-          } else {
-            parts = StringNum.split('.');
-            StringNum = parts[0];
-            IntegerNum = parseInt(StringNum, 10);
+      if (num === 0) {
+        return cnNums[0] + cnIntLast + cnInteger;
+      }
+      if (num < 0) {
+        isNegative = '负';
+        num = -num;
+      }
+      if (num > maxNum) {
+        return '';
+      }
+      StringNum = num.toString().toUpperCase();
+      if (StringNum.indexOf('E') === -1 && StringNum.indexOf('.') === -1) {
+        IntegerNum = num;
+        StringNum = IntegerNum.toString();
+      } else {
+        parts = StringNum.split('.');
+        StringNum = parts[0];
+        IntegerNum = parseInt(StringNum, 10);
+      }
+      zeroCount = 0;
+      IntLen = StringNum.length;
+      var chineseStr = '';
+      for (var i = 0; i < IntLen; i++) {
+        n = parseInt(StringNum.substring(i, 1), 10);
+        p = IntLen - i - 1;
+        q = p / 4;
+        m = p % 4;
+        if (n === 0) {
+          zeroCount++;
+        } else {
+          if (zeroCount > 0) {
+            chineseStr += cnNums[0];
           }
           zeroCount = 0;
-          IntLen = StringNum.length;
-          var chineseStr = '';
-          for (var i = 0; i < IntLen; i++) {
-            n = parseInt(StringNum.substring(i, 1), 10);
-            p = IntLen - i - 1;
-            q = p / 4;
-            m = p % 4;
-            if (n === 0) {
-              zeroCount++;
-            } else {
-              if (zeroCount > 0) {
-                chineseStr += cnNums[0];
-              }
-              zeroCount = 0;
-              chineseStr += cnNums[n] + cnIntRadice[m];
-            }
-            if (m === 0 && zeroCount < 4) {
-              chineseStr += cnIntUnits[q];
-            }
-          }
-          chineseStr += cnIntLast;
-          if (parts && parts.length > 1 && parts[1] !== '') {
-            var decLen = parts[1].length;
-            for (var j = 0; j < decLen; j++) {
-              n = parseInt(parts[1].substring(j, 1), 10);
-              if (n !== 0) {
-                chineseStr += cnNums[n] + cnDecUnits[j];
-              }
-            }
-          }
-          if (chineseStr === '') {
-            chineseStr += cnNums[0] + cnIntLast + cnInteger;
-          } else if (parts && parts.length > 1 && parts[1] === '') {
-            chineseStr += cnInteger;
-          }
-          return isNegative + chineseStr;
+          chineseStr += cnNums[n] + cnIntRadice[m];
         }
+        if (m === 0 && zeroCount < 4) {
+          chineseStr += cnIntUnits[q];
+        }
+      }
+      chineseStr += cnIntLast;
+      if (parts && parts.length > 1 && parts[1] !== '') {
+        var decLen = parts[1].length;
+        for (var j = 0; j < decLen; j++) {
+          n = parseInt(parts[1].substring(j, 1), 10);
+          if (n !== 0) {
+            chineseStr += cnNums[n] + cnDecUnits[j];
+          }
+        }
+      }
+      if (chineseStr === '') {
+        chineseStr += cnNums[0] + cnIntLast + cnInteger;
+      } else if (parts && parts.length > 1 && parts[1] === '') {
+        chineseStr += cnInteger;
+      }
+      return isNegative + chineseStr;
+    }
 
-        // 当订单金额输入时，自动转换为中文大写
-        $('#order-amount').on('input', function() {
-          var amount = parseFloat($(this).val()) || 0;
-          $('#amount-in-words').val(numberToChinese(amount));
-        });
+    // 当订单金额输入时，自动转换为中文大写
+    $('#order-amount').on('input', function () {
+      var amount = parseFloat($(this).val()) || 0;
+      $('#amount-in-words').val(numberToChinese(amount));
+    });
 
-        // 取消按钮事件
-        $('#cancel-btn').on('click', function() {
-          layer.confirm('确定要取消吗？未保存的数据将丢失。', {icon: 3, title: '提示'}, function(confirmIndex) {
-            // 可以返回上一页或关闭当前页面
-            if (window.history.length > 1) {
-              window.history.back();
-            } else {
-              window.close();
-            }
-            layer.close(confirmIndex);
-          });
-        });
-
-        // 确定按钮事件
-        $('#confirm-btn').on('click', function() {
-          // 这里可以添加表单验证逻辑
-          // 收集表单数据
-          var formData = {
-            order_number: $('#order-number').val(),
-            cutting_time: $('input[name="cutting_time"]').val(),
-            material_name: $('input[name="material_name"]').val(),
-            arrival_time: $('input[name="arrival_time"]').val(),
-            project_name: $('input[name="project_name"]').val(),
-            contact_phone: $('input[name="contact_phone"]').val(),
-            supplier: $('input[name="supplier"]').val(),
-            content_description: $('textarea[name="content_description"]').val(),
-            order_amount: $('#order-amount').val(),
-            amount_in_words: $('#amount-in-words').val(),
-            material_manager: $('input[name="material_manager"]').val(),
-            sub_project_manager: $('input[name="sub_project_manager"]').val(),
-            purchasing_staff: $('input[name="purchasing_staff"]').val(),
-            purchasing_manager: $('input[name="purchasing_manager"]').val(),
-            acceptance_staff: $('input[name="acceptance_staff"]').val(),
-            attachments: attachmentList
-          };
-
-          // 这里可以调用后端API保存数据
-          // $.ajax({
-          //   url: '/api/v1/order',
-          //   type: 'POST',
-          //   data: JSON.stringify(formData),
-          //   contentType: 'application/json',
-          //   success: function(res) {
-          //     if (res.code === 0) {
-          //       layer.msg('保存成功', {icon: 1});
-          //       // 显示打印按钮
-          //       $('.print-btn').show();
-          //     } else {
-          //       layer.msg(res.msg || '保存失败', {icon: 2});
-          //     }
-          //   },
-          //   error: function() {
-          //     layer.msg('保存失败，请重试', {icon: 2});
-          //   }
-          // });
-
-          // 临时：直接显示打印按钮（实际应该等后端保存成功后再显示）
-          layer.msg('保存成功', {icon: 1});
-          $('.print-btn').show();
-        });
-
-        // 打印按钮事件
-        $('#print-btn').on('click', function() {
-          // 打印当前页面
-          window.print();
-        });
-
-        // 初始化表单
-        form.render();
+    // 取消按钮事件
+    $('#cancel-btn').on('click', function () {
+      layer.confirm('确定要取消吗？未保存的数据将丢失。', { icon: 3, title: '提示' }, function (confirmIndex) {
+        // 可以返回上一页或关闭当前页面
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.close();
+        }
+        layer.close(confirmIndex);
       });
-    </script>
+    });
+
+    // 确定按钮事件
+    $('#confirm-btn').on('click', function () {
+      // 这里可以添加表单验证逻辑
+      // 收集表单数据
+      var formData = {
+        order_number: $('#order-number').val(),
+        cutting_time: $('input[name="cutting_time"]').val(),
+        material_name: $('input[name="material_name"]').val(),
+        arrival_time: $('input[name="arrival_time"]').val(),
+        project_name: $('input[name="project_name"]').val(),
+        contact_phone: $('input[name="contact_phone"]').val(),
+        supplier: $('input[name="supplier"]').val(),
+        content_description: $('textarea[name="content_description"]').val(),
+        order_amount: $('#order-amount').val(),
+        amount_in_words: $('#amount-in-words').val(),
+        material_manager: $('input[name="material_manager"]').val(),
+        sub_project_manager: $('input[name="sub_project_manager"]').val(),
+        purchasing_staff: $('input[name="purchasing_staff"]').val(),
+        purchasing_manager: $('input[name="purchasing_manager"]').val(),
+        acceptance_staff: $('input[name="acceptance_staff"]').val(),
+        attachments: attachmentList
+      };
+
+      // 这里可以调用后端API保存数据
+      // $.ajax({
+      //   url: '/api/v1/order',
+      //   type: 'POST',
+      //   data: JSON.stringify(formData),
+      //   contentType: 'application/json',
+      //   success: function(res) {
+      //     if (res.code === 0) {
+      //       layer.msg('保存成功', {icon: 1});
+      //       // 显示打印按钮
+      //       $('.print-btn').show();
+      //     } else {
+      //       layer.msg(res.msg || '保存失败', {icon: 2});
+      //     }
+      //   },
+      //   error: function() {
+      //     layer.msg('保存失败，请重试', {icon: 2});
+      //   }
+      // });
+
+      // 临时：直接显示打印按钮（实际应该等后端保存成功后再显示）
+      layer.msg('保存成功', { icon: 1 });
+      $('.print-btn').show();
+    });
+
+    // 打印按钮事件
+    $('#print-btn').on('click', function () {
+      // 打印当前页面
+      window.print();
+    });
+
+    // 初始化表单
+    form.render();
+  });
+</script>

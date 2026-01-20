@@ -536,6 +536,185 @@
       min-width: 100px;
       border-radius: var(--radius-md);
     }
+
+    /* ==================== 移动端适配 ==================== */
+    @media screen and (max-width: 768px) {
+
+      /* 页面内边距 */
+      body>div[style*="padding: 16px"] {
+        padding: 8px !important;
+      }
+
+      /* 卡片内边距 */
+      .layui-card-body {
+        padding: var(--spacing-sm) !important;
+      }
+
+      /* 表格卡片化 - 每行变成一个卡片 */
+      .layui-table-view {
+        border: none !important;
+      }
+
+      .layui-table-header {
+        display: none !important;
+        /* 隐藏表头 */
+      }
+
+      .layui-table-body tbody tr {
+        display: block !important;
+        margin-bottom: 12px;
+        padding: 12px;
+        background: #fff;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+      }
+
+      .layui-table-body tbody td {
+        display: block !important;
+        text-align: left !important;
+        padding: 6px 0 !important;
+        border: none !important;
+      }
+
+      .layui-table-body tbody td::before {
+        content: attr(data-field);
+        display: inline-block;
+        width: 80px;
+        font-weight: 600;
+        color: var(--slate-500);
+        font-size: 12px;
+      }
+
+      /* 隐藏移动端不重要的列 */
+      .layui-table-body tbody td[data-field="id"],
+      .layui-table-body tbody td[data-field="supplier_name"],
+      .layui-table-body tbody td[data-field="supplier_contact_person"],
+      .layui-table-body tbody td[data-field="material_details"],
+      .layui-table-body tbody td[data-field="pays_list"] {
+        display: none !important;
+      }
+
+      /* 操作列全宽 */
+      .layui-table-body tbody td[data-field="operate"],
+      .layui-table-body tbody td:last-child {
+        width: 100% !important;
+        padding-top: 10px !important;
+        margin-top: 8px;
+        border-top: 1px solid var(--border-color) !important;
+      }
+
+      .layui-table-body tbody td:last-child::before {
+        display: none;
+      }
+
+      /* 操作按钮横向排列 */
+      .layui-btn-container {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-start !important;
+      }
+
+      .layui-btn-container .layui-btn {
+        margin: 0 !important;
+        flex: 1;
+        min-width: 70px;
+      }
+
+      /* 工具栏 */
+      .layui-table-tool {
+        padding: 8px !important;
+      }
+
+      /* 分页 */
+      .layui-laypage {
+        padding: 10px !important;
+      }
+
+      .layui-laypage a,
+      .layui-laypage span {
+        margin: 2px !important;
+        padding: 4px 8px !important;
+      }
+
+      /* 表单容器 */
+      .order-form-container {
+        padding: var(--spacing-md) !important;
+      }
+
+      /* 表单标题 */
+      .form-title {
+        font-size: 18px !important;
+      }
+
+      /* 表单网格 - 单列 */
+      .order-details-grid,
+      .responsible-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+
+      /* 表单项标签 */
+      .order-details-item,
+      .responsible-item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+      }
+
+      .order-details-item label,
+      .responsible-item label {
+        min-width: auto !important;
+        text-align: left !important;
+        margin-bottom: 6px;
+        margin-right: 0 !important;
+      }
+
+      .order-details-item input,
+      .order-details-item select,
+      .responsible-item input {
+        width: 100% !important;
+      }
+
+      /* 材料明细 */
+      .material-description {
+        flex-direction: column !important;
+      }
+
+      .material-description label {
+        margin-bottom: 8px;
+      }
+
+      .material-description textarea {
+        min-height: 100px;
+      }
+
+      /* 弹窗全屏 */
+      .layui-layer {
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        border-radius: 0 !important;
+      }
+
+      .layui-layer-content {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* 按钮 */
+      .form-actions {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .form-actions .layui-btn {
+        width: 100%;
+        margin: 0 !important;
+      }
+    }
   </style>
 </head>
 

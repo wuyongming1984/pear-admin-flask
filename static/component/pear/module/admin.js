@@ -34,7 +34,7 @@ layui.define(
 
     var bodyFrame;
 
-    var logout = function () {};
+    var logout = function () { };
 
     var body = $("body");
 
@@ -119,6 +119,11 @@ layui.define(
        */
       this.apply = function (configuration) {
         configurationCache = configuration;
+
+        // 移动端自动折叠侧边栏
+        if ($(window).width() <= 768) {
+          $(".pear-admin").addClass("pear-mini");
+        }
         pearAdmin.logoRender(configuration);
         pearAdmin.menuRender(configuration);
         pearAdmin.menuSearchRender(configuration);
@@ -871,8 +876,11 @@ layui.define(
     }
 
     function compatible() {
+      // 移动端：只有当侧边栏展开时（无pear-mini类）才折叠它
       if ($(window).width() <= 768) {
-        collapse();
+        if (!$(".pear-admin").is(".pear-mini")) {
+          collapse();
+        }
       }
     }
 

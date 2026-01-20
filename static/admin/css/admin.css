@@ -113,7 +113,7 @@ body,
   width: 247px;
 }
 
-.pear-admin .layui-header .layui-nav .layui-nav-item > a {
+.pear-admin .layui-header .layui-nav .layui-nav-item>a {
   color: black;
   font-size: 15px;
 }
@@ -127,7 +127,7 @@ body,
   left: 230px;
 }
 
-.pear-admin .layui-body > div {
+.pear-admin .layui-body>div {
   height: 100%;
 }
 
@@ -340,6 +340,24 @@ body,
     width: 0px;
   }
 
+  /* 移动端侧边栏默认隐藏(有pear-mini类)，点击菜单后展开(无pear-mini类) */
+  /* 注意：在移动端，pear-mini逻辑和PC端相反 */
+  /* PC端：pear-mini = 折叠，无pear-mini = 展开 */
+  /* 移动端：pear-mini = 隐藏，无pear-mini = 显示为抽屉 */
+
+  .pear-admin:not(.pear-mini) .layui-side {
+    width: 230px !important;
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+    z-index: 9999;
+  }
+
+  .pear-admin.pear-mini .layui-side {
+    width: 0px !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
   .pear-admin .layui-body {
     left: 0px;
   }
@@ -422,7 +440,7 @@ body,
   color: whitesmoke;
 }
 
-.dark-theme.layui-header li > a {
+.dark-theme.layui-header li>a {
   color: whitesmoke !important;
 }
 
@@ -621,6 +639,7 @@ body,
 }
 
 @-webkit-keyframes shadow {
+
   0%,
   100% {
     transform: scale(1, 1);
@@ -632,6 +651,7 @@ body,
 }
 
 @keyframes shadow {
+
   0%,
   100% {
     transform: scale(1, 1);
@@ -644,59 +664,62 @@ body,
 
 /** 移动端适配增强 */
 @media screen and (max-width: 768px) {
-    /* 表格横向滚动 */
-    .layui-card-body {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    /* 表单垂直堆叠 */
-    .layui-form-item .layui-form-label {
-        width: 100%;
-        text-align: left;
-        padding-left: 0;
-        float: none;
-        box-sizing: border-box;
-    }
-    
-    .layui-form-item .layui-input-block {
-        margin-left: 0;
-        width: 100%;
-    }
-    
-    /* 调整搜索表单布局 */
-    .pear-container .layui-form-item {
-        margin-bottom: 10px;
-    }
-    
-    .pear-container .layui-inline {
-        margin-bottom: 5px;
-        margin-right: 0;
-        display: block;
-        width: 100%;
-    }
-    
-    .pear-container .layui-inline .layui-form-label {
-        width: auto;
-        display: inline-block;
-    }
-    .pear-container .layui-inline .layui-input-inline {
-        width: calc(100% - 100px);
-        display: inline-block;
-        margin-right: 0;
-    }
-    
-    /* 弹窗样式优化 */
-    .layui-layer {
-        max-width: 100% !important;
-        left: 0 !important;
-    }
-    
-    /* 数据表格Toolbar按钮适配 */
-    .layui-table-tool-temp {
-        padding-right: 0;
-    }
-    .layui-btn-container .layui-btn {
-        margin-bottom: 5px;
-    }
+
+  /* 表格横向滚动 */
+  .layui-card-body {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 表单垂直堆叠 */
+  .layui-form-item .layui-form-label {
+    width: 100%;
+    text-align: left;
+    padding-left: 0;
+    float: none;
+    box-sizing: border-box;
+  }
+
+  .layui-form-item .layui-input-block {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  /* 调整搜索表单布局 */
+  .pear-container .layui-form-item {
+    margin-bottom: 10px;
+  }
+
+  .pear-container .layui-inline {
+    margin-bottom: 5px;
+    margin-right: 0;
+    display: block;
+    width: 100%;
+  }
+
+  .pear-container .layui-inline .layui-form-label {
+    width: auto;
+    display: inline-block;
+  }
+
+  .pear-container .layui-inline .layui-input-inline {
+    width: calc(100% - 100px);
+    display: inline-block;
+    margin-right: 0;
+  }
+
+  /* 弹窗样式优化 */
+  .layui-layer {
+    max-width: 100% !important;
+    left: 0 !important;
+  }
+
+  /* 数据表格Toolbar按钮适配 */
+  .layui-table-tool-temp {
+    padding-right: 0;
+  }
+
+  .layui-btn-container .layui-btn {
+    margin-bottom: 5px;
+  }
 }

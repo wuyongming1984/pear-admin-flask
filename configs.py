@@ -18,7 +18,8 @@ class DevelopmentConfig(BaseConfig):
     """开发配置"""
 
     SQLALCHEMY_DATABASE_URI = "sqlite:///pear_admin.db"
-    # SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:root@127.0.0.1:3306/pear_admin"
+    # MySQL (可选，需要启动Docker)
+    # SQLALCHEMY_DATABASE_URI = "mysql+pymysql://pear_admin:pear_admin123@127.0.0.1:3306/pear_admin"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 

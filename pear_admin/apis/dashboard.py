@@ -108,26 +108,39 @@ def get_monthly_trend():
     today = datetime.now()
     start_date = datetime(today.year - 1, today.month, 1)
     
+    # 判断数据库类型
+    bind = db.session.get_bind()
+    is_mysql = "mysql" in bind.dialect.name
+    
+    if is_mysql:
+        # MySQL: 使用 date_format
+        date_func = func.date_format(OrderORM.create_at, '%Y-%m')
+        pay_date_func = func.date_format(PayORM.create_at, '%Y-%m')
+    else:
+        # SQLite: 使用 strftime
+        date_func = func.strftime('%Y-%m', OrderORM.create_at)
+        pay_date_func = func.strftime('%Y-%m', PayORM.create_at)
+
     # 订单月度趋势
     order_trend = db.session.execute(
         db.select(
-            func.strftime('%Y-%m', OrderORM.create_at).label("month"),
+            date_func.label("month"),
             func.count(OrderORM.id).label("count"),
             func.sum(OrderORM.order_amount).label("amount")
         ).where(OrderORM.create_at >= start_date)
-        .group_by(func.strftime('%Y-%m', OrderORM.create_at))
-        .order_by(func.strftime('%Y-%m', OrderORM.create_at))
+        .group_by(date_func)
+        .order_by(date_func)
     ).all()
     
     # 付款月度趋势
     pay_trend = db.session.execute(
         db.select(
-            func.strftime('%Y-%m', PayORM.create_at).label("month"),
+            pay_date_func.label("month"),
             func.count(PayORM.id).label("count"),
             func.sum(PayORM.current_payment_amount).label("amount")
         ).where(PayORM.create_at >= start_date)
-        .group_by(func.strftime('%Y-%m', PayORM.create_at))
-        .order_by(func.strftime('%Y-%m', PayORM.create_at))
+        .group_by(pay_date_func)
+        .order_by(pay_date_func)
     ).all()
     
     order_data = []

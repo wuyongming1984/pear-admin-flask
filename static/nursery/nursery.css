@@ -690,3 +690,251 @@
 .n-mb-6 {
     margin-bottom: 24px;
 }
+
+/* ===== Mobile Responsive Styles ===== */
+@media screen and (max-width: 768px) {
+    /* Page Layout */
+    .n-page {
+        padding: 16px;
+    }
+    
+    .n-header {
+        margin-bottom: 20px;
+    }
+    
+    .n-title {
+        font-size: 22px;
+    }
+    
+    .n-subtitle {
+        font-size: 13px;
+    }
+    
+    /* Stats Grid - 2 columns on mobile */
+    .n-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .n-stat-card {
+        padding: 14px;
+    }
+    
+    .n-stat-value {
+        font-size: 22px;
+    }
+    
+    .n-stat-label {
+        font-size: 11px;
+    }
+    
+    /* Dual Panel Layout - Stack Vertically */
+    .n-dual-panel,
+    [style*="display: flex"][style*="gap: 24px"] {
+        flex-direction: column !important;
+    }
+    
+    .n-dual-panel__right,
+    [style*="width: 420px"],
+    [style*="width: 340px"] {
+        width: 100% !important;
+    }
+    
+    /* Cards */
+    .n-card__body {
+        padding: 16px;
+    }
+    
+    .n-card__header {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    /* Form Layout */
+    .n-form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .n-form-group {
+        margin-bottom: 14px;
+    }
+    
+    .n-input {
+        padding: 12px 14px;
+        font-size: 16px; /* Prevent iOS zoom */
+    }
+    
+    /* Tabs - Scrollable */
+    .n-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 6px;
+        margin-bottom: 16px;
+        padding-bottom: 4px;
+    }
+    
+    .n-tab {
+        padding: 6px 14px;
+        font-size: 12px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    
+    /* Search Bar */
+    .n-search {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    
+    .n-search__input {
+        font-size: 16px;
+    }
+    
+    /* Inventory Grid - Single Column */
+    .n-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .n-plant-card {
+        padding: 16px;
+    }
+    
+    .n-plant-card__name {
+        font-size: 15px;
+    }
+    
+    /* Table - Card Style on Mobile */
+    .n-table-wrapper {
+        border-radius: var(--n-radius-md);
+    }
+    
+    .n-table-header {
+        display: none; /* Hide table header on mobile */
+    }
+    
+    .n-table-row {
+        display: block !important;
+        padding: 16px;
+        border-bottom: 8px solid var(--n-slate-50);
+    }
+    
+    .n-table-row:last-child {
+        border-bottom: none;
+    }
+    
+    /* Order Grid - Stack on Mobile */
+    .n-order-grid {
+        display: flex !important;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .n-order-grid > * {
+        text-align: left !important;
+    }
+    
+    .n-order-grid > *:last-child {
+        display: flex;
+        justify-content: flex-start;
+        gap: 8px;
+        margin-top: 8px;
+        padding-top: 12px;
+        border-top: 1px solid var(--n-slate-100);
+    }
+    
+    /* Buttons */
+    .n-btn {
+        padding: 12px 16px;
+        font-size: 15px;
+    }
+    
+    .n-btn--block {
+        padding: 14px 20px;
+    }
+
+    /* Action Buttons - Larger Touch Target */
+    .action-btn {
+        padding: 12px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    /* Modal - Full Screen on Mobile */
+    .edit-modal__content {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        border-radius: 0 !important;
+    }
+    
+    .edit-modal__header {
+        padding: 16px;
+    }
+    
+    .edit-modal__body {
+        padding: 16px;
+    }
+    
+    .edit-modal__footer {
+        padding: 16px;
+        flex-direction: column;
+    }
+    
+    .edit-modal__footer .n-btn {
+        width: 100%;
+    }
+    
+    /* Item Row in Modal */
+    .item-row {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px;
+    }
+    
+    /* Hide Less Important Elements */
+    .mobile-hide {
+        display: none !important;
+    }
+    
+    /* Show Mobile-Only Elements */
+    .mobile-show {
+        display: block !important;
+    }
+    
+    /* Tools Row */
+    .n-tools {
+        flex-wrap: wrap;
+    }
+    
+    /* Guide Panel */
+    .n-guide {
+        margin: -8px auto 16px;
+        padding: 12px 16px;
+        font-size: 12px;
+    }
+    
+    /* Import Button */
+    .n-import-btn {
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+    
+    /* Flex Layout Overrides for Mobile */
+    [style*="display: flex"][style*="justify-content: space-between"] {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    
+    /* Cart List Items */
+    #cart-list > [style*="display: flex"] {
+        flex-wrap: wrap;
+    }
+    
+    #cart-list [style*="width: 160px"] {
+        width: 100% !important;
+        margin-top: 8px;
+    }
+}

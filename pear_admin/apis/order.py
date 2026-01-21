@@ -199,9 +199,9 @@ def create_order():
         # 只保留 OrderORM 支持的字段，过滤掉其他字段（如 file 等）
         allowed_fields = {
             'order_number', 'material_name', 'project_name', 'supplier_id',
-            'contact_phone', 'cutting_time', 'estimated_arrival_time',
-            'material_details', 'order_amount', 'material_manager',
-            'sub_project_manager', 'attachments', 'create_at'
+            'supplier_contact_person', 'contact_phone', 'cutting_time', 
+            'estimated_arrival_time', 'material_details', 'order_amount', 
+            'material_manager', 'sub_project_manager', 'attachments', 'create_at'
         }
         order_data = {k: v for k, v in data.items() if k in allowed_fields}
         
@@ -228,9 +228,9 @@ def change_order(oid=None):
         # 只处理 OrderORM 支持的字段
         allowed_fields = {
             'order_number', 'material_name', 'project_name', 'supplier_id',
-            'contact_phone', 'cutting_time', 'estimated_arrival_time',
-            'material_details', 'order_amount', 'material_manager',
-            'sub_project_manager', 'attachments', 'create_at'
+            'supplier_contact_person', 'contact_phone', 'cutting_time', 
+            'estimated_arrival_time', 'material_details', 'order_amount', 
+            'material_manager', 'sub_project_manager', 'attachments', 'create_at'
         }
         
         # 附件数据直接保存为 JSON 字符串

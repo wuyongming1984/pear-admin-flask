@@ -715,6 +715,95 @@
         margin: 0 !important;
       }
     }
+
+    /* ==================== 余额列筛选器样式 ==================== */
+    .balance-filter-dropdown {
+      display: inline-block;
+      margin-left: 8px;
+      position: relative;
+      z-index: 10000;
+    }
+
+    .balance-filter-btn {
+      background: #1E9FFF;
+      color: white;
+      border: none;
+      padding: 2px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.2s;
+    }
+
+    .balance-filter-btn:hover {
+      background: #0d8ddb;
+    }
+
+    .balance-filter-menu {
+      display: none;
+      position: fixed;
+      background: white;
+      border: 1px solid #e6e6e6;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      z-index: 99999 !important;
+      min-width: 200px;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .balance-filter-actions {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e6e6e6;
+      display: flex;
+      gap: 8px;
+    }
+
+    .balance-filter-actions button {
+      flex: 1;
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .balance-filter-actions button:hover {
+      background: #f5f5f5;
+    }
+
+    .balance-filter-item {
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .balance-filter-item:hover {
+      background: #f5f5f5;
+    }
+
+    .balance-filter-item input[type="checkbox"] {
+      margin-right: 8px;
+      cursor: pointer;
+    }
+
+    .balance-filter-item span {
+      font-size: 13px;
+      color: #333;
+    }
+
+    /* 确保余额列的th允许overflow */
+    th[data-field="order_balance"] {
+      overflow: visible !important;
+    }
+
+    th[data-field="order_balance"] .layui-table-cell {
+      overflow: visible !important;
+    }
   </style>
 </head>
 
@@ -773,7 +862,7 @@
           </div>
           <div class="order-details-item">
             <label>供应商：</label>
-            <select name="supplier_id" id="supplier_id" lay-search>
+            <select name="supplier_id" id="supplier_id" lay-search lay-filter="supplier_id">
               <option value="">请选择供应商</option>
             </select>
           </div>
@@ -843,6 +932,11 @@
         <button class="layui-btn layui-btn-sm" lay-event="order-toolbar-add">
           新增订单
         </button>
+        <div class="balance-filter-dropdown" style="display: inline-block; margin-left: 10px;">
+          <button class="layui-btn layui-btn-sm layui-btn-normal" type="button" id="balance-filter-trigger">
+            <i class="layui-icon layui-icon-filter"></i> 付款状态筛选
+          </button>
+        </div>
       </div>
     </script>
   <script type="text/html" id="order-tool">
@@ -1309,6 +1403,55 @@
       loadSuppliers();
       loadMaterialNames();  // 加载材料名称列表
 
+      // 存储付款状态映射（code -> value）
+      var paymentStatusMap = {};
+
+      // 存储已选中的付款状态（用于余额计算）
+      var selectedPaymentStatuses = new Set();
+
+      // 加载付款状态列表（从字典表）
+      function loadPaymentStatuses() {
+        return new Promise(function (resolve) {
+          $.ajax({
+            url: window.location.origin + "/api/v1/dictionary/detail/list",
+            type: "GET",
+            data: {
+              dic_id: 28,  // 付款状态字典的ID (fkzt)
+              limit: 100
+            },
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("access_token"),
+            },
+            success: function (res) {
+              if (res.code === 0 && res.data) {
+                // 构建code到value的映射
+                paymentStatusMap = {};
+                selectedPaymentStatuses.clear(); // 清空选中状态
+
+                res.data.forEach(function (status) {
+                  // 使用code作为键，value作为显示文本
+                  paymentStatusMap[status.code] = status.value;
+                  // 同时建立value到value的映射，兼容可能直接使用value的情况
+                  paymentStatusMap[status.value] = status.value;
+                  // 默认全选
+                  selectedPaymentStatuses.add(status.code);
+                });
+                console.log('付款状态映射已加载:', paymentStatusMap);
+                console.log('默认选中的付款状态:', Array.from(selectedPaymentStatuses));
+              }
+              resolve();
+            },
+            error: function () {
+              console.error('加载付款状态列表失败');
+              resolve();
+            }
+          });
+        });
+      }
+
+      // 加载付款状态
+      loadPaymentStatuses();
+
       // 列宽配置 - 可以根据需要修改各列的初始宽度（单位：px）
       var columnWidths = {
         'ID': 50,                    // ID列
@@ -1733,6 +1876,250 @@
         }, 100);
       }
 
+      // ==================== 余额计算相关函数 ====================
+
+      // 计算付款状态小计（勾选状态的付款金额总和）
+      function calculatePaymentSubtotal(orderData) {
+        if (!orderData.is_order) return null;
+
+        var totalPaid = 0;
+
+        // 遍历该订单的所有付款单
+        if (orderData.pays_list && orderData.pays_list.length > 0) {
+          orderData.pays_list.forEach(function (pay) {
+            // 只计算勾选的付款状态
+            if (selectedPaymentStatuses.has(pay.payment_status)) {
+              totalPaid += parseFloat(pay.current_payment_amount) || 0;
+            }
+          });
+        }
+
+        return totalPaid;
+      }
+
+      // 计算订单余额（订单金额 - 付款状态小计）
+      function calculateOrderBalance(orderData) {
+        if (!orderData.is_order) return null;
+
+        var orderAmount = parseFloat(orderData.order_amount) || 0;
+        var subtotal = calculatePaymentSubtotal(orderData);
+
+        return orderAmount - subtotal;
+      }
+
+      // 在余额列表头添加付款状态复选框
+      function addPaymentStatusCheckboxes() {
+        // 等待付款状态映射加载完成
+        if (Object.keys(paymentStatusMap).length === 0) {
+          setTimeout(addPaymentStatusCheckboxes, 100);
+          return;
+        }
+
+        // 检查是否已经添加过
+        if ($('#balance-filter-menu').length > 0) {
+          return;
+        }
+
+        // 在body添加菜单（避免被表格遮挡）
+        var menuHtml = '<div class="balance-filter-menu" id="balance-filter-menu" style="display:none;">';
+
+        // 添加全选/取消全选按钮
+        menuHtml += '<div class="balance-filter-actions">';
+        menuHtml += '<button class="select-all-status" type="button">全选</button>';
+        menuHtml += '<button class="deselect-all-status" type="button">取消全选</button>';
+        menuHtml += '</div>';
+
+        // 为每个付款状态添加复选框
+        Object.keys(paymentStatusMap).forEach(function (code) {
+          if (code === paymentStatusMap[code]) return; // 跳过反向映射
+          var value = paymentStatusMap[code];
+          menuHtml += '<label class="balance-filter-item">';
+          menuHtml += '<input type="checkbox" class="payment-status-checkbox" value="' + code + '" checked>';
+          menuHtml += '<span>' + value + '</span>';
+          menuHtml += '</label>';
+        });
+
+        menuHtml += '</div>';
+
+        // 添加到body
+        $('body').append(menuHtml);
+
+        // 绑定事件
+        bindBalanceFilterEvents();
+
+        console.log('付款状态筛选器已添加');
+        console.log('筛选按钮元素数量:', $('#balance-filter-trigger').length);
+        console.log('菜单元素数量:', $('#balance-filter-menu').length);
+      }
+
+      // 绑定余额筛选器事件
+      function bindBalanceFilterEvents() {
+        // 监听复选框变化
+        $(document).off('change', '.payment-status-checkbox').on('change', '.payment-status-checkbox', function () {
+          var code = $(this).val();
+          if ($(this).is(':checked')) {
+            selectedPaymentStatuses.add(code);
+          } else {
+            selectedPaymentStatuses.delete(code);
+          }
+          console.log('当前选中的付款状态:', Array.from(selectedPaymentStatuses));
+          // 重新渲染表格余额列
+          refreshBalanceColumn();
+          // 重新渲染付款单子行（隐藏/显示）
+          refreshPayRows();
+        });
+
+        // 全选
+        $(document).off('click', '.select-all-status').on('click', '.select-all-status', function (e) {
+          e.stopPropagation();
+          $('.payment-status-checkbox').prop('checked', true);
+          // 重新初始化选中状态
+          selectedPaymentStatuses.clear();
+          Object.keys(paymentStatusMap).forEach(function (code) {
+            if (code !== paymentStatusMap[code]) {
+              selectedPaymentStatuses.add(code);
+            }
+          });
+          console.log('全选付款状态');
+          refreshBalanceColumn();
+          refreshPayRows();
+        });
+
+        // 取消全选
+        $(document).off('click', '.deselect-all-status').on('click', '.deselect-all-status', function (e) {
+          e.stopPropagation();
+          $('.payment-status-checkbox').prop('checked', false);
+          selectedPaymentStatuses.clear();
+          console.log('取消全选付款状态');
+          refreshBalanceColumn();
+          refreshPayRows();
+        });
+
+        // 切换下拉菜单显示
+        $(document).off('click', '#balance-filter-trigger').on('click', '#balance-filter-trigger', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('筛选按钮被点击');
+
+          var $menu = $('#balance-filter-menu');
+          var $btn = $(this);
+
+          // 切换显示状态
+          if ($menu.is(':visible')) {
+            console.log('隐藏菜单');
+            $menu.hide();
+          } else {
+            console.log('显示菜单');
+
+            // 计算按钮位置
+            var btnOffset = $btn.offset();
+            var btnHeight = $btn.outerHeight();
+            var btnWidth = $btn.outerWidth();
+
+            // 设置菜单位置（按钮下方，右对齐）
+            $menu.css({
+              position: 'fixed',
+              top: btnOffset.top + btnHeight + 4,
+              left: btnOffset.left,
+              display: 'block'
+            });
+
+            console.log('菜单位置:', { top: btnOffset.top + btnHeight + 4, left: btnOffset.left });
+          }
+        });
+
+        // 点击其他地方关闭菜单
+        $(document).off('click.balanceFilter').on('click.balanceFilter', function (e) {
+          if (!$(e.target).closest('.balance-filter-dropdown').length &&
+            !$(e.target).closest('#balance-filter-menu').length) {
+            $('#balance-filter-menu').hide();
+          }
+        });
+
+        // 阻止菜单内点击关闭
+        $(document).off('click', '#balance-filter-menu').on('click', '#balance-filter-menu', function (e) {
+          e.stopPropagation();
+        });
+      }
+
+      // 刷新余额列显示
+      // 刷新付款状态小计和余额列显示
+      function refreshBalanceColumn() {
+        // 获取当前表格数据
+        var tableData = table.cache['order-table'];
+        if (!tableData) return;
+
+        // 更新每行的付款状态小计和余额显示
+        tableData.forEach(function (data, index) {
+          if (!data.is_order) return;
+
+          // 计算付款状态小计
+          var subtotal = calculatePaymentSubtotal(data);
+          var subtotalHtml = '<span style="color: #1E9FFF; font-weight: bold;">¥' + subtotal.toFixed(2) + '</span>';
+
+          // 计算余额
+          var balance = calculateOrderBalance(data);
+          var color = balance >= 0 ? '#5FB878' : '#FF5722';
+          var balanceHtml = '<span style="color: ' + color + '; font-weight: bold;">¥' + balance.toFixed(2) + '</span>';
+
+          var $tr = $('div[lay-id="order-table"] .layui-table-main tr[data-index="' + index + '"]');
+          $tr.find('td[data-field="payment_status_subtotal"] .layui-table-cell').html(subtotalHtml);
+          $tr.find('td[data-field="order_balance"] .layui-table-cell').html(balanceHtml);
+        });
+
+        console.log('付款状态小计和余额列已刷新');
+      }
+
+      // 刷新付款单子行显示
+      function refreshPayRows() {
+        // 遍历所有付款单子行，根据筛选状态显示/隐藏
+        $('.pay-child-row').each(function () {
+          var $row = $(this);
+          var payId = $row.data('pay-id');
+
+          // 从表格数据中查找对应的付款单及其所属订单
+          var tableData = table.cache['order-table'];
+          var paymentStatus = null;
+          var orderId = null;
+
+          if (tableData) {
+            for (var i = 0; i < tableData.length; i++) {
+              var orderData = tableData[i];
+              if (orderData.pays_list) {
+                var pay = orderData.pays_list.find(function (p) {
+                  return p.id === payId;
+                });
+                if (pay) {
+                  paymentStatus = pay.payment_status;
+                  orderId = orderData.id;
+                  break;
+                }
+              }
+            }
+          }
+
+          // 检查当前订单是否展开
+          var isOrderExpanded = expandedRowIds.has(orderId);
+
+          // 根据筛选状态和展开状态决定显示/隐藏
+          if (paymentStatus && selectedPaymentStatuses.has(paymentStatus)) {
+            // 符合筛选条件
+            $row.removeClass('filtered-hidden');
+            // 如果订单展开，则显示；否则保持隐藏
+            if (isOrderExpanded) {
+              $row.show();
+            } else {
+              $row.hide();
+            }
+          } else {
+            // 不符合筛选条件，隐藏
+            $row.addClass('filtered-hidden').hide();
+          }
+        });
+
+        console.log('付款单子行筛选已更新');
+      }
+
       // 渲染表格
       table.render({
         elem: "#order-table",
@@ -1754,6 +2141,12 @@
               field: "order_number",
               title: "订单编号",
               width: 110,
+              align: 'center'
+            },
+            {
+              field: "project_name",
+              title: "项目名称",
+              width: 120,
               align: 'center'
             },
             {
@@ -1814,16 +2207,32 @@
               align: 'right'
             },
             {
+              field: "payment_status_subtotal",
+              title: "付款状态小计",
+              width: 130,
+              sort: true,
+              align: 'right',
+              templet: function (d) {
+                // 计算勾选状态的付款金额总和
+                var subtotal = calculatePaymentSubtotal(d);
+                if (subtotal === null) {
+                  return '<span style="color: #999;">-</span>';
+                }
+                return '<span style="color: #1E9FFF; font-weight: bold;">¥' + subtotal.toFixed(2) + '</span>';
+              }
+            },
+            {
               field: "order_balance",
               title: "余额",
               width: 110,
               sort: true,
               align: 'right',
               templet: function (d) {
-                if (!d.order_balance) {
+                // 余额 = 订单金额 - 付款状态小计
+                var balance = calculateOrderBalance(d);
+                if (balance === null) {
                   return '<span style="color: #999;">-</span>';
                 }
-                var balance = parseFloat(d.order_balance);
                 var color = balance >= 0 ? '#5FB878' : '#FF5722'; // 正数绿色，负数红色
                 return '<span style="color: ' + color + '; font-weight: bold;">¥' + balance.toFixed(2) + '</span>';
               }
@@ -1850,21 +2259,20 @@
                 return '';
               }
             },
-            {
-              field: "project_name",
-              title: "项目名称",
-              minWidth: 50
-            },
+
             {
               title: "操作",
               align: "center",
               toolbar: "#order-tool",
-              minWidth: 200
+              width: 180,
+              fixed: 'right'
             },
           ],
         ],
         done: function (res, curr, count) {
           addFilterInputs();
+          // 添加付款状态筛选器到余额列表头
+          addPaymentStatusCheckboxes();
           // 多次同步列宽，确保完全同步
           setTimeout(function () {
             // syncColumnWidths();
@@ -1915,17 +2323,24 @@
 
           // 为每个付款单创建子行
           data.pays_list.forEach(function (pay, index) {
+            // 只显示勾选的付款状态
+            if (!selectedPaymentStatuses.has(pay.payment_status)) {
+              return; // 跳过未勾选的付款状态
+            }
+
+            // 获取付款状态的显示文本和颜色
+            var statusText = pay.payment_status ? (paymentStatusMap[pay.payment_status] || pay.payment_status) : '未设置';
             var statusColor = '';
-            var statusText = '';
-            if (pay.payment_status === 'paid') {
-              statusColor = '#5FB878';
-              statusText = '已付款';
-            } else if (pay.payment_status === 'partial') {
-              statusColor = '#FFB800';
-              statusText = '部分付款';
+
+            // 根据状态文本设置颜色
+            if (statusText.includes('已付款') || statusText.includes('完成')) {
+              statusColor = '#5FB878';  // 绿色
+            } else if (statusText.includes('部分')) {
+              statusColor = '#FFB800';  // 橙色
+            } else if (statusText.includes('待') || statusText.includes('未')) {
+              statusColor = '#FF5722';  // 红色
             } else {
-              statusColor = '#FF5722';
-              statusText = '待付款';
+              statusColor = '#999999';  // 灰色 - 其他状态
             }
 
             var payRowHtml = '<tr class="pay-child-row" data-pay-id="' + pay.id + '" style="background-color: #fbfcff; border-top: 1px solid #eee; display: none;">';
@@ -2412,46 +2827,67 @@
         updateAttachmentsData();
       });
 
-      // 监听供应商联系人选择，自动填充供应商名称和联系电话
+      // 监听供应商联系人选择，动态筛选供应商下拉框
       form.on('select(supplier_contact_person)', function (data) {
         console.log('供应商联系人选择事件触发', data);
         var contactPerson = data.value;
+
         if (contactPerson) {
-          // 查找对应的供应商信息
-          var selectedOption = $('#supplier_contact_person option:selected');
-          var supplierId = selectedOption.attr('data-supplier-id');
-          var supplierName = selectedOption.attr('data-supplier-name');
-          var phone = selectedOption.attr('data-phone');
+          // 筛选出该联系人对应的所有供应商
+          var relatedSuppliers = suppliersData.filter(function (supplier) {
+            return supplier.contact_person === contactPerson;
+          });
 
-          console.log('找到供应商信息:', { supplierId: supplierId, supplierName: supplierName, phone: phone });
+          console.log('找到关联的供应商:', relatedSuppliers);
 
-          if (supplierId) {
-            // 设置供应商ID
-            $('#supplier_id').val(supplierId);
-            form.render('select');
+          if (relatedSuppliers.length > 0) {
+            // 重新构建供应商下拉框，只显示关联的供应商
+            var supplierHtml = '<option value="">请选择供应商</option>';
+            relatedSuppliers.forEach(function (supplier) {
+              supplierHtml += '<option value="' + supplier.id + '" data-name="' + supplier.name + '" data-phone="' + supplier.phone + '">' + supplier.name + '</option>';
+            });
+            $('#supplier_id').html(supplierHtml);
 
-            // 设置联系电话
-            if (phone) {
-              $('#contact_phone').val(phone);
+            // 如果只有一个关联供应商，自动选中
+            if (relatedSuppliers.length === 1) {
+              $('#supplier_id').val(relatedSuppliers[0].id);
+              $('#contact_phone').val(relatedSuppliers[0].phone);
+              layer.msg('已自动填充供应商和联系电话', { icon: 1, time: 1500 });
             } else {
-              // 如果选项中没有电话，从存储的供应商数据中查找
-              var supplier = suppliersData.find(function (s) {
-                return s.id == supplierId;
-              });
-              if (supplier && supplier.phone) {
-                $('#contact_phone').val(supplier.phone);
-              }
+              // 多个供应商时，清空联系电话，等待用户选择
+              $('#contact_phone').val('');
+              layer.msg('请从筛选后的供应商中选择', { icon: 1, time: 1500 });
             }
 
-            layer.msg('已自动填充供应商和联系电话', { icon: 1, time: 1500 });
+            form.render('select');
           } else {
             layer.msg('未找到对应的供应商信息', { icon: 2 });
           }
         } else {
-          // 清空供应商和联系电话
-          $('#supplier_id').val('');
+          // 未选择联系人时，恢复显示所有供应商
+          var supplierHtml = '<option value="">请选择供应商</option>';
+          suppliersData.forEach(function (supplier) {
+            supplierHtml += '<option value="' + supplier.id + '" data-name="' + supplier.name + '" data-phone="' + supplier.phone + '">' + supplier.name + '</option>';
+          });
+          $('#supplier_id').html(supplierHtml);
           $('#contact_phone').val('');
           form.render('select');
+        }
+      });
+
+      // 监听供应商选择，自动填充联系电话
+      form.on('select(supplier_id)', function (data) {
+        var supplierId = data.value;
+        if (supplierId) {
+          // 从存储的供应商数据中查找对应的供应商
+          var supplier = suppliersData.find(function (s) {
+            return s.id == supplierId;
+          });
+          if (supplier && supplier.phone) {
+            $('#contact_phone').val(supplier.phone);
+          }
+        } else {
+          $('#contact_phone').val('');
         }
       });
 
@@ -2738,8 +3174,6 @@
           url = window.location.origin + `/api/v1/order/${field.id}`;
         }
 
-        // 移除 supplier_contact_person 字段（该字段仅用于前端选择，不提交到后端）
-        delete field.supplier_contact_person;
 
         // 处理订单金额（确保是数字或null）
         if (field.order_amount) {

@@ -469,6 +469,7 @@
                     pendingFiles.forEach(function (item) {
                         formData.append('files', item.file);
                     });
+                    formData.append('path', 'invoice_attachments');
 
                     // Update UI
                     selectedFiles.forEach(f => { if (f.status === 'pending') f.status = 'uploading'; });

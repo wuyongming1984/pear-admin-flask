@@ -192,14 +192,29 @@ def create_order():
             try:
                 data["order_amount"] = Decimal(str(data["order_amount"]))
             except (ValueError, TypeError):
-                return {"code": -1, "msg": "订单金额格式错误"}
-        
+                # 转换失败或为空字符串，设为 None (或者返回错误)
+                # 这里为了稳健性，如果是空字符串导致转化失败，应该设为 None
+                 data["order_amount"] = None
+        else:
+            data["order_amount"] = None
+
         # 处理供应商ID（确保是整数或None）
         if data.get("supplier_id"):
             try:
                 data["supplier_id"] = int(data["supplier_id"])
             except (ValueError, TypeError):
                 data["supplier_id"] = None
+        else:
+            data["supplier_id"] = None
+            
+        # 同样的逻辑处理 project_id 如果它直接被传入
+        if data.get("project_id"):
+            try:
+                data["project_id"] = int(data["project_id"])
+            except (ValueError, TypeError):
+                data["project_id"] = None
+        elif "project_id" in data: # 如果 key 存在但是空值 (e.g. "")
+             data["project_id"] = None
         
         # 处理附件数据
         if attachments_data:
@@ -299,16 +314,31 @@ def change_order(oid=None):
                         value = None
                 else:
                     value = None
-            elif key == "order_amount" and value:
-                try:
-                    value = Decimal(str(value))
-                except (ValueError, TypeError):
-                    continue
-            elif key == "supplier_id" and value:
-                try:
-                    value = int(value)
-                except (ValueError, TypeError):
+            elif key == "order_amount":
+                 if not value:
+                     value = None
+                 else:
+                    try:
+                        value = Decimal(str(value))
+                    except (ValueError, TypeError):
+                         # 转换失败设为 None
+                         value = None
+            elif key == "supplier_id":
+                if not value:
                     value = None
+                else:
+                    try:
+                        value = int(value)
+                    except (ValueError, TypeError):
+                        value = None
+            elif key == "project_id":
+                 if not value:
+                    value = None
+                 else:
+                    try:
+                        value = int(value)
+                    except (ValueError, TypeError):
+                        value = None
             elif key == "attachments":
                 # 附件数据已经是 JSON 字符串，直接保存
                 pass

@@ -1271,10 +1271,11 @@ def upload_invoice():
         
         files = request.files.getlist('files')
         project_id = request.form.get('project_id')
+        custom_path = request.form.get('path', 'invoices').strip()
         
         if not files or files[0].filename == '':
             return jsonify({"code": 1, "msg": "未选择文件"})
-        
+            
         # 允许的文件扩展名
         ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png'}
         
@@ -1365,7 +1366,7 @@ def upload_invoice():
                 if oss.bucket:
                     # --- OSS 上传模式 ---
                     try:
-                        oss_path = f"invoices/{datetime.now().strftime('%Y/%m')}/{new_filename}"
+                        oss_path = f"{custom_path}/{datetime.now().strftime('%Y/%m')}/{new_filename}"
                         with open("debug_invoice.log", "a", encoding="utf-8") as f:
                              f.write(f"{datetime.now()}: Uploading to OSS: {oss_path}\n")
                         
@@ -1383,7 +1384,7 @@ def upload_invoice():
                     with open("debug_invoice.log", "a", encoding="utf-8") as f:
                          f.write(f"{datetime.now()}: Using local storage\n")
                     year_month = datetime.now().strftime('%Y/%m')
-                    upload_dir = os.path.join('static', 'uploads', 'invoices', year_month)
+                    upload_dir = os.path.join('static', 'uploads', custom_path, year_month)
                     os.makedirs(upload_dir, exist_ok=True)
                     local_path = os.path.join(upload_dir, new_filename)
                     with open(local_path, 'wb') as f:

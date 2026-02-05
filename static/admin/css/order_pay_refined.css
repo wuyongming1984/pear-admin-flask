@@ -862,3 +862,20 @@ body {
   height: 10px;
   background: transparent;
 }
+
+/* ==================== 全局弹窗样式修正 ==================== */
+/* 修复 Layui 弹窗在深色主题下文字看不见的问题 (白底白字) */
+.layui-layer {
+  color: #333 !important;
+}
+.layui-layer-title {
+  color: #333 !important;
+  background-color: #f8f8f8 !important;
+  border-bottom: 1px solid #eee !important;
+}
+.layui-layer-btn a {
+  color: #333 !important;
+}
+.layui-layer-btn .layui-layer-btn0 {
+  color: #fff !important; /* 确定按钮保持白色文字 */
+}

@@ -16,6 +16,11 @@
     --radius-md: 8px;
   }
 
+  /* 修复弹窗文字颜色 (避免在深色页面的默认弹窗中白底白字) */
+  .layui-layer {
+    color: #333 !important;
+  }
+
   body {
     background-color: var(--bg-deep);
     background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.02) 1px, transparent 0);
@@ -540,6 +545,7 @@
     upload.render({
       elem: '#upload-attachment',
       url: '/api/v1/upload/',
+      data: { path: 'order_attachments' }, // Save to OSS folder
       accept: 'file',
       multiple: true,
       headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
@@ -666,6 +672,11 @@
     // 提交逻辑
     form.on('submit(order-form-btn)', function (data) {
       var field = data.field;
+
+      // 前端兜底：将空字符串转换为 null，防止后端严格模式报错
+      if (!field.supplier_id) field.supplier_id = null;
+      if (!field.order_amount) field.order_amount = null;
+
       // 将附件列表序列化为 JSON 字符串
       field.attachments = JSON.stringify(attachmentList);
       field.id = orderId && orderId !== '0' ? parseInt(orderId) : 0;

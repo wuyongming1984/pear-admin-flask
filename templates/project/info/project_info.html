@@ -535,7 +535,7 @@
         var projectId = $('#project-form input[name="id"]').val();
         projectId = (projectId && projectId != '0') ? projectId : null;
         var projectName = $('#project-form input[name="project_name"]').val() || currentProjectName;
-        return { project_id: projectId, attachment_code: generateAttachmentCode(projectName) };
+        return { project_id: projectId, attachment_code: generateAttachmentCode(projectName), path: 'project_attachments' };
       },
       before: function (obj) {
         obj.preview(function (index, file, result) {

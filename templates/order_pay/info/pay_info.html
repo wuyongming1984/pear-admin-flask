@@ -20,6 +20,13 @@
       --radius-md: 8px;
     }
 
+    }
+
+    /* 修复弹窗文字颜色 */
+    .layui-layer {
+      color: #333 !important;
+    }
+
     body {
       background-color: var(--bg-deep);
       background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.02) 1px, transparent 0);
@@ -970,6 +977,7 @@
       upload.render({
         elem: '#upload-attachment',
         url: '/api/v1/upload/',
+        data: { path: 'pay_attachments' },
         accept: 'file',
         multiple: true,
         headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },

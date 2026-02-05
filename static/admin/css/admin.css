@@ -650,3 +650,28 @@ body,
     margin-bottom: 5px;
   }
 }
+
+/* ==================== 全局弹窗样式修正 ==================== */
+/* 修复 Layui 弹窗在默认(白色)主题下文字颜色可能异常的问题 */
+/* 强制除按钮外的文字为黑色，避免白底白字 */
+body:not(.pear-admin-dark) .layui-layer {
+  color: #333 !important;
+}
+
+body:not(.pear-admin-dark) .layui-layer-title {
+  color: #333 !important;
+  background-color: #f8f8f8 !important;
+}
+
+body:not(.pear-admin-dark) .layui-layer-content {
+  color: #333 !important;
+}
+
+/* 必须排除按钮，否则确定按钮(通常主要是深色/彩色)的文字也会变成黑色 */
+body:not(.pear-admin-dark) .layui-layer-btn a {
+  color: #333;
+}
+
+body:not(.pear-admin-dark) .layui-layer-btn .layui-layer-btn0 {
+  color: #fff !important;
+}

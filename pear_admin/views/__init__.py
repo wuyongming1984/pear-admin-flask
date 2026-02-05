@@ -9,6 +9,7 @@ from .payer import payer_bp
 from .dictionary import dictionary_bp
 from .dashboard import dashboard_bp
 from .nursery import nursery_bp
+from .material import material_bp
 
 
 def register_views(app: Flask):
@@ -21,3 +22,8 @@ def register_views(app: Flask):
     app.register_blueprint(dictionary_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(nursery_bp)
+    app.register_blueprint(material_bp)
+    
+    # Import from apis to keep logic grouped, even though it renders views
+    from pear_admin.apis.portal import portal_bp
+    app.register_blueprint(portal_bp)

@@ -15,6 +15,11 @@ def pay_info():
     return render_template("order_pay/info/pay_info.html")
 
 
+@order_pay_bp.route("/order_pay/info/invoice_detail.html")
+def invoice_detail():
+    return render_template("order_pay/info/invoice_detail.html")
+
+
 @order_pay_bp.route("/order_pay/base/order_base.html")
 def order_base():
     return render_template("order_pay/order_base.html")
@@ -23,5 +28,15 @@ def order_base():
 @order_pay_bp.route("/order_pay/base/pay_base.html")
 def pay_base():
     return render_template("order_pay/pay_base.html")
+
+
+@order_pay_bp.route("/order_pay/info/print_order.html")
+def print_order():
+    return render_template("order_pay/info/print_order.html")
+
+
+@order_pay_bp.route("/order_pay/info/print_pay.html")
+def print_pay():
+    return render_template("order_pay/info/print_pay.html")
 
 

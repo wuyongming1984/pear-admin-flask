@@ -1,0 +1,253 @@
+<div class="layui-row layui-col-space15">
+    <div class="layui-col-md3">
+        <div class="project-panel">
+            <div class="project-title">项目清单</div>
+            <div style="padding: 10px 12px 5px 12px;">
+                <input type="text" id="records-project-search" placeholder="搜索项目..." autocomplete="off"
+                    class="layui-input" style="height: 28px; font-size: 12px; border-radius: 4px;">
+            </div>
+            <div class="project-item active" data-project-id="">
+                <i class="layui-icon layui-icon-list"></i>
+                <span>全部项目</span>
+            </div>
+            <div id="records-project-list"></div>
+        </div>
+    </div>
+
+    <div class="layui-col-md9">
+        <div class="main-content">
+            <div class="content-header" style="display: flex; align-items: center; justify-content: space-between;">
+                <div class="content-title" id="content-title" style="margin-bottom: 0;">出库记录</div>
+
+                <!-- Selection Summary (Added for consistency) -->
+                <div id="records-selection-summary"
+                    style="display: none; background: #f6ffed; border: 1px solid #b7eb8f; padding: 6px 16px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); animation: fadeIn 0.3s; margin: 0 20px; flex-grow: 1; max-width: 600px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <div style="display: flex; align-items: center; color: #52c41a;">
+                            <i class="layui-icon layui-icon-list" style="margin-right: 8px; font-size: 18px;"></i>
+                            <span style="font-weight: 500;">已选中：<span id="records-selected-count"
+                                    style="font-weight: bold; margin: 0 2px;">0</span> 项</span>
+                        </div>
+                        <div style="display: flex; gap: 20px;">
+                            <div style="font-size: 13px; color: #666;">
+                                不含税合计：<span id="total-records-notax-amount"
+                                    style="font-family: Consolas, monospace;">¥0.00</span>
+                            </div>
+                            <div style="font-size: 13px; color: #999;">
+                                税额合计：<span id="total-records-tax-amount"
+                                    style="font-family: Consolas, monospace;">¥0.00</span>
+                            </div>
+                            <div style="font-size: 14px; color: #262626; font-weight: 600;">
+                                含税总计：<span id="total-records-amount"
+                                    style="color: #f5222d; font-size: 16px; font-family: Consolas, monospace; margin-left: 4px;">¥0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <table id="records-table" lay-filter="records-table"></table>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    layui.use(['table', 'jquery', 'layer', 'form', 'element', 'util'], function () {
+        var table = layui.table;
+        var $ = layui.jquery;
+        var layer = layui.layer;
+        var form = layui.form;
+        var element = layui.element;
+        var util = layui.util;
+        var MODULE_PATH = '/api/v1/material/';
+        var currentProjectId = '';
+        var serverProjects = [];
+
+        // 1. Fetch Options (Standard Pattern)
+        $.getJSON(MODULE_PATH + 'options', function (res) {
+            if (res.code === 0) {
+                if (Array.isArray(res.data)) {
+                    serverProjects = res.data;
+                } else if (res.data) {
+                    serverProjects = res.data.projects || [];
+                }
+                renderProjectList();
+            } else {
+                layer.msg('加载项目失败: ' + res.msg);
+            }
+        });
+
+        // 2. Render List
+        function renderProjectList() {
+            var keyword = $('#records-project-search').val() ? $('#records-project-search').val().toLowerCase() : '';
+            var html = '';
+
+            if (serverProjects && serverProjects.length > 0) {
+                serverProjects.forEach(function (p) {
+                    var pName = p.name || '未命名项目';
+                    if (keyword && pName.toLowerCase().indexOf(keyword) === -1) {
+                        return;
+                    }
+                    html += '<div class="project-item" data-project-id="' + p.id + '">';
+                    html += '<i class="layui-icon layui-icon-template-1"></i>';
+                    html += '<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;" title="' + pName + '">' + pName + '</span>';
+                    html += '</div>';
+                });
+                $('#records-project-list').html(html);
+            } else {
+                $('#records-project-list').html('<div style="padding: 10px; color: #999; text-align: center;">暂无项目</div>');
+            }
+        }
+
+        // 3. Search Event
+        $('#records-project-search').on('input', function () {
+            renderProjectList();
+        });
+
+        // 4. Click Event (Delegated & Scoped)
+        $('.project-panel').on('click', '.project-item', function () {
+            $('.project-panel .project-item').removeClass('active');
+            $(this).addClass('active');
+
+            currentProjectId = $(this).data('project-id');
+            var projectName = $(this).find('span').text();
+
+            if (currentProjectId) {
+                $('#content-title').text(projectName + ' 出库记录');
+            } else {
+                $('#content-title').text('出库记录');
+            }
+            refreshTable();
+        });
+
+        table.render({
+            elem: '#records-table',
+            url: MODULE_PATH + 'outbound',
+            where: { status: 'completed' },
+            page: true,
+            cols: [[
+                { type: 'checkbox', fixed: 'left' },
+                {
+                    field: 'batch_number', title: '批次信息', width: 140, align: 'center',
+                    templet: function (d) {
+                        return d.batch_number ? '<span class="layui-badge layui-bg-gray" style="font-family: Consolas, monospace; padding: 0 5px;">' + d.batch_number + '</span>' : '<span style="color:#ccc">--</span>';
+                    }
+                },
+                {
+                    field: 'inbound_invoice_number', title: '进项发票', width: 140, align: 'center',
+                    templet: function (d) {
+                        if (!d.inbound_invoice_number) return '<span style="color:#ccc">-</span>';
+                        var html = '<div style="display: flex; align-items: center; justify-content: center; gap: 6px;">';
+                        html += '<span style="font-family: Consolas, monospace;">' + d.inbound_invoice_number + '</span>';
+                        if (d.inbound_invoice_file_path) {
+                            html += '<i class="layui-icon layui-icon-file outbound-invoice-view-icon" ' +
+                                'style="cursor: pointer; color: #1e9fff; font-size: 14px;" ' +
+                                'data-url="' + d.inbound_invoice_file_path + '" ' +
+                                'title="预览进项发票"></i>';
+                        }
+                        html += '</div>';
+                        return html;
+                    }
+                },
+                { field: 'material_name', title: '材料名称', width: 150 },
+                { field: 'material_spec', title: '规格', width: 120 },
+                { field: 'material_unit', title: '单位', width: 80, align: 'center' },
+                { field: 'completed_sales_quantity', title: '完成销售数量', width: 100, align: 'center', style: 'color: #fa8c16; font-weight: bold; font-family: Consolas, monospace;' },
+                { field: 'seller_price', title: '含税单价', width: 110, align: 'right', templet: function (d) { return '¥ ' + parseFloat(d.seller_price || 0).toFixed(2); } },
+                { field: 'price_no_tax', title: '不含税单价', width: 110, align: 'right', templet: function (d) { return '¥ ' + parseFloat(d.price_no_tax || 0).toFixed(2); } },
+                { field: 'tax_rate', title: '税率', width: 80, align: 'center', templet: function (d) { return (parseFloat(d.tax_rate || 0) * 100).toFixed(0) + '%'; } },
+                { field: 'tax_amount', title: '税额', width: 90, align: 'right', templet: function (d) { return '¥ ' + parseFloat(d.tax_amount || 0).toFixed(2); } },
+                {
+                    title: '不含税合计', width: 120, align: 'right', templet: function (d) {
+                        var total = (parseFloat(d.completed_sales_quantity || 0) * parseFloat(d.price_no_tax || 0));
+                        return '<span style="color: #666;">¥ ' + total.toFixed(2) + '</span>';
+                    }
+                },
+                {
+                    title: '税额合计', width: 110, align: 'right', templet: function (d) {
+                        var total = (parseFloat(d.completed_sales_quantity || 0) * parseFloat(d.tax_amount || 0));
+                        return '<span style="color: #999;">¥ ' + total.toFixed(2) + '</span>';
+                    }
+                },
+                {
+                    title: '含税合计', width: 120, align: 'right', style: 'font-weight: bold; color: #1890ff;', templet: function (d) {
+                        var total = (parseFloat(d.completed_sales_quantity || 0) * parseFloat(d.seller_price || 0));
+                        return '¥ ' + total.toFixed(2);
+                    }
+                },
+                { field: 'invoice_number', title: '销项发票', width: 180, templet: function (d) { return d.invoice_number || '<span style="color:#ccc">--</span>'; } },
+                { field: 'seller_name', title: '销售商', width: 180, templet: function (d) { return d.seller_name || '<span style="color:#ccc">--</span>'; } },
+                { field: 'create_at', title: '出库时间', width: 180, align: 'center' }
+            ]],
+            skin: 'line',
+            toolbar: true,
+            defaultToolbar: ['filter', 'print', 'exports'],
+            done: function (res) {
+                updateRecordsSelectionSummary();
+            }
+        });
+
+        // 监听勾选状态
+        table.on('checkbox(records-table)', function (obj) {
+            updateRecordsSelectionSummary();
+        });
+
+        function updateRecordsSelectionSummary() {
+            var checkStatus = table.checkStatus('records-table');
+            var data = checkStatus.data;
+            var $summary = $('#records-selection-summary');
+
+            if (data.length > 0) {
+                var totalAmount = 0;
+                var totalNoTax = 0;
+                var totalTax = 0;
+
+                data.forEach(function (item) {
+                    var qty = parseFloat(item.completed_sales_quantity) || 0;
+                    totalAmount += (qty * parseFloat(item.seller_price || 0));
+                    totalNoTax += (qty * parseFloat(item.price_no_tax || 0));
+                    totalTax += (qty * parseFloat(item.tax_amount || 0));
+                });
+
+                $('#records-selected-count').text(data.length);
+                $('#total-records-notax-amount').text('¥' + totalNoTax.toFixed(2));
+                $('#total-records-tax-amount').text('¥' + totalTax.toFixed(2));
+                $('#total-records-amount').text('¥' + totalAmount.toFixed(2));
+
+                if ($summary.css('display') === 'none') {
+                    $summary.fadeIn(200);
+                }
+            } else {
+                $summary.fadeOut(200);
+            }
+        }
+
+        function refreshTable() {
+            // Ensure status stays 'completed'
+            table.reload('records-table', {
+                where: { project_id: currentProjectId, status: 'completed' },
+                page: { curr: 1 }
+            });
+        }
+
+        // 发票预览事件
+        $(document).on('click', '.outbound-invoice-view-icon', function (e) {
+            e.stopPropagation();
+            var url = $(this).data('url');
+            if (!url) return;
+
+            if (url.toLowerCase().endsWith('.pdf')) {
+                window.open(url, '_blank');
+            } else {
+                layer.photos({
+                    photos: {
+                        "title": "发票预览",
+                        "data": [{ "src": url }]
+                    },
+                    shade: 0.7,
+                    anim: 5
+                });
+            }
+        });
+    });
+</script>

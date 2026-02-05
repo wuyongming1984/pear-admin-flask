@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <title>新增发票</title>
+    <link rel="stylesheet" href="/static/component/pear/css/pear.css" />
+    <style>
+        :root {
+            --primary-color: #B65E49;
+            --primary-light: rgba(182, 94, 73, 0.08);
+            --primary-hover: #a04d3a;
+            --success-color: #009688;
+            --text-color: #333;
+            --text-secondary: #666;
+            --border-color: #eee;
+        }
+
+        body {
+            background-color: #fff;
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .mainBox {
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed #e0e0e0;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            background: #fafafa;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+            transform: scale(0.99);
+        }
+
+        .upload-icon {
+            font-size: 56px;
+            color: #ccc;
+            margin-bottom: 15px;
+            transition: color 0.3s;
+        }
+
+        .upload-area:hover .upload-icon {
+            color: var(--primary-color);
+        }
+
+        .upload-text {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+
+        .upload-hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* File List */
+        .file-list {
+            margin-top: 15px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #fff;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .file-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            border-color: #ddd;
+        }
+
+        .file-icon {
+            font-size: 28px;
+            margin-right: 15px;
+            color: #888;
+        }
+
+        .file-icon.pdf {
+            color: #cf222e;
+        }
+
+        .file-icon.img {
+            color: #0969da;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 2px;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .file-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .file-status.pending {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .file-status.uploading {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .file-status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .file-status.ocr_processing {
+            background: #fff8e1;
+            color: #f57f17;
+        }
+
+        .file-status.ocr_success {
+            background: #e8f5e9;
+            color: var(--success-color);
+        }
+
+        .file-status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .file-remove {
+            cursor: pointer;
+            color: #999;
+            font-size: 18px;
+            padding: 5px;
+            margin-left: 10px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .file-remove:hover {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        /* Progress Bar */
+        .ocr-progress {
+            margin-top: 20px;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+            width: 0%;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background-image: linear-gradient(-45deg,
+                    rgba(255, 255, 255, .2) 25%,
+                    transparent 25%,
+                    transparent 50%,
+                    rgba(255, 255, 255, .2) 50%,
+                    rgba(255, 255, 255, .2) 75%,
+                    transparent 75%,
+                    transparent);
+            z-index: 1;
+            background-size: 20px 20px;
+            animation: move 2s linear infinite;
+        }
+
+        @keyframes move {
+            0% {
+                background-position: 0 0;
+            }
+
+            100% {
+                background-position: 20px 20px;
+            }
+        }
+
+        /* Bottom Buttons */
+        .bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 0;
+            background: #fff;
+            border-top: 1px solid #eee;
+            text-align: right;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            z-index: 100;
+        }
+
+        .button-container {
+            padding-right: 20px;
+        }
+
+        .btn-upload {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+            padding: 0 20px;
+        }
+
+        .btn-upload:hover {
+            background-color: var(--primary-hover) !important;
+        }
+
+        .btn-cancel {
+            background: #fff !important;
+            border: 1px solid #ddd !important;
+            color: #666 !important;
+        }
+
+        .btn-cancel:hover {
+            border-color: #999 !important;
+            color: #333 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mainBox">
+        <div class="main-container">
+            <!-- 上传区域 -->
+            <div class="upload-area" id="upload-area">
+                <div class="upload-icon">
+                    <i class="layui-icon layui-icon-upload-drag"></i>
+                </div>
+                <div class="upload-text">点击或拖拽发票文件到此处</div>
+                <div class="upload-hint">支持 PDF、JPG、PNG 格式，支持批量上传识别</div>
+                <input type="file" id="file-input" multiple accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+            </div>
+
+            <!-- 文件列表 -->
+            <div class="file-list" id="file-list"></div>
+
+            <!-- OCR进度 -->
+            <div class="ocr-progress" id="ocr-progress">
+                <div style="font-weight: 600; color: #333; display: flex; justify-content: space-between;">
+                    <span>智能识别中...</span>
+                    <span id="progress-percent" style="color: var(--primary-color);">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div id="progress-text" style="font-size: 13px; color: #888;">正在分析发票内容...</div>
+            </div>
+
+            <div style="height: 60px;"></div> <!-- Spacer -->
+        </div>
+    </div>
+
+    <div class="bottom">
+        <div class="button-container">
+            <button type="button" class="pear-btn pear-btn-primary pear-btn-sm btn-upload" id="upload-btn">
+                <i class="layui-icon layui-icon-release"></i>
+                开始识别
+            </button>
+            <button type="button" class="pear-btn pear-btn-sm btn-cancel" id="cancel-btn">
+                取消
+            </button>
+        </div>
+    </div>
+
+    <script src="/static/component/layui/layui.js"></script>
+    <script src="/static/component/pear/pear.js"></script>
+    <script>
+        layui.use(['form', 'jquery', 'layer'], function () {
+            let form = layui.form;
+            let $ = layui.jquery;
+            let layer = layui.layer;
+            let MODULE_PATH = "/api/v1/material/";
+
+            let selectedFiles = [];
+
+            // 点击上传区域
+            $('#upload-area').on('click', function () {
+                $('#file-input').click();
+            });
+
+            // 文件选择
+            $('#file-input').on('change', function (e) {
+                handleFiles(e.target.files);
+                // Clear input to allow re-selection
+                $(this).val('');
+            });
+
+            // 拖拽上传
+            let uploadArea = document.getElementById('upload-area');
+            uploadArea.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                $(this).addClass('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', function (e) {
+                e.preventDefault();
+                $(this).removeClass('dragover');
+            });
+
+            uploadArea.addEventListener('drop', function (e) {
+                e.preventDefault();
+                $(this).removeClass('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            // 处理文件
+            function handleFiles(files) {
+                for (let i = 0; i < files.length; i++) {
+                    let file = files[i];
+                    // 验证文件类型
+                    let ext = file.name.split('.').pop().toLowerCase();
+                    if (['pdf', 'jpg', 'jpeg', 'png'].indexOf(ext) === -1) {
+                        layer.msg('不支持的文件格式: ' + file.name, { icon: 2 });
+                        continue;
+                    }
+                    selectedFiles.push({
+                        file: file,
+                        status: 'pending',
+                        id: null
+                    });
+                }
+                renderFileList();
+            }
+
+            // 渲染文件列表
+            function renderFileList() {
+                let html = '';
+                if (selectedFiles.length === 0) {
+                    $('#file-list').html('');
+                    return;
+                }
+
+                selectedFiles.forEach(function (item, index) {
+                    let statusClass = item.status;
+                    let statusText = {
+                        'pending': '等待上传',
+                        'uploading': '上传中...',
+                        'success': '上传完成',
+                        'ocr_processing': '正在识别...',
+                        'ocr_success': '识别成功',
+                        'error': '失败'
+                    }[item.status] || item.status;
+
+                    let ext = item.file.name.split('.').pop().toLowerCase();
+                    let iconClass = ext === 'pdf' ? 'layui-icon-file-b pdf' : 'layui-icon-picture img';
+
+                    html += '<div class="file-item" data-index="' + index + '">';
+                    html += '  <i class="layui-icon ' + iconClass + ' file-icon"></i>';
+                    html += '  <div class="file-info">';
+                    html += '    <div class="file-name">' + item.file.name + '</div>';
+                    html += '    <div class="file-size">' + formatFileSize(item.file.size) + '</div>';
+                    html += '  </div>';
+                    html += '  <span class="file-status ' + statusClass + '">' + statusText + '</span>';
+
+                    if (item.status === 'pending' || item.status === 'error') {
+                        html += '  <i class="layui-icon layui-icon-close file-remove" data-index="' + index + '" title="移除"></i>';
+                    }
+                    html += '</div>';
+                });
+                $('#file-list').html(html);
+            }
+
+            // 删除文件
+            $(document).on('click', '.file-remove', function (e) {
+                e.stopPropagation();
+                let index = $(this).data('index');
+                selectedFiles.splice(index, 1);
+                renderFileList();
+            });
+
+            // 格式化文件大小
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+                return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+            }
+
+            // 上传并识别
+            $('#upload-btn').on('click', function () {
+                if (selectedFiles.length === 0) {
+                    layer.msg('请先选择发票文件', { icon: 7 }); // Warning icon
+                    return;
+                }
+                uploadAndOCR();
+            });
+
+            // 上传和OCR流程
+            async function uploadAndOCR() {
+                // Disable button
+                $('#upload-btn').addClass('layui-btn-disabled').prop('disabled', true).html('<i class="layui-icon layui-icon-loading layui-icon layui-anim layui-anim-rotate layui-anim-loop"></i> 处理中...');
+
+                // 1. 上传文件
+                let formData = new FormData();
+                let pendingFiles = selectedFiles.filter(f => f.status === 'pending' || f.status === 'error');
+
+                if (pendingFiles.length === 0 && selectedFiles.length > 0) {
+                    // All probably uploaded, verify ids
+                    pendingFiles = selectedFiles.filter(f => !f.id);
+                }
+
+                if (pendingFiles.length === 0) {
+                    // Start OCR directly if all uploaded
+                } else {
+                    pendingFiles.forEach(function (item) {
+                        formData.append('files', item.file);
+                    });
+
+                    // Update UI
+                    selectedFiles.forEach(f => { if (f.status === 'pending') f.status = 'uploading'; });
+                    renderFileList();
+
+                    try {
+                        let uploadRes = await $.ajax({
+                            url: MODULE_PATH + 'invoice/upload',
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false
+                        });
+
+                        if (uploadRes.code !== 0) {
+                            throw new Error('上传失败: ' + uploadRes.msg);
+                        }
+
+                        // Map back IDs and Status
+                        let newInvoices = uploadRes.data.invoices || [];
+                        let failedInvoices = uploadRes.data.errors || [];
+
+                        let invIdx = 0;
+                        let failIdx = 0;
+
+                        // We need to map responses to the 'uploading' files. 
+                        // Since we can't easily match by name without strict ordering assumption, 
+                        // we'll assume the backend processes files in order of the list.
+
+                        selectedFiles.forEach(f => {
+                            if (f.status === 'uploading') {
+                                // Prioritize successes
+                                if (invIdx < newInvoices.length) {
+                                    let inv = newInvoices[invIdx];
+                                    f.id = inv.id;
+                                    // Check backend OCR status
+                                    if (inv.ocr_status === 'success') {
+                                        f.status = 'ocr_success';
+                                    } else {
+                                        f.status = 'success';
+                                    }
+                                    invIdx++;
+                                }
+                                // Then check failures
+                                else if (failIdx < failedInvoices.length) {
+                                    let fail = failedInvoices[failIdx];
+                                    f.status = 'error';
+                                    let reason = fail.reason || 'Unknown error';
+                                    f.message = reason; // Vital for alert logic
+
+                                    if (reason.indexOf('已存在') !== -1) {
+                                        $(f.fileItem).find('.file-status').text('重复').attr('title', reason);
+                                        layer.msg('发票已存在: ' + f.file.name, { icon: 0, time: 2000 });
+                                    } else {
+                                        layer.msg('上传失败 ' + f.file.name + ': ' + reason, { icon: 2 });
+                                    }
+                                    failIdx++;
+                                }
+                            }
+                        });
+                        renderFileList();
+
+                    } catch (error) {
+                        layer.msg(error.message, { icon: 2 });
+                        selectedFiles.forEach(f => { if (f.status === 'uploading') f.status = 'error'; }); // Reset
+                        renderFileList();
+                        $('#upload-btn').removeClass('layui-btn-disabled').prop('disabled', false).html('<i class="layui-icon layui-icon-release"></i> 开始识别');
+                        return;
+                    }
+                }
+
+                // 2. OCR识别
+                let invoiceIds = selectedFiles.filter(f => f.id && f.status !== 'ocr_success').map(f => f.id);
+
+                if (invoiceIds.length > 0) {
+                    await performOCR(invoiceIds);
+                } else {
+                    // Check completion status
+                    let successCount = selectedFiles.filter(f => f.status === 'ocr_success').length;
+                    let errorCount = selectedFiles.filter(f => f.status === 'error').length;
+
+                    if (successCount + errorCount === selectedFiles.length && selectedFiles.length > 0) {
+                        if (errorCount === 0) {
+                            let lastId = selectedFiles[0].id;
+                            layer.alert('全部处理完成! ID: ' + lastId, { icon: 1 }, function (index) {
+                                layer.close(index);
+                                parent.layer.close(parent.layer.getFrameIndex(window.name));
+                                if (parent.refreshInvoiceList) parent.refreshInvoiceList();
+                                else parent.location.reload();
+                            });
+                        } else {
+                            // Show the first error reason
+                            let firstError = selectedFiles.find(f => f.status === 'error');
+                            let reason = firstError ? firstError.message : "未知错误";
+                            layer.alert('上传失败: ' + reason, { icon: 2 });
+                            $('#upload-btn').removeClass('layui-btn-disabled').prop('disabled', false).html('<i class="layui-icon layui-icon-release"></i> 重试');
+                        }
+                    } else {
+                        layer.msg('没有需要识别的文件');
+                    }
+                    $('#upload-btn').removeClass('layui-btn-disabled').prop('disabled', false).html('<i class="layui-icon layui-icon-release"></i> 开始识别');
+                }
+            }
+
+            // 执行OCR识别
+            async function performOCR(invoiceIds) {
+                $('#ocr-progress').fadeIn();
+                $('#progress-text').text('正在连接云端OCR引擎...');
+                $('#progress-fill').width('20%');
+
+                selectedFiles.forEach(function (item) {
+                    if (invoiceIds.includes(item.id)) item.status = 'ocr_processing';
+                });
+                renderFileList();
+
+                try {
+                    // Simulate progress visual
+                    setTimeout(() => $('#progress-fill').width('50%'), 500);
+                    setTimeout(() => $('#progress-text').text('正在解析票面信息...'), 800);
+
+                    let ocrRes = await $.ajax({
+                        url: MODULE_PATH + 'invoice/ocr',
+                        type: 'POST',
+                        data: JSON.stringify({ invoice_ids: invoiceIds }),
+                        contentType: 'application/json'
+                    });
+
+                    $('#progress-fill').width('100%');
+                    $('#progress-percent').text('100%');
+
+                    if (ocrRes.code === 0) {
+                        let successCount = ocrRes.data.success;
+                        let failedCount = ocrRes.data.failed;
+
+                        let duplicates = [];
+                        let otherErrors = [];
+
+                        // Update status and collect errors
+                        ocrRes.data.results.forEach(function (result) {
+                            let fileItem = selectedFiles.find(item => item.id === result.id);
+                            if (fileItem) {
+                                if (result.status === 'completed') {
+                                    fileItem.status = 'ocr_success';
+                                } else {
+                                    fileItem.status = 'error';
+                                    if (result.error && result.error.indexOf('DUPLICATE_FOUND') !== -1) {
+                                        let cleanMsg = result.error.replace('DUPLICATE_FOUND: ', '');
+                                        duplicates.push(cleanMsg);
+                                        // Update UI specifically for duplicates
+                                        $(fileItem).find('.file-status').text('重复已清理').addClass('error').css('background', '#fff3e0').css('color', '#ff9800');
+                                    } else {
+                                        otherErrors.push(result.error);
+                                    }
+                                }
+                            }
+                        });
+                        renderFileList();
+
+                        if (duplicates.length > 0) {
+                            // Duplicate Alert
+                            let msg = '<div style="color: #ff5722; font-weight: bold; font-size: 15px; margin-bottom: 10px;">发现重复发票，系统已拦截并清理文件：</div>';
+                            msg += duplicates.map(err => '<div style="margin-bottom: 5px;">• ' + err + '</div>').join('');
+
+                            if (otherErrors.length > 0) {
+                                msg += '<hr style="margin: 10px 0;"><div style="font-weight: bold; margin-bottom: 5px;">其它识别错误：</div>';
+                                msg += otherErrors.map(err => '<div>• ' + err + '</div>').join('');
+                            }
+
+                            layer.open({
+                                title: '重复发票处理',
+                                content: msg,
+                                icon: 0,
+                                area: ['450px', 'auto'],
+                                btn: ['我知道了'],
+                                yes: function (index) {
+                                    layer.close(index);
+                                    // Close parent if all were processed (success + duplicates = total)
+                                    // Or give user time to see
+                                    setTimeout(function () {
+                                        parent.layer.close(parent.layer.getFrameIndex(window.name));
+                                        if (parent.refreshInvoiceList) parent.refreshInvoiceList();
+                                        else parent.location.reload();
+                                    }, 500);
+                                }
+                            });
+                        } else if (failedCount > 0) {
+                            layer.alert('识别完成，存在失败项：<br>' + otherErrors.join('<br>'), { icon: 2 });
+                        } else {
+                            layer.msg('全部识别成功', { icon: 1 });
+                            setTimeout(function () {
+                                parent.layer.close(parent.layer.getFrameIndex(window.name));
+                                if (parent.refreshInvoiceList) {
+                                    parent.refreshInvoiceList();
+                                } else {
+                                    parent.location.reload();
+                                }
+                            }, 1000);
+                        }
+
+                    } else {
+                        throw new Error(ocrRes.msg);
+                    }
+                } catch (error) {
+                    $('#progress-text').text('识别中断');
+                    $('#progress-fill').css('background', '#ff5722');
+                    layer.msg('OCR识别失败: ' + (error.responseJSON?.msg || error.message), { icon: 2 });
+                    selectedFiles.forEach(f => {
+                        if (f.status === 'ocr_processing') f.status = 'error';
+                    });
+                    renderFileList();
+                    $('#upload-btn').removeClass('layui-btn-disabled').prop('disabled', false).html('<i class="layui-icon layui-icon-release"></i> 重试');
+                }
+            }
+
+            // 取消按钮
+            $('#cancel-btn').on('click', function () {
+                parent.layer.close(parent.layer.getFrameIndex(window.name));
+            });
+        });
+    </script>
+</body>
+
+</html>

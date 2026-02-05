@@ -1,0 +1,864 @@
+﻿/* 
+ * 璁㈠崟涓庝粯娆惧崟閲嶆瀯涓撴湁鏍峰紡 - 鐜颁唬宸ヤ笟闈㈡澘椋庢牸 (Control Panel Aesthetic)
+ */
+
+:root {
+  /* 璋冭壊鐩橈細娣遍們銆佺簿瀵嗐€佹暟瀛楁劅 */
+  --bg-deep: #0f172a;
+  --bg-surface: rgba(30, 41, 59, 0.7);
+  --bg-sidebar: rgba(15, 23, 42, 0.95);
+
+  --accent-primary: #00e5ff;
+  /* 璧涘崥钃?*/
+  --accent-secondary: #7c4dff;
+  /* 闇撹櫣绱?*/
+
+  --text-primary: #ffffff;
+  /* 绾櫧锛屾渶楂樺姣斿害 */
+  --text-secondary: #cbd5e1;
+  /* 浜伆钃?*/
+  --text-muted: #94a3b8;
+  /* 鏇翠寒鐨勯潤姝㈡枃鏈?*/
+
+  --border-glow: rgba(0, 229, 255, 0.3);
+  --border-dim: rgba(255, 255, 255, 0.12);
+
+  --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: 0 12px 48px 0 rgba(0, 0, 0, 0.5);
+
+  --radius-lg: 16px;
+  --radius-md: 12px;
+}
+
+/* 椤甸潰鑳屾櫙 */
+body {
+  background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, sans-serif;
+  overflow: hidden;
+}
+
+/* 涓ゆ爮甯冨眬瀹瑰櫒 - 鐜荤拑鎷熸€?*/
+.refined-container {
+  display: flex;
+  height: calc(100vh - 20px);
+  margin: 10px;
+  background: var(--bg-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+}
+
+/* 宸︿晶椤圭洰鍒楄〃 - 宸ヤ笟椋庝晶鏍?*/
+.side-panel {
+  width: 250px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-dim);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.side-panel-header {
+  padding: 16px 14px;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.search-input-wrapper i {
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  color: var(--accent-primary);
+  filter: drop-shadow(0 0 5px var(--border-glow));
+}
+
+.search-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px 0 44px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-input:focus {
+  border-color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 15px var(--border-glow);
+}
+
+.project-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
+}
+
+.project-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
+  margin: 4px 8px;
+  border-radius: var(--radius-md);
+}
+
+.project-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.project-item.active {
+  background: rgba(0, 229, 255, 0.1);
+  border-left-color: var(--accent-primary);
+  box-shadow: inset 0 0 10px var(--border-glow);
+}
+
+.project-item.active .project-name {
+  color: var(--accent-primary);
+  text-shadow: 0 0 8px var(--border-glow);
+}
+
+.project-item.active .project-desc {
+  color: var(--text-secondary);
+}
+
+.project-name {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.project-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 鍙充晶涓诲唴瀹瑰尯 */
+.main-content {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+  background: transparent;
+  scroll-behavior: smooth;
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.content-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: linear-gradient(to right, #fff, var(--accent-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 鎸夐挳缁勫悎澧炲己 */
+.content-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.field-setting-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-dim);
+  color: var(--text-secondary);
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.field-setting-btn:hover {
+  background: rgba(0, 229, 255, 0.1);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  box-shadow: 0 0 10px var(--border-glow);
+}
+
+/* 瀛楁鏄剧ず鎺у埗绫?*/
+
+.card-grid.hide-project-name .item-project-name {
+  display: none;
+}
+
+.card-grid.hide-contact .item-contact {
+  display: none;
+}
+
+.card-grid.hide-manager .item-manager {
+  display: none;
+}
+
+.card-grid.hide-amount .item-amount {
+  display: none;
+}
+
+.card-grid.hide-balance .item-balance {
+  display: none;
+}
+
+.card-grid.hide-date .item-date {
+  display: none;
+}
+
+.card-grid.hide-pay-no .item-pay-no {
+  display: none;
+}
+
+.card-grid.hide-details .item-details {
+  display: none;
+}
+
+/* 鍏宠仈椤圭洰鏍囩鏍峰紡 */
+.pay-no-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--accent-primary);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  margin-right: 4px;
+  margin-bottom: 2px;
+  box-shadow: 0 0 5px rgba(0, 229, 255, 0.1);
+  transition: all 0.2s;
+}
+
+.pay-no-tag:hover {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 8px var(--border-glow);
+  transform: translateY(-1px);
+}
+
+/* 涓嬫媺鑿滃崟鏍峰紡 */
+.field-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: #1e293b;
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  width: 180px;
+  z-index: 1000;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  display: none;
+  animation: fadeInDown 0.3s ease-out;
+}
+
+.field-dropdown.show {
+  display: block;
+}
+
+.field-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.field-option:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.field-option input {
+  cursor: pointer;
+  accent-color: var(--accent-primary);
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 璁㈠崟鍗＄墖 - 璧涘崥宸ヤ笟閲嶆瀯 */
+.card-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.4) 0%, transparent 100%);
+  padding: 10px;
+}
+
+.refined-card {
+  position: relative;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-wrap: wrap;
+  /* 鍏佽鍦ㄧ獎灞忎笅鎹㈣ */
+  align-items: stretch;
+  padding: 0;
+  min-height: 100px;
+  overflow: visible;
+  /* 闃叉鎴柇闃村奖鎴栨搷浣滄寜閽?*/
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.refined-card:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: var(--accent-primary);
+  transform: translateX(8px);
+  box-shadow: -5px 0 20px var(--border-glow), 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* 鍛煎惛鐏姸鎬佹潯 */
+.card-indicator {
+  width: 6px;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: var(--bg-surface);
+  transition: all 0.3s;
+}
+
+.refined-card:hover .card-indicator {
+  width: 8px;
+  box-shadow: 0 0 15px currentColor;
+}
+
+.card-indicator.status-pending {
+  background: #ffab40;
+  color: #ffab40;
+}
+
+.card-indicator.status-partial {
+  background: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.card-indicator.status-completed {
+  background: #00e676;
+  color: #00e676;
+}
+
+.card-tag {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 20px;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-dim);
+}
+
+.card-tag.primary {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.card-tag.success {
+  color: #00e676;
+  border-color: #00e676;
+}
+
+.card-tag.warning {
+  color: #ffab40;
+  border-color: #ffab40;
+}
+
+.card-title {
+  width: 140px;
+  padding: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-right: 1px solid var(--border-dim);
+}
+
+.card-title i {
+  color: var(--accent-primary);
+  opacity: 0.7;
+  margin-bottom: 5px;
+}
+
+.card-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 15px 25px;
+  padding: 20px;
+  align-items: start;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  /* 闃叉 grid 婧㈠嚭 */
+}
+
+/* 閽堝涓嶅悓瀛楁寰皟 */
+.item-material,
+.item-details {
+  grid-column: span 2;
+}
+
+.item-pay-no {
+  grid-column: span 1;
+}
+
+@media screen and (max-width: 1200px) {
+
+  .item-material,
+  .item-details {
+    grid-column: 1 / -1;
+  }
+}
+
+/* 鏂板锛氭潗鏂欐槑缁?*/
+
+/* 鏉愭枡鏄庣粏鏂囨湰澶勭悊锛氬厑璁镐袱琛屾樉绀烘垨鑷姩鏀剁缉锛屼繚鎸佽楂樺榻?*/
+.item-details .info-value {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: var(--accent-primary);
+  /* 灏嗘爣绛炬敼涓轰富棰樿壊锛屾瀬澶ф彁鍗囪瘑鍒害 */
+  filter: brightness(1.2);
+  /* 杩涗竴姝ュ浜?*/
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.info-value {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+}
+
+.info-value.numeric {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* 鎿嶄綔闈㈡澘鏍峰紡锛堣ˉ鍏級 */
+.card-actions-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 15px;
+  border-left: 1px solid var(--border-dim);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.action-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-dim);
+  color: var(--text-secondary);
+}
+
+.action-icon-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px var(--border-glow);
+}
+
+.action-icon-btn.edit:hover {
+  border-color: #409eff;
+  color: #409eff;
+}
+
+.action-icon-btn.pay:hover {
+  border-color: #67c23a;
+  color: #67c23a;
+}
+
+.action-icon-btn.print:hover {
+  border-color: #e6a23c;
+  color: #e6a23c;
+}
+
+.action-icon-btn.delete:hover {
+  border-color: #f56c6c;
+  color: #f56c6c;
+}
+
+@media screen and (max-width: 900px) {
+  .card-actions-panel {
+    flex-direction: row;
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border-dim);
+  }
+}
+
+/* 鑷畾涔夋粴鍔ㄦ潯 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-dim);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* 鍝嶅簲寮?*/
+@media screen and (max-width: 768px) {
+  .refined-container {
+    flex-direction: column;
+    height: auto;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .side-panel {
+    width: 100%;
+    height: 250px;
+    border-right: none;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==================== 闄勪欢灞曠ず涓庨瑙堟牱寮?==================== */
+
+/* 闄勪欢鏁伴噺寰界珷 */
+.attachment-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 12px;
+  font-size: 11px;
+  color: var(--accent-primary);
+  margin-left: 8px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.attachment-badge:hover {
+  background: rgba(0, 229, 255, 0.2);
+  box-shadow: 0 0 8px var(--border-glow);
+}
+
+/* 闄勪欢鍒楄〃绱у噾灞曠ず */
+.attachment-list-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.attachment-item-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-dim);
+  border-radius: 8px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.attachment-item-compact:hover {
+  background: rgba(0, 229, 255, 0.08);
+  border-color: var(--accent-primary);
+  transform: translateX(4px);
+}
+
+.attachment-item-compact i.layui-icon-file {
+  color: var(--accent-primary);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.attachment-name {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.attachment-item-compact:hover .attachment-name {
+  color: var(--text-primary);
+}
+
+.attachment-download {
+  color: var(--text-muted);
+  font-size: 16px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  padding: 4px;
+}
+
+.attachment-download:hover {
+  color: var(--accent-primary);
+  transform: scale(1.1);
+}
+
+/* 闄勪欢淇℃伅椤圭綉鏍艰皟鏁?*/
+.item-attachments {
+  min-width: 200px;
+  flex: 2.5 !important;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-dim) !important;
+}
+
+.item-attachments .info-label {
+  margin-bottom: 8px;
+}
+
+/* 鍏宠仈璁㈠崟鍙峰窘绔?*/
+.order-no-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 6px;
+  background: rgba(124, 77, 255, 0.1);
+  border: 1px solid rgba(124, 77, 255, 0.3);
+  color: var(--accent-secondary);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 发票展示样式 */
+.invoice-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: rgba(255, 183, 77, 0.15);
+  color: #ff9800;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 10px;
+}
+
+.invoice-badge i {
+  font-size: 12px;
+}
+
+.invoice-list-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 5px;
+}
+
+.invoice-item-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-dim);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.invoice-item-compact:hover {
+  border-color: #ff9800;
+  background: rgba(255, 152, 0, 0.05);
+}
+
+.invoice-item-compact i {
+  color: #ff9800;
+  font-size: 14px;
+}
+
+.invoice-item-compact .invoice-info {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invoice-item-compact .invoice-amount-tag {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #ff9800;
+  font-weight: bold;
+}
+
+.item-invoices {
+  min-width: 200px;
+  flex: 2 !important;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-dim) !important;
+}
+
+.item-invoices .info-label {
+  margin-bottom: 8px;
+}
+
+.content-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field-setting-btn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.field-setting-btn:hover {
+  background-color: var(--surface-hover);
+  color: var(--accent-primary);
+}
+
+.field-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: 200px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: 8px 0;
+  z-index: 1000;
+  display: none;
+}
+
+.field-option {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+.field-option:hover {
+  background-color: var(--surface-hover);
+}
+
+.field-option input {
+  margin-right: 10px;
+  accent-color: var(--accent-primary);
+}
+
+.field-dropdown {
+  background: #1e1e1e !important;
+  border: 1px solid #333;
+}
+
+.field-setting-btn::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: transparent;
+}

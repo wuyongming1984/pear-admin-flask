@@ -1,0 +1,1009 @@
+<style>
+    /* 侧边栏样式修复：暗色主题 - 使用 ID 增强优先级，防止被 inventory.html 样式污染 */
+    #invoice-page-root .project-panel {
+        background: #283342;
+        color: #f8fafc;
+        border-radius: 8px;
+        height: calc(100vh - 20px);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #invoice-page-root .project-title {
+        padding: 15px 20px;
+        background: #1e2630;
+        font-size: 16px;
+        font-weight: 600;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        color: #00e5ff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #invoice-page-root .project-count {
+        background: rgba(0, 229, 255, 0.15);
+        color: #00e5ff;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 12px;
+    }
+
+    #invoice-page-root .search-group {
+        padding: 15px;
+        background: #283342;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    #invoice-page-root .search-input {
+        background: rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #eee !important;
+        border-radius: 4px;
+        height: 38px;
+        line-height: 38px;
+        width: 100%;
+        margin-bottom: 10px;
+        padding-left: 10px;
+        box-sizing: border-box;
+        transition: all 0.3s;
+    }
+
+    #invoice-page-root .search-input:focus {
+        border-color: #00e5ff !important;
+        background: rgba(0, 0, 0, 0.4) !important;
+    }
+
+    #invoice-page-root .search-input::placeholder {
+        color: #64748b;
+    }
+
+    #invoice-page-root .sidebar-scroll-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    #invoice-page-root .sidebar-scroll-area::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    #invoice-page-root .sidebar-scroll-area::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+    }
+
+    /* 列表项样式 */
+    #invoice-page-root .project-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid transparent;
+        margin-bottom: 8px;
+        border-radius: 6px;
+        padding: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+    }
+
+    #invoice-page-root .project-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    #invoice-page-root .project-item.active {
+        background: rgba(0, 229, 255, 0.1);
+        border-color: rgba(0, 229, 255, 0.3);
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
+    }
+
+    #invoice-page-root .project-item.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: #00e5ff;
+        border-radius: 3px 0 0 3px;
+    }
+
+    #invoice-page-root .item-main {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    #invoice-page-root .item-buyer {
+        font-size: 14px;
+        font-weight: bold;
+        color: #f1f5f9;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 65%;
+    }
+
+    #invoice-page-root .item-seller {
+        font-size: 12px;
+        color: #94a3b8;
+        max-width: 30%;
+        text-align: right;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    #invoice-page-root .item-money {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        color: #ffb74d;
+        margin-bottom: 8px;
+    }
+
+    #invoice-page-root .item-money .val {
+        font-size: 18px;
+        font-weight: bold;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    #invoice-page-root .item-money .unit {
+        font-size: 12px;
+        opacity: 0.8;
+    }
+
+    #invoice-page-root .item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding-top: 8px;
+    }
+
+    #invoice-page-root .item-actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    #invoice-page-root .action-icon {
+        color: #64748b;
+        font-size: 16px;
+        transition: color 0.2s;
+    }
+
+    #invoice-page-root .action-icon:hover {
+        color: #f8fafc;
+    }
+
+    #invoice-page-root .action-icon.del:hover {
+        color: #ff5252;
+    }
+
+    #invoice-page-root .action-icon.view:hover {
+        color: #00e5ff;
+    }
+
+    /* select hack */
+    #invoice-page-root select.search-input option {
+        background: #283342;
+        color: #fff;
+    }
+</style>
+<div class="layui-row layui-col-space15" id="invoice-page-root">
+    <!-- 左侧项目面板 -->
+    <div class="layui-col-md3">
+        <div class="project-panel">
+            <div class="project-title">发票清单 <span class="project-count" id="total-count" style="float: right;">0</span>
+            </div>
+
+            <div class="search-group">
+                <button class="pear-btn pear-btn-primary pear-btn-md layui-btn-fluid" id="new-invoice-btn"
+                    style="margin-bottom: 15px; background-color: #B65E49; border-color: #B65E49; box-shadow: 0 4px 6px rgba(182, 94, 73, 0.2);">
+                    <i class="layui-icon layui-icon-add-1"></i> 新增发票
+                </button>
+                <input type="text" id="invoice-search" placeholder="搜索发票号..." class="search-input">
+                <input type="text" id="buyer-search" placeholder="搜索购买方..." class="search-input">
+                <input type="text" id="seller-search" placeholder="搜索销售方..." class="search-input">
+
+                <!-- 发票大类筛选 -->
+                <div style="margin-top: 10px;">
+                    <label style="font-size: 12px; color: #666; display: block; margin-bottom: 5px;">
+                        <i class="layui-icon layui-icon-tabs" style="color: #B65E49;"></i> 发票大类筛选
+                    </label>
+                    <select id="category-filter" class="search-input"
+                        style="height: 36px; padding: 0 10px; cursor: pointer;">
+                        <option value="">全部发票</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="sidebar-scroll-area" id="invoice-list">
+                <!-- List items with card style -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧主内容 -->
+    <div class="layui-col-md9">
+        <div class="main-content">
+            <div class="content-header">
+                <div class="content-title" id="current-project-title">所有项目发票</div>
+            </div>
+            <!-- ... Table View ... -->
+            <div id="table-view">
+                <table id="invoice-table" lay-filter="invoice-table"></table>
+            </div>
+
+            <!-- ... Paper Invoice Detail View ... -->
+            <div id="detail-view"
+                style="display: none; padding: 20px; background: #e6e6e6; overflow-y: auto; height: calc(100vh - 180px);">
+                <style>
+                    .invoice-paper {
+                        font-family: "SimSun", "Songti SC", serif;
+                    }
+
+                    .invoice-header-label {
+                        color: #888;
+                        font-size: 14px;
+                    }
+
+                    .invoice-val {
+                        font-family: "Courier New", Courier, monospace;
+                        letter-spacing: 1px;
+                        color: #000 !important;
+                        font-weight: 600;
+                    }
+
+                    .invoice-title-main {
+                        font-size: 32px;
+                        color: #B65E49;
+                        border-bottom: 2px double #B65E49;
+                        display: inline-block;
+                        padding-bottom: 5px;
+                        letter-spacing: 2px;
+                        font-weight: bold;
+                    }
+
+                    .invoice-box {
+                        border: 2px solid #B65E49;
+                        color: #B65E49;
+                    }
+
+                    .invoice-box .sep-v {
+                        border-right: 1px solid #B65E49;
+                    }
+
+                    .invoice-box .sep-h {
+                        border-bottom: 1px solid #B65E49;
+                    }
+
+                    .invoice-box .label-col {
+                        width: 35px;
+                        text-align: center;
+                        padding: 10px 5px;
+                        line-height: 1.4;
+                        color: #B65E49 !important;
+                        font-size: 14px;
+                    }
+
+                    .invoice-box .content-col {
+                        padding: 8px;
+                        font-size: 13px;
+                        color: #333 !important;
+                    }
+
+                    .invoice-box .content-row {
+                        margin-bottom: 4px;
+                        display: flex;
+                    }
+
+                    .invoice-box .content-row label {
+                        width: 100px;
+                        color: #B65E49;
+                        display: inline-block;
+                        text-align-last: justify;
+                    }
+
+                    .invoice-table th {
+                        border-color: #B65E49 !important;
+                        color: #B65E49 !important;
+                        text-align: center;
+                    }
+
+                    .invoice-table td {
+                        border-color: #B65E49 !important;
+                        color: #333 !important;
+                    }
+                </style>
+                <div class="invoice-paper"
+                    style="background: #fff; padding: 40px; box-shadow: 0 5px 20px rgba(0,0,0,0.15); max-width: 1020px; margin: 0 auto; min-height: 600px;">
+
+                    <!-- Top Header -->
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <div>
+                            <div class="invoice-header-label">发票代码：<span id="v-code" class="invoice-val"></span>
+                            </div>
+                            <div class="invoice-header-label">发票号码：<span id="v-number" class="invoice-val"
+                                    style="color: #009688; font-size: 18px;"></span></div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="invoice-header-label">机器编号：<span id="v-machine" class="invoice-val"></span>
+                            </div>
+                            <div class="invoice-header-label">校验码：<span id="v-check" class="invoice-val"></span>
+                            </div>
+                            <div class="invoice-header-label">开票日期：<span id="v-date" class="invoice-val"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Title -->
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <h1 id="v-title" class="invoice-title-main">增值税专用发票</h1>
+                    </div>
+
+                    <!-- Classification and Deductible Section (Top) -->
+                    <div
+                        style="display: flex; gap: 20px; margin: 0 10px 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #B65E49;">
+                        <div style="flex: 1;">
+                            <label
+                                style="font-weight: 600; color: #666; margin-bottom: 8px; display: block; font-size: 13px;">
+                                <i class="layui-icon layui-icon-tabs" style="color: #B65E49;"></i> 发票大类
+                            </label>
+                            <select id="invoice-category" class="layui-input"
+                                style="height: 36px; border: 1px solid #ddd;">
+                                <option value="">请选择</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1;">
+                            <label
+                                style="font-weight: 600; color: #666; margin-bottom: 8px; display: block; font-size: 13px;">
+                                <i class="layui-icon layui-icon-ok-circle" style="color: #009688;"></i> 可否抵扣
+                            </label>
+                            <select id="deductible" class="layui-input" style="height: 36px; border: 1px solid #ddd;">
+                                <option value="">请选择</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: flex-end;">
+                            <button id="save-invoice-btn" class="layui-btn layui-btn-normal" style="height: 36px;">
+                                <i class="layui-icon layui-icon-ok"></i> 保存
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Box -->
+                    <div class="invoice-box">
+                        <!-- Row 1: Buyer and Seller -->
+                        <div style="display: flex;" class="sep-h">
+                            <!-- Buyer -->
+                            <div class="sep-v label-col">购<br>买<br>方</div>
+                            <div class="content-col" style="flex: 1;">
+                                <div class="content-row"><label>名称</label>：<span id="v-buyer-name"
+                                        style="font-weight: bold;"></span></div>
+                                <div class="content-row"><label>纳税人识别号</label>：<span id="v-buyer-tax"
+                                        class="invoice-val" style="color: #009688;"></span></div>
+                                <div class="content-row"><label>地址、电话</label>：<span id="v-buyer-addr"></span></div>
+                                <div class="content-row"><label>开户行及账号</label>：<span id="v-buyer-bank"></span></div>
+                            </div>
+                            <!-- Seller -->
+                            <div class="sep-v label-col" style="border-left: 1px solid #B65E49;">销<br>售<br>方</div>
+                            <div class="content-col" style="flex: 1;">
+                                <div class="content-row"><label>名称</label>：<span id="v-seller-name"
+                                        style="font-weight: bold;"></span></div>
+                                <div class="content-row"><label>纳税人识别号</label>：<span id="v-seller-tax"
+                                        class="invoice-val" style="color: #009688;"></span></div>
+                                <div class="content-row"><label>地址、电话</label>：<span id="v-seller-addr"></span></div>
+                                <div class="content-row"><label>开户行及账号</label>：<span id="v-seller-bank"></span>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <!-- Items -->
+                        <div class="sep-h" style="padding: 0; min-height: 150px; border-bottom: 1px solid #B65E49;">
+                            <table class="layui-table invoice-table" style="margin: 0; box-shadow: none; width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th>货物或应税劳务、服务名称</th>
+                                        <th width="12%">规格型号</th>
+                                        <th width="6%">单位</th>
+                                        <th width="10%">数量</th>
+                                        <th width="10%">单价</th>
+                                        <th width="12%">金额</th>
+                                        <th width="6%">税率</th>
+                                        <th width="10%">税额</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="v-items-body"></tbody>
+                            </table>
+                            <div
+                                style="display: flex; border-top: 1px solid #B65E49; padding: 8px 10px; align-items: center;">
+                                <div style="width: 150px; color: #B65E49;">价税合计(大写)</div>
+                                <div style="flex: 1;"><span id="v-words" style="margin-left: 10px;"></span></div>
+                                <div style="width: 250px;">(小写)<span id="v-total"
+                                        style="font-weight: bold; font-size: 16px; margin-left: 10px;"></span></div>
+                            </div>
+                        </div>
+
+                        <!-- Row 4: Remarks (Bottom) -->
+                        <div style="display: flex;">
+                            <div class="sep-v label-col" style="border-bottom: none;">备<br>注</div>
+                            <div class="content-col" style="flex: 1; color: #333; border-bottom: none;" id="v-remarks">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div
+                        style="margin-top: 15px; display: flex; justify-content: space-between; font-size: 14px; padding: 0 10px; color: #666;">
+                        <div>收款人：<span id="v-payee" style="margin-right: 20px;"></span></div>
+                        <div>复核：<span id="v-checker" style="margin-right: 20px;"></span></div>
+                        <div>开票人：<span id="v-drawer" style="margin-right: 20px;"></span></div>
+                        <div>销售方：(章)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toolbar Scripts ... -->
+<script type="text/html" id="invoice-toolbar">
+  </script>
+
+<script type="text/html" id="operation-bar">
+    <button class="pear-btn pear-btn-primary pear-btn-sm" lay-event="edit" title="编辑">
+      <i class="layui-icon layui-icon-edit"></i>
+    </button>
+    <button class="pear-btn pear-btn-danger pear-btn-sm" lay-event="remove" title="删除">
+      <i class="layui-icon layui-icon-delete"></i>
+    </button>
+  </script>
+
+
+<script>
+    layui.use(['table', 'jquery', 'layer'], function () {
+        var table = layui.table;
+        var $ = layui.jquery;
+        var layer = layui.layer;
+        var MODULE_PATH = '/api/v1/material/';
+
+        // Initialize variables
+        var serverInvoices = [];
+        var currentInvoiceId = '';
+
+        // Load invoices from server
+        function loadInvoiceList() {
+            $.ajax({
+                url: MODULE_PATH + 'invoice/list',
+                type: 'GET',
+                success: function (res) {
+                    if (res.code === 0 && res.data) {
+                        serverInvoices = res.data;
+                        $('#total-count').text(serverInvoices.length);
+                        renderInvoices();
+                    } else {
+                        $('#invoice-list').html('<div style="padding: 10px; color: #999; text-align: center;">加载失败</div>');
+                    }
+                },
+                error: function () {
+                    $('#invoice-list').html('<div style="padding: 10px; color: #999; text-align: center;">加载失败</div>');
+                }
+            });
+        }
+
+        // Load dictionary options
+        function loadDictionaryOptions(dicCodeOrName, selectId) {
+            console.log('加载字典选项:', dicCodeOrName, '到', selectId);
+            $.ajax({
+                url: '/api/v1/dictionary/list',  // 修复：添加/v1前缀
+                data: { code_desc: dicCodeOrName, limit: 100 },
+                success: function (res) {
+                    console.log('字典列表响应:', res);
+                    if (res.code === 0 && res.data.length > 0) {
+                        var dicId = res.data[0].id;
+                        console.log('找到字典 ID:', dicId, '代码:', res.data[0].code, '名称:', res.data[0].name);
+                        $.ajax({
+                            url: '/api/v1/dictionary/detail/list',  // 修复：添加/v1前缀
+                            data: { dic_id: dicId, limit: 100 },
+                            success: function (detailRes) {
+                                console.log('字典明细响应:', detailRes);
+                                if (detailRes.code === 0) {
+                                    var options = '';
+                                    // 为筛选框添加"全部"选项
+                                    if (selectId === 'category-filter') {
+                                        options = '<option value="">全部发票</option>';
+                                    } else {
+                                        options = '<option value="">请选择</option>';
+                                    }
+                                    detailRes.data.forEach(function (item) {
+                                        options += '<option value="' + item.code + '">' + item.value + '</option>';
+                                    });
+                                    $('#' + selectId).html(options);
+                                    console.log('成功加载', detailRes.data.length, '个选项到', selectId);
+                                } else {
+                                    console.warn('获取字典明细失败:', detailRes.msg);
+                                }
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('加载字典明细出错:', error);
+                            }
+                        });
+                    } else {
+                        console.warn('未找到字典:', dicCodeOrName, '请在字典管理中创建');
+                        $('#' + selectId).html('<option value="">未找到字典数据</option>');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('加载字典列表出错:', error);
+                    $('#' + selectId).html('<option value="">加载失败</option>');
+                }
+            });
+        }
+
+        // Initial load
+        loadInvoiceList();
+        loadDictionaryOptions('fpdl', 'invoice-category');  // 发票大类
+        loadDictionaryOptions('kfdk', 'deductible');        // 可否抵扣
+        loadDictionaryOptions('fpdl', 'category-filter');   // 筛选框
+
+        // Category filter change event
+        $('#category-filter').on('change', function () {
+            console.log('筛选条件改变:', $(this).val());
+            loadInvoiceList();  // 重新加载列表
+        });
+
+        // Save invoice button
+        $('#save-invoice-btn').click(function () {
+            var invoiceId = currentInvoiceId;
+            if (!invoiceId) {
+                layer.msg('请先选择发票', { icon: 0 });
+                return;
+            }
+
+            var data = {
+                invoice_category: $('#invoice-category').val(),
+                deductible: $('#deductible').val()
+            };
+
+            var loadIdx = layer.load();
+            $.ajax({
+                url: MODULE_PATH + 'invoice/' + invoiceId,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (res) {
+                    layer.close(loadIdx);
+                    if (res.code === 0) {
+                        layer.msg('保存成功', { icon: 1, time: 1500 });
+                        // Optionally reload the invoice detail
+                        loadInvoiceDetail(invoiceId);
+                    } else {
+                        layer.msg(res.msg || '保存失败', { icon: 2 });
+                    }
+                },
+                error: function () {
+                    layer.close(loadIdx);
+                    layer.msg('网络错误', { icon: 2 });
+                }
+            });
+        });
+
+        function renderInvoices() {
+            var searchNum = $('#invoice-search').val().toLowerCase().trim();
+            var searchBuyer = $('#buyer-search').val().toLowerCase().trim();
+            var searchSeller = $('#seller-search').val().toLowerCase().trim();
+            var categoryFilter = $('#category-filter').val();  // 移到循环外部
+            var html = '';
+
+            console.log('筛选条件:', {
+                searchNum: searchNum,
+                searchBuyer: searchBuyer,
+                searchSeller: searchSeller,
+                categoryFilter: categoryFilter
+            });
+
+            if (!serverInvoices || serverInvoices.length === 0) {
+                $('#invoice-list').html('<div style="padding: 10px; color: #999; text-align: center;">暂无发票</div>');
+                return;
+            }
+
+
+
+            serverInvoices.forEach(function (inv) {
+                var invNum = inv.invoice_number || '无编号';
+                var seller = inv.seller_name || '未知销售方';
+                var buyer = inv.buyer_name || '';
+                var amt = '';
+                if (inv.total_amount) {
+                    var val = parseFloat(inv.total_amount);
+                    amt = (val / 10000).toFixed(2) + ' 万元';
+                }
+
+                if (searchNum && invNum.toLowerCase().indexOf(searchNum) === -1) return;
+                if (searchBuyer && buyer.toLowerCase().indexOf(searchBuyer) === -1) return;
+                if (searchSeller && seller.toLowerCase().indexOf(searchSeller) === -1) return;
+
+                // 发票大类筛选
+                if (categoryFilter) {
+                    console.log('检查发票:', inv.id, '发票大类:', inv.invoice_category, '(类型:', typeof inv.invoice_category + ')', '筛选值:', categoryFilter, '(类型:', typeof categoryFilter + ')');
+                    if (inv.invoice_category !== categoryFilter) {
+                        console.log('  → 筛选掉');
+                        return;
+                    } else {
+                        console.log('  → 保留');
+                    }
+                }
+
+                // Unit conversion to 万元
+                var amtVal = '0.00';
+                if (inv.total_amount) {
+                    amtVal = (parseFloat(inv.total_amount) / 10000).toFixed(2);
+                }
+
+                html += '<div class="project-item" data-id="' + inv.id + '">';
+                html += '  <div class="item-main">';
+                html += '    <div class="item-buyer" title="' + (buyer || '未知购买方') + '">' + (buyer || '未知购买方') + '</div>';
+                html += '    <div class="item-seller" title="' + seller + '">' + seller + '</div>';
+                html += '  </div>';
+
+                html += '  <div class="item-money">';
+                html += '    <span class="val">' + amtVal + '</span>';
+                html += '    <span class="unit">万元</span>';
+                html += '  </div>';
+
+                html += '  <div class="item-footer">';
+                html += '    <div class="item-actions">';
+                if (inv.file_url) {
+                    html += '      <i class="layui-icon layui-icon-search action-icon view" data-url="' + inv.file_url + '" title="查看原件"></i>';
+                }
+                html += '      <i class="layui-icon layui-icon-delete action-icon del" data-id="' + inv.id + '" title="删除发票"></i>';
+                html += '    </div>';
+                html += '  </div>';
+                html += '</div>';
+            });
+
+            if (html === '') {
+                html = '<div style="padding: 20px; color: #999; text-align: center;">无匹配发票</div>';
+            }
+
+            $('#invoice-list').html(html);
+
+            // Re-apply active state
+            if (currentInvoiceId) {
+                $('.project-item').removeClass('active');
+                $('.project-item[data-id="' + currentInvoiceId + '"]').addClass('active');
+            }
+        }
+
+        // Select invoice
+        function selectInvoice(id, invoiceNum) {
+            currentInvoiceId = id || '';
+
+            // Update Sidebar Active State
+            $('.project-item').removeClass('active');
+            var activeItem = id ? $('.project-item[data-id="' + id + '"]') : $('.project-item[data-id=""]');
+            activeItem.addClass('active');
+
+            if (id) {
+                $('#current-project-title').text('发票: ' + invoiceNum);
+                $('#table-view').hide();
+                $('#detail-view').show();
+                loadInvoiceDetail(id);
+            } else {
+                $('#current-project-title').text('所有发票');
+                $('#detail-view').hide();
+                $('#table-view').show();
+                refreshTable();
+            }
+        }
+
+        // Load and render invoice detail
+        function loadInvoiceDetail(id) {
+            var loadIdx = layer.load();
+            $.ajax({
+                url: MODULE_PATH + 'invoice',
+                data: { id: id, limit: 1 },
+                success: function (res) {
+                    layer.close(loadIdx);
+                    if (res.code === 0 && res.data.length > 0) {
+                        var inv = res.data[0];
+                        renderDetailContent(inv);
+                    } else {
+                        layer.msg('获取详情失败');
+                    }
+                },
+                error: function () {
+                    layer.close(loadIdx);
+                    layer.msg('网络错误');
+                }
+            });
+        }
+
+        function renderDetailContent(inv) {
+            var ocr = {};
+            try {
+                if (inv.ocr_result) {
+                    ocr = JSON.parse(inv.ocr_result);
+                }
+            } catch (e) { console.error('Parse ocr failed', e); }
+
+            // Title logic
+            var title = inv.invoice_name || ocr.invoice_name || '增值税专用发票';
+            if (!inv.invoice_name && ocr.raw_result && ocr.raw_result.InvoiceTypeOrg) {
+                var val = ocr.raw_result.InvoiceTypeOrg;
+                if (typeof val === 'object') title = val.word;
+                else title = val;
+            }
+            $('#v-title').text(title || '发票详情');
+
+            // Helper
+            function t(v1, v2) { return v1 || v2 || ''; }
+
+            // Header
+            $('#v-code').text(t(inv.invoice_code, ocr.invoice_code));
+            $('#v-number').text(t(inv.invoice_number, ocr.invoice_number));
+            $('#v-check').text(t(inv.check_code, ocr.check_code));
+            $('#v-date').text(t(inv.invoice_date, ocr.invoice_date));
+            $('#v-machine').text(t(inv.machine_num, ocr.machine_code));
+
+            // Buyer
+            $('#v-buyer-name').text(t(inv.buyer_name, ocr.buyer_name));
+            $('#v-buyer-tax').text(t(inv.buyer_tax_num, ocr.buyer_tax_num));
+            $('#v-buyer-addr').text(t(inv.buyer_address_phone, ocr.buyer_address));
+            $('#v-buyer-bank').text(t(inv.buyer_bank_account, ocr.buyer_bank));
+
+            // Password
+            $('#v-password').text(t(inv.password_area, ocr.password));
+
+            // Seller
+            $('#v-seller-name').text(t(inv.seller_name, ocr.seller_name));
+            $('#v-seller-tax').text(t(inv.seller_tax_num, ocr.seller_tax_num));
+            $('#v-seller-addr').text(t(inv.seller_address_phone, ocr.seller_address));
+            $('#v-seller-bank').text(t(inv.seller_bank_account, ocr.seller_bank));
+
+            // Footer
+            $('#v-remarks').text(t(inv.remarks, ocr.remarks));
+            $('#v-payee').text(t(inv.payee, ocr.payee));
+            $('#v-checker').text(t(inv.checker, ocr.checker));
+            $('#v-drawer').text(t(inv.drawer, ocr.note_drawer));
+            $('#v-words').text(t(inv.amount_in_words, ocr.amount_in_words));
+            $('#v-total').text('¥' + (inv.total_amount || 0));
+
+            // Items Render
+            var details = [];
+            try {
+                if (inv.details_json) details = JSON.parse(inv.details_json);
+            } catch (e) { }
+
+            var tb = $('#v-items-body');
+            tb.empty();
+            if (details.length > 0) {
+                details.forEach(function (d) {
+                    var tr = '<tr>' +
+                        '<td>' + (d.name || '') + '</td>' +
+                        '<td>' + (d.spec || '') + '</td>' +
+                        '<td>' + (d.unit || '') + '</td>' +
+                        '<td align="right">' + (d.quantity || '') + '</td>' +
+                        '<td align="right">' + (d.price || '') + '</td>' +
+                        '<td align="right">' + (d.amount || '') + '</td>' +
+                        '<td align="center">' + (d.tax_rate || '') + '</td>' +
+                        '<td align="right">' + (d.tax || '') + '</td>' +
+                        '</tr>';
+                    tb.append(tr);
+                });
+            } else {
+                tb.append('<tr><td colspan="8" style="text-align:center;color:#999;padding:20px;">暂无明细数据</td></tr>');
+            }
+
+            // Set category and deductible values (always set, even if empty)
+            $('#invoice-category').val(inv.invoice_category || '');
+            $('#deductible').val(inv.deductible || '');
+
+            console.log('发票字段回显:', {
+                id: inv.id,
+                invoice_category: inv.invoice_category,
+                deductible: inv.deductible
+            });
+        }
+
+        // Expose refresh function for child windows
+        window.refreshInvoiceList = function () {
+            loadInvoiceList();
+        }
+
+        // Bind Search Event (delegated)
+        $(document).on('input', '#invoice-search, #buyer-search, #seller-search', function () {
+            renderInvoices();
+        });
+
+        // Back button
+        $('#btn-back-list').click(function () {
+            selectInvoice('');
+        });
+
+        // Bind click event (delegated) - Scoped to invoice list
+        $('#invoice-list').on('click', '.project-item', function () {
+            var pid = $(this).data('id');
+            var pname = $(this).find('.item-buyer').text() || '发票详情';
+            selectInvoice(pid, pname);
+        });
+
+        // Delete invoice
+        $(document).on('click', '.action-icon.del', function (e) {
+            e.stopPropagation(); // Prevent triggering selection
+            var id = $(this).data('id');
+            layer.confirm('确定删除该发票吗？', { icon: 3, title: '提示' }, function (index) {
+                var loadIdx = layer.load();
+                $.ajax({
+                    url: MODULE_PATH + 'invoice',
+                    type: 'DELETE',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ ids: [id] }),
+                    success: function (res) {
+                        layer.close(loadIdx);
+                        if (res.code === 0) {
+                            layer.msg('删除成功', { icon: 1 });
+                            loadInvoiceList(); // Reload list
+                            if (currentInvoiceId == id) {
+                                selectInvoice('');
+                            }
+                        } else {
+                            layer.msg(res.msg, { icon: 2 });
+                        }
+                    },
+                    error: function () {
+                        layer.close(loadIdx);
+                        layer.msg('网络或者权限错误', { icon: 2 });
+                    }
+                });
+                layer.close(index);
+            });
+        });
+
+        // View Invoice File (Sidebar)
+        $(document).on('click', '.action-icon.view', function (e) {
+            e.stopPropagation();
+            var url = $(this).data('url');
+            if (url) {
+                window.open(url, '_blank');
+            } else {
+                layer.msg('暂无文件', { icon: 0 });
+            }
+        });
+
+        // New Invoice Button (Sidebar)
+        $('#new-invoice-btn').click(function () {
+            window.add();
+        });
+
+        // Table columns definition
+        var cols = [[
+            { type: 'checkbox' },
+            {
+                field: 'project_name', title: '项目名称', width: 150, align: 'center', templet: function (d) {
+                    return d.project_name || '-';
+                }
+            },
+            {
+                field: 'invoice_number', title: '发票信息', width: 200, templet: function (d) {
+                    return '<div style="padding: 5px 0;">' +
+                        '<div style="font-weight: bold;">' + (d.invoice_number || '-') + '</div>' +
+                        '<div style="font-size: 12px; color: #999;">日期: ' + (d.invoice_date || '-') + '</div>' +
+                        '</div>';
+                }
+            },
+            { field: 'buyer_name', title: '购买方', width: 150 },
+            { field: 'seller_name', title: '销售方', width: 150 },
+            {
+                field: 'total_amount', title: '金额', width: 120, align: 'right', templet: function (d) {
+                    return '¥' + parseFloat(d.total_amount || 0).toFixed(2);
+                }
+            },
+            { title: '操作', toolbar: '#operation-bar', width: 120, align: 'center' }
+        ]];
+
+        // Render table
+        table.render({
+            elem: '#invoice-table',
+            id: 'invoice-table',
+            url: MODULE_PATH + 'invoice',
+            where: {
+                id: currentInvoiceId
+            },
+            page: true,
+            cols: cols,
+            skin: 'line',
+            toolbar: '#invoice-toolbar',
+            defaultToolbar: [{
+                title: '刷新',
+                layEvent: 'refresh',
+                icon: 'layui-icon-refresh',
+            }, 'filter', 'print', 'exports']
+        });
+
+        // Refresh table
+        function refreshTable() {
+            table.reload('invoice-table', {
+                where: {
+                    id: currentInvoiceId
+                },
+                page: { curr: 1 }
+            });
+        }
+
+        // Toolbar events
+        table.on('toolbar(invoice-table)', function (obj) {
+            if (obj.event === 'add') {
+                window.add();
+            } else if (obj.event === 'refresh') {
+                refreshTable();
+            }
+        });
+
+        // Row tool events
+        table.on('tool(invoice-table)', function (obj) {
+            if (obj.event === 'edit') {
+                window.edit(obj);
+            } else if (obj.event === 'remove') {
+                window.remove(obj);
+            }
+        });
+
+        // Add function
+        window.add = function () {
+            layer.open({
+                type: 2,
+                title: '新增发票',
+                shade: 0.1,
+                area: ['500px', '550px'],
+                content: '/view/material/invoice/add'
+            });
+        }
+
+        // Edit function
+        window.edit = function (obj) {
+            layer.open({
+                type: 2,
+                title: '编辑发票',
+                shade: 0.1,
+                area: ['500px', '550px'],
+                content: '/view/material/invoice/edit?id=' + obj.data.id
+            });
+        }
+
+        // Remove function (Fixed to match API)
+        window.remove = function (obj) {
+            layer.confirm('确定要删除该发票吗？', { icon: 3, title: '提示' }, function (index) {
+                layer.close(index);
+                var loading = layer.load();
+                $.ajax({
+                    url: MODULE_PATH + 'invoice',
+                    type: 'DELETE',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ ids: [obj.data.id] }),
+                    success: function (res) {
+                        layer.close(loading);
+                        if (res.code === 0) {
+                            layer.msg(res.msg, { icon: 1, time: 1000 }, function () {
+                                obj.del();
+                                loadInvoiceList(); // Refresh sidebar too
+                                if (currentInvoiceId == obj.data.id) {
+                                    selectInvoice('');
+                                }
+                            });
+                        } else {
+                            layer.msg(res.msg, { icon: 2 });
+                        }
+                    },
+                    error: function () {
+                        layer.close(loading);
+                        layer.msg('网络或者权限错误', { icon: 2 });
+                    }
+                });
+            });
+        }
+    });
+</script>

@@ -7,7 +7,7 @@ window.rootPath = (function (src) {
 
 layui
   .config({
-    base: rootPath + "module/",
+    base: "/static/component/pear/module/",
     version: "4.0.0",
   })
   .extend({
@@ -27,4 +27,4 @@ layui
     echartsTheme: "extends/echartsTheme",
     yaml: "extends/yaml",
   })
-  .use([], function () {});
+  .use([], function () { });

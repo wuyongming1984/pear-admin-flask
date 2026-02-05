@@ -7,6 +7,22 @@
   <meta name="renderer" content="webkit" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <style>
+    /* 强制表单文字颜色，防止被全局白色文字样式覆盖 */
+    #rights-form {
+      color: #333 !important;
+    }
+
+    #rights-form .layui-form-label {
+      color: #333 !important;
+    }
+
+    /* 确保输入框文字也是深色 */
+    #rights-form .layui-input,
+    #rights-form .layui-textarea {
+      color: #333 !important;
+    }
+  </style>
 </head>
 
 <body>

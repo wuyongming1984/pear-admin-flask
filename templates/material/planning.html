@@ -1,0 +1,806 @@
+<style>
+  /* GitHub-style Project List Optimized */
+  .project-panel {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    height: calc(100vh - 170px);
+    /* Adjusted for tab content */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .project-title {
+    padding: 16px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f1f1f;
+    border-bottom: 1px solid #f0f0f0;
+    background-color: #fff;
+  }
+
+  .project-list-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .project-item {
+    padding: 10px 16px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    color: #595959;
+    font-size: 14px;
+  }
+
+  .project-item:hover {
+    background-color: #f5f5f5;
+    color: #1890ff;
+  }
+
+  .project-item.active {
+    background-color: #e6f7ff;
+    color: #1890ff;
+    font-weight: 500;
+  }
+
+  .project-item i {
+    margin-right: 10px;
+    font-size: 16px;
+  }
+
+  .main-content {
+    background: #fff;
+    border-radius: 6px;
+    padding: 15px;
+    border: 1px solid #d0d7de;
+    height: calc(100vh - 170px);
+    /* Adjusted */
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
+<div class="layui-row layui-col-space15">
+  <!-- 左侧项目面板 -->
+  <div class="layui-col-md2">
+    <div class="project-panel">
+      <div class="project-title">
+        <i class="layui-icon layui-icon-app" style="margin-right: 8px; color: #1890ff;"></i>项目清单 • 修复版
+      </div>
+      <div style="padding: 10px 12px 5px 12px;">
+        <input type="text" id="planning-project-search" placeholder="搜索..." autocomplete="off" class="layui-input"
+          style="height: 28px; font-size: 12px; border-radius: 4px;">
+      </div>
+      <div class="project-list-wrapper">
+        <div class="project-item active" data-project-id="">
+          <i class="layui-icon layui-icon-list"></i>
+          <span>全部项目</span>
+        </div>
+        <div id="planning-project-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右侧主内容区 -->
+  <div class="layui-col-md10">
+    <div class="main-content">
+      <div class="content-header">
+        <div class="content-title">所有项目材料策划</div>
+        <div class="content-subtitle">
+          <form class="layui-form" style="display: inline-block; margin-right: 10px;">
+            <select lay-filter="remaining-filter">
+              <option value="">全部余量状态</option>
+              <option value=">0" selected>余量 > 0 (未完)</option>
+              <option value="=0">余量 = 0 (已完)</option>
+              <option value="<0">余量 < 0 (超额)</option>
+            </select>
+          </form>
+          按住 Shift 可范围勾选 | <span id="selection-count">0</span> 项策划 | <a href="javascript:;"
+            onclick="showImportDialog()">导入要求</a>
+        </div>
+        <div id="planning-selection-summary"
+          style="display: none; background: #f6ffed; border: 1px dashed #52c41a; padding: 10px 15px; border-radius: 8px; margin-top: 5px; animation: fadeIn 0.3s; width: fit-content;">
+          <div style="font-size: 13px; color: #52c41a; margin-bottom: 5px; font-weight: 500;">
+            <i class="layui-icon layui-icon-list" style="color: #52c41a; margin-right: 5px;"></i>已选择内容统计
+          </div>
+          <div style="display: flex; gap: 20px;">
+            <div style="font-size: 12px; color: #555;">本次合价总计: <span id="total-planning-amount"
+                style="font-weight: 600; color: #52c41a; font-size: 14px;">¥0.00</span></div>
+          </div>
+        </div>
+      </div>
+      <table id="planning-table" lay-filter="planning-table"></table>
+    </div>
+  </div>
+</div>
+
+<script type="text/html" id="planning-toolbar">
+    <button class="pear-btn pear-btn-success pear-btn-md" lay-event="import">
+        <i class="layui-icon layui-icon-upload-drag"></i>
+        导入
+    </button>
+    <button class="pear-btn pear-btn-danger pear-btn-md" lay-event="batchDelete">
+        <i class="layui-icon layui-icon-delete"></i>
+        批量删除
+    </button>
+    <button class="pear-btn pear-btn-warming pear-btn-md" lay-event="batchSupplier" style="background-color: #FFB800;">
+        <i class="layui-icon layui-icon-user"></i>
+        批量拟供应商
+    </button>
+    <button class="pear-btn pear-btn-md" style="background: #ccc; color: white;" lay-event="generatePlan" id="generate-btn" disabled>
+        <i class="layui-icon layui-icon-list"></i>
+        生成计划
+    </button>
+    <button class="pear-btn pear-btn-primary pear-btn-md" lay-event="add">
+        <i class="layui-icon layui-icon-add-1"></i>
+        新增策划
+    </button>
+  </script>
+
+<script type="text/html" id="operation-bar">
+    <button class="pear-btn pear-btn-danger pear-btn-sm" lay-event="remove" style="background: transparent; color: #ff5722; border: 1px solid #ff5722; padding: 0 5px;">
+        <i class="layui-icon layui-icon-delete"></i> 删除
+    </button>
+  </script>
+<script>
+  layui.use(['table', 'jquery', 'form', 'upload', 'layer'], function () {
+    var table = layui.table;
+    var $ = layui.jquery;
+    var form = layui.form;
+    var upload = layui.upload;
+    var layer = layui.layer;
+    var MODULE_PATH = '/api/v1/material/';
+    var currentProjectId = null;
+    var currentRemainingStatus = '>0';
+
+    // Move variables inside scope to avoid issues
+    var serverProjects = [];
+    var serverSuppliers = [];
+
+    // Fetch options data first
+    $.getJSON(MODULE_PATH + 'options', function (res) {
+      console.log("Planning页面 - API响应:", res);
+      if (res.code === 0) {
+        // Robustly handle data format
+        if (Array.isArray(res.data)) {
+          // Fallback: If API returns array directly (e.g. reused endpoint)
+          serverProjects = res.data;
+          serverSuppliers = [];
+        } else if (res.data) {
+          // Expected: Object with projects and suppliers
+          serverProjects = res.data.projects || [];
+          serverSuppliers = res.data.suppliers || [];
+        }
+
+        console.log("Planning页面 - serverProjects已设置，数量:", serverProjects.length);
+        loadProjects(); // Re-render projects list after fetching
+      } else {
+        console.error("Failed to load options:", res.msg);
+        layer.msg("加载选项数据失败: " + res.msg);
+      }
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+      console.error("Planning页面 - API请求失败:", textStatus, errorThrown);
+      // Fallback for demo/dev if API fails
+      // layer.msg("加载项目列表失败，请检查网络连接");
+    });
+
+    function loadProjects() {
+      console.log("Planning页面 - loadProjects被调用");
+      console.log("Planning页面 - serverProjects:", serverProjects);
+      var html = '';
+      var searchInput = $('#planning-project-search');
+      var val = searchInput.val();
+      var searchKeyword = val ? val.toLowerCase().trim() : '';
+
+      if (serverProjects && serverProjects.length > 0) {
+        serverProjects.forEach(function (p) {
+          // Filter based on search keyword
+          var pName = p.name || '未命名项目'; // Fallback
+
+          if (searchKeyword && pName.toLowerCase().indexOf(searchKeyword) === -1) {
+            return;
+          }
+          html += '<div class="project-item" data-project-id="' + p.id + '">';
+          html += '<i class="layui-icon layui-icon-read"></i>';
+          html += '<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;" title="' + pName + '">' + pName + '</span>';
+          // Add Count Badge - Backend returns planning_count
+          if (p.planning_count !== undefined && p.planning_count > 0) {
+            html += '<span class="project-count">' + p.planning_count + '</span>';
+          }
+          html += '</div>';
+        });
+        $('#planning-project-list').html(html);
+      } else {
+        $('#planning-project-list').html('<div style="padding: 10px; color: #999; text-align: center;">暂无项目</div>');
+      }
+    }
+
+    // Project Search Input Event
+    $('#planning-project-search').on('input', function () {
+      loadProjects();
+    });
+
+    // Delegated event handling for project items - Scoped to this page's list container
+    // Using .project-panel to capture both the static "All" item and dynamic #project-list items
+    $('.project-panel').on('click', '.project-item', function () {
+      var timestamp = new Date().toISOString();
+      console.log("Planning页面 (" + timestamp + ") - 项目点击:", $(this).data('project-id'));
+
+      $('.project-panel .project-item').removeClass('active');
+      $(this).addClass('active');
+
+      currentProjectId = $(this).data('project-id');
+      updateContentTitle($(this).find('span').text());
+      refreshTable();
+    });
+
+    function updateContentTitle(projectName) {
+      if (currentProjectId) {
+        $('.content-title').text(projectName + ' 材料策划');
+      } else {
+        $('.content-title').text('所有项目材料策划');
+      }
+    }
+
+    var cols = [[
+      { type: 'checkbox' },
+      {
+        field: 'material_name', title: '材料名称', width: 180, templet: function (d) {
+          return '<span style="font-weight: bold;">' + d.material_name + '</span>';
+        }
+      },
+      { field: 'material_spec', title: '规格', width: 120 },
+      { field: 'material_unit', title: '单位', width: 80, align: 'center' },
+      { field: 'planned_total_quantity', title: '策划总数', width: 100, align: 'center', style: 'font-weight: bold;' },
+      {
+        field: 'planned_remaining_quantity', title: '策划余量', width: 100, align: 'center', style: 'font-weight: bold;', templet: function (d) {
+          var val = d.planned_remaining_quantity;
+          return '<span id="rem-' + d.id + '" class="rem-val" data-orig="' + val + '">' + (val !== undefined && val !== null ? val : 0) + '</span>';
+        }
+      },
+      {
+        field: 'pending_inbound_quantity', title: '拟入库中', width: 100, align: 'center', templet: function (d) {
+          var qty = parseFloat(d.pending_inbound_quantity || 0);
+          if (qty > 0) {
+            // Construct Link URL
+            var url = '/view/material/inbound?status=pending' +
+              '&project_id=' + (d.project_id || '') +
+              '&material_name=' + encodeURIComponent(d.material_name || '') +
+              '&material_spec=' + encodeURIComponent(d.material_spec || '');
+
+            return '<a href="' + url + '" target="_blank" style="color: #1E9FFF; text-decoration: underline; cursor: pointer; font-weight: bold;">' + qty.toFixed(2) + '</a>';
+          }
+          return '<span style="color: #ccc;">-</span>';
+        }
+      },
+      { field: 'planned_price', title: '策划单价', width: 100, align: 'center', style: 'font-weight: bold;' },
+      {
+        field: 'supplier_name', title: '拟定供应商', width: 150, align: 'center', templet: function (d) {
+          return d.supplier_name ? '<span class="layui-badge layui-bg-blue">' + d.supplier_name + '</span>' : '<span style="color: #ccc;">未拟定</span>';
+        }
+      },
+      { field: 'planned_total_amount', title: '策划合价', width: 120, align: 'center', style: 'color: #666;' },
+      {
+        title: '本次入库量', width: 140, align: 'center', templet: function (d) {
+          return '<div style="display: flex; align-items: center; justify-content: center;">' +
+            '<input type="number" class="layui-input inbound-input" ' +
+            ' data-id="' + d.id + '" data-price="' + d.planned_price + '" ' +
+            ' data-orig-rem="' + d.planned_remaining_quantity + '" ' +
+            ' data-orig-pending="' + d.pending_inbound_quantity + '" ' +
+            ' data-supplier-id="' + (d.supplier_id || '') + '" ' +
+            ' value="" ' +
+            ' style="height: 30px; text-align: center; border-color: #e6e6e6; width: 70px; margin-right: 5px;" placeholder="0">' +
+            '<i class="layui-icon layui-icon-download-circle fill-btn" ' +
+            ' title="全额入库" ' +
+            ' data-id="' + d.id + '" ' +
+            ' style="cursor: pointer; color: #1E9FFF; font-size: 18px;"></i>' +
+            '</div>';
+        }
+      },
+      {
+        title: '本次合价', width: 120, align: 'center', templet: function (d) {
+          return '<span class="current-amount" id="amount-' + d.id + '" style="font-weight: bold; color: #ccc;">-</span>';
+        }
+      },
+      { title: '操作', toolbar: '#operation-bar', width: 100, align: 'center' }
+    ]];
+
+    table.render({
+      elem: '#planning-table',
+      url: MODULE_PATH + 'planning',
+      where: {
+        remaining_status: currentRemainingStatus
+      },
+      page: true,
+      cols: cols,
+      toolbar: '#planning-toolbar',
+      defaultToolbar: [],
+      done: function () {
+        updateToolbarStatus(); // Initial status update after table render
+      }
+    });
+
+    // Use delegated event handling for inputs
+    $(document).on('input', '.inbound-input', function () {
+      handleInputChange($(this));
+    });
+
+    // Handle Fill Button Click
+    $(document).on('click', '.fill-btn', function () {
+      var id = $(this).data('id');
+      var $input = $('.inbound-input[data-id="' + id + '"]');
+      var remaining = parseFloat($input.data('orig-rem') || 0);
+
+      if (remaining > 0) {
+        $input.val(remaining);
+        handleInputChange($input);
+        layer.tips('已自动填充剩余量: ' + remaining, this, { tips: [1, '#1E9FFF'], time: 1000 });
+      } else {
+        layer.msg('无剩余量可填', { icon: 0, time: 1000 });
+      }
+    });
+
+    function handleInputChange($input) {
+      var id = $input.data('id');
+      var price = parseFloat($input.data('price') || 0);
+      var val = $input.val();
+
+      // Validation: Cannot be negative
+      if (parseFloat(val) < 0) {
+        layer.msg('本次入库量不能小于0', { icon: 2, time: 1000 });
+        $input.val(''); // Clear or set to 0
+        val = 0;
+      }
+
+      var qty = parseFloat(val || 0);
+      var origRem = parseFloat($input.data('orig-rem') || 0);
+
+      // Update amount display
+      var amount = price * qty;
+      $('#amount-' + id).text('¥' + amount.toFixed(2));
+
+      // Update remainder preview
+      var newRem = origRem - qty;
+      $('#rem-' + id).text(newRem.toFixed(2));
+
+      updateToolbarStatus();
+      updatePlanningSelectionSummary();
+    }
+
+    // Update status when checkboxes are toggled
+    table.on('checkbox(planning-table)', function (obj) {
+      updateToolbarStatus();
+      updatePlanningSelectionSummary();
+    });
+
+    function updatePlanningSelectionSummary() {
+      var checkStatus = table.checkStatus('planning-table');
+      var data = checkStatus.data;
+      var $summary = $('#planning-selection-summary');
+
+      if (data.length > 0) {
+        var totalAmount = 0;
+        data.forEach(function (item) {
+          // Get current input value for this row
+          var $input = $('.inbound-input[data-id="' + item.id + '"]');
+          var qty = parseFloat($input.val() || 0);
+          var price = parseFloat(item.planned_price || 0);
+          totalAmount += qty * price;
+        });
+
+        $('#total-planning-amount').text('¥' + totalAmount.toFixed(2));
+        if ($summary.css('display') === 'none') {
+          $summary.fadeIn(200);
+        }
+      } else {
+        $summary.fadeOut(200);
+      }
+    }
+
+    function updateToolbarStatus() {
+      var hasValue = false;
+
+      // Check inputs
+      $('.inbound-input').each(function () {
+        var val = parseFloat($(this).val());
+        if (!isNaN(val) && val > 0) {
+          hasValue = true;
+          return false;
+        }
+      });
+
+      // Check table checkboxes
+      var checkStatus = table.checkStatus('planning-table');
+      if (checkStatus.data.length > 0) {
+        hasValue = true;
+      }
+
+      var btn = $('#generate-btn');
+      if (btn.length === 0) {
+        btn = $('[lay-event="generatePlan"]');
+      }
+
+      if (hasValue) {
+        btn.css({ 'background-color': '#28a745', 'cursor': 'pointer', 'opacity': '1' })
+          .removeClass('layui-btn-disabled');
+      } else {
+        btn.css({ 'background-color': '#ccc', 'cursor': 'pointer', 'opacity': '0.8' })
+          .removeClass('layui-btn-disabled');
+      }
+      btn.prop('disabled', false);
+    }
+
+    form.on('select(remaining-filter)', function (data) {
+      currentRemainingStatus = data.value;
+      refreshTable();
+    });
+
+    function refreshTable() {
+      table.reload('planning-table', {
+        where: {
+          project_id: currentProjectId,
+          remaining_status: currentRemainingStatus
+        },
+        page: { curr: 1 },
+        done: function () {
+          updateToolbarStatus();
+        }
+      });
+    }
+
+    table.on('toolbar(planning-table)', function (obj) {
+      if (obj.event === 'add') {
+        layer.msg('新增功能开发中');
+      } else if (obj.event === 'import') {
+        showImportDialog();
+      } else if (obj.event === 'batchDelete') {
+
+        var checkStatus = table.checkStatus('planning-table');
+        if (checkStatus.data.length === 0) {
+          layer.msg('请选择要删除的项', { icon: 2 });
+          return;
+        }
+        var ids = checkStatus.data.map(function (item) { return item.id; });
+        layer.confirm('确定要删除选中的 ' + ids.length + ' 项策划吗？', { icon: 3, title: '提示' }, function (index) {
+          layer.close(index);
+          var loading = layer.load();
+          $.ajax({
+            url: MODULE_PATH + 'planning/batch',
+            type: 'delete',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify({ ids: ids }),
+            success: function (res) {
+              layer.close(loading);
+              if (res.code === 0) {
+                layer.msg(res.msg, { icon: 1, time: 1000 }, function () {
+                  refreshTable();
+                });
+              } else {
+                layer.msg(res.msg, { icon: 2 });
+              }
+            }
+          });
+        });
+      } else if (obj.event === 'generatePlan') { generateInboundPlan(); }
+      else if (obj.event === 'batchSupplier') {
+        var checkStatus = table.checkStatus('planning-table');
+        if (checkStatus.data.length === 0) {
+          layer.msg('请选择要分配供应商的项', { icon: 2 });
+          return;
+        }
+        showBatchSupplierDialog(checkStatus.data.map(function (item) { return item.id; }));
+      }
+    });
+
+    function showBatchSupplierDialog(ids) {
+      var options = '<option value="">请选择供应商</option>';
+      serverSuppliers.forEach(function (s) {
+        options += '<option value="' + s.id + '">' + s.name + '</option>';
+      });
+
+      layer.open({
+        type: 1,
+        title: '批量拟定供应商',
+        area: ['400px', '250px'],
+        content: '<div style="padding: 20px;">' +
+          '<form class="layui-form">' +
+          '<div class="layui-form-item">' +
+          '<label class="layui-form-label" style="width: auto;">供应商</label>' +
+          '<div class="layui-input-block" style="margin-left: 80px;">' +
+          '<select id="batch-supplier-select" lay-filter="batch-supplier">' + options + '</select>' +
+          '</div></div></form></div>',
+        btn: ['确定', '取消'],
+        success: function () { form.render('select'); },
+        yes: function (index) {
+          var supplier_id = $('#batch-supplier-select').val();
+          if (!supplier_id) { layer.msg('请选择供应商', { icon: 2 }); return; }
+          var loading = layer.load();
+          $.ajax({
+            url: MODULE_PATH + 'planning/batch_supplier',
+            type: 'put',
+            contentType: 'application/json',
+            data: JSON.stringify({ ids: ids, supplier_id: supplier_id }),
+            success: function (res) {
+              layer.close(loading);
+              if (res.code === 0) {
+                layer.msg(res.msg, { icon: 1 });
+                layer.close(index);
+
+                // Update UI and Cache manually to preserve selection state
+                var supplierName = $('#batch-supplier-select option:selected').text();
+                var tableData = table.cache['planning-table'];
+
+                if (tableData) {
+                  ids.forEach(function (id) {
+                    for (var i = 0; i < tableData.length; i++) {
+                      if (tableData[i].id == id) {
+                        // Update Cache
+                        tableData[i].supplier_id = supplier_id;
+                        tableData[i].supplier_name = supplierName;
+
+                        // Update DOM (Supplier Name Column)
+                        var $cell = $('.layui-table-body tr[data-index="' + i + '"] td[data-field="supplier_name"] div');
+                        $cell.html('<span class="layui-badge layui-bg-blue">' + supplierName + '</span>');
+                        break;
+                      }
+                    }
+                  });
+                }
+              } else { layer.msg(res.msg, { icon: 2 }); }
+            }
+          });
+        }
+      });
+    }
+
+    // Shift + Click Range Selection Logic
+    var lastCheckedIndex = null;
+    $(document).on('click', '.layui-table-view .layui-table-body tr td[data-field="0"] .layui-form-checkbox', function (e) {
+      if (!e.originalEvent) return; // Ignore programmatic clicks to prevent recursion
+
+      var $tr = $(this).parents('tr');
+      var currentIndex = parseInt($tr.attr('data-index'));
+
+      if (e.shiftKey && lastCheckedIndex !== null && lastCheckedIndex !== currentIndex) {
+        // Determine target state (The click toggles the state, so if it WAS unchecked, it becomes checked)
+        // We want the whole range to match the *new* state of the clicked item.
+        // Note: The 'layui-form-checked' class is toggled by Layui *after* manual clicks, 
+        // but our handler might run before or during. 
+        // Actually, let's look at the CURRENT class state. If it HAS class, proper click removes it.
+        // So if it HAS class 'layui-form-checked', the user INTENDS TO UNCHECK.
+        // If it DOES NOT HAVE class, user INTENDS TO CHECK.
+
+        var willCheck = !$(this).hasClass('layui-form-checked');
+
+        var start = Math.min(lastCheckedIndex, currentIndex);
+        var end = Math.max(lastCheckedIndex, currentIndex);
+
+        for (var i = start; i <= end; i++) {
+          if (i === currentIndex) continue; // Default handler handles the clicked one
+
+          var $cb = $('.layui-table-view .layui-table-body tr[data-index="' + i + '"] td[data-field="0"] .layui-form-checkbox');
+          var isChecked = $cb.hasClass('layui-form-checked');
+
+          if (willCheck && !isChecked) {
+            $cb.click();
+          } else if (!willCheck && isChecked) {
+            $cb.click();
+          }
+        }
+
+        // Clear text selection
+        if (window.getSelection) { window.getSelection().removeAllRanges(); }
+        else if (document.selection) { document.selection.empty(); }
+      }
+
+      lastCheckedIndex = currentIndex;
+    });
+
+    function generateInboundPlan() {
+      var items = [];
+      var checkStatus = table.checkStatus('planning-table');
+
+      if (checkStatus.data.length > 0) {
+        // Priority 1: Process Checked Rows
+        for (var i = 0; i < checkStatus.data.length; i++) {
+          var row = checkStatus.data[i];
+
+          // Check for supplier (Strict Validation)
+          if (!row.supplier_id) {
+            layer.msg('【' + row.material_name + '】未拟定供应商，无法生成计划', { icon: 2 });
+            return;
+          }
+
+          // Find input for this row to see if user entered a specific quantity
+          var $input = $('.inbound-input[data-id="' + row.id + '"]');
+          var inputVal = parseFloat($input.val() || 0);
+
+          // Use input value if > 0, otherwise auto-fill with remaining
+          var finalQty = inputVal > 0 ? inputVal : parseFloat(row.planned_remaining_quantity || 0);
+
+          if (finalQty > 0) {
+            items.push({
+              id: row.id,
+              quantity: finalQty
+            });
+          }
+        }
+      } else {
+        // Priority 2: No checks, process any input > 0
+        var validationError = false;
+        $('.inbound-input').each(function () {
+          var val = parseFloat($(this).val() || 0);
+          if (val > 0) {
+            var supplierId = $(this).data('supplier-id');
+            if (!supplierId) {
+              // Try to find material name for better error message (up the DOM tree)
+              // Since input is inside a cell, we can find the row index and get name from cache, or just say "Item"
+              layer.msg('存在未拟定供应商的项，无法生成计划', { icon: 2 });
+              validationError = true;
+              return false; // Break loop
+            }
+            items.push({
+              id: $(this).data('id'),
+              quantity: val
+            });
+          }
+        });
+
+        if (validationError) return;
+      }
+
+      if (items.length === 0) {
+        layer.msg('请勾选材料或输入入库数量', { icon: 2 });
+        return;
+      }
+
+      layer.confirm('确定要为 ' + items.length + ' 项材料生成入库计划吗？<br><span style="color:red;font-size:12px;">(勾选后未填数量将默认按剩余量生成)</span>', { icon: 3, title: '提示' }, function (index) {
+        layer.close(index);
+        var loading = layer.load();
+        $.ajax({
+          url: MODULE_PATH + 'planning/generate_inbound',
+          type: 'post',
+          dataType: 'json',
+          contentType: 'application/json',
+          data: JSON.stringify({ items: items }),
+          success: function (res) {
+            layer.close(loading);
+            if (res.code === 0) {
+              layer.msg(res.msg, { icon: 1, time: 1000 }, function () {
+                refreshTable();
+              });
+            } else {
+              layer.msg(res.msg, { icon: 2 });
+            }
+          },
+          error: function () {
+            layer.close(loading);
+            layer.msg('网络错误', { icon: 2 });
+          }
+        });
+      });
+    }
+
+    loadProjects();
+
+    function showImportDialog() {
+      layer.open({
+        type: 1,
+        title: '<span style="font-weight: 600; color: #333;"><i class="layui-icon layui-icon-upload-drag" style="margin-right: 8px; color: #1E9FFF;"></i>导入材料策划</span>',
+        area: ['600px', '450px'], // Increased size
+        skin: 'layui-layer-lan', // Optional: use a skin or custom class
+        shadeClose: true,
+        content: `
+            <div style="padding: 25px; background-color: #f8f9fa; height: 100%; box-sizing: border-box;">
+                
+                <!-- Requirements Section -->
+                <div style="background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; border-left: 4px solid #1E9FFF;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 15px; font-weight: 600; color: #333; display: flex; align-items: center;">
+                        <i class="layui-icon layui-icon-tips" style="color: #1E9FFF; margin-right: 6px;"></i> 导入数据要求
+                    </h3>
+                    <div style="font-size: 13px; color: #666; line-height: 1.8;">
+                        <p style="margin: 5px 0;"><span style="display:inline-block; width: 6px; height: 6px; background:#e0e0e0; border-radius:50%; margin-right:8px; vertical-align:middle;"></span>支持格式：<span style="color: #333; font-weight: 500;">.xlsx</span>, <span style="color: #333; font-weight: 500;">.xls</span></p>
+                        <p style="margin: 5px 0;"><span style="display:inline-block; width: 6px; height: 6px; background:#e0e0e0; border-radius:50%; margin-right:8px; vertical-align:middle;"></span>起始行数：数据从 <span style="color: #ff5722; font-weight: 500;">第2行</span> 开始（第1行为表头）</p>
+                        <p style="margin: 5px 0;"><span style="display:inline-block; width: 6px; height: 6px; background:#e0e0e0; border-radius:50%; margin-right:8px; vertical-align:middle;"></span><strong style="color: #333;">必需列及顺序：</strong></p>
+                        <div style="background: #f0f7ff; padding: 8px 12px; border-radius: 4px; margin-top: 8px; color: #1E9FFF; font-weight: 500; font-family: monospace;">
+                            材料名称 | 规格型号 | 单位 | 策划总数 | 策划单价
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Section -->
+                <form class="layui-form" id="import-form" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label" style="text-align: left; width: 80px; font-weight: 500;">选择项目</label>
+                        <div class="layui-input-block" style="margin-left: 90px;">
+                            <select name="project_id" lay-verify="required" id="import-project-select" lay-search lay-skin="primary"></select>
+                        </div>
+                    </div>
+                    
+                    <div class="layui-form-item" style="margin-bottom: 0;">
+                        <label class="layui-form-label" style="text-align: left; width: 80px; font-weight: 500;">上传文件</label>
+                        <div class="layui-input-block" style="margin-left: 90px; display: flex; align-items: center;">
+                            <button type="button" class="pear-btn pear-btn-primary" id="select-file" style="box-shadow: 0 2px 6px rgba(30, 159, 255, 0.3);">
+                                <i class="layui-icon layui-icon-upload-circle"></i> 选择文件
+                            </button>
+                            <span id="file-name" style="margin-left: 15px; color: #999; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">未选择文件...</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+          `,
+        btn: ['<i class="layui-icon layui-icon-release"></i> 确认导入', '取消'],
+        btnAlign: 'c', // Center buttons
+        success: function (layero, index) {
+          // Populate projects
+          var options = '<option value="">请选择项目</option>';
+          serverProjects.forEach(function (p) {
+            options += '<option value="' + p.id + '">' + p.name + '</option>';
+          });
+          $('#import-project-select').html(options);
+          form.render('select');
+
+          // Initialize upload
+          upload.render({
+            elem: '#select-file',
+            url: MODULE_PATH + 'planning/import',
+            auto: false,
+            accept: 'file',
+            exts: 'xlsx|xls',
+            bindAction: '.layui-layer-btn0',
+            before: function () {
+              var projectId = $('#import-project-select').val();
+              if (!projectId) {
+                layer.msg('请选择项目', { icon: 2 });
+                return false; // Stop upload
+              }
+              this.data = { project_id: projectId };
+              layer.load();
+            },
+            choose: function (obj) {
+              obj.preview(function (index, file, result) {
+                $('#file-name').text(file.name);
+              });
+            },
+            done: function (res) {
+              layer.closeAll('loading');
+              if (res.code === 0) {
+                layer.msg(res.msg, { icon: 1 });
+                layer.close(index);
+                refreshTable();
+              } else {
+                layer.msg(res.msg, { icon: 2 });
+              }
+            },
+            error: function () {
+              layer.closeAll('loading');
+              layer.msg('上传失败', { icon: 2 });
+            }
+          });
+        },
+        yes: function (index, layero) {
+          // Trigger upload via bindAction
+        }
+      });
+    }
+
+    // Expose to global scope for HTML onclick attributes
+    window.showImportDialog = showImportDialog;
+  });</script>

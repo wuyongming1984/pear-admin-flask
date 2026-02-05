@@ -1,588 +1,462 @@
-<!doctype html>
-<html lang="zh-cn">
+<style>
+    /* ==================== 赛博工业 (Cyber Industrial) 全局变量 ==================== */
+    :root {
+        --bg-dark: #0f172a;
+        --bg-card: rgba(30, 41, 59, 0.7);
+        --bg-card-hover: rgba(51, 65, 85, 0.8);
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --accent-cyan: #00e5ff;
+        --accent-cyan-dim: rgba(0, 229, 255, 0.1);
+        --border-color: rgba(148, 163, 184, 0.2);
+        --neon-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+    }
 
-<head>
-    <meta charset="utf-8" />
-    <title>付款单位管理</title>
-    <meta name="renderer" content="webkit" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-    <style>
-        /* 操作列按钮间距 */
-        .layui-table-cell .layui-btn-container {
-            display: flex;
-            gap: 5px;
-            justify-content: center;
-        }
+    /* 整体背景 - Scoped */
+    #payer-page-root {
+        background-color: var(--bg-dark);
+        background-image:
+            radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.05) 0%, transparent 20%),
+            radial-gradient(circle at 90% 80%, rgba(255, 0, 150, 0.05) 0%, transparent 20%);
+        color: var(--text-primary);
+        font-family: "Inter", "Microsoft YaHei", sans-serif;
+        margin: 0;
+        padding: 16px;
+        min-height: calc(100vh - 20px);
+        box-sizing: border-box;
+    }
 
-        /* 确保表头和表体的列宽一致 - 根据内容自动调整 */
-        .layui-table-view .layui-table-header table,
-        .layui-table-view .layui-table-body table {
-            table-layout: auto !important;
-            width: 100% !important;
-        }
+    /* 玻璃拟态卡片容器 */
+    #payer-page-root .cyber-card {
+        background: var(--bg-card);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        height: calc(100vh - 40px);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+    }
 
-        /* 确保列宽根据内容自动调整 */
-        .layui-table-view .layui-table-header table colgroup col,
-        .layui-table-view .layui-table-body table colgroup col {
-            width: auto !important;
-        }
+    /* ==================== 深度定制 Layui 表格 ==================== */
+    #payer-page-root .layui-table-view {
+        background-color: #000000 !important;
+        border: none !important;
+        margin: 0 !important;
+        flex: 1;
+    }
 
-        .layui-table-view .layui-table-header table thead th,
-        .layui-table-view .layui-table-body table tbody td {
-            padding: 9px 15px !important;
-            white-space: nowrap;
-        }
+    /* 表头样式 */
+    #payer-page-root .layui-table-header {
+        background-color: rgba(15, 23, 42, 0.8) !important;
+        border-bottom: 2px solid var(--accent-cyan) !important;
+    }
 
-        /* 确保筛选输入框不影响列宽 */
-        .filter-input-wrapper {
-            width: 100%;
-            box-sizing: border-box;
-            min-width: 0;
-        }
+    #payer-page-root .layui-table thead tr {
+        background-color: transparent !important;
+    }
 
-        .filter-input {
-            width: 100%;
-            box-sizing: border-box;
-            min-width: 0;
-        }
-    </style>
-</head>
+    #payer-page-root .layui-table th {
+        background-color: transparent !important;
+        color: var(--accent-cyan) !important;
+        font-weight: 600 !important;
+        border: none !important;
+        padding: 12px 15px !important;
+    }
 
-<body>
-    <div style="padding: 16px">
-        <div class="layui-card">
-            <div class="layui-card-body">
-                <table class="layui-hide" id="payer-table" lay-filter="payer-table"></table>
-            </div>
-        </div>
+    /* 表体样式 */
+    #payer-page-root .layui-table-body {
+        background-color: transparent !important;
+    }
+
+    #payer-page-root .layui-table td {
+        border: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        color: var(--text-primary) !important;
+        padding: 10px 15px !important;
+    }
+
+    /* 悬停高亮 */
+    #payer-page-root .layui-table-hover,
+    #payer-page-root .layui-table-click,
+    #payer-page-root .layui-table tbody tr:hover {
+        background-color: rgba(0, 229, 255, 0.05) !important;
+    }
+
+    /* 去除空隙 */
+    #payer-page-root .layui-table-view .layui-table {
+        width: 100%;
+    }
+
+    #payer-page-root .layui-table-init {
+        background-color: transparent !important;
+    }
+
+    /* 分页栏定制 */
+    #payer-page-root .layui-table-page {
+        border-top: 1px solid var(--border-color) !important;
+        padding: 10px 0 0 0 !important;
+        height: 50px;
+    }
+
+    #payer-page-root .layui-laypage .layui-laypage-curr .layui-laypage-em {
+        background-color: var(--accent-cyan) !important;
+    }
+
+    #payer-page-root .layui-laypage a,
+    #payer-page-root .layui-laypage span {
+        background-color: transparent !important;
+        color: var(--text-secondary) !important;
+        border: 1px solid var(--border-color) !important;
+    }
+
+    #payer-page-root .layui-laypage a:hover {
+        color: var(--accent-cyan) !important;
+        border-color: var(--accent-cyan) !important;
+    }
+
+    /* ==================== 按钮样式重构 (实心 Neon) ==================== */
+    #payer-page-root .layui-btn {
+        border-radius: 4px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    /* 蓝色编辑按钮 */
+    #payer-page-root .layui-bg-blue {
+        background-color: #2196f3 !important;
+        color: #fff !important;
+    }
+
+    #payer-page-root .layui-bg-blue:hover {
+        background-color: #1976d2 !important;
+        box-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
+    }
+
+    /* 红色删除按钮 */
+    #payer-page-root .layui-bg-red {
+        background-color: #f44336 !important;
+        color: #fff !important;
+    }
+
+    #payer-page-root .layui-bg-red:hover {
+        background-color: #d32f2f !important;
+        box-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
+    }
+
+    /* 顶部工具栏按钮 */
+    #payer-page-root .layui-btn-primary {
+        background-color: transparent !important;
+        border: 1px solid var(--accent-cyan) !important;
+        color: var(--accent-cyan) !important;
+    }
+
+    #payer-page-root .layui-btn-primary:hover {
+        background-color: var(--accent-cyan) !important;
+        color: #000 !important;
+        box-shadow: var(--neon-shadow);
+    }
+
+    /* 搜索框与输入框 */
+    #payer-page-root .filter-input,
+    #payer-page-root .layui-input,
+    #payer-page-root .layui-textarea {
+        background-color: rgba(0, 0, 0, 0.3) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-primary) !important;
+        border-radius: 4px;
+        transition: all 0.3s;
+    }
+
+    #payer-page-root .filter-input:focus,
+    #payer-page-root .layui-input:focus,
+    #payer-page-root .layui-textarea:focus {
+        border-color: var(--accent-cyan) !important;
+        box-shadow: 0 0 5px rgba(0, 229, 255, 0.3) !important;
+    }
+
+    /* 弹窗样式修正 */
+    body .layui-layer {
+        background-color: #1e293b !important;
+        border: 1px solid rgba(0, 229, 255, 0.3);
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.8) !important;
+    }
+
+    body .layui-layer-title {
+        background-color: #0f172a !important;
+        color: var(--accent-cyan) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    body .layui-layer-content {
+        color: var(--text-primary);
+    }
+
+    body .layui-layer-btn {
+        background-color: #0f172a !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* ==================== 修复固定列错位 & 白色背景问题 (关键) ==================== */
+    /* 强制统一行高，防止因内容高度不同导致的错位 */
+    #payer-page-root .layui-table-cell {
+        height: 50px !important;
+        line-height: 50px !important;
+        padding: 0 15px !important;
+        display: flex;
+        align-items: center;
+        color: var(--text-primary) !important;
+        /* 强制文字颜色 */
+    }
+
+    /* 修复首列复选框/序号无法垂直居中的问题 */
+    #payer-page-root .layui-table-cell .layui-form-checkbox,
+    #payer-page-root .layui-table-cell .layui-table-sort {
+        margin-top: 0 !important;
+    }
+
+    /* 操作列 flex 布局调整 */
+    #payer-page-root .layui-table-cell .layui-btn-container {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        height: 100%;
+        align-items: center;
+    }
+
+    /* 强制背景为暗色/透明，防止Layui默认白色背景覆盖 */
+    #payer-page-root .layui-table-view,
+    #payer-page-root .layui-table-box,
+    #payer-page-root .layui-table-body,
+    #payer-page-root .layui-table-header,
+    #payer-page-root .layui-table {
+        background-color: transparent !important;
+    }
+
+    /* 确保外层容器有背景 */
+    #payer-page-root .layui-table-view {
+        background-color: rgba(20, 20, 20, 0.6) !important;
+    }
+</style>
+
+<div id="payer-page-root">
+    <div class="cyber-card">
+        <table class="layui-hide" id="payer-table" lay-filter="payer-table"></table>
     </div>
-    <form class="layui-form" lay-filter="payer-form" id="payer-form" action="" style="padding: 15px; display: none">
+
+    <!-- 隐藏的表单 -->
+    <form class="layui-form" lay-filter="payer-form" id="payer-form" action=""
+        style="padding: 20px 30px 0 0; display: none; background-color: #1e293b;">
         <div class="layui-form-item">
-            <label class="layui-form-label">ID</label>
+            <label class="layui-form-label" style="color: var(--text-secondary);">ID</label>
             <div class="layui-input-block">
                 <input type="text" name="id" value="0" lay-verify="required" autocomplete="off" class="layui-input"
-                    disabled />
+                    disabled style="background-color: rgba(255,255,255,0.05) !important; color: #666 !important;" />
             </div>
         </div>
         <div class="layui-form-item">
-            <label class="layui-form-label">付款单位类型</label>
+            <label class="layui-form-label" style="color: var(--text-secondary);">类型</label>
             <div class="layui-input-block">
-                <input type="number" name="type_id" placeholder="请输入付款单位类型(1:单位, 2:个人)" lay-verify="required"
-                    autocomplete="off" class="layui-input" />
+                <!-- <input type="number" name="type_id" placeholder="1:单位, 2:个人" lay-verify="required" autocomplete="off" class="layui-input" /> -->
+                <select name="type_id" lay-verify="required">
+                    <option value="1">单位</option>
+                    <option value="2">个人</option>
+                </select>
             </div>
         </div>
         <div class="layui-form-item">
-            <label class="layui-form-label">付款单位名称</label>
+            <label class="layui-form-label" style="color: var(--text-secondary);">单位名称</label>
             <div class="layui-input-block">
                 <input type="text" name="name" placeholder="请输入付款单位名称" lay-verify="required" autocomplete="off"
                     class="layui-input" />
             </div>
         </div>
         <div class="layui-form-item">
-            <label class="layui-form-label">开户行名称</label>
+            <label class="layui-form-label" style="color: var(--text-secondary);">开户行</label>
             <div class="layui-input-block">
                 <input type="text" name="bank_name" placeholder="请输入开户行名称" autocomplete="off" class="layui-input" />
             </div>
         </div>
         <div class="layui-form-item">
-            <label class="layui-form-label">银行账号</label>
+            <label class="layui-form-label" style="color: var(--text-secondary);">银行账号</label>
             <div class="layui-input-block">
                 <input type="text" name="account_number" placeholder="请输入银行账号" autocomplete="off" class="layui-input" />
             </div>
         </div>
         <div class="layui-form-item">
-            <label class="layui-form-label">备注</label>
+            <label class="layui-form-label" style="color: var(--text-secondary);">备注</label>
             <div class="layui-input-block">
                 <textarea name="remark" placeholder="请输入备注" class="layui-textarea"></textarea>
             </div>
         </div>
         <div class="layui-form-item">
             <div class="layui-input-block">
-                <button type="submit" class="layui-btn" lay-submit lay-filter="payer-form-btn">
+                <button type="submit" class="layui-btn" lay-submit lay-filter="payer-form-btn"
+                    style="background-color: var(--accent-cyan); color: #000;">
                     立即提交
                 </button>
-                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                <button type="reset" class="layui-btn layui-btn-primary"
+                    style="border-color: #666; color: #ccc;">重置</button>
             </div>
         </div>
     </form>
-    <script type="text/html" id="payer-toolbar">
-      <div class="layui-btn-container">
-        <button class="layui-btn layui-btn-sm" lay-event="payer-toolbar-add">
-          新增付款单位
-        </button>
-      </div>
-    </script>
-    <script type="text/html" id="payer-tool">
-      <div class="layui-btn-container">
-        <button
-          class="layui-btn layui-btn-sm layui-bg-blue"
-          lay-event="payer-tool-edit"
-        >
-          编辑
-        </button>
-        <button
-          class="layui-btn layui-btn-sm layui-bg-red"
-          lay-event="payer-tool-del"
-        >
-          删除
-        </button>
-      </div>
-    </script>
-    <script>
-        layui.use(["table", "form", "layer"], function () {
-            var table = layui.table;
-            var form = layui.form;
-            var layer = layui.layer;
-            var $ = layui.$;
+</div>
 
-            // 存储筛选条件
-            var filterParams = {};
+<!-- 头部工具栏 -->
+<script type="text/html" id="payer-toolbar">
+  <div class="layui-btn-container">
+    <button class="layui-btn layui-btn-sm layui-btn-primary" lay-event="payer-toolbar-add">
+      <i class="layui-icon layui-icon-add-1"></i> 新增付款单位
+    </button>
+  </div>
+</script>
 
-            // 渲染表格
-            table.render({
-                elem: "#payer-table",
-                id: "payer-table",
-                url: window.location.origin + "/api/v1/payer/",
-                height: "full-35",
-                toolbar: "#payer-toolbar",
-                page: true,
-                headers: {
-                    Authorization: "Bearer " + localStorage.getItem("access_token"),
-                },
-                defaultToolbar: ['filter', 'exports', 'print'],
-                where: filterParams,
-                cols: [
-                    [
-                        { field: "id", title: "ID", sort: true },
-                        {
-                            field: "name",
-                            title: "付款单位名称",
-                            edit: 'text'
-                        },
-                        {
-                            field: "type_id",
-                            title: "类型",
-                            templet: function (d) {
-                                return d.type_id == 1 ? '单位' : (d.type_id == 2 ? '个人' : d.type_id);
-                            },
-                            edit: 'text'
-                        },
-                        {
-                            field: "bank_name",
-                            title: "开户行名称",
-                            edit: 'text'
-                        },
-                        {
-                            field: "account_number",
-                            title: "银行账号",
-                            edit: 'text'
-                        },
-                        {
-                            field: "remark",
-                            title: "备注",
-                            edit: 'text'
-                        },
-                        {
-                            field: "create_at",
-                            title: "创建时间",
-                            sort: true
-                        },
-                        {
-                            title: "操作",
-                            align: "center",
-                            toolbar: "#payer-tool",
-                            minWidth: 200
-                        },
-                    ],
-                ],
-                done: function (res, curr, count) {
-                    // 表格渲染完成后，在表头添加筛选输入框
-                    addFilterInputs();
-                    // 多次同步列宽，确保完全同步
-                    setTimeout(function () {
-                        syncColumnWidths();
-                        setTimeout(function () {
-                            syncColumnWidths();
-                        }, 100);
-                    }, 200);
-                },
-                parseData: function (res) {
-                    return {
-                        code: res.code,
-                        msg: res.msg,
-                        count: res.count,
-                        data: res.data,
-                    };
-                }
-            });
+<!--行工具栏-->
+<script type="text/html" id="payer-tool">
+  <div class="layui-btn-container">
+    <button
+      class="layui-btn layui-btn-sm layui-bg-blue"
+      lay-event="payer-tool-edit"
+    >
+      编辑
+    </button>
+    <button
+      class="layui-btn layui-btn-sm layui-bg-red"
+      lay-event="payer-tool-del"
+    >
+      删除
+    </button>
+  </div>
+</script>
 
-            // 列宽配置 - 可以根据需要修改各列的初始宽度（单位：px）
-            var columnWidths = {
-                'ID': 60,
-                '付款单位名称': 200,
-                '类型': 80,
-                '开户行名称': 180,
-                '银行账号': 180,
-                '备注': 150,
-                '创建时间': 180
-            };
+<script>
+    layui.use(["table", "form", "layer"], function () {
+        var table = layui.table;
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.$;
 
-            // 根据表头标题获取列宽配置
-            function getColumnWidthByTitle($th) {
-                // 从 .layui-table-cell 中获取纯文本，排除筛选输入框
-                var $cell = $th.find('.layui-table-cell');
-                var title;
-                if ($cell.length) {
-                    // 克隆元素，移除所有子元素（包括筛选输入框），然后获取文本
-                    title = $cell.clone().children().remove().end().text().trim();
-                } else {
-                    // 如果没有 .layui-table-cell，直接获取文本，但排除筛选输入框
-                    title = $th.clone().find('.filter-input-wrapper').remove().end().text().trim();
-                }
-                return columnWidths[title] || null;
+        var filterParams = {};
+
+        table.render({
+            elem: "#payer-table",
+            url: window.location.origin + "/api/v1/payer/",
+            height: "full-40",
+            skin: 'nob',
+            toolbar: "#payer-toolbar",
+            page: true,
+            headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+            where: filterParams,
+            cols: [[
+                { field: "id", title: "ID", sort: true, width: 80 },
+                { field: "name", title: "付款单位名称", edit: 'text', width: 200 },
+                { field: "type_id", title: "类型", templet: function (d) { return d.type_id == 1 ? '单位' : (d.type_id == 2 ? '个人' : d.type_id); }, width: 80 },
+                { field: "bank_name", title: "开户行名称", edit: 'text', width: 220 },
+                { field: "account_number", title: "银行账号", edit: 'text', width: 220 },
+                { field: "remark", title: "备注", edit: 'text', minWidth: 150 },
+                { field: "create_at", title: "创建时间", sort: true, width: 180 },
+                { title: "操作", align: "center", toolbar: "#payer-tool", width: 180 }
+            ]],
+            done: function (res, curr, count) {
+                addFilterInputs();
             }
+        });
 
-            // 同步表头和表体的列宽 - 根据内容自动调整
-            function syncColumnWidths() {
-                var $headerTable = $('.layui-table-view .layui-table-header table');
-                var $bodyTable = $('.layui-table-view .layui-table-body table');
-
-                if ($headerTable.length && $bodyTable.length) {
-                    var $headerThs = $headerTable.find('thead tr th');
-                    var $headerCols = $headerTable.find('colgroup col');
-                    var $bodyCols = $bodyTable.find('colgroup col');
-
-                    if ($headerCols.length === 0) {
-                        var headerColgroup = $('<colgroup></colgroup>');
-                        $headerThs.each(function () {
-                            headerColgroup.append('<col>');
-                        });
-                        $headerTable.prepend(headerColgroup);
-                        $headerCols = $headerTable.find('colgroup col');
-                    }
-
-                    if ($bodyCols.length === 0) {
-                        var bodyColgroup = $('<colgroup></colgroup>');
-                        $headerThs.each(function () {
-                            bodyColgroup.append('<col>');
-                        });
-                        $bodyTable.prepend(bodyColgroup);
-                        $bodyCols = $bodyTable.find('colgroup col');
-                    }
-
-                    $headerThs.each(function (index) {
-                        var $headerTh = $(this);
-                        var configuredWidth = getColumnWidthByTitle($headerTh);
-                        var maxWidth;
-
-                        if (configuredWidth) {
-                            maxWidth = configuredWidth;
-                        } else {
-                            maxWidth = $headerTh.outerWidth() || $headerTh.width() || 0;
-                            $bodyTable.find('tbody tr').each(function () {
-                                var $td = $(this).find('td').eq(index);
-                                if ($td.length) {
-                                    var originalWidth = $td.css('width');
-                                    $td.css('width', 'auto');
-                                    var contentWidth = $td.outerWidth() || $td.width() || 0;
-                                    $td.css('width', originalWidth);
-                                    var padding = parseInt($td.css('padding-left')) + parseInt($td.css('padding-right')) || 30;
-                                    var totalWidth = contentWidth + padding;
-                                    if (totalWidth > maxWidth) {
-                                        maxWidth = totalWidth;
-                                    }
-                                }
-                            });
-                        }
-
-                        var titleText = $headerTh.text().trim();
-                        if (titleText.indexOf('操作') !== -1) {
-                            return;
-                        }
-
-                        if ($headerCols.length > index) {
-                            $headerCols.eq(index).css('width', maxWidth + 'px').attr('width', maxWidth);
-                        }
-                        if ($bodyCols.length > index) {
-                            $bodyCols.eq(index).css('width', maxWidth + 'px').attr('width', maxWidth);
-                        }
-
-                        $headerTh.css('width', maxWidth + 'px');
-                        $bodyTable.find('tbody tr td').eq(index).css('width', maxWidth + 'px');
-                    });
-
-                    $headerTable.css({
-                        'table-layout': 'auto',
-                        'width': '100%'
-                    });
-                    $bodyTable.css({
-                        'table-layout': 'auto',
-                        'width': '100%'
-                    });
-                }
-            }
-
-            // 统一的表格重新加载函数
-            function reloadTable(options) {
-                options = options || {};
-                var defaultOptions = {
-                    where: filterParams,
-                    done: function () {
-                        addFilterInputs();
-                        setTimeout(function () {
-                            syncColumnWidths();
-                        }, 100);
-                    }
-                };
-                var finalOptions = $.extend({}, defaultOptions, options);
-                table.reload('payer-table', finalOptions);
-            }
-
-            // 在表头添加筛选输入框
-            function addFilterInputs() {
-                setTimeout(function () {
-                    var filterConfig = {
-                        'name': {
-                            type: 'text',
-                            placeholder: '筛选付款单位名称',
-                            source: window.location.origin + "/api/v1/payer/",
-                            labelField: 'name',
-                            valueField: 'name'
-                        },
-                        'bank_name': {
-                            type: 'text',
-                            placeholder: '筛选开户行',
-                            source: window.location.origin + "/api/v1/payer/",
-                            labelField: 'bank_name',
-                            valueField: 'bank_name',
-                            unique: true
-                        },
-                        'account_number': { type: 'text', placeholder: '筛选银行账号' },
-                        'remark': { type: 'text', placeholder: '筛选备注' }
-                    };
-
-                    Object.keys(filterConfig).forEach(function (field) {
-                        var $view = $('.layui-table-view[lay-id="payer-table"]');
-                        var $th = $view.find('th[data-field="' + field + '"]');
-                        if ($th.length && !$th.find('.filter-input').length) {
-                            var config = filterConfig[field];
-                            var $filterDiv = $('<div class="filter-input-wrapper" style="margin-top: 5px;"></div>');
-                            var $input;
-
-                            // 检查是否需要 Autocomplete (Source)
-                            var listId = config.source ? 'list-' + field : null;
-                            var listAttr = listId ? ' list="' + listId + '"' : '';
-
-                            $input = $('<input type="' + config.type + '" class="layui-input filter-input" placeholder="' + config.placeholder + '" data-field="' + field + '"' + listAttr + ' style="height: 28px; font-size: 12px; padding: 0 8px;">');
-
-                            if (filterParams[field]) {
-                                $input.val(filterParams[field]);
-                            }
-                            $filterDiv.append($input);
-
-                            // 如果有 source，添加 datalist 和事件
-                            if (config.source) {
-                                var $datalist = $('<datalist id="' + listId + '"></datalist>');
-                                $filterDiv.append($datalist);
-
-                                // 绑定 focus 事件加载数据
-                                $input.on('focus', function () {
-                                    var $thisDatalist = $('#' + listId);
-                                    if ($thisDatalist.children().length > 0) return;
-
-                                    $.ajax({
-                                        url: config.source,
-                                        type: 'GET',
-                                        data: { limit: 1000 },
-                                        headers: {
-                                            Authorization: "Bearer " + localStorage.getItem("access_token"),
-                                        },
-                                        success: function (res) {
-                                            if (res.code === 0 && res.data) {
-                                                $thisDatalist.empty();
-                                                var items = res.data;
-                                                var validValues = new Set();
-
-                                                items.forEach(function (item) {
-                                                    var val = item[config.valueField];
-                                                    if (val) {
-                                                        if (config.unique) {
-                                                            if (validValues.has(val)) return;
-                                                            validValues.add(val);
-                                                        }
-
-                                                        var label = item[config.labelField] || val;
-                                                        $thisDatalist.append('<option value="' + val + '">' + (label !== val ? label : '') + '</option>');
-                                                    }
-                                                });
-                                            }
-                                        }
-                                    });
-                                });
-                            }
-
-                            $th.append($filterDiv);
-                        }
-                    });
-                    setTimeout(function () {
-                        syncColumnWidths();
-                    }, 50);
-                }, 100);
-            }
-
-            // 监听表格筛选
-            table.on('toolbar(payer-table)', function (obj) {
-                if (obj.event === 'payer-toolbar-add') {
-                    $("#payer-form")[0].reset();
-                    $("#payer-form input[name='id']").val(0);
-                    layer.open({
-                        type: 1,
-                        shade: false,
-                        content: $("#payer-form"),
-                        area: ["50%", "90%"],
-                    });
-                    form.render($("#payer-form"));
-                }
-            });
-
-            // 监听行工具事件
-            table.on('tool(payer-table)', function (obj) {
-                var data = obj.data;
-                if (obj.event === 'payer-tool-edit') {
-                    form.val("payer-form", data);
-                    layer.open({
-                        type: 1,
-                        shade: false,
-                        content: $("#payer-form"),
-                        area: ["50%", "90%"],
-                    });
-                    form.render($("#payer-form"));
-                } else if (obj.event === 'payer-tool-del') {
-                    layer.confirm('确定要删除这个付款单位吗？', { icon: 3, title: '提示' }, function (confirmIndex) {
-                        $.ajax({
-                            url: window.location.origin + `/api/v1/payer/${data.id}`,
-                            type: "DELETE",
-                            contentType: "application/json",
-                            headers: {
-                                Authorization: "Bearer " + localStorage.getItem("access_token"),
-                            },
-                            success: function (res) {
-                                if (res.code === 0) {
-                                    layer.msg(res.msg, { icon: 1 });
-                                    reloadTable();
-                                } else {
-                                    layer.msg(res.msg || '删除失败', { icon: 2 });
-                                }
-                                layer.close(confirmIndex);
-                            },
-                            error: function () {
-                                layer.msg('删除失败，请重试', { icon: 2 });
-                                layer.close(confirmIndex);
-                            }
-                        });
-                    });
-                }
-            });
-
-            // 监听单元格编辑
-            table.on('edit(payer-table)', function (obj) {
-                var value = obj.value;
-                var data = obj.data;
-                var field = obj.field;
-
-                var updateData = {};
-                updateData[field] = value;
-                updateData.id = data.id;
-
-                $.ajax({
-                    url: window.location.origin + `/api/v1/payer/${data.id}`,
-                    type: "PUT",
-                    contentType: "application/json",
-                    data: JSON.stringify(updateData),
-                    headers: {
-                        Authorization: "Bearer " + localStorage.getItem("access_token"),
-                    },
-                    success: function (res) {
-                        if (res.code === 0) {
-                            layer.msg('更新成功', { icon: 1, time: 1000 });
-                        } else {
-                            layer.msg(res.msg || '更新失败', { icon: 2 });
-                            reloadTable();
-                        }
-                    },
-                    error: function () {
-                        layer.msg('更新失败，请重试', { icon: 2 });
-                        reloadTable();
-                    }
+        table.on('toolbar(payer-table)', function (obj) {
+            if (obj.event === 'payer-toolbar-add') {
+                $("#payer-form")[0].reset();
+                $("#payer-form input[name='id']").val(0);
+                layer.open({
+                    type: 1, title: '新增付款单位', content: $("#payer-form"),
+                    area: ["500px", "600px"], shade: 0.8
                 });
-            });
+            }
+        });
 
-            // 表单提交
-            form.on("submit(payer-form-btn)", function (data) {
-                var field = data.field;
-                let method, url;
-                if (field.id == 0) {
-                    field.id = null;
-                    method = "POST";
-                    url = window.location.origin + "/api/v1/payer/";
-                } else {
-                    method = "PUT";
-                    url = window.location.origin + `/api/v1/payer/${field.id}`;
-                }
-
-                if (field.account_number) {
-                    // 不进行转换，保持字符串
-                }
-
-                $.ajax({
-                    url: url,
-                    type: method,
-                    contentType: "application/json",
-                    data: JSON.stringify(field),
-                    headers: {
-                        Authorization: "Bearer " + localStorage.getItem("access_token"),
-                    },
-                    success: function (res) {
-                        if (res.code === 0) {
-                            layer.msg(res.msg, { icon: 1 });
-                            layer.closeAll();
-                            reloadTable();
-                        } else {
-                            layer.msg(res.msg || '操作失败', { icon: 2 });
-                        }
-                    },
-                    error: function () {
-                        layer.msg('操作失败，请重试', { icon: 2 });
-                    }
+        table.on('tool(payer-table)', function (obj) {
+            var data = obj.data;
+            if (obj.event === 'payer-tool-edit') {
+                form.val("payer-form", data);
+                layer.open({
+                    type: 1, title: '编辑付款单位', content: $("#payer-form"),
+                    area: ["500px", "600px"], shade: 0.8
                 });
-                return false;
-            });
-
-            // 监听筛选栏输入，实现模糊搜索
-            var filterTimer = null;
-            $(document).on('input', '.filter-input', function () {
-                var $input = $(this);
-                var field = $input.data('field');
-                var value = $input.val().trim();
-
-                if (value) {
-                    filterParams[field] = value;
-                } else {
-                    delete filterParams[field];
-                }
-
-                clearTimeout(filterTimer);
-                filterTimer = setTimeout(function () {
-                    reloadTable({
-                        page: {
-                            curr: 1
+            } else if (obj.event === 'payer-tool-del') {
+                layer.confirm('确定删除该付款单位？', { icon: 3, title: '提示', skin: 'layui-layer-molv' }, function (idx) {
+                    $.ajax({
+                        url: `/api/v1/payer/${data.id}`, type: "DELETE",
+                        headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+                        success: function (res) {
+                            if (res.code === 0) {
+                                layer.msg('删除成功', { icon: 1 });
+                                table.reload('payer-table');
+                            } else layer.msg(res.msg, { icon: 2 });
+                            layer.close(idx);
                         }
                     });
-                }, 1200);
+                });
+            }
+        });
+
+        // 监听单元格编辑
+        table.on('edit(payer-table)', function (obj) {
+            var updateData = { id: obj.data.id };
+            updateData[obj.field] = obj.value;
+            $.ajax({
+                url: `/api/v1/payer/${obj.data.id}`, type: "PUT",
+                contentType: "application/json", data: JSON.stringify(updateData),
+                headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+                success: function (res) {
+                    if (res.code === 0) layer.msg('更新成功', { icon: 1, time: 1000 });
+                    else { layer.msg(res.msg, { icon: 2 }); table.reload('payer-table'); }
+                }
             });
         });
-    </script>
-</body>
 
-</html>
+        form.on("submit(payer-form-btn)", function (data) {
+            var method = data.field.id == 0 ? "POST" : "PUT";
+            var url = method === "POST" ? "/api/v1/payer/" : `/api/v1/payer/${data.field.id}`;
+            if (method === "POST") delete data.field.id;
+
+            $.ajax({
+                url: window.location.origin + url, type: method,
+                contentType: "application/json", data: JSON.stringify(data.field),
+                headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+                success: function (res) {
+                    if (res.code === 0) {
+                        layer.closeAll(); layer.msg('操作成功', { icon: 1 });
+                        table.reload('payer-table');
+                    } else layer.msg(res.msg, { icon: 2 });
+                }
+            });
+            return false;
+        });
+
+        function addFilterInputs() {
+            var $th = $('.layui-table-header th');
+            $th.each(function () {
+                var field = $(this).data('field');
+                if (['name', 'bank_name', 'account_number', 'remark'].includes(field)) {
+                    if ($(this).find('.filter-input').length === 0) {
+                        var $input = $(`<input class="filter-input" placeholder="筛选" style="width:100%; height:24px; margin-top:5px; padding:0 5px;">`);
+                        $input.on('click', function (e) { e.stopPropagation(); });
+                        $input.on('input', function () {
+                            filterParams[field] = $(this).val();
+                            clearTimeout(this.timer);
+                            this.timer = setTimeout(() => {
+                                table.reload('payer-table', { where: filterParams, done: addFilterInputs });
+                            }, 800);
+                        });
+                        $(this).append($input);
+                        if (filterParams[field]) $input.val(filterParams[field]);
+                    }
+                }
+            });
+        }
+    });
+</script>

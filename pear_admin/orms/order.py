@@ -11,7 +11,12 @@ class OrderORM(BaseORM):
     id = db.Column(db.Integer, primary_key=True, comment="自增id")
     order_number = db.Column(db.String(64), nullable=False, unique=True, comment="订单编号")
     material_name = db.Column(db.String(128), nullable=False, comment="材料名称")
-    project_name = db.Column(db.String(128), nullable=True, comment="项目名称")
+    project_id = db.Column(
+        db.Integer,
+        db.ForeignKey("ums_project.id", ondelete="SET NULL"),
+        nullable=True,
+        comment="项目ID"
+    )
     supplier_id = db.Column(
         db.Integer,
         db.ForeignKey("ums_supplier.id", ondelete="SET NULL"),
@@ -35,6 +40,7 @@ class OrderORM(BaseORM):
     )
 
     # 关系属性（延迟导入避免循环依赖）
+    project = db.relationship("ProjectORM", backref="orders", lazy="select")
     supplier = db.relationship("SupplierORM", backref="orders", lazy="select")
 
     def json(self):
@@ -120,7 +126,8 @@ class OrderORM(BaseORM):
             "id": self.id,
             "order_number": self.order_number,
             "material_name": self.material_name,
-            "project_name": self.project_name,
+            "project_id": self.project_id,
+            "project_name": self.project.project_name if self.project else None,
             "supplier_id": self.supplier_id,
             "supplier_name": self.supplier.name if self.supplier else None,
             "supplier_contact_person": self.supplier_contact_person, # 使用新字段

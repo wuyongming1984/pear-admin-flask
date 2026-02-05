@@ -25,12 +25,30 @@ def project_list():
     project_scale = request.args.get("project_scale", type=str)
     project_status = request.args.get("project_status", type=str)
     project_amount = request.args.get("project_amount", type=str)
+    has_payments = request.args.get("has_payments", type=str) == 'true'
+    has_orders = request.args.get("has_orders", type=str) == 'true'
     
     # 构建查询
     q = db.select(ProjectORM)
     
+    # 如果要求仅显示有付款记录的项目
+    if has_payments:
+        from pear_admin.orms import OrderORM, PayORM
+        # 使用 exists 子查询检查是否有关联的付款记录
+        # Project -> Order -> Pay
+        exists_query = db.select(PayORM.id).join(OrderORM).where(OrderORM.project_id == ProjectORM.id)
+        q = q.where(exists_query.exists())
+    
+    # 如果要求仅显示有订单记录的项目
+    if has_orders:
+        from pear_admin.orms import OrderORM
+        exists_query = db.select(OrderORM.id).where(OrderORM.project_id == ProjectORM.id)
+        q = q.where(exists_query.exists())
+    
     # 模糊搜索条件
+
     if project_name:
+
         q = q.where(ProjectORM.project_name.like(f"%{project_name}%"))
     if project_full_name:
         q = q.where(ProjectORM.project_full_name.like(f"%{project_full_name}%"))

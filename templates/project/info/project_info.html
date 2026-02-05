@@ -1,198 +1,353 @@
-<!doctype html>
-<html lang="zh-cn">
+<style>
+  /* ==================== 赛博工业 (Cyber Industrial) 全局变量 ==================== */
+  :root {
+    --bg-dark: #0f172a;
+    --bg-card: rgba(30, 41, 59, 0.7);
+    --bg-card-hover: rgba(51, 65, 85, 0.8);
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --accent-cyan: #00e5ff;
+    --accent-cyan-dim: rgba(0, 229, 255, 0.1);
+    --border-color: rgba(148, 163, 184, 0.2);
+    --neon-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+  }
 
-<head>
-  <meta charset="utf-8" />
-  <title>项目管理</title>
-  <meta name="renderer" content="webkit" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <style>
-    /* 操作列按钮间距 */
-    .layui-table-cell .layui-btn-container {
-      display: flex;
-      gap: 5px;
-      justify-content: center;
-    }
+  /* 整体背景 - Scoped to Page Root */
+  #project-page-root {
+    background-color: var(--bg-dark);
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.05) 0%, transparent 20%),
+      radial-gradient(circle at 90% 80%, rgba(255, 0, 150, 0.05) 0%, transparent 20%);
+    color: var(--text-primary);
+    font-family: "Inter", "Microsoft YaHei", sans-serif;
+    margin: 0;
+    padding: 16px;
+    min-height: calc(100vh - 20px);
+    /* Adjust for padding */
+    box-sizing: border-box;
+  }
 
-    /* 确保表头和表体的列宽一致 - 根据内容自动调整 */
-    .layui-table-view .layui-table-header table,
-    .layui-table-view .layui-table-body table {
-      table-layout: auto !important;
-      width: 100% !important;
-    }
+  /* 玻璃拟态卡片容器 */
+  #project-page-root .cyber-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    height: calc(100vh - 40px);
+    /* Adjust height */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
 
-    /* 确保列宽根据内容自动调整 */
-    .layui-table-view .layui-table-header table colgroup col,
-    .layui-table-view .layui-table-body table colgroup col {
-      width: auto !important;
-    }
+  /* ==================== 深度定制 Layui 表格 ==================== */
+  /* Scope to this page to avoid bleeding */
+  #project-page-root .layui-table-view {
+    background-color: #000000 !important;
+    border: none !important;
+    margin: 0 !important;
+    flex: 1;
+  }
 
-    .layui-table-view .layui-table-header table thead th,
-    .layui-table-view .layui-table-body table tbody td {
-      padding: 9px 15px !important;
-      white-space: nowrap;
-    }
+  /* 表头样式 */
+  #project-page-root .layui-table-header {
+    background-color: rgba(15, 23, 42, 0.8) !important;
+    border-bottom: 2px solid var(--accent-cyan) !important;
+  }
 
-    /* 确保筛选输入框不影响列宽 */
-    .filter-input-wrapper {
-      width: 100%;
-      box-sizing: border-box;
-      min-width: 0;
-    }
+  #project-page-root .layui-table thead tr {
+    background-color: transparent !important;
+  }
 
-    .filter-input {
-      width: 100%;
-      box-sizing: border-box;
-      min-width: 0;
-    }
+  #project-page-root .layui-table th {
+    background-color: transparent !important;
+    color: var(--accent-cyan) !important;
+    font-weight: 600 !important;
+    border: none !important;
+    padding: 12px 15px !important;
+  }
 
-    /* 附件上传样式 */
-    .attachment-section {
-      margin-top: 15px;
-    }
+  #project-page-root .layui-table th span {
+    font-weight: bold;
+    letter-spacing: 0.5px;
+  }
 
-    .attachment-upload {
-      margin-bottom: 15px;
-    }
+  /* 表体样式 */
+  #project-page-root .layui-table-body {
+    background-color: transparent !important;
+  }
 
-    .attachment-list {
-      border: 1px solid #e6e6e6;
-      border-radius: 2px;
-      padding: 10px;
-      min-height: 100px;
-      background: #fafafa;
-    }
+  #project-page-root .layui-table td {
+    border: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    color: var(--text-primary) !important;
+    padding: 10px 15px !important;
+  }
 
-    .attachment-item {
-      display: flex;
-      align-items: center;
-      padding: 10px;
-      margin-bottom: 10px;
-      background: #fff;
-      border: 1px solid #e6e6e6;
-      border-radius: 2px;
-    }
+  /* 悬停高亮 */
+  #project-page-root .layui-table-hover,
+  #project-page-root .layui-table-click,
+  #project-page-root .layui-table tbody tr:hover {
+    background-color: rgba(0, 229, 255, 0.05) !important;
+  }
 
-    .attachment-item:last-child {
-      margin-bottom: 0;
-    }
+  /* 去除空隙 */
+  #project-page-root .layui-table-view .layui-table {
+    width: 100%;
+  }
 
-    .attachment-item .file-icon {
-      margin-right: 10px;
-      font-size: 20px;
-      color: #1E9FFF;
-    }
+  #project-page-root .layui-table-init {
+    background-color: transparent !important;
+  }
 
-    .attachment-item .file-info {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
+  /* 分页栏定制 */
+  #project-page-root .layui-table-page {
+    border-top: 1px solid var(--border-color) !important;
+    padding: 10px 0 0 0 !important;
+    height: 50px;
+  }
 
-    .attachment-item .file-code {
-      font-size: 12px;
-      color: #1E9FFF;
-      font-weight: bold;
-      margin-bottom: 3px;
-    }
+  #project-page-root .layui-laypage .layui-laypage-curr .layui-laypage-em {
+    background-color: var(--accent-cyan) !important;
+  }
 
-    .attachment-item .file-name {
-      font-size: 14px;
-      color: #333;
-      margin-bottom: 3px;
-    }
+  #project-page-root .layui-laypage a,
+  #project-page-root .layui-laypage span {
+    background-color: transparent !important;
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+  }
 
-    .attachment-item .file-size {
-      font-size: 12px;
-      color: #999;
-    }
+  #project-page-root .layui-laypage a:hover {
+    color: var(--accent-cyan) !important;
+    border-color: var(--accent-cyan) !important;
+  }
 
-    .attachment-item .file-actions {
-      display: flex;
-      gap: 10px;
-    }
+  /* 滚动条美化 */
+  #project-page-root ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
 
-    .attachment-item .file-download,
-    .attachment-item .file-delete {
-      cursor: pointer;
-      color: #1E9FFF;
-      font-size: 14px;
-    }
+  #project-page-root ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+  }
 
-    .attachment-item .file-delete {
-      color: #ff5722;
-    }
+  #project-page-root ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 4px;
+  }
 
-    .attachment-item .file-download:hover {
-      color: #009688;
-    }
+  #project-page-root ::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+  }
 
-    .attachment-item .file-delete:hover {
-      color: #f56c6c;
-    }
+  /* ==================== 按钮样式重构 (实心 Neon) ==================== */
+  #project-page-root .layui-btn {
+    border-radius: 4px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    /* 实心按钮，不透明 */
+    border: none;
+  }
 
-    .attachment-empty {
-      text-align: center;
-      color: #999;
-      padding: 20px;
-      font-size: 14px;
-    }
-  </style>
-</head>
+  /* 蓝色编辑按钮 */
+  #project-page-root .layui-bg-blue {
+    background-color: #2196f3 !important;
+    color: #fff !important;
+  }
 
-<body>
-  <div style="padding: 16px">
-    <div class="layui-card">
-      <div class="layui-card-body">
-        <table class="layui-hide" id="project-table" lay-filter="project-table"></table>
-      </div>
-    </div>
+  #project-page-root .layui-bg-blue:hover {
+    background-color: #1976d2 !important;
+    box-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
+  }
+
+  /* 红色删除按钮 */
+  #project-page-root .layui-bg-red {
+    background-color: #f44336 !important;
+    color: #fff !important;
+  }
+
+  #project-page-root .layui-bg-red:hover {
+    background-color: #d32f2f !important;
+    box-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
+  }
+
+  /* 顶部工具栏按钮 */
+  #project-page-root .layui-btn-primary {
+    background-color: transparent !important;
+    border: 1px solid var(--accent-cyan) !important;
+    color: var(--accent-cyan) !important;
+  }
+
+  #project-page-root .layui-btn-primary:hover {
+    background-color: var(--accent-cyan) !important;
+    color: #000 !important;
+    box-shadow: var(--neon-shadow);
+  }
+
+  /* 搜索框与输入框 */
+  #project-page-root .filter-input,
+  #project-page-root .layui-input {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    border-radius: 4px;
+    transition: all 0.3s;
+  }
+
+  #project-page-root .filter-input:focus,
+  #project-page-root .layui-input:focus {
+    border-color: var(--accent-cyan) !important;
+    box-shadow: 0 0 5px rgba(0, 229, 255, 0.3) !important;
+  }
+
+  #project-page-root .filter-input::placeholder {
+    color: rgba(148, 163, 184, 0.5);
+  }
+
+  /* 弹窗样式调整 - 虽然弹窗在body下，但我们加!important确保覆盖 */
+  body .layui-layer {
+    background-color: #1e293b !important;
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8) !important;
+  }
+
+  body .layui-layer-title {
+    background-color: #0f172a !important;
+    color: var(--accent-cyan) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  body .layui-layer-content {
+    color: var(--text-primary) !important;
+  }
+
+  body .layui-layer-btn {
+    background-color: #0f172a !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* ==================== 修复固定列错位 & 白色背景问题 (关键) ==================== */
+  /* 强制统一行高 */
+  #project-page-root .layui-table-cell {
+    height: 50px !important;
+    line-height: 50px !important;
+    padding: 0 15px !important;
+    display: flex;
+    align-items: center;
+    color: var(--text-primary) !important;
+    /* 强制文字颜色 */
+  }
+
+  /* 修复首列复选框/序号无法垂直居中的问题 */
+  #project-page-root .layui-table-cell .layui-form-checkbox,
+  #project-page-root .layui-table-cell .layui-table-sort {
+    margin-top: 0 !important;
+  }
+
+  /* 操作列 flex */
+  #project-page-root .layui-table-cell .layui-btn-container {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+  }
+
+  /* 强制背景为暗色/透明，防止Layui默认白色背景覆盖 */
+  #project-page-root .layui-table-view,
+  #project-page-root .layui-table-box,
+  #project-page-root .layui-table-body,
+  #project-page-root .layui-table-header,
+  #project-page-root .layui-table {
+    background-color: transparent !important;
+  }
+
+  /* 确保外层容器有背景 */
+  #project-page-root .layui-table-view {
+    background-color: rgba(20, 20, 20, 0.6) !important;
+  }
+
+  /* 附件上传区域 */
+  #project-page-root .attachment-list {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary);
+  }
+
+  #project-page-root .attachment-item {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+  }
+
+  #project-page-root .attachment-item .file-name {
+    color: var(--text-primary) !important;
+  }
+
+  #project-page-root .attachment-empty {
+    color: #666;
+  }
+</style>
+
+<div id="project-page-root">
+  <div class="cyber-card">
+    <table class="layui-hide" id="project-table" lay-filter="project-table"></table>
   </div>
-  <form class="layui-form" lay-filter="project-form" id="project-form" action="" style="padding: 15px; display: none">
+
+  <!-- 隐藏的表单 -->
+  <form class="layui-form" lay-filter="project-form" id="project-form" action=""
+    style="padding: 20px 30px 0 0; display: none; background-color: #1e293b;">
     <div class="layui-form-item">
-      <label class="layui-form-label">ID</label>
+      <label class="layui-form-label" style="color: var(--text-secondary);">ID</label>
       <div class="layui-input-block">
-        <input type="text" name="id" value="0" lay-verify="required" autocomplete="off" class="layui-input" disabled />
+        <input type="text" name="id" value="0" lay-verify="required" autocomplete="off" class="layui-input" disabled
+          style="background-color: rgba(255,255,255,0.05) !important; color: #666 !important;" />
       </div>
     </div>
     <div class="layui-form-item">
-      <label class="layui-form-label">项目名称</label>
+      <label class="layui-form-label" style="color: var(--text-secondary);">项目名称</label>
       <div class="layui-input-block">
         <input type="text" name="project_name" placeholder="请输入项目名称" lay-verify="required" autocomplete="off"
           class="layui-input" />
       </div>
     </div>
     <div class="layui-form-item">
-      <label class="layui-form-label">项目全称</label>
+      <label class="layui-form-label" style="color: var(--text-secondary);">项目全称</label>
       <div class="layui-input-block">
         <input type="text" name="project_full_name" placeholder="请输入项目全称" autocomplete="off" class="layui-input" />
       </div>
     </div>
     <div class="layui-form-item">
-      <label class="layui-form-label">项目规模</label>
+      <label class="layui-form-label" style="color: var(--text-secondary);">项目规模</label>
       <div class="layui-input-block">
         <input type="text" name="project_scale" placeholder="请输入项目规模" autocomplete="off" class="layui-input" />
       </div>
     </div>
     <div class="layui-form-item">
-      <label class="layui-form-label">开始日期</label>
+      <label class="layui-form-label" style="color: var(--text-secondary);">开始日期</label>
       <div class="layui-input-block">
         <input type="text" name="start_date" id="form_start_date" placeholder="yyyy-MM-dd" autocomplete="off"
           class="layui-input" />
       </div>
     </div>
     <div class="layui-form-item">
-      <label class="layui-form-label">结束日期</label>
+      <label class="layui-form-label" style="color: var(--text-secondary);">结束日期</label>
       <div class="layui-input-block">
         <input type="text" name="end_date" id="form_end_date" placeholder="yyyy-MM-dd" autocomplete="off"
           class="layui-input" />
       </div>
     </div>
     <div class="layui-form-item">
-      <label class="layui-form-label">项目状态</label>
+      <label class="layui-form-label" style="color: var(--text-secondary);">项目状态</label>
       <div class="layui-input-block">
-        <select name="project_status" lay-verify="">
+        <select name="project_status">
           <option value="">请选择项目状态</option>
           <option value="进行中">进行中</option>
           <option value="已完成">已完成</option>
@@ -202,18 +357,19 @@
       </div>
     </div>
     <div class="layui-form-item">
-      <label class="layui-form-label">项目金额</label>
+      <label class="layui-form-label" style="color: var(--text-secondary);">项目金额</label>
       <div class="layui-input-block">
         <input type="number" name="project_amount" placeholder="请输入项目金额" step="0.01" autocomplete="off"
           class="layui-input" />
       </div>
     </div>
     <div class="layui-form-item">
-      <label class="layui-form-label">附件</label>
+      <label class="layui-form-label" style="color: var(--text-secondary);">附件</label>
       <div class="layui-input-block">
         <div class="attachment-section">
           <div class="attachment-upload">
-            <button type="button" class="layui-btn layui-btn-normal" id="upload-attachment">
+            <button type="button" class="layui-btn layui-btn-normal" id="upload-attachment"
+              style="background-color: var(--accent-cyan); color: #000;">
               <i class="layui-icon layui-icon-upload"></i> 添加附件
             </button>
           </div>
@@ -221,27 +377,32 @@
             <div class="attachment-empty">暂无附件</div>
           </div>
         </div>
-        <!-- 隐藏字段，用于存储附件JSON数据 -->
         <input type="hidden" name="attachments" id="attachments-data" />
       </div>
     </div>
     <div class="layui-form-item">
       <div class="layui-input-block">
-        <button type="submit" class="layui-btn" lay-submit lay-filter="project-form-btn">
+        <button type="submit" class="layui-btn" lay-submit lay-filter="project-form-btn"
+          style="background-color: var(--accent-cyan); color: #000;">
           立即提交
         </button>
-        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        <button type="reset" class="layui-btn layui-btn-primary" style="border-color: #666; color: #ccc;">重置</button>
       </div>
     </div>
   </form>
-  <script type="text/html" id="project-toolbar">
+</div>
+
+<!-- 头部工具栏模板 -->
+<script type="text/html" id="project-toolbar">
       <div class="layui-btn-container">
-        <button class="layui-btn layui-btn-sm" lay-event="project-toolbar-add">
-          新增项目
+        <button class="layui-btn layui-btn-sm layui-btn-primary" lay-event="project-toolbar-add">
+          <i class="layui-icon layui-icon-add-1"></i> 新增项目
         </button>
       </div>
     </script>
-  <script type="text/html" id="project-tool">
+
+<!-- 行工具栏模板 -->
+<script type="text/html" id="project-tool">
       <div class="layui-btn-container">
         <button
           class="layui-btn layui-btn-sm layui-bg-blue"
@@ -257,836 +418,267 @@
         </button>
       </div>
     </script>
-  <script>
-    layui.use(["table", "form", "layer", "laydate", "upload"], function () {
-      var table = layui.table;
-      var form = layui.form;
-      var layer = layui.layer;
-      var laydate = layui.laydate;
-      var upload = layui.upload;
-      var $ = layui.$;
 
-      // 存储筛选条件
-      var filterParams = {};
+<script>
+  layui.use(["table", "form", "layer", "laydate", "upload"], function () {
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+    var laydate = layui.laydate;
+    var upload = layui.upload;
+    var $ = layui.$;
 
-      // 存储附件列表
-      var attachmentList = [];
-      // 附件流水号计数器
-      var attachmentSequence = 0;
-      // 当前项目名称（用于生成附件编号）
-      var currentProjectName = '';
+    var filterParams = {};
+    var attachmentList = [];
+    var attachmentSequence = 0;
+    var currentProjectName = '';
 
-      // 初始化日期选择器
-      laydate.render({
-        elem: "#form_start_date",
-        type: "date"
-      });
-      laydate.render({
-        elem: "#form_end_date",
-        type: "date"
-      });
+    laydate.render({ elem: "#form_start_date", type: "date" });
+    laydate.render({ elem: "#form_end_date", type: "date" });
 
-      // 格式化文件大小
-      function formatFileSize(bytes) {
-        if (bytes === 0) return '0 B';
-        var k = 1024;
-        var sizes = ['B', 'KB', 'MB', 'GB'];
-        var i = Math.floor(Math.log(bytes) / Math.log(k));
-        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-      }
+    // 格式化文件大小
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 B';
+      var k = 1024;
+      var sizes = ['B', 'KB', 'MB', 'GB'];
+      var i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
 
-      // 获取文件图标
-      function getFileIcon(fileName) {
-        var ext = fileName.split('.').pop().toLowerCase();
-        var iconMap = {
-          'pdf': 'layui-icon-file-pdf',
-          'doc': 'layui-icon-file',
-          'docx': 'layui-icon-file',
-          'xls': 'layui-icon-file-excel',
-          'xlsx': 'layui-icon-file-excel',
-          'ppt': 'layui-icon-file',
-          'pptx': 'layui-icon-file',
-          'jpg': 'layui-icon-picture',
-          'jpeg': 'layui-icon-picture',
-          'png': 'layui-icon-picture',
-          'gif': 'layui-icon-picture',
-          'zip': 'layui-icon-file',
-          'rar': 'layui-icon-file',
-          'txt': 'layui-icon-file',
-          'dwg': 'layui-icon-file',
-          'dgn': 'layui-icon-file',
-          'dwf': 'layui-icon-file',
-          'dxf': 'layui-icon-file'
-        };
-        return iconMap[ext] || 'layui-icon-file';
-      }
+    function getFileIcon(fileName) {
+      var ext = fileName.split('.').pop().toLowerCase();
+      var iconMap = {
+        'pdf': 'layui-icon-file-pdf', 'doc': 'layui-icon-file', 'docx': 'layui-icon-file',
+        'xls': 'layui-icon-file-excel', 'xlsx': 'layui-icon-file-excel', 'ppt': 'layui-icon-file',
+        'jpg': 'layui-icon-picture', 'png': 'layui-icon-picture', 'zip': 'layui-icon-file'
+      };
+      return iconMap[ext] || 'layui-icon-file';
+    }
 
-      // 生成附件编号：项目名称 + F + 三位流水号
-      function generateAttachmentCode(projectName) {
-        if (!projectName) {
-          // 如果项目名称还未设置，返回临时编号
-          attachmentSequence++;
-          var sequenceStr = String(attachmentSequence).padStart(3, '0');
-          return 'TEMP' + 'F' + sequenceStr;
-        }
+    function generateAttachmentCode(projectName) {
+      if (!projectName) {
         attachmentSequence++;
-        var sequenceStr = String(attachmentSequence).padStart(3, '0');
-        // 使用项目名称的前几个字符作为前缀（最多10个字符）
-        var prefix = projectName.substring(0, 10).replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
-        return prefix + 'F' + sequenceStr;
+        return 'TEMP' + 'F' + String(attachmentSequence).padStart(3, '0');
       }
+      attachmentSequence++;
+      var prefix = projectName.substring(0, 10).replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
+      return prefix + 'F' + String(attachmentSequence).padStart(3, '0');
+    }
 
-      // 渲染附件列表
-      function renderAttachmentList() {
-        var $list = $('#attachment-list');
-        if (attachmentList.length === 0) {
-          $list.html('<div class="attachment-empty">暂无附件</div>');
-          return;
-        }
-        var html = '';
-        attachmentList.forEach(function (file, index) {
-          html += '<div class="attachment-item" data-index="' + index + '">';
-          html += '<i class="layui-icon ' + getFileIcon(file.name) + ' file-icon"></i>';
-          html += '<div class="file-info">';
-          // 显示附件编号
-          if (file.code) {
-            html += '<div class="file-code">附件编号：' + file.code + '</div>';
-          }
-          html += '<div class="file-name">' + (file.name || file.filename || '未知文件') + '</div>';
-          html += '<div class="file-size">' + formatFileSize(file.size || 0) + '</div>';
-          html += '</div>';
-          html += '<div class="file-actions">';
-          if (file.url) {
-            html += '<span class="file-download" onclick="downloadAttachment(' + index + ')">下载</span>';
-          }
-          html += '<span class="file-delete" onclick="deleteAttachment(' + index + ')">删除</span>';
-          html += '</div>';
-          html += '</div>';
-        });
-        $list.html(html);
+    function renderAttachmentList() {
+      var $list = $('#attachment-list');
+      if (attachmentList.length === 0) {
+        $list.html('<div class="attachment-empty">暂无附件</div>');
+        return;
       }
+      var html = '';
+      attachmentList.forEach(function (file, index) {
+        html += '<div class="attachment-item">';
+        html += '<i class="layui-icon ' + getFileIcon(file.name) + ' file-icon" style="color:var(--accent-cyan); font-size: 20px; margin-right: 10px;"></i>';
+        html += '<div class="file-info" style="flex:1;">';
+        if (file.code) html += '<div class="file-code" style="color: #2196f3; font-size:12px; font-weight:bold;">' + file.code + '</div>';
+        html += '<div class="file-name" style="color:var(--text-primary); margin-bottom: 2px;">' + (file.name || file.filename) + '</div>';
+        html += '<div class="file-size" style="color: #666; font-size:12px;">' + formatFileSize(file.size || 0) + '</div>';
+        html += '</div>';
+        html += '<div class="file-actions" style="margin-left: 10px; display:flex; gap:10px;">';
+        if (file.url) html += '<span style="color:#2196f3; cursor:pointer;" onclick="downloadAttachment(' + index + ')">下载</span>';
+        html += '<span style="color:#f44336; cursor:pointer;" onclick="deleteAttachment(' + index + ')">删除</span>';
+        html += '</div></div>';
+      });
+      $list.html(html);
+    }
 
-      // 删除附件
-      window.deleteAttachment = function (index) {
-        layer.confirm('确定要删除这个附件吗？', { icon: 3, title: '提示' }, function (confirmIndex) {
-          var file = attachmentList[index];
-          // 如果附件已保存到数据库，调用API删除
-          if (file.id) {
-            $.ajax({
-              url: window.location.origin + `/api/v1/attachment/${file.id}`,
-              type: "DELETE",
-              headers: {
-                Authorization: "Bearer " + localStorage.getItem("access_token"),
-              },
-              success: function (res) {
-                if (res.code === 0) {
-                  attachmentList.splice(index, 1);
-                  renderAttachmentList();
-                  updateAttachmentsData();
-                  layer.msg('删除成功', { icon: 1 });
-                } else {
-                  layer.msg(res.msg || '删除失败', { icon: 2 });
-                }
-                layer.close(confirmIndex);
-              },
-              error: function () {
-                layer.msg('删除失败，请重试', { icon: 2 });
-                layer.close(confirmIndex);
-              }
-            });
-          } else {
-            // 如果附件还未保存，直接从列表中移除
-            attachmentList.splice(index, 1);
-            renderAttachmentList();
-            updateAttachmentsData();
-            layer.close(confirmIndex);
-          }
-        });
-      };
-
-      // 下载附件
-      window.downloadAttachment = function (index) {
+    window.deleteAttachment = function (index) {
+      layer.confirm('确定删除该附件？', { icon: 3, title: '提示', skin: 'layui-layer-molv' }, function (idx) {
         var file = attachmentList[index];
-        if (file.url) {
-          window.open(file.url, '_blank');
-        } else if (file.blob) {
-          var url = URL.createObjectURL(file.blob);
-          var a = document.createElement('a');
-          a.href = url;
-          a.download = file.name;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }
-      };
-
-      // 更新隐藏字段中的附件数据
-      function updateAttachmentsData() {
-        var attachmentsData = attachmentList.map(function (file) {
-          return {
-            id: file.id || null,
-            code: file.code || '',
-            name: file.name,
-            url: file.url || '',
-            size: file.size || 0,
-            filename: file.filename || file.name
-          };
-        });
-        $('#attachments-data').val(JSON.stringify(attachmentsData));
-      }
-
-      // 初始化文件上传
-      upload.render({
-        elem: '#upload-attachment',
-        url: window.location.origin + '/api/v1/upload/',
-        accept: 'file',
-        multiple: true,
-        headers: {
-          Authorization: "Bearer " + localStorage.getItem("access_token")
-        },
-        data: function () {
-          // 动态获取项目ID和附件编号
-          var projectId = $('#project-form input[name="id"]').val();
-          projectId = (projectId && projectId != '0') ? projectId : null;
-          var projectName = $('#project-form input[name="project_name"]').val() || currentProjectName;
-          var attachmentCode = generateAttachmentCode(projectName);
-          return {
-            project_id: projectId,
-            attachment_code: attachmentCode
-          };
-        },
-        before: function (obj) {
-          // 预读本地文件
-          obj.preview(function (index, file, result) {
-            // 获取项目名称用于生成附件编号
-            var projectName = $('#project-form input[name="project_name"]').val() || currentProjectName;
-            // 生成附件编号
-            var attachmentCode = generateAttachmentCode(projectName);
-
-            // 添加到附件列表
-            attachmentList.push({
-              code: attachmentCode,
-              name: file.name,
-              size: file.size,
-              blob: file,
-              url: null,
-              filename: null
-            });
-            renderAttachmentList();
-            updateAttachmentsData();
-          });
-        },
-        done: function (res, index, upload) {
-          // 上传成功后的回调
-          if (res.code === 0) {
-            // 更新附件URL和文件名
-            if (attachmentList[index]) {
-              attachmentList[index].id = res.data.id || null;
-              attachmentList[index].url = res.data.url || res.url;
-              attachmentList[index].filename = res.data.filename || res.data.original_filename;
-              attachmentList[index].size = res.data.size || attachmentList[index].size;
-              // 如果附件编号是临时的，更新为正式编号
-              if (attachmentList[index].code && attachmentList[index].code.startsWith('TEMP')) {
-                var projectName = $('#project-form input[name="project_name"]').val() || currentProjectName;
-                if (projectName) {
-                  attachmentList[index].code = generateAttachmentCode(projectName);
-                }
-              }
+        if (file.id) {
+          $.ajax({
+            url: `/api/v1/attachment/${file.id}`, type: "DELETE",
+            headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+            success: function (res) {
+              if (res.code === 0) {
+                attachmentList.splice(index, 1);
+                renderAttachmentList();
+                updateAttachmentsData();
+                layer.msg('删除成功', { icon: 1 });
+              } else layer.msg(res.msg, { icon: 2 });
+              layer.close(idx);
             }
-            renderAttachmentList();
-            updateAttachmentsData();
-            layer.msg('上传成功', { icon: 1 });
-          } else {
-            layer.msg(res.msg || '上传失败', { icon: 2 });
-            // 移除失败的附件
-            attachmentList.splice(index, 1);
-            renderAttachmentList();
-            updateAttachmentsData();
-          }
-        },
-        error: function (index, upload) {
-          // 上传失败的回调
-          layer.msg('上传失败，请重试', { icon: 2 });
+          });
+        } else {
           attachmentList.splice(index, 1);
           renderAttachmentList();
           updateAttachmentsData();
+          layer.close(idx);
         }
       });
+    };
 
-      // 渲染表格
-      table.render({
-        elem: "#project-table",
-        id: "project-table",
-        url: window.location.origin + "/api/v1/project/",
-        height: "full-35",
-        toolbar: "#project-toolbar",
-        page: true,
-        headers: {
-          Authorization: "Bearer " + localStorage.getItem("access_token"),
-        },
-        defaultToolbar: ['filter', 'exports', 'print'],
-        where: filterParams,
-        cols: [
-          [
-            { field: "id", title: "ID", sort: true },
-            {
-              field: "project_name",
-              title: "项目名称",
-              edit: 'text'
-            },
-            {
-              field: "project_full_name",
-              title: "项目全称",
-              edit: 'text'
-            },
-            {
-              field: "project_scale",
-              title: "项目规模",
-              edit: 'text'
-            },
-            {
-              field: "start_date",
-              title: "开始日期"
-            },
-            {
-              field: "end_date",
-              title: "结束日期"
-            },
-            {
-              field: "project_status",
-              title: "项目状态"
-            },
-            {
-              field: "project_amount",
-              title: "项目金额",
-              edit: 'text'
-            },
-            {
-              field: "create_at",
-              title: "创建时间",
-              sort: true
-            },
-            {
-              title: "操作",
-              align: "center",
-              toolbar: "#project-tool",
-              minWidth: 200
-            },
-          ],
-        ],
-        done: function (res, curr, count) {
-          // 表格渲染完成后，在表头添加筛选输入框
-          addFilterInputs();
-          // 多次同步列宽，确保完全同步
-          setTimeout(function () {
-            syncColumnWidths();
-            setTimeout(function () {
-              syncColumnWidths();
-            }, 100);
-          }, 200);
-        },
-        parseData: function (res) {
-          return {
-            code: res.code,
-            msg: res.msg,
-            count: res.count,
-            data: res.data,
-          };
-        }
+    window.downloadAttachment = function (index) {
+      var file = attachmentList[index];
+      if (file.url) window.open(file.url, '_blank');
+    };
+
+    function updateAttachmentsData() {
+      var attachmentsData = attachmentList.map(function (file) {
+        return { id: file.id || null, code: file.code || '', name: file.name, url: file.url || '', size: file.size || 0, filename: file.filename || file.name };
       });
+      $('#attachments-data').val(JSON.stringify(attachmentsData));
+    }
 
-      // 列宽配置 - 可以根据需要修改各列的初始宽度（单位：px）
-      var columnWidths = {
-        'ID': 60,                    // ID列
-        '项目名称': 150,             // 项目名称
-        '项目全称': 200,             // 项目全称
-        '项目规模': 120,             // 项目规模
-        '开始日期': 120,             // 开始日期
-        '结束日期': 120,             // 结束日期
-        '项目状态': 100,             // 项目状态
-        '项目金额': 120,             // 项目金额
-        '创建时间': 180              // 创建时间
-      };
-
-      // 根据表头标题获取列宽配置
-      function getColumnWidthByTitle($th) {
-        // 从 .layui-table-cell 中获取纯文本，排除筛选输入框
-        var $cell = $th.find('.layui-table-cell');
-        var title;
-        if ($cell.length) {
-          // 克隆元素，移除所有子元素（包括筛选输入框），然后获取文本
-          title = $cell.clone().children().remove().end().text().trim();
-        } else {
-          // 如果没有 .layui-table-cell，直接获取文本，但排除筛选输入框
-          title = $th.clone().find('.filter-input-wrapper').remove().end().text().trim();
-        }
-
-        // 调试输出（可以在浏览器控制台查看）
-        // console.log('列标题:', title, '配置宽度:', columnWidths[title]);
-
-        return columnWidths[title] || null; // 返回配置的宽度，如果没有配置则返回null
-      }
-
-      // 同步表头和表体的列宽 - 根据内容自动调整
-      function syncColumnWidths() {
-        var $headerTable = $('.layui-table-view .layui-table-header table');
-        var $bodyTable = $('.layui-table-view .layui-table-body table');
-
-        if ($headerTable.length && $bodyTable.length) {
-          var $headerThs = $headerTable.find('thead tr th');
-          var $headerCols = $headerTable.find('colgroup col');
-          var $bodyCols = $bodyTable.find('colgroup col');
-
-          // 确保 colgroup 存在
-          if ($headerCols.length === 0) {
-            var headerColgroup = $('<colgroup></colgroup>');
-            $headerThs.each(function () {
-              headerColgroup.append('<col>');
-            });
-            $headerTable.prepend(headerColgroup);
-            $headerCols = $headerTable.find('colgroup col');
-          }
-
-          if ($bodyCols.length === 0) {
-            var bodyColgroup = $('<colgroup></colgroup>');
-            $headerThs.each(function () {
-              bodyColgroup.append('<col>');
-            });
-            $bodyTable.prepend(bodyColgroup);
-            $bodyCols = $bodyTable.find('colgroup col');
-          }
-
-          // 根据内容自动计算每列的最大宽度
-          $headerThs.each(function (index) {
-            var $headerTh = $(this);
-            var configuredWidth = getColumnWidthByTitle($headerTh); // 获取配置的宽度
-            var maxWidth;
-
-            if (configuredWidth) {
-              // 如果配置了宽度，优先使用配置的宽度
-              maxWidth = configuredWidth;
-            } else {
-              // 如果没有配置，则根据内容自动计算
-              maxWidth = $headerTh.outerWidth() || $headerTh.width() || 0;
-
-              // 遍历表体中的所有行，找出该列的最大宽度
-              $bodyTable.find('tbody tr').each(function () {
-                var $td = $(this).find('td').eq(index);
-                if ($td.length) {
-                  // 临时移除宽度限制，获取实际内容宽度
-                  var originalWidth = $td.css('width');
-                  $td.css('width', 'auto');
-                  var contentWidth = $td.outerWidth() || $td.width() || 0;
-                  $td.css('width', originalWidth);
-
-                  // 加上padding，确保有足够空间
-                  var padding = parseInt($td.css('padding-left')) + parseInt($td.css('padding-right')) || 30;
-                  var totalWidth = contentWidth + padding;
-
-                  if (totalWidth > maxWidth) {
-                    maxWidth = totalWidth;
-                  }
-                }
-              });
-            }
-
-            // 特殊处理:跳过"操作"列的宽度设置,让其自适应(弹性列)
-            var titleText = $headerTh.text().trim();
-            if (titleText.indexOf('操作') !== -1) {
-              return; // 直接跳过此列的设置
-            }
-
-            // 设置列宽（不设置min-width和max-width，允许自动调整）
-            if ($headerCols.length > index) {
-              $headerCols.eq(index).css('width', maxWidth + 'px').attr('width', maxWidth);
-            }
-            if ($bodyCols.length > index) {
-              $bodyCols.eq(index).css('width', maxWidth + 'px').attr('width', maxWidth);
-            }
-
-            // 设置表头和表体的宽度
-            $headerTh.css('width', maxWidth + 'px');
-            $bodyTable.find('tbody tr td').eq(index).css('width', maxWidth + 'px');
-          });
-
-          // 使用auto布局，让表格根据内容自动调整
-          $headerTable.css({
-            'table-layout': 'auto',
-            'width': '100%'
-          });
-          $bodyTable.css({
-            'table-layout': 'auto',
-            'width': '100%'
-          });
-        }
-      }
-
-      // 统一的表格重新加载函数，确保筛选输入框不消失
-      function reloadTable(options) {
-        options = options || {};
-        var defaultOptions = {
-          where: filterParams,
-          done: function () {
-            addFilterInputs();
-            setTimeout(function () {
-              syncColumnWidths();
-            }, 100);
-          }
-        };
-        // 合并选项
-        var finalOptions = $.extend({}, defaultOptions, options);
-        table.reload('project-table', finalOptions);
-      }
-
-      // 在表头添加筛选输入框
-      function addFilterInputs() {
-        // 延迟执行，确保表格DOM已渲染
-        setTimeout(function () {
-          var filterConfig = {
-            'project_name': {
-              type: 'text',
-              placeholder: '筛选项目名称',
-              source: window.location.origin + "/api/v1/project/",
-              labelField: 'project_name',
-              valueField: 'project_name',
-              unique: true
-            },
-            'project_full_name': {
-              type: 'text',
-              placeholder: '筛选项目全称',
-              source: window.location.origin + "/api/v1/project/",
-              labelField: 'project_full_name',
-              valueField: 'project_full_name',
-              unique: true
-            },
-            'project_scale': {
-              type: 'text',
-              placeholder: '筛选项目规模',
-              source: window.location.origin + "/api/v1/project/",
-              labelField: 'project_scale',
-              valueField: 'project_scale',
-              unique: true
-            },
-            'project_status': {
-              type: 'text',
-              placeholder: '筛选项目状态',
-              source: window.location.origin + "/api/v1/project/",
-              labelField: 'project_status',
-              valueField: 'project_status',
-              unique: true
-            },
-            'project_amount': { type: 'text', placeholder: '筛选项目金额' }
-          };
-
-          Object.keys(filterConfig).forEach(function (field) {
-            var $view = $('.layui-table-view[lay-id="project-table"]');
-            var $th = $view.find('th[data-field="' + field + '"]');
-            if ($th.length && !$th.find('.filter-input').length) {
-              var config = filterConfig[field];
-              var $filterDiv = $('<div class="filter-input-wrapper" style="margin-top: 5px;"></div>');
-              var $input;
-
-              // 检查是否需要 Autocomplete (Source)
-              var listId = config.source ? 'list-' + field : null;
-              var listAttr = listId ? ' list="' + listId + '"' : '';
-
-              $input = $('<input type="' + config.type + '" class="layui-input filter-input" placeholder="' + config.placeholder + '" data-field="' + field + '"' + listAttr + ' style="height: 28px; font-size: 12px; padding: 0 8px;">');
-              // 如果有已保存的筛选值，恢复它
-              if (filterParams[field]) {
-                $input.val(filterParams[field]);
-              }
-              $filterDiv.append($input);
-
-              // 如果有 source，添加 datalist 和事件
-              if (config.source) {
-                var $datalist = $('<datalist id="' + listId + '"></datalist>');
-                $filterDiv.append($datalist);
-
-                // 绑定 focus 事件加载数据
-                $input.on('focus', function () {
-                  var $thisDatalist = $('#' + listId);
-                  // 如果已经有数据，不再请求
-                  if ($thisDatalist.children().length > 0) return;
-
-                  $.ajax({
-                    url: config.source,
-                    type: 'GET',
-                    data: { limit: 1000 }, // 获取足够多的数据
-                    headers: {
-                      Authorization: "Bearer " + localStorage.getItem("access_token"),
-                    },
-                    success: function (res) {
-                      if (res.code === 0 && res.data) {
-                        $thisDatalist.empty();
-                        var items = res.data;
-                        var validValues = new Set();
-
-                        items.forEach(function (item) {
-                          var val = item[config.valueField];
-                          // 过滤空值
-                          if (val) {
-                            // 如果需要唯一性去重
-                            if (config.unique) {
-                              if (validValues.has(val)) return;
-                              validValues.add(val);
-                            }
-
-                            var label = item[config.labelField] || val;
-                            $thisDatalist.append('<option value="' + val + '">' + (label !== val ? label : '') + '</option>');
-                          }
-                        });
-                      }
-                    }
-                  });
-                });
-              }
-
-              $th.append($filterDiv);
-            }
-          });
-          // 添加筛选输入框后，重新同步列宽
-          setTimeout(function () {
-            syncColumnWidths();
-          }, 50);
-        }, 100);
-      }
-
-      // 监听项目名称变化，更新附件编号
-      $(document).on('input', '#project-form input[name="project_name"]', function () {
-        var projectName = $(this).val();
-        currentProjectName = projectName;
-        // 更新临时编号的附件
-        attachmentList.forEach(function (file, index) {
-          if (file.code && file.code.startsWith('TEMP') && projectName) {
-            file.code = generateAttachmentCode(projectName);
-          }
-        });
-        renderAttachmentList();
-        updateAttachmentsData();
-      });
-
-      // 监听表格筛选
-      table.on('toolbar(project-table)', function (obj) {
-        if (obj.event === 'project-toolbar-add') {
-          $("#project-form")[0].reset();
-          $("#project-form input[name='id']").val(0);
-          // 清空附件列表和重置计数器
-          attachmentList = [];
-          attachmentSequence = 0;
-          currentProjectName = '';
+    upload.render({
+      elem: '#upload-attachment',
+      url: window.location.origin + '/api/v1/upload/',
+      accept: 'file', multiple: true,
+      headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+      data: function () {
+        var projectId = $('#project-form input[name="id"]').val();
+        projectId = (projectId && projectId != '0') ? projectId : null;
+        var projectName = $('#project-form input[name="project_name"]').val() || currentProjectName;
+        return { project_id: projectId, attachment_code: generateAttachmentCode(projectName) };
+      },
+      before: function (obj) {
+        obj.preview(function (index, file, result) {
+          var projectName = $('#project-form input[name="project_name"]').val() || currentProjectName;
+          attachmentList.push({ code: generateAttachmentCode(projectName), name: file.name, size: file.size, blob: file, url: null, filename: null });
           renderAttachmentList();
           updateAttachmentsData();
-          form.render('select');
-          layer.open({
-            type: 1,
-            shade: false,
-            content: $("#project-form"),
-            area: ["50%", "90%"],
-          });
-          form.render($("#project-form"));
-        }
-      });
-
-      // 监听行工具事件
-      table.on('tool(project-table)', function (obj) {
-        var data = obj.data;
-        if (obj.event === 'project-tool-edit') {
-          form.val("project-form", data);
-          // 设置当前项目名称
-          currentProjectName = data.project_name || '';
-          // 重置附件计数器
-          attachmentSequence = 0;
-
-          // 加载附件数据（优先使用数据库中的附件列表）
-          attachmentList = [];
-          var attachments = null;
-
-          // 优先使用 attachments_list（从数据库加载）
-          if (data.attachments_list && Array.isArray(data.attachments_list) && data.attachments_list.length > 0) {
-            attachments = data.attachments_list;
-          } else if (data.attachments) {
-            // 兼容旧的 JSON 字符串格式
-            try {
-              attachments = JSON.parse(data.attachments);
-            } catch (e) {
-              console.error('解析附件数据失败:', e);
-            }
-          }
-
-          if (attachments && Array.isArray(attachments) && attachments.length > 0) {
-            attachmentList = attachments.map(function (file) {
-              // 确保每个附件都有完整的字段
-              return {
-                id: file.id || null,
-                code: file.code || generateAttachmentCode(currentProjectName),
-                name: file.name || file.original_filename || file.filename || '未知文件',
-                url: file.url || file.file_path || '',
-                size: file.size || file.file_size || 0,
-                filename: file.filename || file.name || ''
-              };
-            });
-            // 更新计数器到最大值
-            attachmentList.forEach(function (file) {
-              if (file.code && file.code.includes('F')) {
-                var parts = file.code.split('F');
-                if (parts.length > 1) {
-                  var seq = parseInt(parts[parts.length - 1]) || 0;
-                  if (seq > attachmentSequence) {
-                    attachmentSequence = seq;
-                  }
-                }
-              }
-            });
-          }
+        });
+      },
+      done: function (res, index, upload) {
+        if (res.code === 0 && attachmentList[index]) {
+          var item = attachmentList[index];
+          item.id = res.data.id; item.url = res.data.url; item.filename = res.data.filename;
           renderAttachmentList();
           updateAttachmentsData();
-          form.render('select');
-          layer.open({
-            type: 1,
-            shade: false,
-            content: $("#project-form"),
-            area: ["50%", "90%"],
-          });
-          form.render($("#project-form"));
-        } else if (obj.event === 'project-tool-del') {
-          layer.confirm('确定要删除这个项目吗？', { icon: 3, title: '提示' }, function (confirmIndex) {
-            $.ajax({
-              url: window.location.origin + `/api/v1/project/${data.id}`,
-              type: "DELETE",
-              contentType: "application/json",
-              headers: {
-                Authorization: "Bearer " + localStorage.getItem("access_token"),
-              },
-              success: function (res) {
-                if (res.code === 0) {
-                  layer.msg(res.msg, { icon: 1 });
-                  reloadTable();
-                } else {
-                  layer.msg(res.msg || '删除失败', { icon: 2 });
-                }
-                layer.close(confirmIndex);
-              },
-              error: function () {
-                layer.msg('删除失败，请重试', { icon: 2 });
-                layer.close(confirmIndex);
-              }
-            });
-          });
+          layer.msg('上传成功', { icon: 1 });
         }
-      });
-
-      // 监听单元格编辑
-      table.on('edit(project-table)', function (obj) {
-        var value = obj.value;
-        var data = obj.data;
-        var field = obj.field;
-
-        // 更新数据
-        var updateData = {};
-        updateData[field] = value;
-        updateData.id = data.id;
-
-        $.ajax({
-          url: window.location.origin + `/api/v1/project/${data.id}`,
-          type: "PUT",
-          contentType: "application/json",
-          data: JSON.stringify(updateData),
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("access_token"),
-          },
-          success: function (res) {
-            if (res.code === 0) {
-              layer.msg('更新成功', { icon: 1, time: 1000 });
-            } else {
-              layer.msg(res.msg || '更新失败', { icon: 2 });
-              reloadTable();
-            }
-          },
-          error: function () {
-            layer.msg('更新失败，请重试', { icon: 2 });
-            reloadTable();
-          }
-        });
-      });
-
-      // 表单提交
-      form.on("submit(project-form-btn)", function (data) {
-        var field = data.field;
-        let method, url;
-        if (field.id == 0) {
-          field.id = null;
-          method = "POST";
-          url = window.location.origin + "/api/v1/project/";
-        } else {
-          method = "PUT";
-          url = window.location.origin + `/api/v1/project/${field.id}`;
-        }
-
-        // 处理项目金额
-        if (field.project_amount) {
-          field.project_amount = parseFloat(field.project_amount) || 0;
-        }
-
-        // 处理附件数据，转换为JSON字符串
-        updateAttachmentsData();
-        field.attachments = $('#attachments-data').val() || JSON.stringify([]);
-
-        $.ajax({
-          url: url,
-          type: method,
-          contentType: "application/json",
-          data: JSON.stringify(field),
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("access_token"),
-          },
-          success: function (res) {
-            if (res.code === 0) {
-              layer.msg(res.msg, { icon: 1 });
-              layer.closeAll();
-              // 清空附件列表
-              attachmentList = [];
-              renderAttachmentList();
-              updateAttachmentsData();
-              reloadTable();
-            } else {
-              layer.msg(res.msg || '操作失败', { icon: 2 });
-            }
-          },
-          error: function () {
-            layer.msg('操作失败，请重试', { icon: 2 });
-          }
-        });
-        return false;
-      });
-
-      // 监听筛选栏输入，实现模糊搜索
-      var filterTimer = null;
-      $(document).on('input', '.filter-input', function () {
-        var $input = $(this);
-        var field = $input.data('field');
-        var value = $input.val().trim();
-
-        // 更新筛选参数
-        if (value) {
-          filterParams[field] = value;
-        } else {
-          delete filterParams[field];
-        }
-
-        // 防抖处理
-        clearTimeout(filterTimer);
-        filterTimer = setTimeout(function () {
-          // 重新加载表格数据，带上搜索参数
-          reloadTable({
-            page: {
-              curr: 1 // 重新从第 1 页开始
-            }
-          });
-        }, 1200);
-      });
+      }
     });
-  </script>
+
+    // 渲染表格
+    table.render({
+      elem: "#project-table",
+      url: window.location.origin + "/api/v1/project/",
+      height: 'full-32', // 适应容器高度
+      skin: 'nob', // 无边框风格
+      toolbar: "#project-toolbar",
+      defaultToolbar: [], // 隐藏筛选、导出、打印按钮
+      page: true,
+      headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+      where: filterParams,
+      cols: [[
+        { field: "id", title: "ID", sort: true, width: 80 },
+        { field: "project_name", title: "项目名称", edit: 'text', width: 200 },
+        { field: "project_full_name", title: "项目全称", edit: 'text', width: 250, hide: true },
+        { field: "project_scale", title: "项目规模", edit: 'text', width: 120 },
+        { field: "start_date", title: "开始日期", width: 120 },
+        { field: "end_date", title: "结束日期", width: 120 },
+        { field: "project_status", title: "项目状态", width: 100 },
+        { field: "project_amount", title: "项目金额", edit: 'text', width: 150 },
+        { field: "create_at", title: "创建时间", sort: true, width: 180, hide: true },
+        { title: "操作", align: "center", toolbar: "#project-tool", width: 180, fixed: 'right' }
+      ]],
+      done: function (res, curr, count) {
+        addFilterInputs();
+      }
+    });
+
+    // 监听工具栏
+    table.on('toolbar(project-table)', function (obj) {
+      if (obj.event === 'project-toolbar-add') {
+        form.val("project-form", {
+          "id": "0", "project_name": "", "project_full_name": "", "project_scale": "",
+          "start_date": "", "end_date": "", "project_status": "", "project_amount": "", "attachments": ""
+        });
+        attachmentList = []; attachmentSequence = 0; currentProjectName = '';
+        renderAttachmentList();
+        layer.open({
+          type: 1, title: '新增项目', content: $('#project-form'),
+          area: ['600px', '700px'], shade: 0.8
+        });
+      }
+    });
+
+    // 监听行工具
+    table.on('tool(project-table)', function (obj) {
+      if (obj.event === 'project-tool-del') {
+        layer.confirm('确定删除该项目？', { icon: 3, title: '提示', skin: 'layui-layer-molv' }, function (index) {
+          $.ajax({
+            url: `/api/v1/project/${obj.data.id}`, type: "DELETE",
+            headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+            success: function (res) {
+              layer.msg(res.msg);
+              if (res.code === 0) obj.del();
+            }
+          });
+          layer.close(index);
+        });
+      } else if (obj.event === 'project-tool-edit') {
+        form.val("project-form", obj.data);
+        currentProjectName = obj.data.project_name;
+        // 加载附件... (此处简化，需调用后端接口获取附件列表)
+        layer.open({
+          type: 1, title: '编辑项目', content: $('#project-form'),
+          area: ['600px', '700px'], shade: 0.8
+        });
+      }
+    });
+
+    // 监听表单提交
+    form.on('submit(project-form-btn)', function (data) {
+      var method = data.field.id === "0" ? "POST" : "PUT";
+      var url = method === "POST" ? "/api/v1/project/" : `/api/v1/project/${data.field.id}`;
+
+      // 处理附件数据
+      try {
+        data.field.attachments = attachmentList;
+      } catch (e) { }
+
+      $.ajax({
+        url: window.location.origin + url, type: method,
+        dataType: 'json', contentType: 'application/json',
+        data: JSON.stringify(data.field),
+        headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+        success: function (res) {
+          if (res.code === 0) {
+            layer.msg('操作成功', { icon: 1 });
+            layer.closeAll('page');
+            table.reload('project-table');
+          } else {
+            layer.msg(res.msg, { icon: 2 });
+          }
+        }
+      });
+      return false;
+    });
+
+    // 筛选输入框逻辑
+    function addFilterInputs() {
+      var $th = $('.layui-table-header th');
+      $th.each(function () {
+        var field = $(this).data('field');
+        if (['project_name', 'project_status'].includes(field)) {
+          if ($(this).find('.filter-input').length === 0) {
+            var $input = $(`<input class="filter-input" placeholder="筛选" style="width:100%; height:24px; margin-top:5px; padding:0 5px;">`);
+            $input.on('click', function (e) { e.stopPropagation(); });
+            $input.on('input', function () {
+              filterParams[field] = $(this).val();
+              // 防抖重载
+              clearTimeout(this.timer);
+              this.timer = setTimeout(() => {
+                table.reload('project-table', { where: filterParams, done: addFilterInputs });
+              }, 800);
+            });
+            $(this).append($input);
+            if (filterParams[field]) $input.val(filterParams[field]);
+          }
+        }
+      });
+    }
+
+  });
+</script>
 </body>
 
 </html>

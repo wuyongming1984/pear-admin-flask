@@ -1,3359 +1,943 @@
-<!doctype html>
-<html lang="zh-cn">
-
-<head>
-  <meta charset="utf-8" />
-  <title>订单管理</title>
-  <meta name="renderer" content="webkit" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <style>
-    /* ==================== 统一设计规范 ==================== */
-    :root {
-      /* 颜色体系 */
-      --primary-50: #eff6ff;
-      --primary-100: #dbeafe;
-      --primary-500: #3b82f6;
-      --primary-600: #2563eb;
-
-      --slate-50: #f8fafc;
-      --slate-100: #f1f5f9;
-      --slate-200: #e2e8f0;
-      --slate-300: #cbd5e1;
-      --slate-400: #94a3b8;
-      --slate-500: #64748b;
-      --slate-600: #475569;
-      --slate-800: #1e293b;
-      --slate-900: #0f172a;
-
-      --white: #ffffff;
-
-      /* 语义化颜色 */
-      --bg-body: var(--slate-100);
-      --bg-card: var(--white);
-      --text-main: var(--slate-800);
-      --text-muted: var(--slate-500);
-      --border-color: var(--slate-200);
-
-      /* 圆角规范 */
-      --radius-sm: 4px;
-      --radius-md: 8px;
-      --radius-lg: 12px;
-
-      /* 阴影规范 */
-      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-      --ring-primary: 0 0 0 3px rgba(59, 130, 246, 0.2);
-
-      /* 间距规范 */
-      --spacing-xs: 4px;
-      --spacing-sm: 8px;
-      --spacing-md: 16px;
-      --spacing-lg: 24px;
-    }
-
-    body {
-      background-color: var(--bg-body);
-      color: var(--text-main);
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* 卡片容器样式 */
-    .layui-card {
-      background: var(--bg-card);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-md);
-      border: 1px solid var(--border-color);
-      overflow: hidden;
-      margin-bottom: 0;
-    }
-
-    .layui-card-header {
-      border-bottom: 1px solid var(--border-color);
-      padding: var(--spacing-md) var(--spacing-lg);
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--slate-900);
-      background: var(--white);
-    }
-
-    .layui-card-body {
-      padding: var(--spacing-lg);
-    }
-
-    /* 按钮样式 */
-    .layui-btn {
-      border-radius: var(--radius-md);
-      font-weight: 500;
-      box-shadow: var(--shadow-sm);
-      transition: all 0.2s;
-    }
-
-    .layui-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-md);
-    }
-
-    /* 表格样式 */
-    .layui-table-view {
-      border: 1px solid var(--border-color) !important;
-      border-radius: var(--radius-md);
-    }
-
-    .layui-table-header th {
-      background-color: var(--slate-50) !important;
-      color: var(--slate-600);
-      font-weight: 600;
-      border-color: var(--border-color) !important;
-    }
-
-    .layui-table-view .layui-table td {
-      border-color: var(--border-color);
-    }
-
-    .layui-table-hover,
-    .layui-table-body tr:hover {
-      background-color: var(--primary-50) !important;
-    }
-
-    /* 筛选输入框 */
-    .filter-input {
-      border: 1px solid var(--border-color) !important;
-      border-radius: var(--radius-md);
-      background: var(--slate-50);
-      transition: all 0.2s ease;
-    }
-
-    .filter-input:hover {
-      background: var(--white);
-      border-color: var(--slate-300) !important;
-    }
-
-    .filter-input:focus {
-      background: var(--white);
-      border-color: var(--primary-500) !important;
-      box-shadow: var(--ring-primary);
-      outline: none;
-    }
-
-    /* 操作列按钮间距 */
-    .layui-table-cell .layui-btn-container {
-      display: flex;
-      gap: 5px;
-      justify-content: center;
-    }
-
-    /* 确保表头和表体的列宽一致 - 根据内容自动调整 */
-    .layui-table-view .layui-table-header table,
-    .layui-table-view .layui-table-body table {
-      width: 100% !important;
-    }
-
-    /* 如果表格有配置的列宽，使用 fixed 布局 */
-    .layui-table-view.has-configured-width .layui-table-header table,
-    .layui-table-view.has-configured-width .layui-table-body table {
-      table-layout: fixed !important;
-    }
-
-    /* 如果没有配置列宽，使用 auto 布局 */
-    .layui-table-view:not(.has-configured-width) .layui-table-header table,
-    .layui-table-view:not(.has-configured-width) .layui-table-body table {
-      table-layout: auto !important;
-    }
-
-    /* 确保列宽根据内容自动调整（仅在无配置宽度时） */
-    .layui-table-view:not(.has-configured-width) .layui-table-header table colgroup col,
-    .layui-table-view:not(.has-configured-width) .layui-table-body table colgroup col {
-      width: auto !important;
-    }
-
-    /* 有配置宽度时，colgroup col 的宽度由JavaScript通过内联样式设置，不使用CSS */
-    .layui-table-view .layui-table-header table thead th,
-    .layui-table-view .layui-table-body table tbody td {
-      padding: 5px 15px !important;
-      white-space: nowrap;
-    }
-
-    /* 确保筛选输入框不影响列宽 */
-    .filter-input-wrapper {
-      width: 100%;
-      box-sizing: border-box;
-      min-width: 0;
-    }
-
-    .filter-input {
-      width: 100%;
-      box-sizing: border-box;
-      min-width: 0;
-    }
-
-    /* 订单行样式 - 加粗加大 */
-    .layui-table-body table tbody tr:not(.pay-child-row) td {
-      font-weight: bold !important;
-      font-size: 14px !important;
-      color: #333 !important;
-    }
-
-    /* 付款单子行保持正常样式 */
-    .layui-table-body table tbody tr.pay-child-row td {
-      font-weight: normal;
-      font-size: 13px;
-    }
-
-    /* 强制表格行高一致，解决固定列错位问题 */
-    .layui-table-cell {
-      height: 32px !important;
-      line-height: 32px !important;
-    }
-
-    /* Sticky Operation Column */
-    .layui-table-view .layui-table th:last-child,
-    .layui-table-view .layui-table td:last-child {
-      position: sticky;
-      right: 0;
-      background-color: #fff;
-      z-index: 100;
-      border-left: 1px solid #e6e6e6;
-      /* Visual separator */
-      box-shadow: -1px 0 5px rgba(0, 0, 0, 0.05);
-      /* Subtle shadow */
-    }
-
-    /* Ensure header background matches */
-    .layui-table-header th:last-child {
-      background-color: #f2f2f2;
-    }
-
-    /* Ensure hover effect works on sticky column */
-    .layui-table-hover td:last-child {
-      background-color: #f2f2f2;
-    }
-
-    /* 附件上传样式 */
-    .attachment-section {
-      margin-top: 15px;
-    }
-
-    .attachment-upload {
-      margin-bottom: 15px;
-    }
-
-    .attachment-list {
-      border: 1px solid #e6e6e6;
-      border-radius: 2px;
-      padding: 10px;
-      min-height: 100px;
-      background: #fafafa;
-    }
-
-    .attachment-item {
-      display: flex;
-      align-items: center;
-      padding: 10px;
-      margin-bottom: 10px;
-      background: #fff;
-      border: 1px solid #e6e6e6;
-      border-radius: 2px;
-    }
-
-    .attachment-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .attachment-item .file-icon {
-      margin-right: 10px;
-      font-size: 20px;
-      color: #1E9FFF;
-    }
-
-    .attachment-item .file-info {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .attachment-item .file-code {
-      font-size: 12px;
-      color: #1E9FFF;
-      font-weight: bold;
-      margin-bottom: 3px;
-    }
-
-    .attachment-item .file-name {
-      font-size: 14px;
-      color: #333;
-      margin-bottom: 3px;
-    }
-
-    .attachment-item .file-size {
-      font-size: 12px;
-      color: #999;
-    }
-
-    .attachment-item .file-actions {
-      display: flex;
-      gap: 10px;
-    }
-
-    .attachment-item .file-download,
-    .attachment-item .file-delete {
-      cursor: pointer;
-      color: #1E9FFF;
-      font-size: 14px;
-    }
-
-    .attachment-item .file-delete {
-      color: #ff5722;
-    }
-
-    .attachment-item .file-download:hover {
-      color: #009688;
-    }
-
-    .attachment-item .file-delete:hover {
-      color: #f56c6c;
-    }
-
-    .attachment-empty {
-      text-align: center;
-      color: #999;
-      padding: 20px;
-      font-size: 14px;
-    }
-
-    /* 订单表单样式 */
-    .order-form-container {
-      padding: var(--spacing-lg);
-      background: var(--bg-card);
-      max-width: 1200px;
-      margin: 0 auto;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-md);
-    }
-
-    #order-form-wrapper {
-      display: none;
-      padding: 20px 0;
-    }
-
-    #order-form-wrapper .order-form-container {
-      display: block !important;
-    }
-
-    .form-title {
-      text-align: center;
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 30px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid var(--border-color);
-      color: var(--slate-900);
-    }
-
-    .order-details-section {
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: var(--spacing-md);
-      margin-bottom: 20px;
-      background: var(--slate-50);
-    }
-
-    .order-details-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px 30px;
-    }
-
-    .order-details-item {
-      display: flex;
-      align-items: center;
-    }
-
-    .order-details-item label {
-      min-width: 100px;
-      text-align: right;
-      margin-right: 10px;
-      font-weight: normal;
-    }
-
-    .order-details-item input,
-    .order-details-item select {
-      flex: 1;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      padding: 5px 8px;
-      height: 36px;
-      line-height: 36px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .order-details-item input:focus,
-    .order-details-item select:focus {
-      border-color: var(--primary-500);
-      box-shadow: var(--ring-primary);
-      outline: none;
-    }
-
-    .section-title {
-      text-align: center;
-      font-size: 18px;
-      font-weight: 600;
-      margin: 20px 0 15px 0;
-      padding: 10px 0;
-      border-top: none;
-      border-bottom: 2px solid var(--border-color);
-      color: var(--slate-800);
-    }
-
-    .material-details-section {
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: var(--spacing-md);
-      margin-bottom: 20px;
-      background: var(--slate-50);
-    }
-
-    .material-description {
-      display: flex;
-      align-items: flex-start;
-      margin-bottom: 15px;
-    }
-
-    .material-description label {
-      min-width: 100px;
-      text-align: right;
-      margin-right: 10px;
-      padding-top: 5px;
-    }
-
-    .material-description textarea {
-      flex: 1;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      padding: 10px;
-      min-height: 200px;
-      resize: vertical;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .material-description textarea:focus {
-      border-color: var(--primary-500);
-      box-shadow: var(--ring-primary);
-      outline: none;
-    }
-
-    .financial-section {
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: var(--spacing-md);
-      margin-bottom: 20px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      background: var(--slate-50);
-    }
-
-    .financial-item {
-      display: flex;
-      align-items: center;
-    }
-
-    .financial-item label {
-      min-width: 120px;
-      text-align: right;
-      margin-right: 10px;
-    }
-
-    .financial-item input {
-      flex: 1;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      padding: 5px 8px;
-      height: 36px;
-      line-height: 36px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .financial-item input:focus {
-      border-color: var(--primary-500);
-      box-shadow: var(--ring-primary);
-      outline: none;
-    }
-
-    .responsible-section {
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: var(--spacing-md);
-      margin-bottom: 20px;
-      background: var(--slate-50);
-    }
-
-    .responsible-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px 30px;
-      margin-top: 15px;
-    }
-
-    .responsible-item {
-      display: flex;
-      align-items: center;
-    }
-
-    .responsible-item label {
-      min-width: 120px;
-      text-align: right;
-      margin-right: 10px;
-    }
-
-    .responsible-item input {
-      flex: 1;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      padding: 5px 8px;
-      height: 36px;
-      line-height: 36px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .responsible-item input:focus {
-      border-color: var(--primary-500);
-      box-shadow: var(--ring-primary);
-      outline: none;
-    }
-
-    .form-actions {
-      margin-top: 30px;
-      padding: 20px 0;
-      text-align: center;
-      border-top: 1px solid var(--border-color);
-    }
-
-    .form-actions .layui-btn {
-      margin: 0 10px;
-      min-width: 100px;
-      border-radius: var(--radius-md);
-    }
-
-    /* ==================== 移动端适配 ==================== */
-    @media screen and (max-width: 768px) {
-
-      /* 页面内边距 */
-      body>div[style*="padding: 16px"] {
-        padding: 8px !important;
-      }
-
-      /* 卡片内边距 */
-      .layui-card-body {
-        padding: var(--spacing-sm) !important;
-      }
-
-      /* 表格卡片化 - 每行变成一个卡片 */
-      .layui-table-view {
-        border: none !important;
-      }
-
-      .layui-table-header {
-        display: none !important;
-        /* 隐藏表头 */
-      }
-
-      .layui-table-body tbody tr {
-        display: block !important;
-        margin-bottom: 12px;
-        padding: 12px;
-        background: #fff;
-        border-radius: var(--radius-md);
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--border-color);
-      }
-
-      .layui-table-body tbody td {
-        display: block !important;
-        text-align: left !important;
-        padding: 6px 0 !important;
-        border: none !important;
-      }
-
-      .layui-table-body tbody td::before {
-        content: attr(data-field);
-        display: inline-block;
-        width: 80px;
-        font-weight: 600;
-        color: var(--slate-500);
-        font-size: 12px;
-      }
-
-      /* 隐藏移动端不重要的列 */
-      .layui-table-body tbody td[data-field="id"],
-      .layui-table-body tbody td[data-field="supplier_name"],
-      .layui-table-body tbody td[data-field="supplier_contact_person"],
-      .layui-table-body tbody td[data-field="material_details"],
-      .layui-table-body tbody td[data-field="pays_list"] {
-        display: none !important;
-      }
-
-      /* 操作列全宽 */
-      .layui-table-body tbody td[data-field="operate"],
-      .layui-table-body tbody td:last-child {
-        width: 100% !important;
-        padding-top: 10px !important;
-        margin-top: 8px;
-        border-top: 1px solid var(--border-color) !important;
-      }
-
-      .layui-table-body tbody td:last-child::before {
-        display: none;
-      }
-
-      /* 操作按钮横向排列 */
-      .layui-btn-container {
-        display: flex !important;
-        flex-wrap: wrap;
-        gap: 8px;
-        justify-content: flex-start !important;
-      }
-
-      .layui-btn-container .layui-btn {
-        margin: 0 !important;
-        flex: 1;
-        min-width: 70px;
-      }
-
-      /* 工具栏 */
-      .layui-table-tool {
-        padding: 8px !important;
-      }
-
-      /* 分页 */
-      .layui-laypage {
-        padding: 10px !important;
-      }
-
-      .layui-laypage a,
-      .layui-laypage span {
-        margin: 2px !important;
-        padding: 4px 8px !important;
-      }
-
-      /* 表单容器 */
-      .order-form-container {
-        padding: var(--spacing-md) !important;
-      }
-
-      /* 表单标题 */
-      .form-title {
-        font-size: 18px !important;
-      }
-
-      /* 表单网格 - 单列 */
-      .order-details-grid,
-      .responsible-grid {
-        grid-template-columns: 1fr !important;
-        gap: 12px !important;
-      }
-
-      /* 表单项标签 */
-      .order-details-item,
-      .responsible-item {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-      }
-
-      .order-details-item label,
-      .responsible-item label {
-        min-width: auto !important;
-        text-align: left !important;
-        margin-bottom: 6px;
-        margin-right: 0 !important;
-      }
-
-      .order-details-item input,
-      .order-details-item select,
-      .responsible-item input {
-        width: 100% !important;
-      }
-
-      /* 材料明细 */
-      .material-description {
-        flex-direction: column !important;
-      }
-
-      .material-description label {
-        margin-bottom: 8px;
-      }
-
-      .material-description textarea {
-        min-height: 100px;
-      }
-
-      /* 弹窗全屏 */
-      .layui-layer {
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        max-width: 100% !important;
-        border-radius: 0 !important;
-      }
-
-      .layui-layer-content {
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch;
-      }
-
-      /* 按钮 */
-      .form-actions {
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .form-actions .layui-btn {
-        width: 100%;
-        margin: 0 !important;
-      }
-    }
-
-    /* ==================== 余额列筛选器样式 ==================== */
-    .balance-filter-dropdown {
-      display: inline-block;
-      margin-left: 8px;
-      position: relative;
-      z-index: 10000;
-    }
-
-    .balance-filter-btn {
-      background: #1E9FFF;
-      color: white;
-      border: none;
-      padding: 2px 8px;
-      border-radius: 3px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: background 0.2s;
-    }
-
-    .balance-filter-btn:hover {
-      background: #0d8ddb;
-    }
-
-    .balance-filter-menu {
-      display: none;
-      position: fixed;
-      background: white;
-      border: 1px solid #e6e6e6;
-      border-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      z-index: 99999 !important;
-      min-width: 200px;
-      max-height: 300px;
-      overflow-y: auto;
-      padding: 8px 0;
-    }
-
-    .balance-filter-actions {
-      padding: 8px 12px;
-      border-bottom: 1px solid #e6e6e6;
-      display: flex;
-      gap: 8px;
-    }
-
-    .balance-filter-actions button {
-      flex: 1;
-      padding: 4px 8px;
-      border: 1px solid #ddd;
-      background: white;
-      border-radius: 3px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-
-    .balance-filter-actions button:hover {
-      background: #f5f5f5;
-    }
-
-    .balance-filter-item {
-      display: flex;
-      align-items: center;
-      padding: 6px 12px;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .balance-filter-item:hover {
-      background: #f5f5f5;
-    }
-
-    .balance-filter-item input[type="checkbox"] {
-      margin-right: 8px;
-      cursor: pointer;
-    }
-
-    .balance-filter-item span {
-      font-size: 13px;
-      color: #333;
-    }
-
-    /* 确保余额列的th允许overflow */
-    th[data-field="order_balance"] {
-      overflow: visible !important;
-    }
-
-    th[data-field="order_balance"] .layui-table-cell {
-      overflow: visible !important;
-    }
-  </style>
-</head>
-
-<body>
-  <div style="padding: 16px">
-    <div class="layui-card">
-      <div class="layui-card-body">
-        <table class="layui-hide" id="order-table" lay-filter="order-table"></table>
+<link rel="stylesheet" href="/static/admin/css/order_pay_refined.css" />
+<style>
+  /* 解决 Pear Admin Tab 覆盖问题 - Scoped */
+  #order-page-root {
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    /* padding: 10px;  Prevent full flush if needed, but refined-container usually handles it */
+  }
+
+  /* Scope global body resets if any */
+  #order-page-root .refined-container {
+    margin: 0 !important;
+    height: calc(100vh - 20px) !important;
+    /* Adjust for padding/tabs */
+    border-radius: 0 !important;
+    box-sizing: border-box;
+  }
+</style>
+
+<div id="order-page-root">
+  <div class="refined-container">
+    <!-- 左侧项目侧边栏 -->
+    <div class="side-panel">
+      <div class="side-panel-header">
+        <div class="search-input-wrapper">
+          <i class="layui-icon layui-icon-search"></i>
+          <input type="text" id="order-project-search" class="search-input" placeholder="筛选项目..." />
+        </div>
+      </div>
+      <div class="project-list" id="order-project-list">
+        <!-- 项目加载中... -->
       </div>
     </div>
-  </div>
-  <!-- 表单容器，放在表格下方 -->
-  <div id="order-form-wrapper">
-    <form class="layui-form order-form-container" lay-filter="order-form" id="order-form" action="">
-      <!-- 隐藏字段 -->
-      <input type="hidden" name="id" value="0" />
-      <input type="hidden" name="attachments" id="attachments-data" />
 
-      <!-- 表单标题 -->
-      <div class="form-title">订单信息录入</div>
-
-      <!-- 订单详情部分 -->
-      <div class="order-details-section">
-        <div class="order-details-grid">
-          <div class="order-details-item">
-            <label>订单编号：</label>
-            <input type="text" name="order_number" placeholder="请输入订单编号" lay-verify="required" />
-          </div>
-          <div class="order-details-item">
-            <label>下料时间：</label>
-            <input type="text" name="cutting_time" id="form_cutting_time" placeholder="yyyy-MM-dd" />
-          </div>
-          <div class="order-details-item">
-            <label>材料名称：</label>
-            <select name="material_name" lay-search lay-verify="required">
-              <option value="">请选择材料名称</option>
-            </select>
-          </div>
-          <div class="order-details-item">
-            <label>预计到场时间：</label>
-            <input type="text" name="estimated_arrival_time" id="form_estimated_arrival_time"
-              placeholder="yyyy-MM-dd" />
-          </div>
-          <div class="order-details-item">
-            <label>项目名称：</label>
-            <select name="project_name" lay-search>
-              <option value="">请选择项目名称</option>
-            </select>
-          </div>
-          <div class="order-details-item">
-            <label>供应商联系人：</label>
-            <select name="supplier_contact_person" id="supplier_contact_person" lay-search
-              lay-filter="supplier_contact_person">
-              <option value="">请选择供应商联系人</option>
-            </select>
-          </div>
-          <div class="order-details-item">
-            <label>供应商：</label>
-            <select name="supplier_id" id="supplier_id" lay-search lay-filter="supplier_id">
-              <option value="">请选择供应商</option>
-            </select>
-          </div>
-          <div class="order-details-item">
-            <label>联系电话：</label>
-            <input type="text" name="contact_phone" id="contact_phone" placeholder="联系电话将自动填充" readonly
-              style="background-color: #f5f5f5;" />
-          </div>
+    <!-- 中间供应商联系人侧边栏 -->
+    <div class="side-panel" style="border-right: 1px solid var(--border-dim);">
+      <div class="side-panel-header">
+        <div class="search-input-wrapper">
+          <i class="layui-icon layui-icon-search"></i>
+          <input type="text" id="order-contact-search" class="search-input" placeholder="筛选联系人..." />
         </div>
       </div>
-
-      <!-- 材料明细部分 -->
-      <div class="section-title">材料明细</div>
-      <div class="material-details-section">
-        <div class="material-description">
-          <label>内容描述：</label>
-          <textarea name="material_details" placeholder="请输入材料明细"></textarea>
+      <div class="project-list" id="order-contact-list">
+        <div class="project-item active" data-id="all">
+          <div class="project-name">全部联系人</div>
+          <div class="project-desc">不限供应商负责人</div>
         </div>
-        <div class="attachment-section">
-          <div class="attachment-upload">
-            <button type="button" class="layui-btn layui-btn-normal" id="upload-attachment">
-              <i class="layui-icon layui-icon-upload"></i> 添加附件
-            </button>
-          </div>
-          <div class="attachment-list" id="attachment-list">
-            <div class="attachment-empty">暂无附件</div>
-          </div>
-        </div>
+        <!-- 联系人项将通过 JS 动态渲染 -->
       </div>
+    </div>
 
-      <!-- 财务信息部分 -->
-      <div class="financial-section">
-        <div class="financial-item">
-          <label>订单金额：</label>
-          <input type="number" name="order_amount" placeholder="请输入订单金额" step="0.01" />
-        </div>
-      </div>
-
-      <!-- 负责人信息部分 -->
-      <div class="section-title">负责人信息</div>
-      <div class="responsible-section">
-        <div class="responsible-grid">
-          <div class="responsible-item">
-            <label>材料负责人：</label>
-            <input type="text" name="material_manager" placeholder="请输入材料负责人" />
+    <!-- 右侧主内容区 -->
+    <div class="main-content">
+      <div class="content-header">
+        <div class="content-title" id="current-project-title">全部项目 - 订单明细</div>
+        <div class="content-actions">
+          <div class="search-input-wrapper" style="width: 200px; margin-right: 10px;">
+            <i class="layui-icon layui-icon-search"></i>
+            <input type="text" id="order-number-search" class="search-input" placeholder="输入订单号搜索..." />
           </div>
-          <div class="responsible-item">
-            <label>分项目负责人：</label>
-            <input type="text" name="sub_project_manager" placeholder="请输入分项目负责人" />
+          <div class="field-setting-btn" id="field-setting-btn">
+            <i class="layui-icon layui-icon-cols"></i>
+            <div class="field-dropdown" id="field-dropdown">
+              <label class="field-option"><input type="checkbox" checked data-field="project-name"> 项目名称</label>
+              <label class="field-option"><input type="checkbox" checked data-field="material"> 材料名称</label>
+              <label class="field-option"><input type="checkbox" checked data-field="contact"> 供应商联系人</label>
+              <label class="field-option"><input type="checkbox" checked data-field="manager"> 负责人</label>
+              <label class="field-option"><input type="checkbox" checked data-field="amount"> 订单金额</label>
+              <label class="field-option"><input type="checkbox" checked data-field="balance"> 当前余额</label>
+              <label class="field-option"><input type="checkbox" checked data-field="date"> 时间日期</label>
+              <label class="field-option"><input type="checkbox" checked data-field="pay-no"> 付款单号</label>
+              <label class="field-option"><input type="checkbox" checked data-field="details"> 材料明细</label>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <!-- 表单操作按钮 -->
-      <div class="form-actions">
-        <button type="button" class="layui-btn layui-btn-primary" id="cancel-btn">取消</button>
-        <button type="submit" class="layui-btn" lay-submit lay-filter="order-form-btn">确定</button>
-      </div>
-    </form>
-  </div>
-
-  <!-- 付款单弹窗容器（从订单页面新增付款单） -->
-  <!-- 已替换为 iframe 加载 pay_info.html，不再需要 pay_form.html -->
-
-  <script type="text/html" id="order-toolbar">
-      <div class="layui-btn-container">
-        <button class="layui-btn layui-btn-sm" lay-event="order-toolbar-add">
-          新增订单
-        </button>
-        <div class="balance-filter-dropdown" style="display: inline-block; margin-left: 10px;">
-          <button class="layui-btn layui-btn-sm layui-btn-normal" type="button" id="balance-filter-trigger">
-            <i class="layui-icon layui-icon-filter"></i> 付款状态筛选
+          <button class="layui-btn layui-btn-normal" id="add-order-btn">
+            <i class="layui-icon layui-icon-add-1"></i> 新增订单
           </button>
         </div>
       </div>
-    </script>
-  <script type="text/html" id="order-tool">
-      <div class="layui-btn-container">
-        <button
-          class="layui-btn layui-btn-sm layui-bg-blue"
-          lay-event="order-tool-edit"
-        >
-          编辑
-        </button>
-        <button
-          class="layui-btn layui-btn-sm layui-bg-orange"
-          lay-event="order-tool-print"
-        >
-          打印订单
-        </button>
-        <button
-          class="layui-btn layui-btn-sm layui-bg-green"
-          lay-event="order-tool-pay"
-        >
-          新增付款单
-        </button>
-        <button
-          class="layui-btn layui-btn-sm layui-bg-red"
-          lay-event="order-tool-del"
-        >
-          删除
+
+      <!-- 卡片列表容器 -->
+      <div class="card-grid" id="order-card-container">
+        <!-- 订单卡片将通过 JS 动态渲染 -->
+        <div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #999;">
+          <i class="layui-icon layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop"
+            style="font-size: 30px;"></i>
+          <p style="margin-top: 10px;">正在加载订单数据...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 原有的 order-form-wrapper 已移除，改为 iframe 弹窗加载 order_info.html -->
+
+<script type="text/html" id="order-toolbar">
+    <div class="layui-btn-container">
+      <button class="layui-btn layui-btn-sm" lay-event="order-toolbar-add">
+        新增订单
+      </button>
+      <div class="balance-filter-dropdown" style="display: inline-block; margin-left: 10px;">
+        <button class="layui-btn layui-btn-sm layui-btn-normal" type="button" id="balance-filter-trigger">
+          <i class="layui-icon layui-icon-filter"></i> 付款状态筛选
         </button>
       </div>
-    </script>
-  <script>
-    layui.use(["table", "form", "layer", "laydate", "upload"], function () {
-      var table = layui.table;
-      var form = layui.form;
-      var layer = layui.layer;
-      var laydate = layui.laydate;
-      var upload = layui.upload;
-      var $ = layui.$;
+    </div>
+  </script>
+<script type="text/html" id="order-tool">
+    <div class="layui-btn-container">
+      <button
+        class="layui-btn layui-btn-sm layui-bg-blue"
+        lay-event="order-tool-edit"
+      >
+        编辑
+      </button>
+      <button
+        class="layui-btn layui-btn-sm layui-bg-orange"
+        lay-event="order-tool-print"
+      >
+        打印订单
+      </button>
+      <button
+        class="layui-btn layui-btn-sm layui-bg-green"
+        lay-event="order-tool-pay"
+      >
+        新增付款单
+      </button>
+      <button
+        class="layui-btn layui-btn-sm layui-bg-red"
+        lay-event="order-tool-del"
+      >
+        删除
+      </button>
+    </div>
+  </script>
+<script>
+  layui.use(["table", "form", "layer", "laydate", "upload"], function () {
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+    var laydate = layui.laydate;
+    var upload = layui.upload;
+    var $ = layui.$;
 
-      // 存储筛选条件
-      var filterParams = {};
-      // 筛选防抖定时器
-      var filterTimer = null;
 
-      // 存储附件列表
-      var attachmentList = [];
-      // 附件流水号计数器
-      var attachmentSequence = 0;
-      // 当前订单编号（用于生成附件编号）
-      var currentOrderNumber = '';
 
-      // 记录已展开的行ID，用于reloadTable后保持展开状态
-      var expandedRowIds = new Set();
 
-      // 初始化日期选择器
-      laydate.render({
-        elem: "#form_cutting_time",
-        type: "date"
-      });
-      laydate.render({
-        elem: "#form_estimated_arrival_time",
-        type: "date"
-      });
 
-      // 格式化文件大小
-      function formatFileSize(bytes) {
-        if (bytes === 0) return '0 B';
-        var k = 1024;
-        var sizes = ['B', 'KB', 'MB', 'GB'];
-        var i = Math.floor(Math.log(bytes) / Math.log(k));
-        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-      }
+    // 存储材料名称映射（ID -> 名称）
+    var materialNamesMap = {};
 
-      // 获取文件图标
-      function getFileIcon(fileName) {
-        var ext = fileName.split('.').pop().toLowerCase();
-        var iconMap = {
-          'pdf': 'layui-icon-file-pdf',
-          'doc': 'layui-icon-file',
-          'docx': 'layui-icon-file',
-          'xls': 'layui-icon-file-excel',
-          'xlsx': 'layui-icon-file-excel',
-          'ppt': 'layui-icon-file',
-          'pptx': 'layui-icon-file',
-          'jpg': 'layui-icon-picture',
-          'jpeg': 'layui-icon-picture',
-          'png': 'layui-icon-picture',
-          'gif': 'layui-icon-picture',
-          'zip': 'layui-icon-file',
-          'rar': 'layui-icon-file',
-          'txt': 'layui-icon-file',
-          'dwg': 'layui-icon-file',
-          'dgn': 'layui-icon-file',
-          'dwf': 'layui-icon-file',
-          'dxf': 'layui-icon-file'
-        };
-        return iconMap[ext] || 'layui-icon-file';
-      }
-
-      // 生成订单编号：D + 年月日(8位) + 序号(3位)
-      // 格式：D20240101001
-      function generateOrderNumber() {
-        var now = new Date();
-        var year = now.getFullYear();
-        var month = String(now.getMonth() + 1).padStart(2, '0');
-        var day = String(now.getDate()).padStart(2, '0');
-        var dateStr = year + month + day; // 8位日期字符串
-
-        // 使用时间戳的后3位作为序号，确保唯一性
-        var timestamp = now.getTime();
-        var sequence = String(timestamp % 1000).padStart(3, '0');
-
-        return 'D' + dateStr + sequence;
-      }
-
-      // 生成附件编号：订单编号 + F + 三位流水号
-      function generateAttachmentCode(orderNumber) {
-        if (!orderNumber) {
-          attachmentSequence++;
-          var sequenceStr = String(attachmentSequence).padStart(3, '0');
-          return 'TEMP' + 'F' + sequenceStr;
-        }
-        attachmentSequence++;
-        var sequenceStr = String(attachmentSequence).padStart(3, '0');
-        // 使用订单编号作为前缀
-        var prefix = orderNumber.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '');
-        return prefix + 'F' + sequenceStr;
-      }
-
-      // 渲染附件列表
-      function renderAttachmentList() {
-        var $list = $('#attachment-list');
-        if (attachmentList.length === 0) {
-          $list.html('<div class="attachment-empty">暂无附件</div>');
-          return;
-        }
-        var html = '';
-        attachmentList.forEach(function (file, index) {
-          html += '<div class="attachment-item" data-index="' + index + '">';
-          html += '<i class="layui-icon ' + getFileIcon(file.name) + ' file-icon"></i>';
-          html += '<div class="file-info">';
-          // 显示附件编号
-          if (file.code) {
-            html += '<div class="file-code">附件编号：' + file.code + '</div>';
-          }
-          html += '<div class="file-name">' + (file.name || file.filename || '未知文件') + '</div>';
-          html += '<div class="file-size">' + formatFileSize(file.size || 0) + '</div>';
-          html += '</div>';
-          html += '<div class="file-actions">';
-          if (file.url) {
-            html += '<span class="file-download" onclick="downloadAttachment(' + index + ')">下载</span>';
-          }
-          html += '<span class="file-delete" onclick="deleteAttachment(' + index + ')">删除</span>';
-          html += '</div>';
-          html += '</div>';
-        });
-        $list.html(html);
-      }
-
-      // 删除附件
-      window.deleteAttachment = function (index) {
-        layer.confirm('确定要删除这个附件吗？', { icon: 3, title: '提示' }, function (confirmIndex) {
-          var file = attachmentList[index];
-          // 如果附件已保存到数据库，调用API删除
-          if (file.id) {
-            $.ajax({
-              url: window.location.origin + `/api/v1/attachment/${file.id}`,
-              type: "DELETE",
-              headers: {
-                Authorization: "Bearer " + localStorage.getItem("access_token"),
-              },
-              success: function (res) {
-                if (res.code === 0) {
-                  attachmentList.splice(index, 1);
-                  renderAttachmentList();
-                  updateAttachmentsData();
-                  layer.msg('删除成功', { icon: 1 });
-                } else {
-                  layer.msg(res.msg || '删除失败', { icon: 2 });
-                }
-                layer.close(confirmIndex);
-              },
-              error: function () {
-                layer.msg('删除失败，请重试', { icon: 2 });
-                layer.close(confirmIndex);
-              }
-            });
-          } else {
-            // 如果附件还未保存，直接从列表中移除
-            attachmentList.splice(index, 1);
-            renderAttachmentList();
-            updateAttachmentsData();
-            layer.close(confirmIndex);
-          }
-        });
-      };
-
-      // 下载附件
-      window.downloadAttachment = function (index) {
-        var file = attachmentList[index];
-        if (file.url) {
-          window.open(file.url, '_blank');
-        } else if (file.blob) {
-          var url = URL.createObjectURL(file.blob);
-          var a = document.createElement('a');
-          a.href = url;
-          a.download = file.name;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }
-      };
-
-      // 更新隐藏字段中的附件数据
-      function updateAttachmentsData() {
-        var attachmentsData = attachmentList.map(function (file) {
-          return {
-            id: file.id || null,
-            code: file.code || '',
-            name: file.name,
-            url: file.url || '',
-            size: file.size || 0,
-            filename: file.filename || file.name
-          };
-        });
-        $('#attachments-data').val(JSON.stringify(attachmentsData));
-      }
-
-      // 初始化文件上传
-      upload.render({
-        elem: '#upload-attachment',
-        url: window.location.origin + '/api/v1/upload/',
-        accept: 'file',
-        multiple: true,
-        headers: {
-          Authorization: "Bearer " + localStorage.getItem("access_token")
-        },
-        data: function () {
-          // 动态获取订单ID和附件编号
-          var orderId = $('#order-form input[name="id"]').val();
-          orderId = (orderId && orderId != '0') ? orderId : null;
-          var orderNumber = $('#order-form input[name="order_number"]').val() || currentOrderNumber;
-          var attachmentCode = generateAttachmentCode(orderNumber);
-          return {
-            project_id: orderId,  // 使用 project_id 字段，但实际是订单ID
-            attachment_code: attachmentCode
-          };
-        },
-        before: function (obj) {
-          // 预读本地文件
-          obj.preview(function (index, file, result) {
-            // 获取订单编号用于生成附件编号
-            var orderNumber = $('#order-form input[name="order_number"]').val() || currentOrderNumber;
-            // 生成附件编号
-            var attachmentCode = generateAttachmentCode(orderNumber);
-
-            // 添加到附件列表
-            var orderId = $('#order-form input[name="id"]').val();
-            orderId = (orderId && orderId != '0') ? parseInt(orderId) : null;
-            attachmentList.push({
-              id: null,
-              code: attachmentCode,
-              name: file.name,
-              size: file.size,
-              blob: file,
-              url: null,
-              filename: null,
-              orderId: orderId
-            });
-            renderAttachmentList();
-            updateAttachmentsData();
-          });
-        },
-        done: function (res, index, upload) {
-          // 上传成功后的回调
-          if (res.code === 0) {
-            // 更新附件URL和文件名
-            if (attachmentList[index]) {
-              attachmentList[index].id = res.data.id || null;
-              attachmentList[index].url = res.data.url || res.url;
-              attachmentList[index].filename = res.data.filename || res.data.original_filename;
-              attachmentList[index].size = res.data.size || attachmentList[index].size;
-              // 如果附件编号是临时的，更新为正式编号
-              if (attachmentList[index].code && attachmentList[index].code.startsWith('TEMP')) {
-                var orderNumber = $('#order-form input[name="order_number"]').val() || currentOrderNumber;
-                if (orderNumber) {
-                  attachmentList[index].code = generateAttachmentCode(orderNumber);
-                }
-              }
-            }
-            renderAttachmentList();
-            updateAttachmentsData();
-            layer.msg('上传成功', { icon: 1 });
-          } else {
-            layer.msg(res.msg || '上传失败', { icon: 2 });
-            // 移除失败的附件
-            attachmentList.splice(index, 1);
-            renderAttachmentList();
-            updateAttachmentsData();
-          }
-        },
-        error: function (index, upload) {
-          // 上传失败的回调
-          layer.msg('上传失败，请重试', { icon: 2 });
-          attachmentList.splice(index, 1);
-          renderAttachmentList();
-          updateAttachmentsData();
-        }
-      });
-
-      // 存储供应商数据，用于根据联系人查找供应商信息
-      var suppliersData = [];
-
-      // 存储材料名称映射（ID -> 名称）
-      var materialNamesMap = {};
-
-      // 加载项目列表（返回 Promise，用于等待加载完成）
-      function loadProjects() {
-        return new Promise(function (resolve) {
-          $.ajax({
-            url: window.location.origin + "/api/v1/project/",
-            type: "GET",
-            data: {
-              limit: 1000  // 获取所有项目，不分页
-            },
-            headers: {
-              Authorization: "Bearer " + localStorage.getItem("access_token"),
-            },
-            success: function (res) {
-              if (res.code === 0 && res.data) {
-                var html = '<option value="">请选择项目名称</option>';
-                res.data.forEach(function (project) {
-                  html += '<option value="' + project.project_name + '">' + project.project_name + '</option>';
-                });
-                $('select[name="project_name"]').html(html);
-                form.render('select');
-              }
-              resolve();
-            },
-            error: function () {
-              resolve();
-            }
-          });
-        });
-      }
-
-      // 加载材料名称列表（从字典表，返回 Promise）
-      function loadMaterialNames() {
-        return new Promise(function (resolve) {
-          $.ajax({
-            url: window.location.origin + "/api/v1/dictionary/detail/list",
-            type: "GET",
-            data: {
-              dic_id: 35,  // 材料名称代码字典的ID (clmc)
-              limit: 1000  // 获取所有材料，不分页
-            },
-            headers: {
-              Authorization: "Bearer " + localStorage.getItem("access_token"),
-            },
-            success: function (res) {
-              if (res.code === 0 && res.data) {
-                // 构建ID到名称的映射
-                materialNamesMap = {};
-                var html = '<option value="">请选择材料名称</option>';
-                res.data.forEach(function (material) {
-                  // 使用value作为option的value（材料名称文本）
-                  html += '<option value="' + material.value + '">' + material.value + '</option>';
-                  // 同时建立ID到名称的映射（用于显示旧数据）
-                  materialNamesMap[material.id] = material.value;
-                  materialNamesMap[material.code] = material.value;
-                });
-                $('select[name="material_name"]').html(html);
-                form.render('select');
-              }
-              resolve();
-            },
-            error: function () {
-              resolve();
-            }
-          });
-        });
-      }
-
-      // 加载供应商列表和联系人列表（返回 Promise）
-      function loadSuppliers() {
-        return new Promise(function (resolve) {
-          $.ajax({
-            url: window.location.origin + "/api/v1/supplier/",
-            type: "GET",
-            data: {
-              limit: 1000  // 获取所有供应商，不分页
-            },
-            headers: {
-              Authorization: "Bearer " + localStorage.getItem("access_token"),
-            },
-            success: function (res) {
-              if (res.code === 0 && res.data) {
-                // 存储供应商数据
-                suppliersData = res.data;
-
-                // 加载供应商下拉框
-                var supplierHtml = '<option value="">请选择供应商</option>';
-                res.data.forEach(function (supplier) {
-                  supplierHtml += '<option value="' + supplier.id + '" data-name="' + supplier.name + '" data-phone="' + supplier.phone + '">' + supplier.name + '</option>';
-                });
-                $('#supplier_id').html(supplierHtml);
-
-                // 加载供应商联系人下拉框（去重）
-                var contactPersonMap = {};
-                var contactPersonHtml = '<option value="">请选择供应商联系人</option>';
-                res.data.forEach(function (supplier) {
-                  if (supplier.contact_person && !contactPersonMap[supplier.contact_person]) {
-                    contactPersonMap[supplier.contact_person] = supplier;
-                    contactPersonHtml += '<option value="' + supplier.contact_person + '" data-supplier-id="' + supplier.id + '" data-supplier-name="' + supplier.name + '" data-phone="' + supplier.phone + '">' + supplier.contact_person + '</option>';
-                  }
-                });
-                $('#supplier_contact_person').html(contactPersonHtml);
-
-                form.render('select');
-              }
-              resolve();
-            },
-            error: function () {
-              resolve();
-            }
-          });
-        });
-      }
-
-      // 加载供应商列表（用于付款单表单）
-      function loadSuppliersForOrderPay() {
+    // 加载项目列表（返回 Promise，用于等待加载完成）
+    function loadProjects() {
+      return new Promise(function (resolve) {
         $.ajax({
-          url: window.location.origin + "/api/v1/supplier/",
+          url: window.location.origin + "/api/v1/project/",
           type: "GET",
+          data: {
+            limit: 1000  // 获取所有项目，不分页
+          },
           headers: {
             Authorization: "Bearer " + localStorage.getItem("access_token"),
           },
           success: function (res) {
             if (res.code === 0 && res.data) {
-              var html = '<option value="">请选择供应商</option>';
-              res.data.forEach(function (supplier) {
-                html += '<option value="' + supplier.id + '">' + supplier.name + '</option>';
+              allProjects = res.data; // 赋值给全局变量
+              var html = '<option value="">请选择项目名称</option>';
+              res.data.forEach(function (project) {
+                html += '<option value="' + project.project_name + '">' + project.project_name + '</option>';
               });
-              $('#order-pay-info-form select[name="payer_supplier_id"]').html(html);
-              $('#order-pay-info-form select[name="payee_supplier_id"]').html(html);
+              renderProjectList(allProjects); // 渲染项目列表
+              $('select[name="project_name"]').html(html);
               form.render('select');
-
-              if (res.data.length === 0) {
-                console.warn("加载供应商成功，但列表为空");
-                // Optional: layer.msg("暂无供应商数据，请先维护供应商", {icon: 0});
-              }
-            } else {
-              layer.msg(res.msg || '加载供应商列表失败', { icon: 2 });
             }
+            resolve();
           },
-          error: function (xhr, status, error) {
-            console.error("加载供应商失败:", error);
-            layer.msg('加载供应商失败: ' + (xhr.status || 'Unknown'), { icon: 2 });
+          error: function () {
+            resolve();
           }
         });
-      }
+      });
+    }
 
-      loadSuppliers();
-      loadMaterialNames();  // 加载材料名称列表
-
-      // 存储付款状态映射（code -> value）
-      var paymentStatusMap = {};
-
-      // 存储已选中的付款状态（用于余额计算）
-      var selectedPaymentStatuses = new Set();
-
-      // 加载付款状态列表（从字典表）
-      function loadPaymentStatuses() {
-        return new Promise(function (resolve) {
-          $.ajax({
-            url: window.location.origin + "/api/v1/dictionary/detail/list",
-            type: "GET",
-            data: {
-              dic_id: 28,  // 付款状态字典的ID (fkzt)
-              limit: 100
-            },
-            headers: {
-              Authorization: "Bearer " + localStorage.getItem("access_token"),
-            },
-            success: function (res) {
-              if (res.code === 0 && res.data) {
-                // 构建code到value的映射
-                paymentStatusMap = {};
-                selectedPaymentStatuses.clear(); // 清空选中状态
-
-                res.data.forEach(function (status) {
-                  // 使用code作为键，value作为显示文本
-                  paymentStatusMap[status.code] = status.value;
-                  // 同时建立value到value的映射，兼容可能直接使用value的情况
-                  paymentStatusMap[status.value] = status.value;
-                  // 默认全选
-                  selectedPaymentStatuses.add(status.code);
-                });
-                console.log('付款状态映射已加载:', paymentStatusMap);
-                console.log('默认选中的付款状态:', Array.from(selectedPaymentStatuses));
-              }
-              resolve();
-            },
-            error: function () {
-              console.error('加载付款状态列表失败');
-              resolve();
-            }
-          });
-        });
-      }
-
-      // 加载付款状态
-      loadPaymentStatuses();
-
-      // 列宽配置 - 可以根据需要修改各列的初始宽度（单位：px）
-      var columnWidths = {
-        'ID': 50,                    // ID列
-        '订单编号': 50,             // 订单编号
-        '材料名称': 150,             // 材料名称
-        '材料明细': 200,             // 材料明细
-        '项目名称': 150,             // 项目名称
-        '供应商': 120,               // 供应商
-        '供应商联系人': 120,         // 供应商联系人
-        '订单金额': 120,             // 订单金额
-        '订单余额': 120,             // 订单余额
-        '材料负责人': 120,           // 材料负责人
-        '关联付款单': 200            // 关联付款单
-      };
-
-      // 根据表头标题获取列宽配置
-      function getColumnWidthByTitle($th) {
-        // 从 .layui-table-cell 中获取纯文本，排除筛选输入框
-        var $cell = $th.find('.layui-table-cell');
-        var title;
-        if ($cell.length) {
-          // 克隆元素，移除所有子元素（包括筛选输入框），然后获取文本
-          title = $cell.clone().children().remove().end().text().trim();
-        } else {
-          // 如果没有 .layui-table-cell，直接获取文本，但排除筛选输入框
-          title = $th.clone().find('.filter-input-wrapper').remove().end().text().trim();
-        }
-
-        // 调试输出（可以在浏览器控制台查看）
-        console.log('列标题:', title, '配置宽度:', columnWidths[title], '所有配置:', Object.keys(columnWidths));
-
-        // 尝试精确匹配
-        if (columnWidths[title]) {
-          return columnWidths[title];
-        }
-
-        // 如果精确匹配失败，尝试去除所有空白字符后匹配
-        var titleNoSpace = title.replace(/\s+/g, '');
-        for (var key in columnWidths) {
-          if (key.replace(/\s+/g, '') === titleNoSpace) {
-            return columnWidths[key];
-          }
-        }
-
-        return null; // 返回配置的宽度，如果没有配置则返回null
-      }
-
-      // 同步表头和表体的列宽 - 根据内容自动调整
-      function syncColumnWidths() {
-        var $tableView = $('.layui-table-view');
-        var $headerTable = $tableView.find('.layui-table-header table');
-        var $bodyTable = $tableView.find('.layui-table-body table');
-
-        if ($headerTable.length && $bodyTable.length) {
-          var $headerThs = $headerTable.find('thead tr th');
-          var $headerCols = $headerTable.find('colgroup col');
-          var $bodyCols = $bodyTable.find('colgroup col');
-
-          // 确保 colgroup 存在
-          if ($headerCols.length === 0) {
-            var headerColgroup = $('<colgroup></colgroup>');
-            $headerThs.each(function () {
-              headerColgroup.append('<col>');
-            });
-            $headerTable.prepend(headerColgroup);
-            $headerCols = $headerTable.find('colgroup col');
-          }
-
-          if ($bodyCols.length === 0) {
-            var bodyColgroup = $('<colgroup></colgroup>');
-            $headerThs.each(function () {
-              bodyColgroup.append('<col>');
-            });
-            $bodyTable.prepend(bodyColgroup);
-            $bodyCols = $bodyTable.find('colgroup col');
-          }
-
-          // 根据内容自动计算每列的最大宽度
-          $headerThs.each(function (index) {
-            var $headerTh = $(this);
-            var configuredWidth = getColumnWidthByTitle($headerTh); // 获取配置的宽度
-            var maxWidth;
-
-            if (configuredWidth !== null && configuredWidth !== undefined) {
-              // 如果配置了宽度，强制使用配置的宽度
-              maxWidth = configuredWidth;
-              console.log('使用配置宽度:', maxWidth, '列索引:', index);
-            } else {
-              // 如果没有配置，则根据内容自动计算
-              maxWidth = $headerTh.outerWidth() || $headerTh.width() || 0;
-
-              // 遍历表体中的所有行，找出该列的最大宽度
-              $bodyTable.find('tbody tr').each(function () {
-                var $td = $(this).find('td').eq(index);
-                if ($td.length) {
-                  // 临时移除宽度限制，获取实际内容宽度
-                  var originalWidth = $td.css('width');
-                  $td.css('width', 'auto');
-                  var contentWidth = $td.outerWidth() || $td.width() || 0;
-                  $td.css('width', originalWidth);
-
-                  // 加上padding，确保有足够空间
-                  var padding = parseInt($td.css('padding-left')) + parseInt($td.css('padding-right')) || 30;
-                  var totalWidth = contentWidth + padding;
-
-                  if (totalWidth > maxWidth) {
-                    maxWidth = totalWidth;
-                  }
-                }
+    // 加载材料名称列表（从字典表，返回 Promise）
+    function loadMaterialNames() {
+      return new Promise(function (resolve) {
+        $.ajax({
+          url: window.location.origin + "/api/v1/dictionary/detail/list",
+          type: "GET",
+          data: {
+            dic_id: 35,  // 材料名称代码字典的ID (clmc)
+            limit: 1000  // 获取所有材料，不分页
+          },
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("access_token"),
+          },
+          success: function (res) {
+            if (res.code === 0 && res.data) {
+              // 构建ID到名称的映射
+              materialNamesMap = {};
+              var html = '<option value="">请选择材料名称</option>';
+              res.data.forEach(function (material) {
+                // 使用value作为option的value（材料名称文本）
+                html += '<option value="' + material.value + '">' + material.value + '</option>';
+                // 同时建立ID到名称的映射（用于显示旧数据）
+                materialNamesMap[material.id] = material.value;
+                materialNamesMap[material.code] = material.value;
               });
-              console.log('自动计算宽度:', maxWidth, '列索引:', index);
+              $('select[name="material_name"]').html(html);
+              form.render('select');
             }
-
-
-            // 特殊处理：跳过“操作”列的宽度设置，让其自适应（弹性列）
-            var columnTitle = getColumnWidthByTitle($headerTh); // 注意：这里有点重复调用，但为了复用逻辑
-            // 为了准确判断，我们再次获取标题
-            var titleText = $headerTh.text().trim();
-            if (titleText.indexOf('操作') !== -1) {
-              console.log('跳过操作列宽度设置，让其自适应');
-              return; // 直接跳过此列的设置
-            }
-
-            // 设置列宽
-            // 如果配置了宽度，强制应用（设置min-width和max-width）
-            if (configuredWidth !== null && configuredWidth !== undefined) {
-              // 设置 colgroup col 的宽度（使用 attr 和 style 双重设置确保生效）
-              if ($headerCols.length > index) {
-                var $headerCol = $headerCols.eq(index);
-                $headerCol.attr('width', maxWidth);
-                // 清理并设置样式
-                var existingStyle = ($headerCol.attr('style') || '').replace(/width\s*:\s*[^;!]+;?/gi, '').replace(/min-width\s*:\s*[^;!]+;?/gi, '').replace(/max-width\s*:\s*[^;!]+;?/gi, '');
-                $headerCol.attr('style', existingStyle + ' width: ' + maxWidth + 'px !important; min-width: ' + maxWidth + 'px !important; max-width: ' + maxWidth + 'px !important;');
-              }
-              if ($bodyCols.length > index) {
-                var $bodyCol = $bodyCols.eq(index);
-                $bodyCol.attr('width', maxWidth);
-                // 清理并设置样式
-                var existingStyle = ($bodyCol.attr('style') || '').replace(/width\s*:\s*[^;!]+;?/gi, '').replace(/min-width\s*:\s*[^;!]+;?/gi, '').replace(/max-width\s*:\s*[^;!]+;?/gi, '');
-                $bodyCol.attr('style', existingStyle + ' width: ' + maxWidth + 'px !important; min-width: ' + maxWidth + 'px !important; max-width: ' + maxWidth + 'px !important;');
-              }
-              // 设置表头和表体的宽度（使用内联样式确保优先级）
-              var headerExistingStyle = ($headerTh.attr('style') || '').replace(/width\s*:\s*[^;!]+;?/gi, '').replace(/min-width\s*:\s*[^;!]+;?/gi, '').replace(/max-width\s*:\s*[^;!]+;?/gi, '');
-              $headerTh.attr('style', headerExistingStyle + ' width: ' + maxWidth + 'px !important; min-width: ' + maxWidth + 'px !important; max-width: ' + maxWidth + 'px !important;');
-
-              $bodyTable.find('tbody tr td').eq(index).each(function () {
-                var $td = $(this);
-                var tdExistingStyle = ($td.attr('style') || '').replace(/width\s*:\s*[^;!]+;?/gi, '').replace(/min-width\s*:\s*[^;!]+;?/gi, '').replace(/max-width\s*:\s*[^;!]+;?/gi, '');
-                $td.attr('style', tdExistingStyle + ' width: ' + maxWidth + 'px !important; min-width: ' + maxWidth + 'px !important; max-width: ' + maxWidth + 'px !important;');
-              });
-            } else {
-              // 如果没有配置，使用自动调整
-              if ($headerCols.length > index) {
-                $headerCols.eq(index).css('width', maxWidth + 'px').attr('width', maxWidth);
-              }
-              if ($bodyCols.length > index) {
-                $bodyCols.eq(index).css('width', maxWidth + 'px').attr('width', maxWidth);
-              }
-              $headerTh.css('width', maxWidth + 'px');
-              $bodyTable.find('tbody tr td').eq(index).css('width', maxWidth + 'px');
-            }
-          });
-
-          // 检查是否有配置的列宽
-          var hasConfiguredWidth = false;
-          $headerThs.each(function () {
-            var $th = $(this);
-            var width = getColumnWidthByTitle($th);
-            if (width !== null && width !== undefined) {
-              hasConfiguredWidth = true;
-              return false; // 跳出循环
-            }
-          });
-
-          // 根据是否有配置的列宽，添加或移除CSS类
-          if (hasConfiguredWidth) {
-            $tableView.addClass('has-configured-width');
-            // 使用 fixed 布局以确保宽度生效（使用 !important）
-            $headerTable.attr('style', ($headerTable.attr('style') || '') + ' table-layout: fixed !important;');
-            $bodyTable.attr('style', ($bodyTable.attr('style') || '') + ' table-layout: fixed !important;');
-          } else {
-            $tableView.removeClass('has-configured-width');
-            // 使用 auto 布局，让表格根据内容自动调整
-            $headerTable.css('table-layout', 'auto');
-            $bodyTable.css('table-layout', 'auto');
-          }
-
-          // 确保表格宽度为100%
-          $headerTable.css('width', '100%');
-          $bodyTable.css('width', '100%');
-
-          // 如果有配置的宽度，强制重新应用一次（确保生效）
-          if (hasConfiguredWidth) {
-            setTimeout(function () {
-              $headerThs.each(function (index) {
-                var $headerTh = $(this);
-                var configuredWidth = getColumnWidthByTitle($headerTh);
-                if (configuredWidth !== null && configuredWidth !== undefined) {
-                  var maxWidth = configuredWidth;
-                  // 再次强制设置宽度
-                  if ($headerCols.length > index) {
-                    $headerCols.eq(index).attr('width', maxWidth).attr('style', 'width: ' + maxWidth + 'px !important; min-width: ' + maxWidth + 'px !important; max-width: ' + maxWidth + 'px !important;');
-                  }
-                  if ($bodyCols.length > index) {
-                    $bodyCols.eq(index).attr('width', maxWidth).attr('style', 'width: ' + maxWidth + 'px !important; min-width: ' + maxWidth + 'px !important; max-width: ' + maxWidth + 'px !important;');
-                  }
-                  $headerTh.attr('style', 'width: ' + maxWidth + 'px !important; min-width: ' + maxWidth + 'px !important; max-width: ' + maxWidth + 'px !important;');
-                  $bodyTable.find('tbody tr td').eq(index).attr('style', 'width: ' + maxWidth + 'px !important; min-width: ' + maxWidth + 'px !important; max-width: ' + maxWidth + 'px !important;');
-                }
-              });
-            }, 50);
-          }
-        }
-      }
-
-      // 统一的表格重新加载函数
-      function reloadTable(options) {
-        options = options || {};
-        var defaultOptions = {
-          where: filterParams,
-          done: function (res, curr, count) {
-            addFilterInputs();
-            setTimeout(function () {
-              syncColumnWidths();
-
-              // 恢复已展开的行
-              if (res.data && expandedRowIds.size > 0) {
-                // 遍历当前页的数据，找到对应的行索引
-                // 注意： Layui table 的数据索引通常从 0 开始
-                var data = res.data;
-                for (var i = 0; i < data.length; i++) {
-                  if (data[i].id && expandedRowIds.has(data[i].id)) {
-                    // 找到对应的 TR 元素并触发点击
-                    // Layui table body tr 具有 data-index 属性，对应数据索引
-                    var $tr = $('div[lay-id="order-table"] .layui-table-body tr[data-index="' + i + '"]');
-                    if ($tr.length > 0) {
-                      // 触发点击事件以展开
-                      // 注意：如果不判断当前是否已展开，直接点击会触发展开逻辑
-                      // 因为 reload 后默认是收起的，所以直接点击即可
-                      $tr.click();
-                    }
-                  }
-                }
-              }
-            }, 100);
-          }
-        };
-        var finalOptions = $.extend({}, defaultOptions, options);
-        table.reload('order-table', finalOptions);
-      }
-
-      // 在表头添加筛选输入框
-      function addFilterInputs() {
-        setTimeout(function () {
-          // 所有可筛选的字段配置
-          var filterConfig = {
-            'id': { type: 'text', placeholder: '筛选ID' },
-            'order_number': {
-              type: 'text',
-              placeholder: '筛选订单编号',
-              source: window.location.origin + "/api/v1/order/",
-              labelField: 'order_number',
-              valueField: 'order_number',
-              unique: true
-            },
-            'material_name': {
-              type: 'text',
-              placeholder: '筛选材料名称',
-              source: window.location.origin + "/api/v1/order/",
-              labelField: 'material_name',
-              valueField: 'material_name',
-              unique: true
-            },
-            'project_name': {
-              type: 'text',
-              placeholder: '筛选项目名称',
-              source: window.location.origin + "/api/v1/project/",
-              labelField: 'project_name',
-              valueField: 'project_name'
-            },
-            'supplier_name': {
-              type: 'text',
-              placeholder: '筛选供应商',
-              source: window.location.origin + "/api/v1/supplier/",
-              labelField: 'name',
-              valueField: 'name'
-            },
-            'supplier_contact_person': {
-              type: 'text',
-              placeholder: '筛选供应商联系人',
-              source: window.location.origin + "/api/v1/supplier/",
-              labelField: 'contact_person',
-              valueField: 'contact_person',
-              unique: true
-            },
-            'order_amount': { type: 'text', placeholder: '筛选订单金额' },
-            'material_manager': {
-              type: 'text',
-              placeholder: '筛选材料负责人',
-              source: window.location.origin + "/api/v1/order/",
-              labelField: 'material_manager',
-              valueField: 'material_manager',
-              unique: true
-            }
-          };
-
-          Object.keys(filterConfig).forEach(function (field) {
-            var $view = $('.layui-table-view[lay-id="order-table"]');
-            var $th = $view.find('th[data-field="' + field + '"]');
-            if ($th.length && !$th.find('.filter-input').length) {
-              var config = filterConfig[field];
-              var $filterDiv = $('<div class="filter-input-wrapper" style="margin-top: 5px;"></div>');
-              var $input;
-
-              if (config.type === 'date') {
-                // 日期字段使用日期选择器
-                $input = $('<input type="text" class="layui-input filter-input filter-date" placeholder="' + config.placeholder + '" data-field="' + field + '" style="height: 28px; font-size: 12px; padding: 0 8px;">');
-                if (filterParams[field]) {
-                  $input.val(filterParams[field]);
-                }
-                $filterDiv.append($input);
-                // 初始化日期选择器
-                setTimeout(function () {
-                  laydate.render({
-                    elem: $input[0],
-                    type: 'date',
-                    done: function (value) {
-                      if (value) {
-                        filterParams[field] = value;
-                      } else {
-                        delete filterParams[field];
-                      }
-                      clearTimeout(filterTimer);
-                      filterTimer = setTimeout(function () {
-                        reloadTable({
-                          page: { curr: 1 }
-                        });
-                      }, 300);
-                    }
-                  });
-                }, 50);
-              } else {
-                // 文本和数字字段，检查是否需要 Autocomplete (Source)
-                var listId = config.source ? 'list-' + field : null;
-                var listAttr = listId ? ' list="' + listId + '"' : '';
-
-                $input = $('<input type="' + config.type + '" class="layui-input filter-input" placeholder="' + config.placeholder + '" data-field="' + field + '"' + listAttr + ' style="height: 28px; font-size: 12px; padding: 0 8px;">');
-                if (filterParams[field]) {
-                  $input.val(filterParams[field]);
-                }
-                $filterDiv.append($input);
-
-                // 如果有 source，添加 datalist 和事件
-                if (config.source) {
-                  var $datalist = $('<datalist id="' + listId + '"></datalist>');
-                  $filterDiv.append($datalist);
-
-                  // 绑定 focus 事件加载数据
-                  $input.on('focus', function () {
-                    var $thisDatalist = $('#' + listId);
-                    // 如果已经有数据，不再请求
-                    if ($thisDatalist.children().length > 0) return;
-
-                    $.ajax({
-                      url: config.source,
-                      type: 'GET',
-                      data: { limit: 1000 }, // 获取足够多的数据
-                      headers: {
-                        Authorization: "Bearer " + localStorage.getItem("access_token"),
-                      },
-                      success: function (res) {
-                        if (res.code === 0 && res.data) {
-                          $thisDatalist.empty();
-                          var items = res.data;
-                          var validValues = new Set();
-
-                          items.forEach(function (item) {
-                            var val = item[config.valueField];
-                            // 过滤空值
-                            if (val) {
-                              // 如果需要唯一性去重
-                              if (config.unique) {
-                                if (validValues.has(val)) return;
-                                validValues.add(val);
-                              }
-
-                              var label = item[config.labelField] || val;
-                              $thisDatalist.append('<option value="' + val + '">' + (label !== val ? label : '') + '</option>');
-                            }
-                          });
-                        }
-                      }
-                    });
-                  });
-                }
-
-                // 绑定 input 事件，更新 filterParams 并触发后端筛选
-                (function (currentField) {
-                  $input.on('input change', function () {
-                    var value = $(this).val().trim();
-                    if (value) {
-                      filterParams[currentField] = value;
-                    } else {
-                      delete filterParams[currentField];
-                    }
-                    clearTimeout(filterTimer);
-                    filterTimer = setTimeout(function () {
-                      reloadTable({
-                        page: { curr: 1 }
-                      });
-                    }, 500); // 500ms 防抖
-                  });
-                })(field);
-              }
-
-              $th.append($filterDiv);
-            }
-          });
-          setTimeout(function () {
-            syncColumnWidths();
-          }, 50);
-        }, 100);
-      }
-
-      // ==================== 余额计算相关函数 ====================
-
-      // 计算付款状态小计（勾选状态的付款金额总和）
-      function calculatePaymentSubtotal(orderData) {
-        if (!orderData.is_order) return null;
-
-        var totalPaid = 0;
-
-        // 遍历该订单的所有付款单
-        if (orderData.pays_list && orderData.pays_list.length > 0) {
-          orderData.pays_list.forEach(function (pay) {
-            // 只计算勾选的付款状态
-            if (selectedPaymentStatuses.has(pay.payment_status)) {
-              totalPaid += parseFloat(pay.current_payment_amount) || 0;
-            }
-          });
-        }
-
-        return totalPaid;
-      }
-
-      // 计算订单余额（订单金额 - 付款状态小计）
-      function calculateOrderBalance(orderData) {
-        if (!orderData.is_order) return null;
-
-        var orderAmount = parseFloat(orderData.order_amount) || 0;
-        var subtotal = calculatePaymentSubtotal(orderData);
-
-        return orderAmount - subtotal;
-      }
-
-      // 在余额列表头添加付款状态复选框
-      function addPaymentStatusCheckboxes() {
-        // 等待付款状态映射加载完成
-        if (Object.keys(paymentStatusMap).length === 0) {
-          setTimeout(addPaymentStatusCheckboxes, 100);
-          return;
-        }
-
-        // 检查是否已经添加过
-        if ($('#balance-filter-menu').length > 0) {
-          return;
-        }
-
-        // 在body添加菜单（避免被表格遮挡）
-        var menuHtml = '<div class="balance-filter-menu" id="balance-filter-menu" style="display:none;">';
-
-        // 添加全选/取消全选按钮
-        menuHtml += '<div class="balance-filter-actions">';
-        menuHtml += '<button class="select-all-status" type="button">全选</button>';
-        menuHtml += '<button class="deselect-all-status" type="button">取消全选</button>';
-        menuHtml += '</div>';
-
-        // 为每个付款状态添加复选框
-        Object.keys(paymentStatusMap).forEach(function (code) {
-          if (code === paymentStatusMap[code]) return; // 跳过反向映射
-          var value = paymentStatusMap[code];
-          menuHtml += '<label class="balance-filter-item">';
-          menuHtml += '<input type="checkbox" class="payment-status-checkbox" value="' + code + '" checked>';
-          menuHtml += '<span>' + value + '</span>';
-          menuHtml += '</label>';
-        });
-
-        menuHtml += '</div>';
-
-        // 添加到body
-        $('body').append(menuHtml);
-
-        // 绑定事件
-        bindBalanceFilterEvents();
-
-        console.log('付款状态筛选器已添加');
-        console.log('筛选按钮元素数量:', $('#balance-filter-trigger').length);
-        console.log('菜单元素数量:', $('#balance-filter-menu').length);
-      }
-
-      // 绑定余额筛选器事件
-      function bindBalanceFilterEvents() {
-        // 监听复选框变化
-        $(document).off('change', '.payment-status-checkbox').on('change', '.payment-status-checkbox', function () {
-          var code = $(this).val();
-          if ($(this).is(':checked')) {
-            selectedPaymentStatuses.add(code);
-          } else {
-            selectedPaymentStatuses.delete(code);
-          }
-          console.log('当前选中的付款状态:', Array.from(selectedPaymentStatuses));
-          // 重新渲染表格余额列
-          refreshBalanceColumn();
-          // 重新渲染付款单子行（隐藏/显示）
-          refreshPayRows();
-        });
-
-        // 全选
-        $(document).off('click', '.select-all-status').on('click', '.select-all-status', function (e) {
-          e.stopPropagation();
-          $('.payment-status-checkbox').prop('checked', true);
-          // 重新初始化选中状态
-          selectedPaymentStatuses.clear();
-          Object.keys(paymentStatusMap).forEach(function (code) {
-            if (code !== paymentStatusMap[code]) {
-              selectedPaymentStatuses.add(code);
-            }
-          });
-          console.log('全选付款状态');
-          refreshBalanceColumn();
-          refreshPayRows();
-        });
-
-        // 取消全选
-        $(document).off('click', '.deselect-all-status').on('click', '.deselect-all-status', function (e) {
-          e.stopPropagation();
-          $('.payment-status-checkbox').prop('checked', false);
-          selectedPaymentStatuses.clear();
-          console.log('取消全选付款状态');
-          refreshBalanceColumn();
-          refreshPayRows();
-        });
-
-        // 切换下拉菜单显示
-        $(document).off('click', '#balance-filter-trigger').on('click', '#balance-filter-trigger', function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          console.log('筛选按钮被点击');
-
-          var $menu = $('#balance-filter-menu');
-          var $btn = $(this);
-
-          // 切换显示状态
-          if ($menu.is(':visible')) {
-            console.log('隐藏菜单');
-            $menu.hide();
-          } else {
-            console.log('显示菜单');
-
-            // 计算按钮位置
-            var btnOffset = $btn.offset();
-            var btnHeight = $btn.outerHeight();
-            var btnWidth = $btn.outerWidth();
-
-            // 设置菜单位置（按钮下方，右对齐）
-            $menu.css({
-              position: 'fixed',
-              top: btnOffset.top + btnHeight + 4,
-              left: btnOffset.left,
-              display: 'block'
-            });
-
-            console.log('菜单位置:', { top: btnOffset.top + btnHeight + 4, left: btnOffset.left });
+            resolve();
+          },
+          error: function () {
+            resolve();
           }
         });
+      });
+    }
 
-        // 点击其他地方关闭菜单
-        $(document).off('click.balanceFilter').on('click.balanceFilter', function (e) {
-          if (!$(e.target).closest('.balance-filter-dropdown').length &&
-            !$(e.target).closest('#balance-filter-menu').length) {
-            $('#balance-filter-menu').hide();
-          }
-        });
 
-        // 阻止菜单内点击关闭
-        $(document).off('click', '#balance-filter-menu').on('click', '#balance-filter-menu', function (e) {
-          e.stopPropagation();
-        });
-      }
 
-      // 刷新余额列显示
-      // 刷新付款状态小计和余额列显示
-      function refreshBalanceColumn() {
-        // 获取当前表格数据
-        var tableData = table.cache['order-table'];
-        if (!tableData) return;
-
-        // 更新每行的付款状态小计和余额显示
-        tableData.forEach(function (data, index) {
-          if (!data.is_order) return;
-
-          // 计算付款状态小计
-          var subtotal = calculatePaymentSubtotal(data);
-          var subtotalHtml = '<span style="color: #1E9FFF; font-weight: bold;">¥' + subtotal.toFixed(2) + '</span>';
-
-          // 计算余额
-          var balance = calculateOrderBalance(data);
-          var color = balance >= 0 ? '#5FB878' : '#FF5722';
-          var balanceHtml = '<span style="color: ' + color + '; font-weight: bold;">¥' + balance.toFixed(2) + '</span>';
-
-          var $tr = $('div[lay-id="order-table"] .layui-table-main tr[data-index="' + index + '"]');
-          $tr.find('td[data-field="payment_status_subtotal"] .layui-table-cell').html(subtotalHtml);
-          $tr.find('td[data-field="order_balance"] .layui-table-cell').html(balanceHtml);
-        });
-
-        console.log('付款状态小计和余额列已刷新');
-      }
-
-      // 刷新付款单子行显示
-      function refreshPayRows() {
-        // 遍历所有付款单子行，根据筛选状态显示/隐藏
-        $('.pay-child-row').each(function () {
-          var $row = $(this);
-          var payId = $row.data('pay-id');
-
-          // 从表格数据中查找对应的付款单及其所属订单
-          var tableData = table.cache['order-table'];
-          var paymentStatus = null;
-          var orderId = null;
-
-          if (tableData) {
-            for (var i = 0; i < tableData.length; i++) {
-              var orderData = tableData[i];
-              if (orderData.pays_list) {
-                var pay = orderData.pays_list.find(function (p) {
-                  return p.id === payId;
-                });
-                if (pay) {
-                  paymentStatus = pay.payment_status;
-                  orderId = orderData.id;
-                  break;
-                }
-              }
-            }
-          }
-
-          // 检查当前订单是否展开
-          var isOrderExpanded = expandedRowIds.has(orderId);
-
-          // 根据筛选状态和展开状态决定显示/隐藏
-          if (paymentStatus && selectedPaymentStatuses.has(paymentStatus)) {
-            // 符合筛选条件
-            $row.removeClass('filtered-hidden');
-            // 如果订单展开，则显示；否则保持隐藏
-            if (isOrderExpanded) {
-              $row.show();
-            } else {
-              $row.hide();
-            }
-          } else {
-            // 不符合筛选条件，隐藏
-            $row.addClass('filtered-hidden').hide();
-          }
-        });
-
-        console.log('付款单子行筛选已更新');
-      }
-
-      // 渲染表格
-      table.render({
-        elem: "#order-table",
-        id: "order-table",
-        url: window.location.origin + "/api/v1/order/",
+    // 加载供应商列表（用于付款单表单）
+    function loadSuppliersForOrderPay() {
+      $.ajax({
+        url: window.location.origin + "/api/v1/supplier/",
+        type: "GET",
         headers: {
           Authorization: "Bearer " + localStorage.getItem("access_token"),
         },
-        height: "full-35",
-        toolbar: "#order-toolbar",
-        page: true,
-        limit: 90,
-        defaultToolbar: ['filter', 'exports', 'print'],
-        where: filterParams,
-        cols: [
-          [
-            { field: "id", title: "ID", width: 60, sort: true, fixed: 'left', hide: true },
-            {
-              field: "order_number",
-              title: "订单编号",
-              width: 110,
-              align: 'center'
-            },
-            {
-              field: "project_name",
-              title: "项目名称",
-              width: 120,
-              align: 'center'
-            },
-            {
-              field: "material_name",
-              title: "材料名称",
-              width: 90,
-              //minWidth: 90,
-              align: 'center',
-              templet: function (d) {
-                var materialName = d.material_name;
-                if (!materialName) return '-';
+        success: function (res) {
+          if (res.code === 0 && res.data) {
+            var html = '<option value="">请选择供应商</option>';
+            res.data.forEach(function (supplier) {
+              html += '<option value="' + supplier.id + '">' + supplier.name + '</option>';
+            });
+            $('#order-pay-info-form select[name="payer_supplier_id"]').html(html);
+            $('#order-pay-info-form select[name="payee_supplier_id"]').html(html);
+            form.render('select');
 
-                // 检查是否为数字ID
-                if (/^\d+$/.test(materialName)) {
-                  // 尝试从映射表中查找
-                  return materialNamesMap[materialName] || materialName;
-                }
-
-                // 直接返回文本
-                return materialName;
-              }
-            },
-            {
-              field: "material_details",
-              title: "材料明细",
-              width: 200,
-              align: 'left',
-              hide: true,  // 默认隐藏，可在列显示设置中打开
-              templet: function (d) {
-                var details = d.material_details;
-                if (!details || details.trim() === '') {
-                  return '<span style="color: #999;">-</span>';
-                }
-                // 如果内容过长，截断显示并添加title提示
-                if (details.length > 50) {
-                  return '<span title="' + details + '">' + details.substring(0, 50) + '...</span>';
-                }
-                return details;
-              }
-            },
-            {
-              field: "supplier_name",
-              title: "供应商",
-              width: 120,
-              hide: true
-            },
-            {
-              field: "supplier_contact_person",
-              title: "供应商联系人",
-              width: 120,
-              align: 'center'
-            },
-            {
-              field: "order_amount",
-              title: "金额",
-              width: 110,
-              sort: true,
-              align: 'right'
-            },
-            {
-              field: "payment_status_subtotal",
-              title: "付款状态小计",
-              width: 130,
-              sort: true,
-              align: 'right',
-              templet: function (d) {
-                // 计算勾选状态的付款金额总和
-                var subtotal = calculatePaymentSubtotal(d);
-                if (subtotal === null) {
-                  return '<span style="color: #999;">-</span>';
-                }
-                return '<span style="color: #1E9FFF; font-weight: bold;">¥' + subtotal.toFixed(2) + '</span>';
-              }
-            },
-            {
-              field: "order_balance",
-              title: "余额",
-              width: 110,
-              sort: true,
-              align: 'right',
-              templet: function (d) {
-                // 余额 = 订单金额 - 付款状态小计
-                var balance = calculateOrderBalance(d);
-                if (balance === null) {
-                  return '<span style="color: #999;">-</span>';
-                }
-                var color = balance >= 0 ? '#5FB878' : '#FF5722'; // 正数绿色，负数红色
-                return '<span style="color: ' + color + '; font-weight: bold;">¥' + balance.toFixed(2) + '</span>';
-              }
-            },
-            {
-              field: "material_manager",
-              title: "负责人",
-              width: 80,
-              align: 'center'
-            },
-            {
-              field: "pays_list",
-              title: "付款单",
-              width: 90,
-              align: 'center',
-              templet: function (d) {
-                // 如果是订单行，显示付款单数量提示
-                if (d.is_order) {
-                  if (!d.pays_list || d.pays_list.length === 0) {
-                    return '<span style="color: #999; font-size: 12px;">无</span>';
-                  }
-                  return '<span style="color: #1E9FFF; font-weight: bold;">' + d.pays_list.length + '笔</span>';
-                }
-                return '';
-              }
-            },
-
-            {
-              title: "操作",
-              align: "center",
-              toolbar: "#order-tool",
-              width: 180,
-              fixed: 'right'
-            },
-          ],
-        ],
-        done: function (res, curr, count) {
-          addFilterInputs();
-          // 添加付款状态筛选器到余额列表头
-          addPaymentStatusCheckboxes();
-          // 多次同步列宽，确保完全同步
-          setTimeout(function () {
-            // syncColumnWidths();
-            setTimeout(function () {
-              // syncColumnWidths();
-              // 默认不展开付款单子行，页面为收缩状态
-              addPayRows();
-            }, 100);
-          }, 200);
-        },
-        parseData: function (res) {
-          return {
-            code: res.code,
-            msg: res.msg,
-            count: res.count,
-            data: res.data,
-          };
-        }
-      });
-
-      // 为订单行添加付款单子行
-      // 动态添加付款单详情行
-      function addPayRows() {
-        // 先移除所有已存在的子行，避免重复
-        $('.pay-child-row').remove();
-
-        var tableData = table.cache['order-table'];
-        if (!tableData) return;
-
-        // 根据当前表格显示的列结构手动构建子行
-        // 当前显示列（9列）：[1]没有(隐藏) [2]订单编号 [3]材料 [4]供应商(隐藏) [5]联系人 [6]金额 [7]余额 [8]负责人 [9]付款单 [10]项目 [11]操作
-        // 实际可见索引：
-        // 0: Order No
-        // 1: Material
-        // 2: Contact
-        // 3: Amount
-        // 4: Balance
-        // 5: Manager
-        // 6: Pays List
-        // 7: Project
-        // 8: Operation
-
-        tableData.forEach(function (data, index) {
-          if (!data.is_order || !data.pays_list || data.pays_list.length === 0) return;
-
-          var $tr = $('div[lay-id="order-table"] .layui-table-main tr[data-index="' + index + '"]');
-          if ($tr.length === 0) return;
-
-          // 为每个付款单创建子行
-          data.pays_list.forEach(function (pay, index) {
-            // 只显示勾选的付款状态
-            if (!selectedPaymentStatuses.has(pay.payment_status)) {
-              return; // 跳过未勾选的付款状态
+            if (res.data.length === 0) {
+              console.warn("加载供应商成功，但列表为空");
+              // Optional: layer.msg("暂无供应商数据，请先维护供应商", {icon: 0});
             }
-
-            // 获取付款状态的显示文本和颜色
-            var statusText = pay.payment_status ? (paymentStatusMap[pay.payment_status] || pay.payment_status) : '未设置';
-            var statusColor = '';
-
-            // 根据状态文本设置颜色
-            if (statusText.includes('已付款') || statusText.includes('完成')) {
-              statusColor = '#5FB878';  // 绿色
-            } else if (statusText.includes('部分')) {
-              statusColor = '#FFB800';  // 橙色
-            } else if (statusText.includes('待') || statusText.includes('未')) {
-              statusColor = '#FF5722';  // 红色
-            } else {
-              statusColor = '#999999';  // 灰色 - 其他状态
-            }
-
-            var payRowHtml = '<tr class="pay-child-row" data-pay-id="' + pay.id + '" style="background-color: #fbfcff; border-top: 1px solid #eee; display: none;">';
-
-            // 1. 订单编号列 (仅显示结构线)
-            payRowHtml += '<td style="text-align: right; color: #ddd; padding-right: 15px; border-right: none;">└─</td>';
-
-            // 2. 材料名称列 (空)
-            payRowHtml += '<td style="border-left: none;"></td>';
-
-            // 3. 联系人列 (空)
-            payRowHtml += '<td></td>';
-
-            // 4-8. 合并详情列 (colspan=5: 金额, 余额, 负责人, 付款单, 项目)
-            payRowHtml += '<td colspan="5" style="padding-left: 20px;">';
-            payRowHtml += '<div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">';
-
-            // 付款单编号
-            payRowHtml += '<span style="color: #333; font-weight: bold; min-width: 120px;">' + (pay.pay_number || '无编号') + '</span>';
-
-            // 金额
-            payRowHtml += '<span style="color: #1E9FFF; font-weight: bold; font-family: monospace; font-size: 14px;">¥' + (pay.current_payment_amount ? parseFloat(pay.current_payment_amount).toFixed(2) : '0.00') + '</span>';
-
-            // 付款单位
-            if (pay.payer_supplier_name) {
-              payRowHtml += '<span style="color: #666;">付款单位: <span style="color: #333;">' + pay.payer_supplier_name + '</span></span>';
-            }
-
-            // 状态
-            payRowHtml += '<span style="padding: 2px 6px; border-radius: 2px; font-size: 12px; color: #fff; background-color: ' + statusColor + ';">' + statusText + '</span>';
-
-            // 经办人
-            if (pay.handler) {
-              payRowHtml += '<span style="color: #999; font-size: 12px;">经办人: ' + pay.handler + '</span>';
-            }
-
-            payRowHtml += '</div>';
-            payRowHtml += '</td>';
-
-            // 9. 操作列
-            payRowHtml += '<td style="text-align: center;">';
-            payRowHtml += '<button type="button" class="layui-btn layui-btn-xs layui-btn-normal edit-pay-btn" data-pay-id="' + pay.id + '" data-order-id="' + data.id + '">编辑</button>';
-            payRowHtml += '<button type="button" class="layui-btn layui-btn-xs layui-bg-orange print-pay-btn" data-pay-id="' + pay.id + '" data-order-id="' + data.id + '" style="margin-left: 5px;">打印</button>';
-            payRowHtml += '</td>';
-
-            payRowHtml += '</tr>';
-
-            $tr.after(payRowHtml);
-          });
-        });
-      }
-
-      // 监听表格行点击，展开/折叠付款单
-      table.on('row(order-table)', function (obj) {
-        var data = obj.data;
-        if (!data.is_order || !data.pays_list || data.pays_list.length === 0) return;
-
-        var $tr = obj.tr;
-        // 找到属于当前订单的所有子行（直到下一个订单行或表格结束）
-        var $childRows = $tr.nextUntil('tr:not(.pay-child-row)', '.pay-child-row');
-        // 获取付款单列的单元格内容元素
-        var $payCountCell = $tr.find('td[data-field="pays_list"] .layui-table-cell');
-
-        if ($childRows.length > 0) {
-          // 如果子行已存在，则切换显示/隐藏
-          $childRows.toggle();
-          // 根据子行是否显示，切换父行付款单数量显示的可见性
-          if ($childRows.is(':visible')) {
-            $payCountCell.css('visibility', 'hidden');
-            expandedRowIds.add(data.id);
           } else {
-            $payCountCell.css('visibility', 'visible');
-            expandedRowIds.delete(data.id);
+            layer.msg(res.msg || '加载供应商列表失败', { icon: 2 });
           }
-        } else {
-          // 如果子行不存在，则添加并显示
-          addPayRows();
-          // 重新获取子行并显示
-          setTimeout(function () {
-            var $newChildRows = $tr.nextUntil('tr:not(.pay-child-row)', '.pay-child-row');
-            $newChildRows.show();
-            // 展开后隐藏父行数量显示
-            $payCountCell.css('visibility', 'hidden');
-            expandedRowIds.add(data.id);
-          }, 50);
+        },
+        error: function (xhr, status, error) {
+          console.error("加载供应商失败:", error);
+          layer.msg('加载供应商失败: ' + (xhr.status || 'Unknown'), { icon: 2 });
         }
       });
+    }
 
-      // 打印订单函数 - 样式与编辑订单页面一致
-      function printOrder(orderData) {
-        // 创建打印内容，样式与编辑页面一致
-        var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>订单打印</title>';
-        printContent += '<style>';
-        // 屏幕预览样式
-        printContent += 'body{font-family: "Microsoft YaHei", Arial, sans-serif; padding: 20px; background: #fff; max-width: 1200px; margin: 0 auto; line-height: 1.4;}';
-        printContent += '.form-title{text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; padding-bottom: 10px; border-bottom: 2px solid #000;}';
 
-        // 表格样式
-        printContent += '.info-table{border-collapse: collapse; width: 100%; margin-bottom: 15px;}';
-        printContent += '.info-table th, .info-table td{border: 1px solid #000; padding: 8px; text-align: left;}';
-        printContent += '.info-table .section-header{background-color: #f0f0f0; font-weight: bold; font-size: 16px; text-align: center;}';
-        printContent += '.info-table .label{background-color: #f8f8f8; font-weight: bold; width: 120px; text-align: right; padding-right: 12px;}';
-        printContent += '.info-table .value{background-color: #fff; padding-left: 12px;}';
+    loadMaterialNames();  // 加载材料名称列表
 
-        // 关联付款单表格样式（保留）
-        printContent += 'table{border-collapse: collapse; width: 100%; margin-top: 10px;}';
-        printContent += 'table th, table td{border: 1px solid #000; padding: 8px; text-align: left;}';
-        printContent += 'table th{background-color: #f0f0f0; font-weight: bold;}';
+    // 存储付款状态映射（code -> value）
+    var paymentStatusMap = {};
 
-        // 打印样式 - 竖向打印在A4纸上半部分
-        printContent += '@media print{';
-        printContent += 'body{padding: 5mm; margin: 0; max-width: 100%; line-height: 1.2; height: 148.5mm; overflow: hidden;}';
-        printContent += '@page{size: A4 portrait; margin: 8mm 10mm 0 10mm;}';
-        printContent += '.form-title{font-size: 18px; margin-bottom: 3mm; padding-bottom: 2mm; line-height: 1.2;}';
+    // 存储已选中的付款状态（用于余额计算）
+    var selectedPaymentStatuses = new Set();
 
-        // 打印时的表格样式
-        printContent += '.info-table{margin-bottom: 2mm;}';
-        printContent += '.info-table th, .info-table td{font-size: 9px; padding: 1mm 2mm; line-height: 1.2;}';
-        printContent += '.info-table .section-header{font-size: 10px; padding: 1.5mm 2mm;}';
-        printContent += '.info-table .label{width: 80px; font-size: 9px; padding-right: 2mm;}';
-        printContent += '.info-table .value{font-size: 9px; padding-left: 2mm;}';
-
-        printContent += 'table th, table td{font-size: 8px; padding: 1mm; line-height: 1.2;}';
-        printContent += '}</style></head><body>';
-
-        // 表单标题
-        printContent += '<div class="form-title">订单信息录入</div>';
-
-        // 订单详情表格
-        printContent += '<table class="info-table">';
-        printContent += '<thead><tr><th colspan="4" class="section-header">订单详情</th></tr></thead>';
-        printContent += '<tbody>';
-        printContent += '<tr>';
-        printContent += '<td class="label">订单编号</td>';
-        printContent += '<td class="value">' + (orderData.order_number || '-') + '</td>';
-        printContent += '<td class="label">下料时间</td>';
-        printContent += '<td class="value">' + (orderData.cutting_time || '-') + '</td>';
-        printContent += '</tr>';
-        printContent += '<tr>';
-        printContent += '<td class="label">材料名称</td>';
-        printContent += '<td class="value">' + (orderData.material_name || '-') + '</td>';
-        printContent += '<td class="label">预计到场时间</td>';
-        printContent += '<td class="value">' + (orderData.estimated_arrival_time || '-') + '</td>';
-        printContent += '</tr>';
-        printContent += '<tr>';
-        printContent += '<td class="label">项目名称</td>';
-        printContent += '<td class="value">' + (orderData.project_name || '-') + '</td>';
-        printContent += '<td class="label">供应商联系人</td>';
-        printContent += '<td class="value">' + (orderData.supplier_contact_person || '-') + '</td>';
-        printContent += '</tr>';
-        printContent += '<tr>';
-        printContent += '<td class="label">供应商</td>';
-        printContent += '<td class="value">' + (orderData.supplier_name || '-') + '</td>';
-        printContent += '<td class="label">联系电话</td>';
-        printContent += '<td class="value">' + (orderData.contact_phone || '-') + '</td>';
-        printContent += '</tr>';
-        printContent += '</tbody>';
-        printContent += '</table>';
-
-        // 材料明细表格
-        printContent += '<table class="info-table" style="margin-top: 15px;">';
-        printContent += '<thead><tr><th colspan="4" class="section-header">材料明细</th></tr></thead>';
-        printContent += '<tbody>';
-        printContent += '<tr>';
-        printContent += '<td class="label" style="width: 100px;">内容描述</td>';
-        printContent += '<td class="value" colspan="3" style="white-space: pre-wrap; min-height: 100px; vertical-align: top; padding: 8px;">' + (orderData.material_details || '-') + '</td>';
-        printContent += '</tr>';
-        printContent += '</tbody>';
-        printContent += '</table>';
-
-        // 财务信息表格
-        printContent += '<table class="info-table" style="margin-top: 15px;">';
-        printContent += '<thead><tr><th colspan="4" class="section-header">财务信息</th></tr></thead>';
-        printContent += '<tbody>';
-        printContent += '<tr>';
-        printContent += '<td class="label">订单金额</td>';
-        printContent += '<td class="value">¥' + (orderData.order_amount ? parseFloat(orderData.order_amount).toFixed(2) : '0.00') + '</td>';
-        printContent += '<td class="label">订单余额</td>';
-        printContent += '<td class="value">¥' + (orderData.order_balance ? parseFloat(orderData.order_balance).toFixed(2) : '0.00') + '</td>';
-        printContent += '</tr>';
-        printContent += '</tbody>';
-        printContent += '</table>';
-
-        // 负责人信息表格
-        printContent += '<table class="info-table" style="margin-top: 15px;">';
-        printContent += '<thead><tr><th colspan="4" class="section-header">负责人信息</th></tr></thead>';
-        printContent += '<tbody>';
-        printContent += '<tr>';
-        printContent += '<td class="label">材料负责人</td>';
-        printContent += '<td class="value">' + (orderData.material_manager || '-') + '</td>';
-        printContent += '<td class="label">分项目负责人</td>';
-        printContent += '<td class="value">' + (orderData.sub_project_manager || '-') + '</td>';
-        printContent += '</tr>';
-        printContent += '</tbody>';
-        printContent += '</table>';
-
-        // 关联付款单（如果有）
-        if (orderData.pays_list && orderData.pays_list.length > 0) {
-          printContent += '<div class="section-title">关联付款单</div>';
-          printContent += '<div style="border: 1px solid #000; padding: 2mm; margin-bottom: 2mm;">';
-          printContent += '<table><thead><tr><th>付款单编号</th><th>付款金额</th><th>付款状态</th><th>经办人</th><th>付款单位</th></tr></thead><tbody>';
-          orderData.pays_list.forEach(function (pay) {
-            printContent += '<tr>';
-            printContent += '<td>' + (pay.pay_number || '-') + '</td>';
-            printContent += '<td>¥' + (pay.current_payment_amount ? parseFloat(pay.current_payment_amount).toFixed(2) : '0.00') + '</td>';
-            printContent += '<td>' + (pay.payment_status || '-') + '</td>';
-            printContent += '<td>' + (pay.handler || '-') + '</td>';
-            printContent += '<td>' + (pay.payer_supplier_name || '-') + '</td>';
-            printContent += '</tr>';
-          });
-          printContent += '</tbody></table></div>';
-        }
-
-        printContent += '</body></html>';
-
-        // 打开新窗口并打印
-        var printWindow = window.open('', '_blank');
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-        printWindow.onload = function () {
-          setTimeout(function () {
-            printWindow.print();
-          }, 250);
-        };
-      }
-
-      // 打印付款单函数
-      function printPay(payData, orderData, supplierData) {
-        // 创建打印内容，样式与编辑页面一致
-        var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>付款单打印</title>';
-        printContent += '<style>';
-        // 屏幕预览样式
-        printContent += 'body{font-family: "Microsoft YaHei", Arial, sans-serif; padding: 20px; background: #fff; max-width: 1200px; margin: 0 auto; line-height: 1.4;}';
-        printContent += '.form-title{text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; padding-bottom: 10px; border-bottom: 2px solid #000;}';
-
-        // 表格样式
-        printContent += '.info-table{border-collapse: collapse; width: 100%; margin-bottom: 15px;}';
-        printContent += '.info-table th, .info-table td{border: 1px solid #000; padding: 8px; text-align: left;}';
-        printContent += '.info-table .section-header{background-color: #f0f0f0; font-weight: bold; font-size: 16px; text-align: center;}';
-        printContent += '.info-table .label{background-color: #f8f8f8; font-weight: bold; width: 120px; text-align: right; padding-right: 12px;}';
-        printContent += '.info-table .value{background-color: #fff; padding-left: 12px;}';
-
-        // 打印样式
-        printContent += '@media print{';
-        printContent += 'body{padding: 5mm; margin: 0; max-width: 100%; line-height: 1.2; height: 148.5mm; overflow: hidden;}';
-        printContent += '@page{size: A4 portrait; margin: 8mm 10mm 0 10mm;}';
-        printContent += '.form-title{font-size: 18px; margin-bottom: 3mm; padding-bottom: 2mm; line-height: 1.2;}';
-        printContent += '.info-table{margin-bottom: 2mm;}';
-        printContent += '.info-table th, .info-table td{font-size: 9px; padding: 1mm 2mm; line-height: 1.2;}';
-        printContent += '.info-table .section-header{font-size: 10px; padding: 1.5mm 2mm;}';
-        printContent += '.info-table .label{width: 80px; font-size: 9px; padding-right: 2mm;}';
-        printContent += '.info-table .value{font-size: 9px; padding-left: 2mm;}';
-        printContent += '}</style></head><body>';
-
-        // 表单标题
-        printContent += '<div class="form-title">付款单</div>';
-
-        // 订单信息摘要表格（如果有）
-        if (orderData) {
-          printContent += '<table class="info-table">';
-          printContent += '<thead><tr><th colspan="4" class="section-header">订单信息摘要</th></tr></thead>';
-          printContent += '<tbody>';
-          printContent += '<tr>';
-          printContent += '<td class="label">关联订单编号</td>';
-          printContent += '<td class="value">' + (orderData.order_number || '-') + '</td>';
-          printContent += '<td class="label">项目名称</td>';
-          printContent += '<td class="value">' + (orderData.project_name || '-') + '</td>';
-          printContent += '</tr>';
-          printContent += '<tr>';
-          printContent += '<td class="label">材料名称</td>';
-          printContent += '<td class="value">' + (orderData.material_name || '-') + '</td>';
-          printContent += '<td class="label">供应商</td>';
-          printContent += '<td class="value">' + (orderData.supplier_name || '-') + '</td>';
-          printContent += '</tr>';
-          printContent += '<tr>';
-          printContent += '<td class="label">订单金额</td>';
-          printContent += '<td class="value" colspan="3">¥' + (orderData.order_amount ? parseFloat(orderData.order_amount).toFixed(2) : '0.00') + '</td>';
-          printContent += '</tr>';
-          printContent += '</tbody>';
-          printContent += '</table>';
-        }
-
-        // 付款单信息表格
-        printContent += '<table class="info-table">';
-        printContent += '<thead><tr><th colspan="4" class="section-header">付款单信息</th></tr></thead>';
-        printContent += '<tbody>';
-
-        // 付款状态文本转换
-        var paymentStatusText = '';
-        if (payData.payment_status === 'paid') {
-          paymentStatusText = '已付款';
-        } else if (payData.payment_status === 'partial') {
-          paymentStatusText = '部分付款';
-        } else {
-          paymentStatusText = '待付款';
-        }
-
-        printContent += '<tr>';
-        printContent += '<td class="label">付款单编号</td>';
-        printContent += '<td class="value">' + (payData.pay_number || '-') + '</td>';
-        printContent += '<td class="label">付款单位</td>';
-        printContent += '<td class="value">' + (payData.payer_supplier_name || '-') + '</td>';
-        printContent += '</tr>';
-
-        printContent += '<tr>';
-        printContent += '<td class="label">收款单位</td>';
-        printContent += '<td class="value">' + (payData.payee_supplier_name || '-') + '</td>';
-        printContent += '<td class="label">付款状态</td>';
-        printContent += '<td class="value">' + paymentStatusText + '</td>';
-        printContent += '</tr>';
-
-        // 新增：联系人与电话
-        var contactPerson = supplierData ? (supplierData.contact_person || '-') : '-';
-        var contactPhone = supplierData ? (supplierData.phone || '-') : '-';
-        printContent += '<tr>';
-        printContent += '<td class="label">联系人</td>';
-        printContent += '<td class="value">' + contactPerson + '</td>';
-        printContent += '<td class="label">联系电话</td>';
-        printContent += '<td class="value">' + contactPhone + '</td>';
-        printContent += '</tr>';
-
-        // 新增：开户行与账号
-        var bankName = supplierData ? (supplierData.bank_name || '-') : '-';
-        var bankAccount = supplierData ? (supplierData.account_number || '-') : '-';
-        printContent += '<tr>';
-        printContent += '<td class="label">开户行名称</td>';
-        printContent += '<td class="value">' + bankName + '</td>';
-        printContent += '<td class="label">开户行账号</td>';
-        printContent += '<td class="value">' + bankAccount + '</td>';
-        printContent += '</tr>';
-
-        printContent += '<tr>';
-        printContent += '<td class="label">本次付款金额</td>';
-        printContent += '<td class="value">¥' + (payData.current_payment_amount ? parseFloat(payData.current_payment_amount).toFixed(2) : '0.00') + '</td>';
-        printContent += '<td class="label">开票金额</td>';
-        printContent += '<td class="value">¥' + (payData.invoice_amount ? parseFloat(payData.invoice_amount).toFixed(2) : '0.00') + '</td>';
-        printContent += '</tr>';
-
-        printContent += '<tr>';
-        printContent += '<td class="label">经办人</td>';
-        printContent += '<td class="value" colspan="3">' + (payData.handler || '-') + '</td>';
-        printContent += '</tr>';
-
-        printContent += '<tr>';
-        printContent += '<td class="label" style="vertical-align: top;">付款用途</td>';
-        printContent += '<td class="value" colspan="3" style="white-space: pre-wrap; min-height: 80px; vertical-align: top; padding: 8px;">' + (payData.payment_purpose || '-') + '</td>';
-        printContent += '</tr>';
-        printContent += '</tbody>';
-        printContent += '</table>';
-
-        printContent += '</body></html>';
-
-        // 打开新窗口并打印
-        var printWindow = window.open('', '_blank');
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-        printWindow.onload = function () {
-          setTimeout(function () {
-            printWindow.print();
-          }, 250);
-        };
-      }
-
-      // 监听打印付款单按钮点击
-      $(document).on('click', '.print-pay-btn', function (e) {
-        e.stopPropagation(); // 阻止事件冒泡
-
-        var payId = $(this).data('pay-id');
-
-        if (!payId) {
-          layer.msg('付款单ID不存在', { icon: 2 });
-          return;
-        }
-
-        // 加载付款单详情
+    // 加载付款状态列表（从字典表）
+    function loadPaymentStatuses() {
+      return new Promise(function (resolve) {
         $.ajax({
-          url: window.location.origin + `/api/v1/pay/${payId}`,
-          type: 'GET',
+          url: window.location.origin + "/api/v1/dictionary/detail/list",
+          type: "GET",
+          data: {
+            dic_id: 28,  // 付款状态字典的ID (fkzt)
+            limit: 100
+          },
           headers: {
             Authorization: "Bearer " + localStorage.getItem("access_token"),
           },
           success: function (res) {
             if (res.code === 0 && res.data) {
-              var payData = res.data;
-              var orderData = null;
-              var supplierData = null;
+              // 构建code到value的映射
+              paymentStatusMap = {};
+              selectedPaymentStatuses.clear(); // 清空选中状态
 
-              // 使用 Promise 链式调用，以便支持 fallback 逻辑
-              var fetchOrder = function () {
-                var def = $.Deferred();
-                if (payData.order_id) {
-                  $.ajax({
-                    url: window.location.origin + `/api/v1/order/${payData.order_id}`,
-                    type: 'GET',
-                    headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-                    success: function (res) {
-                      if (res.code === 0) orderData = res.data;
-                      def.resolve();
-                    },
-                    error: function () { def.resolve(); }
-                  });
-                } else {
-                  def.resolve();
-                }
-                return def.promise();
-              };
-
-              fetchOrder().then(function () {
-                var supplierId = payData.payee_supplier_id;
-                // Fallback: 如果付款单没有记录收款单位，尝试使用订单的供应商
-                if (!supplierId && orderData && orderData.supplier_id) {
-                  console.log('Using Order Supplier ID as fallback:', orderData.supplier_id);
-                  supplierId = orderData.supplier_id;
-                }
-
-                if (supplierId) {
-                  console.log('Fetching supplier info for ID:', supplierId);
-                  $.ajax({
-                    url: window.location.origin + `/api/v1/supplier/${supplierId}`,
-                    type: 'GET',
-                    headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-                    success: function (res) {
-                      console.log('Supplier Fetch Result:', res);
-                      if (res.code === 0) supplierData = res.data;
-                      printPay(payData, orderData, supplierData);
-                    },
-                    error: function (xhr, status, err) {
-                      console.error('Supplier Fetch Error:', err);
-                      // 即使获取失败，也尝试打印（没有供应商详情）
-                      printPay(payData, orderData, null);
-                    }
-                  });
-                } else {
-                  console.warn('No supplier ID found (checked payee_supplier_id and order fallback)');
-                  printPay(payData, orderData, null);
-                }
+              res.data.forEach(function (status) {
+                // 使用code作为键，value作为显示文本
+                paymentStatusMap[status.code] = status.value;
+                // 同时建立value到value的映射，兼容可能直接使用value的情况
+                paymentStatusMap[status.value] = status.value;
+                // 默认全选
+                selectedPaymentStatuses.add(status.code);
               });
-            } else {
-              layer.msg(res.msg || '获取付款单信息失败', { icon: 2 });
+              console.log('付款状态映射已加载:', paymentStatusMap);
+              console.log('默认选中的付款状态:', Array.from(selectedPaymentStatuses));
             }
+            resolve();
           },
           error: function () {
-            layer.msg('获取付款单信息失败，请重试', { icon: 2 });
+            console.error('加载付款状态列表失败');
+            resolve();
           }
         });
       });
+    }
 
-      // 监听付款单编辑按钮点击
-      $(document).off('click', '.edit-pay-btn').on('click', '.edit-pay-btn', function (e) {
-        e.stopPropagation(); // 阻止事件冒泡，避免触发行点击事件
+    // 加载付款状态
+    loadPaymentStatuses();
 
-        var payId = $(this).data('pay-id');
-        var orderId = $(this).data('order-id');
+    // ==================== 基础数据状态与映射 ====================
+    var materialNamesMap = {};
+    var paymentStatusMap = {};
+    var allProjects = [];
+    // --- 字段筛选功能逻辑 ---
+    function initFieldFilter() {
+      var $btn = $('#field-setting-btn');
+      var $dropdown = $('#field-dropdown');
+      var $container = $('#order-card-container');
 
-        if (!payId) {
-          layer.msg('付款单ID不存在', { icon: 2 });
-          return;
+      // 从 localStorage 恢复配置
+      var savedFilter = localStorage.getItem('order_field_filter');
+      if (savedFilter) {
+        var filterConfig = JSON.parse(savedFilter);
+        $dropdown.find('input[type="checkbox"]').each(function () {
+          var field = $(this).data('field');
+          if (filterConfig[field] === false) {
+            $(this).prop('checked', false);
+            $container.addClass('hide-' + field);
+          }
+        });
+      }
+
+      // 切换下拉菜单 (改为悬停模式，与付款单页面一致)
+      $btn.on('mouseenter', function () {
+        $dropdown.stop().fadeIn(200);
+      }).on('mouseleave', function () {
+        $dropdown.stop().fadeOut(200);
+      });
+
+      // 移除 document click 监听，因为悬停模式不需要
+      // $(document).on('click', function () { ... });
+
+      // 监听勾选变化
+      $dropdown.find('input[type="checkbox"]').on('change', function () {
+        var field = $(this).data('field');
+        var isChecked = $(this).is(':checked');
+
+        if (isChecked) {
+          $container.removeClass('hide-' + field);
+        } else {
+          $container.addClass('hide-' + field);
         }
 
-        var payUrl = '/order_pay/info/pay_info.html?payment_id=' + payId +
-          (orderId ? '&order_id=' + orderId : '');
+        // 保存配置
+        saveFilterConfig();
+      });
 
+      function saveFilterConfig() {
+        var config = {};
+        $dropdown.find('input[type="checkbox"]').each(function () {
+          config[$(this).data('field')] = $(this).is(':checked');
+        });
+        localStorage.setItem('order_field_filter', JSON.stringify(config));
+      }
+    }
+
+    var currentProject = 'all';
+
+    // ==================== 项目与卡片渲染逻辑 ====================
+
+    // 加载项目侧边栏
+    function initProjectSidebar() {
+      console.log('正在获取项目列表...');
+      $.ajax({
+        url: window.location.origin + "/api/v1/project/",
+        type: "GET",
+        headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+        data: { limit: 1000, has_orders: 'true' },
+
+        success: function (res) {
+          console.log('获取项目请求已返回:', res.code);
+          if (res.code === 0) {
+            allProjects = res.data;
+            // 按 ID 倒序排序
+            allProjects.sort((a, b) => b.id - a.id);
+            renderProjectList(allProjects);
+          }
+        },
+        error: function (xhr) {
+          console.error('获取项目失败:', xhr.status);
+        }
+      });
+    }
+
+    var currentProject = 'all';
+    var currentContact = 'all'; // 新增：当前选中的联系人
+    var allProjects = [];
+    var allContacts = []; // 新增：所有联系人列表 [{name: '张三', id: 1}]
+
+    function renderProjectList(projects) {
+      var $list = $('#order-project-list');
+      // 保留“全部项目”
+      var html = `
+        <div class="project-item ${currentProject === 'all' ? 'active' : ''}" data-id="all">
+          <div class="project-name">全部项目</div>
+        </div>
+      `;
+      projects.forEach(function (p, index) {
+        var activeClass = p.project_name === currentProject ? 'active' : '';
+        html += `
+          <div class="project-item ${activeClass}" data-id="${p.project_name}" style="animation-delay: ${index * 0.05}s">
+            <div class="project-name">${p.project_name}</div>
+          </div>
+        `;
+      });
+      $list.html(html);
+    }
+
+    // 新增：渲染供应商联系人列表
+    function renderContactList(contacts) {
+      var $list = $('#order-contact-list');
+      var html = `
+        <div class="project-item ${currentContact === 'all' ? 'active' : ''}" data-id="all">
+          <div class="project-name">全部联系人</div>
+        </div>
+      `;
+      contacts.forEach(function (c, index) {
+        if (!c || !c.name || c.name === "undefined") return; // Robustness check
+        var activeClass = c.name === currentContact ? 'active' : '';
+        html += `
+          <div class="project-item ${activeClass}" data-id="${c.name}" style="animation-delay: ${index * 0.05}s; display: flex; justify-content: space-between; align-items: center; padding-right: 10px;">
+            <div class="project-name" style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.name}</div>
+            <i class="layui-icon layui-icon-website portal-btn" title="获取门户链接" data-id="${c.id}" data-name="${c.name}" style="color: var(--accent-cyan); cursor: pointer; font-size: 14px; opacity: 0.7; transition: all 0.2s;"></i>
+          </div>
+        `;
+      });
+      $list.html(html);
+    }
+
+    // 更新联系人侧边栏 (Moved out to global scope)
+    function updateContactSidebarList(orders) {
+      if (!allContacts || allContacts.length === 0) {
+        console.warn("allContacts not loaded yet, skipping filtered update");
+        return;
+      }
+
+      if (currentProject === 'all' && currentContact === 'all' && !$('#order-number-search').val()) {
+        return;
+      }
+
+      if (currentProject !== 'all') {
+        var contactsSet = new Set();
+        orders.forEach(function (o) {
+          if (o.supplier_contact_person) contactsSet.add(o.supplier_contact_person);
+        });
+
+        var contacts = allContacts.filter(function (c) {
+          return c && c.name && contactsSet.has(c.name);
+        });
+        renderContactList(contacts);
+      } else {
+        renderContactList(allContacts);
+      }
+    }
+
+    // 模糊搜索项目
+    $('#order-project-search').on('input', function () {
+      var val = $(this).val().toLowerCase();
+      var filtered = allProjects.filter(function (p) {
+        return p.project_name.toLowerCase().includes(val);
+      });
+      renderProjectList(filtered);
+    });
+
+    // 新增：模糊搜索联系人
+    $('#order-contact-search').on('input', function () {
+      var val = $(this).val().toLowerCase();
+      var filtered = allContacts.filter(function (c) {
+        return c.name.toLowerCase().includes(val);
+      });
+      renderContactList(filtered);
+    });
+
+    // 新增：订单号搜索事件
+    $('#order-number-search').on('input', function () {
+      // 使用防抖或简单延迟，这里直接调用 loadOrders
+      // 为避免频繁请求，简单做一个延迟
+      clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(function () {
+        loadOrders();
+      }, 300);
+    });
+
+    // 项目点击事件
+    $(document).on('click', '#order-project-list .project-item', function () {
+      $('#order-project-list .project-item').removeClass('active');
+      $(this).addClass('active');
+      currentProject = $(this).data('id');
+      currentContact = 'all'; // 切换项目时，重置联系人为全部，但不重新加载联系人列表（因为要求固定排序）
+
+      updateHeader();
+      loadOrders();
+    });
+
+    // 修改：联系人侧边栏现在的加载逻辑：从供应商获取，按供应商ID倒序
+    function initContactSidebar() {
+      console.log('开始加载联系人数据...');
+      $.ajax({
+        url: "/api/v1/supplier/",
+        type: "GET",
+        headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+        data: { limit: 1000 },
+        success: function (res) {
+          console.log('获取供应商联系人返回:', res.code);
+          if (res.code === 0) {
+            // 按供应商 ID 倒序排序
+            var suppliers = res.data.sort((a, b) => b.id - a.id);
+
+            var contacts = [];
+            var seen = new Set();
+
+            suppliers.forEach(s => {
+              if (s.contact_person && !seen.has(s.contact_person)) {
+                contacts.push({ name: s.contact_person, id: s.id });
+                seen.add(s.contact_person);
+              }
+            });
+
+            allContacts = contacts;
+            renderContactList(allContacts);
+          }
+        },
+        error: function (xhr) {
+          console.error('获取供应商联系人失败:', xhr.status);
+        }
+      });
+    }
+
+    // 废弃 updateAssociatedContacts，因为不再仅显示当前项目的联系人
+
+    // 新增：联系人点击事件
+    $(document).on('click', '#order-contact-list .project-item', function () {
+      $('#order-contact-list .project-item').removeClass('active');
+      $(this).addClass('active');
+      currentContact = $(this).data('id');
+      updateHeader();
+      loadOrders();
+    });
+
+    // 门户按钮点击事件
+    $(document).on('click', '.portal-btn', function (e) {
+      e.stopPropagation(); // 阻止冒泡，防止触发联系人选择
+      var id = $(this).data('id');
+      var name = $(this).data('name');
+
+      var $icon = $(this);
+      $icon.addClass('layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop');
+
+      $.ajax({
+        url: window.location.origin + `/api/v1/supplier/${id}/token`,
+        type: "POST",
+        headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+        success: function (res) {
+          $icon.removeClass('layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop');
+          if (res.code === 0) {
+            var fullUrl = window.location.origin + res.data.url;
+            layer.open({
+              title: `<span style="color:#7000ff; font-weight:bold;">${name} - 门户访问链接</span>`,
+              skin: 'layui-layer-molv',
+              content: `<div style="padding:20px; color:#fff;">
+                  <p style="margin-bottom:10px; color:#94a3b8;">请复制以下链接发送给供应商：</p>
+                  <input type="text" class="layui-input" value="${fullUrl}" id="portal-link-input-${id}" style="color:#00e5ff; border-color:#00e5ff;">
+                </div>`,
+              btn: ['复制', '关闭'],
+              yes: function (index) {
+                var input = document.getElementById(`portal-link-input-${id}`);
+                input.select();
+                document.execCommand("copy");
+                layer.msg('已复制到剪贴板', { icon: 1 });
+              }
+            });
+          } else {
+            layer.msg(res.msg || '获取失败', { icon: 2 });
+          }
+        },
+        error: function () {
+          $icon.removeClass('layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop');
+          layer.msg('网络请求失败', { icon: 2 });
+        }
+      });
+    });
+
+    function updateHeader() {
+      var pText = currentProject === 'all' ? '全部项目' : currentProject;
+      var cText = currentContact === 'all' ? '全部联系人' : currentContact;
+      $('#current-project-title').text(pText + ' | ' + cText + ' - 订单明细');
+    }
+
+    // 加载并渲染订单卡片
+    function loadOrders() {
+      var orderNumber = $('#order-number-search').val();
+
+      // 性能优化：如果项目和联系人都是全部，且没有输入搜索关键词，则不加载数据
+      if (currentProject === 'all' && currentContact === 'all' && !orderNumber) {
+        $('#order-card-container').html('<div style="grid-column: 1/-1; text-align: center; padding: 100px; color: #999;"><i class="layui-icon layui-icon-tips" style="font-size: 50px; color: #ccc;"></i><p style="margin-top: 20px; font-size: 16px;">请选择左侧项目或联系人以查看明细</p></div>');
+        return;
+      }
+
+      var params = { page: 1, limit: 1000 };
+      if (currentProject !== 'all') {
+        params.project_name = currentProject;
+      }
+      if (currentContact !== 'all') {
+        params.supplier_contact_person = currentContact;
+      }
+      if (orderNumber) {
+        params.order_number = orderNumber;
+      }
+
+      $('#order-card-container').html(`
+        <div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #999;">
+          <i class="layui-icon layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop" style="font-size: 30px;"></i>
+          <p style="margin-top: 10px;">正在加载订单数据...</p>
+        </div>
+      `);
+
+      // --- 新增：更新联系人侧边栏 ---
+
+
+      $.ajax({
+        url: window.location.origin + "/api/v1/order/",
+        type: "GET",
+        headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+        data: params,
+        success: function (res) {
+          if (res.code === 0) {
+            renderOrderCards(res.data);
+            // 触发侧边栏更新 (仅当没有选定具体联系人时更新，避免列表收缩)
+            if (currentContact === 'all') {
+              updateContactSidebarList(res.data);
+            }
+          } else {
+            $('#order-card-container').html('<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #ff5722;">加载失败: ' + res.msg + '</div>');
+          }
+        }
+      });
+    }
+
+    function calculateOrderBalance(order) {
+      var amount = parseFloat(order.order_amount || 0);
+      var paid = parseFloat(order.paid_amount || order.total_paid || 0);
+      return amount - paid;
+    }
+
+    function renderOrderCards(orders) {
+      var $container = $('#order-card-container');
+      if (!orders || orders.length === 0) {
+        $container.html('<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #999;">暂无订单记录</div>');
+        return;
+      }
+
+      // --- 新增：按项目名称排序 ---
+      orders.sort(function (a, b) {
+        var nameA = (a.project_name || "").toLowerCase();
+        var nameB = (b.project_name || "").toLowerCase();
+        if (nameA < nameB) return -1;
+        if (nameA > nameB) return 1;
+        return 0;
+      });
+
+      // --- 新增：项目色彩映射 ---
+      var projectPalette = [
+        '#00e5ff', '#ff9800', '#4caf50', '#2196f3', '#9c27b0',
+        '#f44336', '#ffeb3b', '#e91e63', '#00bcd4', '#ff5722',
+        '#795548', '#607d8b', '#cddc39', '#ffc107', '#03a9f4'
+      ];
+      function getProjectColor(name) {
+        if (!name || name === '未指定项目') return '#999';
+        var hash = 0;
+        for (var i = 0; i < name.length; i++) {
+          hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        var index = Math.abs(hash) % projectPalette.length;
+        return projectPalette[index];
+      }
+
+      var html = '';
+      orders.forEach(function (o, index) {
+        var totalPay = (o.pays_list || []).reduce((acc, cur) => acc + parseFloat(cur.current_payment_amount || 0), 0);
+        var balance = parseFloat(o.order_amount || 0) - totalPay;
+        var color = balance >= 0 ? 'success' : 'warning';
+        // 获取项目唯一颜色
+        var projectColor = getProjectColor(o.project_name);
+        // 用户反馈颜色再浅一点点，调整为 #444444
+        var bgStyle = balance <= 0 ? 'background-color: #444444;' : '';
+        var matName = o.material_name;
+        if (/^\d+$/.test(matName)) matName = materialNamesMap[matName] || matName;
+
+        // 解析附件列表
+        var attachmentsList = [];
+        try {
+          if (o.attachments_list && Array.isArray(o.attachments_list)) {
+            attachmentsList = o.attachments_list;
+          } else if (o.attachments && typeof o.attachments === 'string') {
+            attachmentsList = JSON.parse(o.attachments);
+          }
+        } catch (e) {
+          attachmentsList = [];
+        }
+        var attachmentCount = attachmentsList.length;
+
+        html += `
+          <div class="refined-card" data-id="${o.id}" style="${bgStyle} animation-delay: ${index * 0.05}s">
+            <!-- 呼吸灯状态条：使用项目分配的唯一颜色 -->
+            <div class="card-indicator" style="background-color: ${projectColor}; box-shadow: 0 0 10px ${projectColor};"></div>
+            
+            <div class="card-title" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="layui-icon layui-icon-list"></i>
+                <span>${o.order_number}</span>
+              </div>
+              <div style="padding-left: 24px; font-size: 13px; color: var(--accent-primary); font-family: 'JetBrains Mono', monospace; display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
+                 <span>订单: ¥${parseFloat(o.order_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                 <span style="color: #ff9800;">已付: ¥${totalPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+              ${(o.pays_list && o.pays_list.length > 0) ? `
+              <div style="padding-left: 24px; display: flex; flex-wrap: wrap; gap: 4px;">
+                 ${o.pays_list.map(p => `<span class="pay-no-tag clickable-pay-no" data-id="${p.id}" title="点击编辑付款单" style="cursor: pointer; font-size: 12px; color: #ff9800; background: rgba(255,152,0,0.1); padding: 0 4px; border-radius: 2px;">${p.pay_number} <span style="opacity: 0.8; font-size: 11px;">¥${parseFloat(p.current_payment_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></span>`).join('')}
+              </div>` : ''}
+            </div>
+
+            <div class="card-body">
+              <div class="info-item item-project-name">
+                <span class="info-label">项目名称</span>
+                <span class="info-value text-ellipsis" title="${o.project_name || '-'}">${o.project_name || '-'}</span>
+              </div>
+              <div class="info-item item-contact">
+                <span class="info-label">供应商负责人</span>
+                <span class="info-value text-ellipsis" title="${o.supplier_contact_person || '-'}">${o.supplier_contact_person || '-'}</span>
+              </div>
+              <div class="info-item item-material">
+                <span class="info-label">材料名称</span>
+                <span class="info-value">${matName}</span>
+              </div>
+              <div class="info-item item-manager">
+                <span class="info-label">负责人</span>
+                <span class="info-value">${o.material_manager || '-'}</span>
+              </div>
+              <div class="info-item item-balance">
+                <span class="info-label">当前余额</span>
+                <span class="info-value numeric" style="color: ${balance >= 0 ? '#00e676' : '#ffab40'};">¥${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div class="info-item item-date">
+                <span class="info-label">下料 / 到场</span>
+                <span class="info-value">${o.cutting_time || '-'} / ${o.estimated_arrival_time || '-'}</span>
+              </div>
+              <div class="info-item item-details">
+                <span class="info-label">材料明细</span>
+                <span class="info-value" title="${o.material_details || '-'}">${o.material_details || '-'}</span>
+              </div>
+              ${attachmentCount > 0 ? `
+              <div class="info-item item-attachments" style="grid-column: 1/-1;">
+                <span class="info-label">附件列表</span>
+                <div class="attachment-list-compact">
+                  ${attachmentsList.map(att => `
+                    <div class="attachment-item-compact preview-attachment" title="${att.name || att.filename || '未命名'}" data-url="${att.url}" data-name="${att.name || att.filename}">
+                      <i class="layui-icon layui-icon-file"></i>
+                      <span class="attachment-name" title="点击预览">${att.name || att.filename || '未命名'}</span>
+                      ${att.url ? `<a href="${att.url}" target="_blank" class="attachment-download" onclick="event.stopPropagation();" title="下载附件"><i class="layui-icon layui-icon-download-circle"></i></a>` : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+              ` : ''}
+            </div>
+
+            <!-- 悬浮操作面板 -->
+            <div class="card-actions-panel">
+              <div class="action-icon-btn edit card-edit-btn" title="编辑订单" data-id="${o.id}">
+                <i class="layui-icon layui-icon-edit"></i>
+              </div>
+              <div class="action-icon-btn pay card-pay-btn" title="记账付款" data-id="${o.id}" data-no="${o.order_number}">
+                <i class="layui-icon layui-icon-rmb"></i>
+              </div>
+              <div class="action-icon-btn print card-print-btn" title="打印单据" data-id="${o.id}">
+                <i class="layui-icon layui-icon-print"></i>
+              </div>
+              <div class="action-icon-btn delete card-del-btn" title="删除记录" data-id="${o.id}">
+                <i class="layui-icon layui-icon-delete"></i>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      $container.html(html);
+    }
+
+    // 初始化加载
+    console.log('启动项目侧边栏初始化...');
+    initProjectSidebar();
+    console.log('启动订单数据加载...');
+    loadOrders();
+    console.log('初始化流程完成。');
+
+    // 按钮点击事件统一代理
+    $(document).on('click', '.card-edit-btn', function () {
+      var id = $(this).data('id');
+      editOrder(id);
+    });
+
+    $(document).on('click', '.card-del-btn', function () {
+      var id = $(this).data('id');
+      deleteOrder(id);
+    });
+
+    $(document).on('click', '.card-pay-btn', function () {
+      var id = $(this).data('id');
+      var no = $(this).data('no');
+      addPayment(id, no);
+    });
+
+    $(document).on('click', '.card-print-btn', function () {
+      var id = $(this).data('id');
+      // 打开独立的打印页面
+      window.open('/order_pay/info/print_order.html?id=' + id, '_blank');
+    });
+
+    $('#add-order-btn').on('click', function () {
+      var url = '/order_pay/info/order_info.html?id=0';
+      if (currentProject && currentProject !== 'all') {
+        url += '&project_name=' + encodeURIComponent(currentProject);
+      }
+      if (currentContact && currentContact !== 'all') {
+        url += '&contact=' + encodeURIComponent(currentContact);
+      }
+      layer.open({
+        type: 2, title: '新增订单', shade: 0.1,
+        area: ['90%', '90%'], content: url,
+        end: function () { loadOrders(); }
+      });
+    });
+
+    // 附件预览逻辑
+    $(document).on('click', '.preview-attachment', function () {
+      var url = $(this).data('url');
+      var name = $(this).data('name') || '未命名';
+      if (!url) {
+        layer.msg('该附件无有效路径，无法预览', { icon: 5 });
+        return;
+      }
+
+      var ext = name.split('.').pop().toLowerCase();
+      // 图片类预览
+      if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].indexOf(ext) > -1) {
+        layer.photos({
+          photos: {
+            "title": "附件预览: " + name,
+            "data": [{ "src": url, "alt": name }]
+          },
+          shade: 0.7,
+          anim: 5
+        });
+      } else {
+        // 其他类（PDF 等）通过 iframe 预览
         layer.open({
           type: 2,
-          title: '编辑付款单',
-          shade: 0.1,
-          area: ['90%', '90%'],
-          content: payUrl,
-          end: function () {
-            reloadTable();
-          }
+          title: '<i class="layui-icon layui-icon-file" style="color: var(--accent-primary);"></i> 预览: ' + name,
+          shadeClose: true,
+          maxmin: true,
+          area: ['80%', '90%'],
+          content: url
         });
+      }
+    });
+
+
+    // (已移除 Layui Table 渲染相关遗留代码)
+
+    // 统一的重新加载函数，适配新卡片布局
+    function reloadTable() {
+      loadOrders();
+    }
+
+
+
+    function editOrder(orderId) {
+      layer.open({
+        type: 2, title: '编辑订单', shade: 0.1,
+        area: ['90%', '90%'], content: '/order_pay/info/order_info.html?id=' + orderId,
+        end: function () { loadOrders(); }
       });
+    }
 
-      // 监听订单编号输入，动态更新附件编号
-      $(document).on('input', '#order-form input[name="order_number"]', function () {
-        currentOrderNumber = $(this).val() || '';
-        attachmentList.forEach(function (file) {
-          if (file.code && file.code.startsWith('TEMP')) {
-            file.code = generateAttachmentCode(currentOrderNumber);
-          }
-        });
-        renderAttachmentList();
-        updateAttachmentsData();
-      });
 
-      // 监听供应商联系人选择，动态筛选供应商下拉框
-      form.on('select(supplier_contact_person)', function (data) {
-        console.log('供应商联系人选择事件触发', data);
-        var contactPerson = data.value;
-
-        if (contactPerson) {
-          // 筛选出该联系人对应的所有供应商
-          var relatedSuppliers = suppliersData.filter(function (supplier) {
-            return supplier.contact_person === contactPerson;
-          });
-
-          console.log('找到关联的供应商:', relatedSuppliers);
-
-          if (relatedSuppliers.length > 0) {
-            // 重新构建供应商下拉框，只显示关联的供应商
-            var supplierHtml = '<option value="">请选择供应商</option>';
-            relatedSuppliers.forEach(function (supplier) {
-              supplierHtml += '<option value="' + supplier.id + '" data-name="' + supplier.name + '" data-phone="' + supplier.phone + '">' + supplier.name + '</option>';
-            });
-            $('#supplier_id').html(supplierHtml);
-
-            // 如果只有一个关联供应商，自动选中
-            if (relatedSuppliers.length === 1) {
-              $('#supplier_id').val(relatedSuppliers[0].id);
-              $('#contact_phone').val(relatedSuppliers[0].phone);
-              layer.msg('已自动填充供应商和联系电话', { icon: 1, time: 1500 });
-            } else {
-              // 多个供应商时，清空联系电话，等待用户选择
-              $('#contact_phone').val('');
-              layer.msg('请从筛选后的供应商中选择', { icon: 1, time: 1500 });
-            }
-
-            form.render('select');
-          } else {
-            layer.msg('未找到对应的供应商信息', { icon: 2 });
-          }
-        } else {
-          // 未选择联系人时，恢复显示所有供应商
-          var supplierHtml = '<option value="">请选择供应商</option>';
-          suppliersData.forEach(function (supplier) {
-            supplierHtml += '<option value="' + supplier.id + '" data-name="' + supplier.name + '" data-phone="' + supplier.phone + '">' + supplier.name + '</option>';
-          });
-          $('#supplier_id').html(supplierHtml);
-          $('#contact_phone').val('');
-          form.render('select');
-        }
-      });
-
-      // 监听供应商选择，自动填充联系电话
-      form.on('select(supplier_id)', function (data) {
-        var supplierId = data.value;
-        if (supplierId) {
-          // 从存储的供应商数据中查找对应的供应商
-          var supplier = suppliersData.find(function (s) {
-            return s.id == supplierId;
-          });
-          if (supplier && supplier.phone) {
-            $('#contact_phone').val(supplier.phone);
-          }
-        } else {
-          $('#contact_phone').val('');
-        }
-      });
-
-      // 监听表格工具栏事件
-      table.on('toolbar(order-table)', function (obj) {
-        if (obj.event === 'order-toolbar-add') {
-          console.log('新增订单按钮被点击');
-          $("#order-form")[0].reset();
-          $("#order-form input[name='id']").val(0);
-          // 清空附件列表和重置计数器
-          attachmentList = [];
-          attachmentSequence = 0;
-          currentOrderNumber = '';
-          renderAttachmentList();
-          updateAttachmentsData();
-          loadProjects();  // 加载项目列表
-          loadSuppliers();  // 加载供应商列表和联系人列表
-          loadMaterialNames();  // 加载材料名称列表
-
-          // 自动生成订单编号
-          var orderNumber = generateOrderNumber();
-          $("#order-form input[name='order_number']").val(orderNumber);
-          currentOrderNumber = orderNumber;
-
-          // 自动填入当前日期到下料时间
-          var now = new Date();
-          var year = now.getFullYear();
-          var month = String(now.getMonth() + 1).padStart(2, '0');
-          var day = String(now.getDate()).padStart(2, '0');
-          var currentDate = year + '-' + month + '-' + day;
-          // 先设置输入框的值
-          $("#order-form input[name='cutting_time']").val(currentDate);
-
-          // 使用 layer 弹窗显示表单
-          layer.open({
-            type: 1,
-            title: false,
-            closeBtn: 1,
-            shadeClose: true,
-            shade: false,  // 不显示遮罩层
-            area: ['90%', '90%'],
-            content: $("#order-form-wrapper"),
-            success: function (layero, index) {
-              // 弹窗打开后，确保表单可见
-              $("#order-form-wrapper").show();
-              form.render($("#order-form"));
-              // 重新初始化日期选择器，并设置默认值为当前日期
-              laydate.render({
-                elem: layero.find("#form_cutting_time"),
-                type: "date",
-                value: currentDate  // 设置默认值为当前日期
-              });
-              laydate.render({
-                elem: layero.find("#form_estimated_arrival_time"),
-                type: "date"
-              });
-            },
-            end: function () {
-              // 弹窗关闭后隐藏表单容器
-              $("#order-form-wrapper").hide();
-            }
-          });
-        }
-      });
-
-      // 监听行工具事件
-      table.on('tool(order-table)', function (obj) {
-        var data = obj.data;
-        if (obj.event === 'order-tool-edit') {
-          console.log('编辑订单按钮被点击', data);
-
-          // 使用 Promise.all 等待所有下拉框数据加载完成后再设置表单值
-          Promise.all([loadProjects(), loadSuppliers(), loadMaterialNames()]).then(function () {
-            // 处理材料名称：如果是ID，则转换为对应的名称
-            if (data.material_name && /^\d+$/.test(data.material_name)) {
-              var mappedName = materialNamesMap[data.material_name];
-              if (mappedName) {
-                data.material_name = mappedName;
-              }
-            }
-            form.val("order-form", data);
-
-            // 设置供应商联系人（如果存在）
-            if (data.supplier_contact_person) {
-              $('#supplier_contact_person').val(data.supplier_contact_person);
-              form.render('select');
-
-              // 触发联系人选择事件，自动填充供应商和联系电话
-              var contactPersonOption = $('#supplier_contact_person option[value="' + data.supplier_contact_person + '"]');
-              if (contactPersonOption.length > 0) {
-                var supplierId = contactPersonOption.attr('data-supplier-id');
-                var phone = contactPersonOption.attr('data-phone');
-                if (supplierId) {
-                  $('#supplier_id').val(supplierId);
-                  $('#contact_phone').val(phone || data.contact_phone || '');
-                  form.render('select');
-                }
-              }
-            } else if (data.supplier_id) {
-              // 如果没有联系人，但有供应商ID，直接设置供应商
-              $('#supplier_id').val(data.supplier_id);
-              form.render('select');
-            }
-          });
-
-          // 设置当前订单编号
-          currentOrderNumber = data.order_number || '';
-          // 重置附件计数器
-          attachmentSequence = 0;
-
-          // 加载附件数据
-          attachmentList = [];
-          var attachments = null;
-
-          // 优先使用 attachments_list（从数据库加载）
-          if (data.attachments_list && Array.isArray(data.attachments_list) && data.attachments_list.length > 0) {
-            attachments = data.attachments_list;
-          } else if (data.attachments) {
-            // 兼容旧的 JSON 字符串格式
-            try {
-              attachments = JSON.parse(data.attachments);
-            } catch (e) {
-              console.error('解析附件数据失败:', e);
-            }
-          }
-
-          if (attachments && Array.isArray(attachments) && attachments.length > 0) {
-            attachmentList = attachments.map(function (file) {
-              return {
-                id: file.id || null,
-                code: file.code || generateAttachmentCode(currentOrderNumber),
-                name: file.name || file.original_filename || file.filename || '未知文件',
-                url: file.url || file.file_path || '',
-                size: file.size || file.file_size || 0,
-                filename: file.filename || file.name || ''
-              };
-            });
-            // 更新计数器到最大值
-            attachmentList.forEach(function (file) {
-              if (file.code && file.code.includes('F')) {
-                var parts = file.code.split('F');
-                if (parts.length > 1) {
-                  var seq = parseInt(parts[parts.length - 1]) || 0;
-                  if (seq > attachmentSequence) {
-                    attachmentSequence = seq;
-                  }
-                }
-              }
-            });
-          }
-          renderAttachmentList();
-          updateAttachmentsData();
-
-          // 使用 layer 弹窗显示表单
-          layer.open({
-            type: 1,
-            title: false,
-            closeBtn: 1,
-            shadeClose: true,
-            shade: false,  // 不显示遮罩层
-            area: ['90%', '90%'],
-            content: $("#order-form-wrapper"),
-            success: function (layero, index) {
-              // 弹窗打开后，确保表单可见
-              $("#order-form-wrapper").show();
-              form.render($("#order-form"));
-              // 重新初始化日期选择器
-              laydate.render({
-                elem: layero.find("#form_cutting_time"),
-                type: "date"
-              });
-              laydate.render({
-                elem: layero.find("#form_estimated_arrival_time"),
-                type: "date"
-              });
-            },
-            end: function () {
-              // 弹窗关闭后隐藏表单容器
-              $("#order-form-wrapper").hide();
-            }
-          });
-        } else if (obj.event === 'order-tool-print') {
-          // 打印订单
-          console.log('打印订单按钮被点击', data);
-          printOrder(data);
-        } else if (obj.event === 'order-tool-pay') {
-          // 新增付款单 - 弹出弹窗并自动填充订单信息
-          console.log('新增付款单按钮被点击', data);
-
-          var payUrl = '/order_pay/info/pay_info.html?order_id=' + data.id +
-            (data.order_number ? '&order_number=' + encodeURIComponent(data.order_number) : '');
-
-          layer.open({
-            type: 2,
-            title: '新增付款单',
-            shade: 0.1,
-            area: ['90%', '90%'],
-            content: payUrl,
-            end: function () {
-              reloadTable();
-            }
-          });
-        } else if (obj.event === 'order-tool-del') {
-          layer.confirm('确定要删除这个订单吗？', { icon: 3, title: '提示' }, function (confirmIndex) {
-            $.ajax({
-              url: window.location.origin + `/api/v1/order/${data.id}`,
-              type: "DELETE",
-              contentType: "application/json",
-              headers: {
-                Authorization: "Bearer " + localStorage.getItem("access_token"),
-              },
-              success: function (res) {
-                if (res.code === 0) {
-                  layer.msg(res.msg, { icon: 1 });
-                  reloadTable();
-                } else {
-                  layer.msg(res.msg || '删除失败', { icon: 2 });
-                }
-                layer.close(confirmIndex);
-              },
-              error: function () {
-                layer.msg('删除失败，请重试', { icon: 2 });
-                layer.close(confirmIndex);
-              }
-            });
-          });
-        }
-      });
-
-      // 监听单元格编辑
-      table.on('edit(order-table)', function (obj) {
-        var value = obj.value;
-        var data = obj.data;
-        var field = obj.field;
-
-        var updateData = {};
-        updateData[field] = value;
-        updateData.id = data.id;
-
+    function deleteOrder(orderId) {
+      layer.confirm('确定要删除这个订单吗？', { icon: 3, title: '提示' }, function (confirmIndex) {
         $.ajax({
-          url: window.location.origin + `/api/v1/order/${data.id}`,
-          type: "PUT",
-          contentType: "application/json",
-          data: JSON.stringify(updateData),
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("access_token"),
-          },
-          success: function (res) {
-            if (res.code === 0) {
-              layer.msg('更新成功', { icon: 1, time: 1000 });
-            } else {
-              layer.msg(res.msg || '更新失败', { icon: 2 });
-              reloadTable();
-            }
-          },
-          error: function () {
-            layer.msg('更新失败，请重试', { icon: 2 });
-            reloadTable();
-          }
-        });
-      });
-
-      // 表单提交
-      form.on("submit(order-form-btn)", function (data) {
-        var field = data.field;
-
-        // 验证必填字段
-        if (!field.order_number || field.order_number.trim() === '') {
-          layer.msg('订单编号不能为空', { icon: 2 });
-          return false;
-        }
-        if (!field.material_name || field.material_name.trim() === '') {
-          layer.msg('材料名称不能为空', { icon: 2 });
-          return false;
-        }
-
-        let method, url;
-        if (field.id == 0 || field.id == '0') {
-          field.id = null;
-          method = "POST";
-          url = window.location.origin + "/api/v1/order/";
-        } else {
-          method = "PUT";
-          url = window.location.origin + `/api/v1/order/${field.id}`;
-        }
-
-
-        // 处理订单金额（确保是数字或null）
-        if (field.order_amount) {
-          var amount = parseFloat(field.order_amount);
-          field.order_amount = isNaN(amount) ? null : amount;
-        } else {
-          field.order_amount = null;
-        }
-
-        // 处理供应商ID（确保是整数或null）
-        if (field.supplier_id) {
-          var supplierId = parseInt(field.supplier_id);
-          field.supplier_id = isNaN(supplierId) ? null : supplierId;
-        } else {
-          field.supplier_id = null;
-        }
-
-        // 处理附件数据，转换为JSON字符串
-        updateAttachmentsData();
-        field.attachments = $('#attachments-data').val() || JSON.stringify([]);
-
-        // 调试信息
-        console.log('提交订单数据:', field);
-
-        $.ajax({
-          url: url,
-          type: method,
-          contentType: "application/json",
-          data: JSON.stringify(field),
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("access_token"),
-          },
-          success: function (res) {
-            if (res && res.code === 0) {
-              layer.msg(res.msg || '操作成功', { icon: 1 });
-              // 关闭弹窗
-              layer.closeAll();
-              // 清空附件列表
-              attachmentList = [];
-              renderAttachmentList();
-              updateAttachmentsData();
-              reloadTable();
-            } else {
-              var errorMsg = (res && res.msg) ? res.msg : '操作失败';
-              layer.msg(errorMsg, { icon: 2 });
-              console.error('订单操作失败:', res);
-            }
-          },
-          error: function (xhr, status, error) {
-            var errorMsg = '操作失败，请重试';
-            if (xhr.responseJSON && xhr.responseJSON.msg) {
-              errorMsg = xhr.responseJSON.msg;
-            } else if (xhr.responseText) {
-              try {
-                var errorData = JSON.parse(xhr.responseText);
-                if (errorData.msg) {
-                  errorMsg = errorData.msg;
-                }
-              } catch (e) {
-                errorMsg = '网络错误，请检查连接';
-              }
-            }
-            layer.msg(errorMsg, { icon: 2 });
-            console.error('订单操作错误:', status, error, xhr);
-          }
-        });
-        return false;
-      });
-
-      // 监听筛选栏输入，实现模糊搜索
-      $(document).on('input', '.filter-input:not(.filter-date)', function () {
-        var $input = $(this);
-        var field = $input.data('field');
-        var value = $input.val().trim();
-
-        if (value) {
-          filterParams[field] = value;
-        } else {
-          delete filterParams[field];
-        }
-
-        clearTimeout(filterTimer);
-        filterTimer = setTimeout(function () {
-          reloadTable({
-            page: {
-              curr: 1
-            }
-          });
-        }, 1200);
-      });
-
-      // 取消按钮事件
-      $(document).on('click', '#cancel-btn', function () {
-        layer.closeAll();
-        $("#order-form")[0].reset();
-        attachmentList = [];
-        attachmentSequence = 0;
-        currentOrderNumber = '';
-        renderAttachmentList();
-        updateAttachmentsData();
-      });
-
-      // 订单付款单表单提交
-      form.on("submit(order-pay-info-form-btn)", function (data) {
-        var field = data.field;
-
-        // 验证必填字段
-        if (!field.order_id) {
-          layer.msg('订单ID不能为空', { icon: 2 });
-          return false;
-        }
-        if (!field.pay_number) {
-          layer.msg('请输入付款单编号', { icon: 2 });
-          return false;
-        }
-        if (!field.payer_supplier_id) {
-          layer.msg('请选择付款单位', { icon: 2 });
-          return false;
-        }
-        if (!field.payee_supplier_id) {
-          layer.msg('请选择收款单位', { icon: 2 });
-          return false;
-        }
-        if (!field.current_payment_amount) {
-          layer.msg('请输入本次付款金额', { icon: 2 });
-          return false;
-        }
-
-        // 判断是新增还是编辑
-        var method, url;
-        if (field.id && field.id != 0) {
-          // 编辑付款单
-          method = "PUT";
-          url = window.location.origin + `/api/v1/pay/${field.id}`;
-        } else {
-          // 创建付款单
-          method = "POST";
-          url = window.location.origin + "/api/v1/pay/";
-          delete field.id; // 删除id字段，让后端自动生成
-        }
-
-        // 处理金额字段
-        if (field.current_payment_amount) {
-          field.current_payment_amount = parseFloat(field.current_payment_amount) || field.current_payment_amount;
-        }
-        if (field.invoice_amount) {
-          field.invoice_amount = parseFloat(field.invoice_amount) || field.invoice_amount;
-        }
-
-        $.ajax({
-          url: url,
-          type: method,
-          contentType: "application/json",
-          data: JSON.stringify(field),
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("access_token"),
-          },
+          url: window.location.origin + `/api/v1/order/${orderId}`,
+          type: "DELETE",
+          headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
           success: function (res) {
             if (res.code === 0) {
               layer.msg(res.msg, { icon: 1 });
-              layer.closeAll();
-              // 重新加载表格以显示更新后的付款单信息
-              reloadTable();
+              loadOrders();
             } else {
-              layer.msg(res.msg || '操作失败', { icon: 2 });
+              layer.msg(res.msg || '删除失败', { icon: 2 });
             }
-          },
-          error: function () {
-            layer.msg('操作失败，请重试', { icon: 2 });
+            layer.close(confirmIndex);
           }
         });
-        return false;
       });
+    }
 
-      // 订单付款单取消按钮
-      $(document).on('click', '#order-pay-info-cancel-btn', function () {
-        layer.closeAll();
+    function addPayment(orderId, orderNo) {
+      var payUrl = '/order_pay/info/pay_info.html?order_id=' + orderId + '&order_number=' + encodeURIComponent(orderNo);
+      layer.open({
+        type: 2, title: '新增付款单', shade: 0.1,
+        area: ['90%', '90%'], content: payUrl,
+        end: function () { loadOrders(); }
+      });
+    }
+
+    // 编辑付款单
+    $(document).on('click', '.clickable-pay-no', function (e) {
+      e.stopPropagation();
+      var payId = $(this).data('id');
+      layer.open({
+        type: 2, title: '编辑付款单', shade: 0.1,
+        area: ['90%', '90%'], content: '/order_pay/info/pay_info.html?payment_id=' + payId,
+        end: function () { loadOrders(); } // 编辑完成后刷新订单列表以更新余额等信息
       });
     });
-  </script>
-</body>
 
-</html>
+    // ==================== 初始化与动作代理 ====================
+    console.log('配置字段筛选功能...');
+    initFieldFilter();
+    console.log('启动项目侧边栏初始化...');
+    initProjectSidebar();
+    console.log('启动联系人侧边栏初始化...');
+    initContactSidebar();
+    console.log('启动订单数据加载...');
+    loadOrders();
+    console.log('初始化流程完成。');
+  });
+</script>

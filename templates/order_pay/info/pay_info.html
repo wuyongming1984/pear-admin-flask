@@ -6,211 +6,342 @@
   <title>付款单</title>
   <link rel="stylesheet" href="/static/component/pear/css/pear.css" />
   <style>
-    /* ==================== 统一设计规范 ==================== */
+    /* ==================== 赛博工业设计规范 ==================== */
     :root {
-      --primary-50: #eff6ff;
-      --primary-500: #3b82f6;
-      --primary-600: #2563eb;
-      --slate-50: #f8fafc;
-      --slate-100: #f1f5f9;
-      --slate-200: #e2e8f0;
-      --slate-300: #cbd5e1;
-      --slate-500: #64748b;
-      --slate-600: #475569;
-      --slate-800: #1e293b;
-      --slate-900: #0f172a;
-      --white: #ffffff;
-      --bg-body: var(--slate-100);
-      --bg-card: var(--white);
-      --border-color: var(--slate-200);
-      --radius-sm: 4px;
-      --radius-md: 8px;
+      --accent-primary: #00e5ff;
+      --accent-glow: rgba(0, 229, 255, 0.3);
+      --bg-deep: #0f172a;
+      --bg-surface: rgba(30, 41, 59, 0.7);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --border-dim: rgba(255, 255, 255, 0.05);
+      --border-glow: rgba(0, 229, 255, 0.2);
       --radius-lg: 12px;
-      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-      --ring-primary: 0 0 0 3px rgba(59, 130, 246, 0.2);
-      --spacing-md: 16px;
-      --spacing-lg: 24px;
+      --radius-md: 8px;
     }
 
     body {
-      background-color: var(--bg-body);
-      padding: 20px;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-deep);
+      background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.02) 1px, transparent 0);
+      background-size: 24px 24px;
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, sans-serif;
+      padding: 24px;
     }
 
     .order-form-container {
-      padding: var(--spacing-lg);
-      background: var(--bg-card);
-      max-width: 1200px;
+      max-width: 1100px;
       margin: 0 auto;
+      background: var(--bg-surface);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-dim);
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-md);
+      padding: 30px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
     }
 
     .main-title {
-      text-align: center;
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 30px;
-      color: var(--slate-900);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 35px;
+      padding-left: 15px;
+      border-left: 4px solid var(--accent-primary);
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px var(--accent-glow);
     }
 
-    /* 通用区块样式 */
+    /* 区块样式 */
     .info-section {
-      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-dim);
       border-radius: var(--radius-md);
-      padding: var(--spacing-lg);
-      margin-bottom: 30px;
-      position: relative;
-      background: var(--slate-50);
+      padding: 24px;
+      margin-bottom: 24px;
     }
 
     .section-header {
-      text-align: center;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
     }
 
     .section-title {
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 600;
-      display: inline-block;
-      background: var(--slate-50);
-      padding: 0 15px;
-      color: var(--slate-800);
+      color: var(--accent-primary);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, var(--border-glow), transparent);
     }
 
     /* 网格布局 */
     .info-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px 60px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px 40px;
     }
 
     .form-item {
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      gap: 8px;
     }
 
     .form-item label {
-      width: 110px;
-      text-align: right;
-      margin-right: 10px;
-      color: var(--slate-600);
-      font-size: 14px;
-      white-space: nowrap;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
     }
 
-    .form-item .input-wrapper {
-      flex: 1;
-    }
-
+    /* 输入框与选择框 */
     .form-item input,
     .form-item select,
-    .layui-form-select {
-      width: 100%;
-      height: 38px;
-      line-height: 38px;
-      border: 1px solid var(--border-color);
-      padding: 0 12px;
-      box-sizing: border-box;
-      border-radius: var(--radius-sm);
-      transition: border-color 0.2s, box-shadow 0.2s;
+    .layui-input,
+    .layui-form-select .layui-input {
+      background: rgba(15, 23, 42, 0.6) !important;
+      border: 1px solid var(--border-dim) !important;
+      color: var(--text-primary) !important;
+      border-radius: var(--radius-md) !important;
+      height: 40px !important;
+      line-height: 40px !important;
+      padding: 0 15px !important;
+      transition: all 0.3s !important;
     }
 
     .form-item input:focus,
-    .form-item select:focus {
-      border-color: var(--primary-500);
-      box-shadow: var(--ring-primary);
-      outline: none;
+    .layui-input:focus,
+    .layui-form-select .layui-input:focus {
+      border-color: var(--accent-primary) !important;
+      box-shadow: 0 0 0 3px var(--accent-glow) !important;
+      background: rgba(15, 23, 42, 0.8) !important;
     }
 
-    /* 针对只读输入框的样式微调 */
     .form-item input[readonly] {
-      background-color: var(--slate-100);
-      border-color: var(--border-color);
+      background: rgba(255, 255, 255, 0.02) !important;
+      color: var(--text-secondary) !important;
+      cursor: default !important;
     }
 
-    /* 特殊：订单金额独占一行 */
     .form-item.full-width {
       grid-column: 1 / -1;
     }
 
-    /* 多行文本框 */
     .form-item textarea {
-      width: 100%;
-      min-height: 100px;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      padding: 12px;
-      box-sizing: border-box;
+      background: rgba(15, 23, 42, 0.6) !important;
+      border: 1px solid var(--border-dim) !important;
+      color: var(--text-primary) !important;
+      border-radius: var(--radius-md) !important;
+      padding: 12px !important;
+      min-height: 80px;
       resize: vertical;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: all 0.3s;
     }
 
     .form-item textarea:focus {
-      border-color: var(--primary-500);
-      box-shadow: var(--ring-primary);
-      outline: none;
+      border-color: var(--accent-primary) !important;
+      box-shadow: 0 0 0 3px var(--accent-glow) !important;
     }
 
-    /* layui select 覆盖 */
-    .layui-form-select .layui-input {
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      height: 38px;
-    }
-
+    /* Layui Select 弹出层适配 */
     .layui-form-select dl {
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      box-shadow: var(--shadow-md);
+      background: var(--bg-deep) !important;
+      border: 1px solid var(--border-dim) !important;
+      color: var(--text-primary) !important;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+      border-radius: var(--radius-md) !important;
+      padding: 5px 0 !important;
+    }
+
+    .layui-form-select dl dd:hover,
+    .layui-form-select dl dd.layui-this {
+      background: var(--accent-primary) !important;
+      color: #000 !important;
     }
 
     /* 底部按钮 */
     .form-actions {
-      text-align: center;
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border-color);
+      margin-top: 30px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding-top: 30px;
+      border-top: 1px solid var(--border-dim);
     }
 
-    .form-actions .layui-btn {
-      min-width: 100px;
-      height: 38px;
-      line-height: 38px;
-      border-radius: var(--radius-md);
-      margin: 0 10px;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-
-    .form-actions .layui-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-md);
+    .layui-btn {
+      border-radius: var(--radius-md) !important;
+      height: 40px !important;
+      line-height: 40px !important;
+      padding: 0 24px !important;
+      font-weight: 600 !important;
+      transition: all 0.2s !important;
     }
 
     .btn-cancel {
-      background-color: var(--white);
-      color: var(--slate-600);
-      border: 1px solid var(--border-color);
+      background: transparent !important;
+      border: 1px solid var(--border-dim) !important;
+      color: var(--text-secondary) !important;
     }
 
     .btn-cancel:hover {
-      background-color: var(--slate-50);
-      border-color: var(--slate-300);
+      border-color: var(--text-secondary) !important;
+      color: var(--text-primary) !important;
     }
 
     .btn-confirm {
-      background-color: var(--primary-500);
-      color: var(--white);
-      border: none;
+      background: var(--accent-primary) !important;
+      color: #000 !important;
+      border: none !important;
+      box-shadow: 0 0 15px var(--accent-glow) !important;
     }
 
     .btn-confirm:hover {
-      background-color: var(--primary-600);
+      transform: translateY(-1px) !important;
+      box-shadow: 0 0 25px var(--accent-glow) !important;
     }
+
+    /* 附件面板样式 */
+    .attachment-panel {
+      margin-top: 20px;
+    }
+
+    .attachment-upload {
+      margin-bottom: 15px;
+    }
+
+    .attachment-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .attachment-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-dim);
+      border-radius: var(--radius-md);
+      transition: all 0.2s;
+    }
+
+    .attachment-item:hover {
+      background: rgba(15, 23, 42, 0.8);
+      border-color: var(--accent-primary);
+    }
+
+    .file-icon {
+      font-size: 24px;
+      color: var(--accent-primary);
+    }
+
+    .file-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .file-code {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .file-name {
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-primary);
+    }
+
+    .file-size {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .file-ops {
+      display: flex;
+      gap: 10px;
+    }
+
+    .file-ops i {
+      cursor: pointer;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+
+    .file-ops .layui-icon-download-circle:hover {
+      color: var(--accent-primary);
+    }
+
+    .file-ops .layui-icon-close:hover {
+      color: #ff5252;
+    }
+
+    .attachment-empty {
+      text-align: center;
+      color: var(--text-secondary);
+      padding: 30px;
+      font-size: 13px;
+      border: 1px dashed var(--border-dim);
+      border-radius: var(--radius-md);
+    }
+
+    .search-results-dropdown {
+      position: absolute;
+      top: 40px;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: #1a1a1a;
+      border: 1px solid var(--border-dim);
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      max-height: 250px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .search-result-item {
+      padding: 10px 15px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-dim);
+      transition: background 0.2s;
+    }
+
+    .search-result-item:last-child {
+      border-bottom: none;
+    }
+
+    .search-result-item:hover {
+      background: rgba(255, 152, 0, 0.1);
+    }
+
+    .search-result-item .res-number {
+      display: block;
+      font-weight: bold;
+      color: var(--accent-primary);
+      font-size: 13px;
+    }
+
+    .search-result-item .res-info {
+      display: block;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+  </style>
   </style>
 </head>
 
@@ -220,166 +351,151 @@
 
     <!-- 订单信息摘要 -->
     <div class="info-section">
-      <div class="section-header">
-        <span class="section-title">订单信息摘要</span>
-      </div>
-
-      <div class="info-grid">
+      <div class="section-title">关联订单摘要</div>
+      <div class="info-grid" style="margin-top: 20px;">
         <div class="form-item">
-          <label>选择订单：</label>
-          <div class="input-wrapper">
-            <select name="order_id" lay-filter="order_select" id="order-select" lay-search>
-              <option value="">请选择订单</option>
-              <!-- 选项将通过JS加载 -->
-            </select>
-          </div>
-        </div>
-
-        <div class="form-item"></div> <!-- 占位保持对其 -->
-
-        <div class="form-item">
-          <label>关联订单编号：</label>
-          <div class="input-wrapper">
-            <input type="text" name="order_number" id="order-number" readonly autocomplete="off">
-          </div>
+          <label>选择订单</label>
+          <select name="order_id" lay-filter="order_select" id="order-select" lay-search>
+            <option value="">请选择订单</option>
+          </select>
         </div>
 
         <div class="form-item">
-          <label>项目名称：</label>
-          <div class="input-wrapper">
-            <input type="text" name="project_name" readonly autocomplete="off">
-          </div>
+          <label>关联订单编号</label>
+          <input type="text" name="order_number" id="order-number" readonly autocomplete="off">
         </div>
 
         <div class="form-item">
-          <label>材料名称：</label>
-          <div class="input-wrapper">
-            <input type="text" name="material_name" readonly autocomplete="off">
-          </div>
+          <label>项目名称</label>
+          <input type="text" name="project_name" readonly autocomplete="off">
         </div>
-
 
         <div class="form-item">
-          <label>供应商联系人：</label>
-          <div class="input-wrapper">
-            <input type="text" name="supplier_contact_person" readonly autocomplete="off">
-          </div>
+          <label>材料名称</label>
+          <input type="text" name="material_name" readonly autocomplete="off">
         </div>
 
-        <div class="form-item full-width">
-          <label>订单金额：</label>
-          <div class="input-wrapper">
-            <input type="text" name="order_amount" readonly autocomplete="off">
-          </div>
+        <div class="form-item">
+          <label>供应商负责人</label>
+          <input type="text" name="supplier_contact_person" readonly autocomplete="off">
+        </div>
+
+        <div class="form-item">
+          <label>订单总额 (CNY)</label>
+          <input type="text" name="order_amount" readonly autocomplete="off">
         </div>
       </div>
     </div>
 
     <!-- 付款单信息 -->
     <div class="info-section">
-      <div class="section-header">
-        <span class="section-title">付款单信息</span>
-      </div>
-
-      <div class="info-grid">
+      <div class="section-title">付款流水详情</div>
+      <div class="info-grid" style="margin-top: 20px;">
         <!-- 隐藏的ID字段 -->
         <input type="hidden" name="id" value="0">
 
         <div class="form-item">
-          <label>付款单编号：</label>
-          <div class="input-wrapper">
-            <input type="text" name="pay_number" readonly value="" placeholder="自动生成" autocomplete="off">
-          </div>
+          <label>付款单编号</label>
+          <input type="text" name="pay_number" readonly value="" placeholder="系统自动生成" autocomplete="off">
         </div>
 
         <div class="form-item">
-          <label>付款单位：</label>
-          <div class="input-wrapper">
-            <select name="payer_supplier_id" id="payer-supplier-select" lay-search>
-              <option value="">请选择付款单位</option>
-            </select>
-          </div>
+          <label>付款主体单位</label>
+          <select name="payer_supplier_id" id="payer-supplier-select" lay-search>
+            <option value="">请选择付款单位</option>
+          </select>
         </div>
 
         <div class="form-item">
-          <label>收款单位：</label>
-          <div class="input-wrapper">
-            <select name="payee_supplier_id" id="payee-supplier-select" lay-filter="payee_unit" lay-search>
-              <option value="">请选择或输入</option>
-            </select>
-          </div>
+          <label>收款单位名称</label>
+          <select name="payee_supplier_id" id="payee-supplier-select" lay-filter="payee_unit" lay-search>
+            <option value="">请选择或搜索</option>
+          </select>
         </div>
 
         <div class="form-item">
-          <label>联系人：</label>
-          <div class="input-wrapper">
-            <input type="text" name="contact_person" id="contact-person" autocomplete="off">
-          </div>
+          <label>财务联系人</label>
+          <input type="text" name="contact_person" id="contact-person" autocomplete="off">
         </div>
 
         <div class="form-item">
-          <label>联系电话：</label>
-          <div class="input-wrapper">
-            <input type="text" name="contact_phone" id="contact-phone" autocomplete="off">
-          </div>
+          <label>联系方式</label>
+          <input type="text" name="contact_phone" id="contact-phone" autocomplete="off">
         </div>
 
         <div class="form-item">
-          <label>开户行名称：</label>
-          <div class="input-wrapper">
-            <input type="text" name="bank_name" id="bank-name" autocomplete="off">
-          </div>
+          <label>开户行名称</label>
+          <input type="text" name="bank_name" id="bank-name" autocomplete="off">
         </div>
 
         <div class="form-item">
-          <label>开户行账号：</label>
-          <div class="input-wrapper">
-            <input type="text" name="bank_account" id="bank-account" autocomplete="off">
-          </div>
+          <label>银行账号</label>
+          <input type="text" name="bank_account" id="bank-account" autocomplete="off">
         </div>
 
         <div class="form-item">
-          <label>本次付款金额：</label>
-          <div class="input-wrapper">
-            <input type="number" name="current_payment_amount" step="0.01" autocomplete="off">
-          </div>
+          <label>本次实付金额</label>
+          <input type="number" name="current_payment_amount" step="0.01" autocomplete="off">
         </div>
 
         <div class="form-item">
-          <label>开票金额：</label>
-          <div class="input-wrapper">
-            <input type="number" name="invoice_amount" step="0.01" placeholder="请输入开票金额" autocomplete="off">
-          </div>
+          <label>对应票据金额</label>
+          <input type="number" name="invoice_amount" step="0.01" placeholder="0.00" autocomplete="off">
         </div>
 
         <div class="form-item">
-          <label>付款状态：</label>
-          <div class="input-wrapper">
-            <select name="payment_status" id="payment-status-select">
-              <option value="">请选择付款状态</option>
-              <!-- 状态会从字典加载 -->
-            </select>
-          </div>
+          <label>付款当前状态</label>
+          <select name="payment_status" id="payment-status-select">
+            <option value="">请选择状态</option>
+          </select>
         </div>
 
         <div class="form-item">
-          <label>经办人：</label>
-          <div class="input-wrapper">
-            <input type="text" name="handler" placeholder="请输入经办人" autocomplete="off">
+          <label>财务经办人</label>
+          <input type="text" name="handler" placeholder="输入姓名" autocomplete="off">
+        </div>
+
+        <div class="form-item full-width">
+          <label>付款说明与备注</label>
+          <textarea name="payment_purpose" placeholder="在此输入付款用途或相关说明..."></textarea>
+        </div>
+
+        <div class="form-item full-width">
+          <label>附件管理</label>
+          <div class="attachment-panel">
+            <div class="attachment-upload">
+              <button type="button" class="layui-btn layui-btn-normal" id="upload-attachment">
+                <i class="layui-icon layui-icon-upload"></i> 添加附件
+              </button>
+            </div>
+            <input type="hidden" name="attachments" id="attachments-data" />
+            <div class="attachment-list" id="attachment-list">
+              <div class="attachment-empty">暂无附件</div>
+            </div>
           </div>
         </div>
 
         <div class="form-item full-width">
-          <label>付款用途：</label>
-          <div class="input-wrapper">
-            <textarea name="payment_purpose"></textarea>
+          <label>关联发票</label>
+          <div class="attachment-panel">
+            <div class="attachment-upload" style="position: relative;">
+              <input type="text" id="invoice-picker" placeholder="输入发票号/代码关键字查询..." autocomplete="off"
+                style="width: 100%; height: 38px; border: 1px solid var(--border-dim); background: rgba(255,255,255,0.05); color: var(--text-primary); border-radius: 4px; padding: 0 10px;">
+              <div id="invoice-search-results" class="search-results-dropdown"></div>
+            </div>
+            <div class="attachment-list" id="invoice-list" style="margin-top: 10px;">
+              <div class="attachment-empty">未关联发票</div>
+            </div>
           </div>
         </div>
-
       </div>
     </div>
 
     <div class="form-actions">
+      <button type="button" class="layui-btn" id="print-btn"
+        style="background: transparent; border: 1px solid #ff9800; color: #ff9800; margin-right: auto; display: none;">
+        <i class="layui-icon layui-icon-print"></i> 打印
+      </button>
       <button type="button" class="layui-btn btn-cancel" id="cancel-btn">取消</button>
       <button class="layui-btn btn-confirm" lay-submit lay-filter="save">确定</button>
     </div>
@@ -388,10 +504,11 @@
   <script src="/static/component/layui/layui.js"></script>
   <script src="/static/component/pear/pear.js"></script>
   <script>
-    layui.use(['form', 'jquery', 'layer'], function () {
+    layui.use(['form', 'jquery', 'layer', 'upload'], function () {
       var form = layui.form;
       var $ = layui.jquery;
       var layer = layui.layer;
+      var upload = layui.upload;
 
       // API 配置
       var API = {
@@ -399,13 +516,19 @@
         PAY: "/api/v1/pay/",
         PAYER: "/api/v1/payer/",
         SUPPLIER: "/api/v1/supplier/",
-        DICT: "/api/v1/dictionary/detail/list"
+        DICT: "/api/v1/dictionary/detail/list",
+        INVOICE: "/api/v1/material/invoice"
       };
 
       // 存储供应商数据，用于自动填充
       var supplierDataMap = {};
       // 当前支付单ID (如果存在)
       var currentPaymentId = null;
+      // 附件列表
+      var attachmentList = [];
+      // 已选发票列表
+      var selectedInvoices = [];
+      var currentPaymentNumber = '';
 
       // 获取URL参数
       var urlParams = new URLSearchParams(window.location.search);
@@ -619,6 +742,12 @@
                 "order_id": data.order_id
               });
 
+              // 显示打印按钮
+              $('#print-btn').show();
+
+              // 保存当前付款单号用于附件编码
+              currentPaymentNumber = data.pay_number;
+
               // 保存当前付款单的收款单位ID，用于后续选中
               var savedPayeeId = data.payee_supplier_id;
 
@@ -637,6 +766,18 @@
                 if (savedPayeeId && supplierDataMap[savedPayeeId]) {
                   updateSupplierInfo(savedPayeeId);
                 }
+              }
+
+              // 加载附件列表
+              if (data.attachments_list) {
+                attachmentList = data.attachments_list || [];
+                renderAttachmentList();
+              }
+
+              // 加载关联发票已保存数据
+              if (data.invoices_list) {
+                selectedInvoices = data.invoices_list || [];
+                renderInvoiceList();
               }
             }
           },
@@ -669,7 +810,185 @@
           String(now.getDate()).padStart(2, '0') +
           String(Math.floor(Math.random() * 100000)).padStart(6, '0');
         $('input[name="pay_number"]').val(str);
+        currentPaymentNumber = str;
       }
+
+      // 格式化文件大小
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        var k = 1024, sizes = ['B', 'KB', 'MB', 'GB'], i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+      }
+
+      // 获取文件图标
+      function getFileIcon(fileName) {
+        if (!fileName) return 'layui-icon-file';
+        var ext = fileName.split('.').pop().toLowerCase();
+        var iconMap = { 'pdf': 'layui-icon-file-pdf', 'doc': 'layui-icon-file', 'docx': 'layui-icon-file', 'xls': 'layui-icon-file-excel', 'xlsx': 'layui-icon-file-excel', 'jpg': 'layui-icon-picture', 'png': 'layui-icon-picture', 'txt': 'layui-icon-file' };
+        return iconMap[ext] || 'layui-icon-file';
+      }
+
+      // 渲染附件列表
+      function renderAttachmentList() {
+        var $list = $('#attachment-list');
+        if (attachmentList.length === 0) {
+          $list.html('<div class="attachment-empty">暂无附件</div>');
+          return;
+        }
+        var html = '';
+        attachmentList.forEach(function (file, index) {
+          html += `<div class="attachment-item" data-index="${index}">
+            <i class="layui-icon ${getFileIcon(file.name || file.filename)} file-icon"></i>
+            <div class="file-main">
+              <div class="file-code">${file.code || '-'}</div>
+              <div class="file-name" title="${file.name || file.filename}">${file.name || file.filename}</div>
+              <div class="file-size">${formatFileSize(file.size || 0)}</div>
+            </div>
+            <div class="file-ops">
+              ${file.url ? `<i class="layui-icon layui-icon-download-circle" onclick="window.open('${file.url}')" title="下载"></i>` : ''}
+              <i class="layui-icon layui-icon-close" data-idx="${index}" title="删除"></i>
+            </div>
+          </div>`;
+        });
+        $list.html(html);
+        // 绑定删除事件
+        $('.file-ops .layui-icon-close').click(function () {
+          var idx = $(this).data('idx');
+          layer.confirm('确定删除吗？', function (index) {
+            attachmentList.splice(idx, 1);
+            renderAttachmentList();
+            layer.close(index);
+          });
+        });
+      }
+
+      // ==================== 发票关联逻辑 ====================
+      var searchTimer = null;
+
+      // 模糊查找发票并显示结果列表
+      function searchInvoices(keyword) {
+        // 如果关键字为空，则获取最近的10张发票作为默认下拉建议
+        var isDefault = !keyword || keyword.trim().length === 0;
+
+        makeRequest({
+          url: API.INVOICE,
+          type: 'GET',
+          data: isDefault ? { limit: 10 } : { search: keyword, limit: 10 },
+          success: function (res) {
+            if (res.code === 0 && res.data && res.data.length > 0) {
+              var html = '';
+              res.data.forEach(function (inv) {
+                // 检查是否已在列表中
+                var isSelected = selectedInvoices.some(function (si) { return si.id === inv.id; });
+                if (!isSelected) {
+                  html += `<div class="search-result-item" data-id="${inv.id}" data-info='${JSON.stringify(inv).replace(/'/g, "&#39;")}'>
+                    <span class="res-number">${inv.invoice_number}</span>
+                    <span class="res-info">¥${inv.total_amount} | 购: ${inv.buyer_name || '-'} | 销: ${inv.seller_name || '-'}</span>
+                  </div>`;
+                }
+              });
+              if (html) {
+                $('#invoice-search-results').html(html).fadeIn(100);
+              } else {
+                $('#invoice-search-results').html('<div style="padding: 10px; color: #999; text-align: center;">无可选发票</div>').show();
+              }
+            } else {
+              $('#invoice-search-results').html('<div style="padding: 10px; color: #999; text-align: center;">无匹配结果</div>').show();
+            }
+          }
+        });
+      }
+
+      // 转换并渲染已选发票列表
+      function renderInvoiceList() {
+        var $list = $('#invoice-list');
+        if (!selectedInvoices || selectedInvoices.length === 0) {
+          $list.html('<div class="attachment-empty">未关联发票</div>');
+          return;
+        }
+
+        var html = '';
+        selectedInvoices.forEach(function (inv, index) {
+          html += `<div class="attachment-item" style="display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-dim); background: rgba(255,152,0,0.05); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
+            <div class="attachment-info" style="flex: 1; display: flex; align-items: center; gap: 10px;">
+              <i class="layui-icon layui-icon-file-b" style="color: #ff9800; font-size: 20px;"></i>
+              <div style="display: flex; flex-direction: column;">
+                <span style="font-size: 13px; font-weight: bold; color: var(--text-primary);">${inv.invoice_number}</span>
+                <span style="font-size: 11px; color: var(--text-secondary);">购: ${inv.buyer_name || '-'} | 销: ${inv.seller_name || '-'} | 日期: ${inv.invoice_date || '-'}</span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+              <span style="font-family: 'JetBrains Mono'; color: #ff9800; font-weight: bold; font-size: 13px;">¥${parseFloat(inv.total_amount || 0).toLocaleString()}</span>
+              <button type="button" class="layui-btn layui-btn-xs layui-btn-primary remove-invoice" data-index="${index}" style="background: transparent; color: #ff5722; border: none;"><i class="layui-icon layui-icon-delete"></i></button>
+            </div>
+          </div>`;
+        });
+        $list.html(html);
+      }
+
+      // 绑定搜索和选择事件
+      $('#invoice-picker').on('focus', function () {
+        searchInvoices($(this).val());
+      });
+
+      $('#invoice-picker').on('input', function () {
+        var keyword = $(this).val();
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function () {
+          searchInvoices(keyword);
+        }, 300);
+      });
+
+      // 处理点击搜索结果
+      $(document).on('click', '.search-result-item', function () {
+        var info = $(this).data('info');
+        if (typeof info === 'string') info = JSON.parse(info);
+
+        if (info) {
+          selectedInvoices.push(info);
+          renderInvoiceList();
+          $('#invoice-picker').val(''); // 清空输入框
+          $('#invoice-search-results').hide().empty();
+        }
+      });
+
+      // 点击外部关闭搜索结果
+      $(document).on('click', function (e) {
+        if (!$(e.target).closest('.attachment-upload').length) {
+          $('#invoice-search-results').hide();
+        }
+      });
+
+      $(document).on('click', '.remove-invoice', function () {
+        var index = $(this).data('index');
+        selectedInvoices.splice(index, 1);
+        renderInvoiceList();
+      });
+
+
+      // 初始化上传
+      upload.render({
+        elem: '#upload-attachment',
+        url: '/api/v1/upload/',
+        accept: 'file',
+        multiple: true,
+        headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+        done: function (res) {
+          if (res.code === 0) {
+            attachmentList.push({
+              id: res.data.id,
+              code: currentPaymentNumber + 'F' + (attachmentList.length + 1).toString().padStart(3, '0'),
+              name: res.data.filename || res.data.original_filename,
+              url: res.data.url,
+              size: res.data.size
+            });
+            renderAttachmentList();
+            layer.msg('上传成功');
+          } else {
+            layer.msg(res.msg || '上传失败', { icon: 2 });
+          }
+        }
+      });
 
       // 事件监听
 
@@ -681,6 +1000,15 @@
       // 监听收款单位选择
       form.on('select(payee_unit)', function (data) {
         updateSupplierInfo(data.value);
+      });
+
+      // 打印按钮事件
+      $('#print-btn').on('click', function () {
+        if (currentPaymentId) {
+          window.open('/order_pay/info/print_pay.html?id=' + currentPaymentId, '_blank');
+        } else {
+          layer.msg('请先保存付款单后再打印', { icon: 0 });
+        }
       });
 
       // 取消按钮
@@ -709,7 +1037,9 @@
           invoice_amount: field.invoice_amount ? parseFloat(field.invoice_amount) : 0,
           payment_status: field.payment_status,
           handler: field.handler,
-          payment_purpose: field.payment_purpose
+          payment_purpose: field.payment_purpose,
+          attachments: JSON.stringify(attachmentList),
+          invoice_ids: selectedInvoices.map(function (inv) { return inv.id; })
         };
 
         var method = (id && id !== "0") ? "PUT" : "POST";

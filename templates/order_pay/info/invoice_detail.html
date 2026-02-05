@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>发票详情</title>
+    <link rel="stylesheet" href="/static/component/layui/css/layui.css" />
+    <style>
+        body {
+            background: #e6e6e6;
+            padding: 20px;
+        }
+
+        .invoice-paper {
+            font-family: "SimSun", "Songti SC", serif;
+            background: #fff;
+            padding: 40px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            max-width: 1000px;
+            margin: 0 auto;
+            min-height: 600px;
+        }
+
+        .invoice-header-label {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .invoice-val {
+            font-family: "Courier New", Courier, monospace;
+            letter-spacing: 1px;
+            color: #000;
+            font-weight: 600;
+        }
+
+        .invoice-title-main {
+            font-size: 28px;
+            color: #B65E49;
+            border-bottom: 2px double #B65E49;
+            display: inline-block;
+            padding-bottom: 5px;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+
+        .invoice-box {
+            border: 2px solid #B65E49;
+            color: #B65E49;
+        }
+
+        .invoice-box .sep-v {
+            border-right: 1px solid #B65E49;
+        }
+
+        .invoice-box .sep-h {
+            border-bottom: 1px solid #B65E49;
+        }
+
+        .invoice-box .label-col {
+            width: 35px;
+            text-align: center;
+            padding: 10px 5px;
+            line-height: 1.4;
+            color: #B65E49;
+            font-size: 14px;
+        }
+
+        .invoice-box .content-col {
+            padding: 8px;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .invoice-box .content-row {
+            margin-bottom: 4px;
+            display: flex;
+        }
+
+        .invoice-box .content-row label {
+            width: 100px;
+            color: #B65E49;
+            display: inline-block;
+            text-align-last: justify;
+        }
+
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+
+        .invoice-table th,
+        .invoice-table td {
+            border: 1px solid #B65E49;
+            padding: 8px;
+            text-align: center;
+            color: #333;
+            font-size: 12px;
+        }
+
+        .invoice-table th {
+            color: #B65E49;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="invoice-paper" id="invoice-content" style="display: none;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <div>
+                <div class="invoice-header-label">发票代码：<span id="v-code" class="invoice-val"></span></div>
+                <div class="invoice-header-label">发票号码：<span id="v-number" class="invoice-val"
+                        style="color: #009688; font-size: 18px;"></span></div>
+            </div>
+            <div style="text-align: right;">
+                <div class="invoice-header-label">校验码：<span id="v-check" class="invoice-val"></span></div>
+                <div class="invoice-header-label">开票日期：<span id="v-date" class="invoice-val"></span></div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 25px;">
+            <h1 id="v-title" class="invoice-title-main">增值税专用发票</h1>
+        </div>
+
+        <div class="invoice-box">
+            <div style="display: flex;" class="sep-h">
+                <div class="sep-v label-col">购<br>买<br>方</div>
+                <div class="content-col" style="flex: 1;">
+                    <div class="content-row"><label>名称</label>：<span id="v-buyer-name"
+                            style="font-weight: bold;"></span></div>
+                    <div class="content-row"><label>纳税人识别号</label>：<span id="v-buyer-tax" class="invoice-val"
+                            style="color: #009688;"></span></div>
+                    <div class="content-row"><label>地址、电话</label>：<span id="v-buyer-addr"></span></div>
+                    <div class="content-row"><label>开户行及账号</label>：<span id="v-buyer-bank"></span></div>
+                </div>
+                <div class="sep-v label-col" style="border-left: 1px solid #B65E49;">销<br>售<br>方</div>
+                <div class="content-col" style="flex: 1;">
+                    <div class="content-row"><label>名称</label>：<span id="v-seller-name"
+                            style="font-weight: bold;"></span></div>
+                    <div class="content-row"><label>纳税人识别号</label>：<span id="v-seller-tax" class="invoice-val"
+                            style="color: #009688;"></span></div>
+                    <div class="content-row"><label>地址、电话</label>：<span id="v-seller-addr"></span></div>
+                    <div class="content-row"><label>开户行及账号</label>：<span id="v-seller-bank"></span></div>
+                </div>
+            </div>
+
+            <div class="sep-h" style="padding: 0; min-height: 150px;">
+                <table class="invoice-table">
+                    <thead>
+                        <tr>
+                            <th>货物或应税劳务、服务名称</th>
+                            <th width="10%">规格型号</th>
+                            <th width="6%">单位</th>
+                            <th width="10%">数量</th>
+                            <th width="10%">单价</th>
+                            <th width="12%">金额</th>
+                            <th width="6%">税率</th>
+                            <th width="10%">税额</th>
+                        </tr>
+                    </thead>
+                    <tbody id="v-items-body"></tbody>
+                </table>
+                <div style="display: flex; border-top: 1px solid #B65E49; padding: 8px 10px; align-items: center;">
+                    <div style="width: 150px; color: #B65E49;">价税合计(大写)</div>
+                    <div style="flex: 1;"><span id="v-words" style="margin-left: 10px;"></span></div>
+                    <div style="width: 250px;">(小写)<span id="v-total"
+                            style="font-weight: bold; font-size: 16px; margin-left: 10px;"></span></div>
+                </div>
+            </div>
+
+            <div style="display: flex;">
+                <div class="sep-v label-col" style="border-bottom: none;">备<br>注</div>
+                <div class="content-col" style="flex: 1; color: #333; border-bottom: none; min-height: 40px;"
+                    id="v-remarks"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/component/layui/layui.js"></script>
+    <script>
+        layui.use(['jquery', 'layer'], function () {
+            var $ = layui.jquery;
+            var layer = layui.layer;
+
+            var urlParams = new URLSearchParams(window.location.search);
+            var id = urlParams.get('id');
+
+            if (!id) {
+                layer.msg('未提供发票ID');
+                return;
+            }
+
+            var loading = layer.load(1);
+            $.ajax({
+                url: '/api/v1/material/invoice',
+                data: { id: id, limit: 1 },
+                headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+                success: function (res) {
+                    layer.close(loading);
+                    if (res.code === 0 && res.data && res.data.length > 0) {
+                        var inv = res.data[0];
+                        renderDetailContent(inv);
+                        $('#invoice-content').fadeIn();
+                    } else {
+                        layer.msg('获取详情失败: ' + (res.msg || '未知错误'));
+                    }
+                },
+                error: function () {
+                    layer.close(loading);
+                    layer.msg('网络错误');
+                }
+            });
+
+            function renderDetailContent(inv) {
+                var ocr = {};
+                try { if (inv.ocr_result) ocr = JSON.parse(inv.ocr_result); } catch (e) { }
+
+                function t(v1, v2) { return v1 || v2 || ''; }
+
+                $('#v-title').text(inv.invoice_name || ocr.invoice_name || '发票详情');
+                $('#v-code').text(t(inv.invoice_code, ocr.invoice_code));
+                $('#v-number').text(t(inv.invoice_number, ocr.invoice_number));
+                $('#v-check').text(t(inv.check_code, ocr.check_code));
+                $('#v-date').text(t(inv.invoice_date, ocr.invoice_date));
+
+                $('#v-buyer-name').text(t(inv.buyer_name, ocr.buyer_name));
+                $('#v-buyer-tax').text(t(inv.buyer_tax_num, ocr.buyer_tax_num));
+                $('#v-buyer-addr').text(t(inv.buyer_address_phone, ocr.buyer_address));
+                $('#v-buyer-bank').text(t(inv.buyer_bank_account, ocr.buyer_bank));
+
+                $('#v-seller-name').text(t(inv.seller_name, ocr.seller_name));
+                $('#v-seller-tax').text(t(inv.seller_tax_num, ocr.seller_tax_num));
+                $('#v-seller-addr').text(t(inv.seller_address_phone, ocr.seller_address));
+                $('#v-seller-bank').text(t(inv.seller_bank_account, ocr.seller_bank));
+
+                $('#v-remarks').text(t(inv.remarks, ocr.remarks));
+                $('#v-words').text(t(inv.amount_in_words, ocr.amount_in_words));
+                $('#v-total').text('¥' + (inv.total_amount || 0));
+
+                var details = [];
+                try { if (inv.details_json) details = JSON.parse(inv.details_json); } catch (e) { }
+
+                var tb = $('#v-items-body');
+                tb.empty();
+                if (details && details.length > 0) {
+                    details.forEach(function (d) {
+                        var tr = '<tr>' +
+                            '<td>' + (d.name || '') + '</td>' +
+                            '<td>' + (d.spec || '') + '</td>' +
+                            '<td>' + (d.unit || '') + '</td>' +
+                            '<td align="right">' + (d.quantity || '') + '</td>' +
+                            '<td align="right">' + (d.price || '') + '</td>' +
+                            '<td align="right">' + (d.amount || '') + '</td>' +
+                            '<td align="center">' + (d.tax_rate || '') + '</td>' +
+                            '<td align="right">' + (d.tax || '') + '</td>' +
+                            '</tr>';
+                        tb.append(tr);
+                    });
+                } else {
+                    tb.append('<tr><td colspan="8" style="text-align:center;color:#999;padding:20px;">暂无明细数据</td></tr>');
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

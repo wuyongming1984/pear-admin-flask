@@ -1,0 +1,89 @@
+<div class="layui-row layui-col-space10">
+    <div class="layui-col-xs6 layui-col-md3">
+        <div class="layui-card top-panel">
+            <div class="layui-card-header">当前库存总值</div>
+            <div class="layui-card-body">
+                <div class="layui-row layui-col-space5">
+                    <div class="layui-col-xs12 top-panel-number" style="color: #28333E;" id="total-inventory-value">
+                        0
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="layui-col-xs6 layui-col-md3">
+        <div class="layui-card top-panel">
+            <div class="layui-card-header">待入库批次</div>
+            <div class="layui-card-body">
+                <div class="layui-row layui-col-space5">
+                    <div class="layui-col-xs12 top-panel-number" style="color: #28333E;" id="pending-inbound-count">
+                        0
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="layui-col-xs6 layui-col-md3">
+        <div class="layui-card top-panel">
+            <div class="layui-card-header">待出库计划</div>
+            <div class="layui-card-body">
+                <div class="layui-row layui-col-space5">
+                    <div class="layui-col-xs12 top-panel-number" style="color: #28333E;" id="pending-outbound-count">
+                        0
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="layui-col-xs6 layui-col-md3">
+        <div class="layui-card top-panel">
+            <div class="layui-card-header">最近7天入库额</div>
+            <div class="layui-card-body">
+                <div class="layui-row layui-col-space5">
+                    <div class="layui-col-xs12 top-panel-number" style="color: #28333E;" id="recent-inbound-amount">
+                        0
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    layui.use(['jquery', 'count'], function () {
+        let $ = layui.jquery;
+        let count = layui.count;
+
+        $.ajax({
+            url: '/api/v1/material/dashboard/stats',
+            dataType: 'json',
+            success: function (res) {
+                if (res.code === 0) {
+                    count.up("total-inventory-value", {
+                        startVal: 0,
+                        endVal: res.data.total_inventory_value,
+                        decimals: 2,
+                        duration: 2
+                    });
+                    count.up("pending-inbound-count", {
+                        startVal: 0,
+                        endVal: res.data.pending_inbound_count,
+                        duration: 2
+                    });
+                    count.up("pending-outbound-count", {
+                        startVal: 0,
+                        endVal: res.data.pending_outbound_count,
+                        duration: 2
+                    });
+                    count.up("recent-inbound-amount", {
+                        startVal: 0,
+                        endVal: res.data.recent_inbound_amount,
+                        decimals: 2,
+                        duration: 2
+                    });
+                }
+            }
+        })
+    });
+</script>

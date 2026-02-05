@@ -8,7 +8,7 @@ from flask_sqlalchemy.pagination import Pagination
 from sqlalchemy import cast, String, Date, Numeric
 
 from pear_admin.extensions import db
-from pear_admin.orms import OrderORM, SupplierORM, PayORM
+from pear_admin.orms import OrderORM, SupplierORM, PayORM, ProjectORM
 from sqlalchemy.orm import selectinload
 
 order_api = Blueprint("order", __name__, url_prefix="/order")
@@ -47,7 +47,12 @@ def order_list():
     if material_name:
         q = q.where(OrderORM.material_name.like(f"%{material_name}%"))
     if project_name:
-        q = q.where(OrderORM.project_name.like(f"%{project_name}%"))
+        # 通过 project_name 查找 project_id，然后筛选
+        from pear_admin.orms import ProjectORM
+        project_subquery = db.select(ProjectORM.id).where(
+            ProjectORM.project_name.like(f"%{project_name}%")
+        )
+        q = q.where(OrderORM.project_id.in_(project_subquery))
     if supplier_id:
         q = q.where(OrderORM.supplier_id == supplier_id)
     if supplier_name:
@@ -91,6 +96,7 @@ def order_list():
     
     # 使用 selectinload 预加载关联的付款单数据及其供应商关系，避免 N+1 查询
     q = q.options(
+        selectinload(OrderORM.project),  # 预加载项目关系
         selectinload(OrderORM.pays).selectinload(PayORM.payer),
         selectinload(OrderORM.pays).selectinload(PayORM.payee_supplier)
     )
@@ -111,7 +117,10 @@ def get_order(oid):
     # 使用 selectinload 预加载关联的付款单数据
     order_obj = db.session.scalar(
         db.select(OrderORM)
-        .options(selectinload(OrderORM.pays))
+        .options(
+            selectinload(OrderORM.project),  # 预加载项目关系
+            selectinload(OrderORM.pays)
+        )
         .where(OrderORM.id == oid)
     )
     if not order_obj:
@@ -197,8 +206,21 @@ def create_order():
             data["attachments"] = attachments_data
         
         # 只保留 OrderORM 支持的字段，过滤掉其他字段（如 file 等）
+        # 向后兼容：如果提供了 project_name，转换为 project_id
+        if 'project_name' in data and data['project_name']:
+            project = db.session.scalar(
+                db.select(ProjectORM).where(ProjectORM.project_name == data['project_name'])
+            )
+            if project:
+                data['project_id'] = project.id
+            else:
+                # 如果项目不存在，设置为 None
+                data['project_id'] = None
+            # 移除 project_name，因为模型中已经没有这个字段
+            del data['project_name']
+        
         allowed_fields = {
-            'order_number', 'material_name', 'project_name', 'supplier_id',
+            'order_number', 'material_name', 'project_id', 'supplier_id',
             'supplier_contact_person', 'contact_phone', 'cutting_time', 
             'estimated_arrival_time', 'material_details', 'order_amount', 
             'material_manager', 'sub_project_manager', 'attachments', 'create_at'
@@ -225,9 +247,20 @@ def change_order(oid=None):
         if not order_obj:
             return {"code": -1, "msg": "订单不存在"}
         
+        # 向后兼容：如果提供了 project_name，转换为 project_id
+        if 'project_name' in data and data['project_name']:
+            project = db.session.scalar(
+                db.select(ProjectORM).where(ProjectORM.project_name == data['project_name'])
+            )
+            if project:
+                data['project_id'] = project.id
+            else:
+                data['project_id'] = None
+            del data['project_name']
+        
         # 只处理 OrderORM 支持的字段
         allowed_fields = {
-            'order_number', 'material_name', 'project_name', 'supplier_id',
+            'order_number', 'material_name', 'project_id', 'supplier_id',
             'supplier_contact_person', 'contact_phone', 'cutting_time', 
             'estimated_arrival_time', 'material_details', 'order_amount', 
             'material_manager', 'sub_project_manager', 'attachments', 'create_at'

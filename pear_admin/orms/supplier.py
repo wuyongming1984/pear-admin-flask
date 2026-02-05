@@ -19,6 +19,9 @@ class SupplierORM(BaseORM):
     email = db.Column(db.String(64), nullable=True, comment="邮箱")
     bank_name = db.Column(db.String(128), nullable=False, comment="开户行名称")
     account_number = db.Column(db.String(128), nullable=False, comment="银行账号")
+    
+    # 供应商门户访问令牌 (Magic Link)
+    access_token = db.Column(db.String(64), nullable=True, unique=True, index=True, comment="访问令牌")
 
     address = db.Column(db.Text, nullable=True, comment="地址")
     remark = db.Column(db.Text, nullable=True, comment="备注")

@@ -48,28 +48,35 @@ def logout():
 @passport_api.get("/menu")
 @jwt_required()
 def menus_api():
-    rights_orm_list = set()
-    current_user: UserORM = get_current_user()
-    for role in current_user.role_list:
-        for rights_orm in role.rights_list:
-            if rights_orm.type != "auth":
-                rights_orm_list.add(rights_orm)
+    try:
+        rights_orm_list = set()
+        current_user: UserORM = get_current_user()
+        for role in current_user.role_list:
+            for rights_orm in role.rights_list:
+                if rights_orm.type != "auth":
+                    rights_orm_list.add(rights_orm)
 
-    rights_list = [rights_orm.menu_json() for rights_orm in rights_orm_list]
-    rights_list.sort(key=lambda x: (x["pid"], x["id"]), reverse=True)
+        rights_list = [rights_orm.menu_json() for rights_orm in rights_orm_list]
+        rights_list.sort(key=lambda x: (int(x["pid"] or 0), int(x["id"])), reverse=True)
 
-    menu_dict_list = OrderedDict()
-    for menu_dict in rights_list:
-        if menu_dict["id"] in menu_dict_list.keys():  # 如果当前节点已经存在与字典中
-            # 当前节点添加子节点
-            menu_dict["children"] = deepcopy(menu_dict_list[menu_dict["id"]])
-            menu_dict["children"].sort(key=lambda item: item["sort"])
-            # 删除子节点
-            del menu_dict_list[menu_dict["id"]]
+        menu_dict_list = OrderedDict()
+        for menu_dict in rights_list:
+            if menu_dict["id"] in menu_dict_list.keys():  # 如果当前节点已经存在与字典中
+                # 当前节点添加子节点
+                menu_dict["children"] = deepcopy(menu_dict_list[menu_dict["id"]])
+                menu_dict["children"].sort(key=lambda item: item["sort"])
+                # 删除子节点
+                del menu_dict_list[menu_dict["id"]]
 
-        if menu_dict["pid"] not in menu_dict_list:
-            menu_dict_list[menu_dict["pid"]] = [menu_dict]
-        else:
-            menu_dict_list[menu_dict["pid"]].append(menu_dict)
+            if menu_dict["pid"] not in menu_dict_list:
+                menu_dict_list[menu_dict["pid"]] = [menu_dict]
+            else:
+                menu_dict_list[menu_dict["pid"]].append(menu_dict)
 
-    return sorted(menu_dict_list.get(0), key=lambda item: item["sort"])
+        return sorted(menu_dict_list.get(0, []), key=lambda item: item["sort"])
+    except Exception as e:
+        import traceback
+        with open("d:\\pear_admin\\pear-admin-flask\\debug_error.log", "a", encoding="utf-8") as f:
+            f.write("Error in menus_api:\n")
+            f.write(traceback.format_exc())
+        raise e

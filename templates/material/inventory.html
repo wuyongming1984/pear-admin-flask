@@ -1,0 +1,954 @@
+<style>
+    /* GitHub-style Project List Optimized */
+    /* Scoped to inventory-page for safety, though styles are fairly generic */
+    .project-panel {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        height: calc(100vh - 170px);
+        /* Adjusted for tab content height */
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .project-title {
+        padding: 16px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #1f1f1f;
+        border-bottom: 1px solid #f0f0f0;
+        background-color: #fff;
+    }
+
+    .project-list-wrapper {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px;
+    }
+
+    .project-item {
+        padding: 10px 16px;
+        margin-bottom: 4px;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        color: #595959;
+        font-size: 14px;
+    }
+
+    .project-item:hover {
+        background-color: #f5f5f5;
+        color: #1890ff;
+    }
+
+    .project-item.active {
+        background-color: #e6f7ff;
+        color: #1890ff;
+        font-weight: 500;
+    }
+
+    .project-item i {
+        margin-right: 10px;
+        font-size: 16px;
+    }
+
+    .main-content {
+        background: #fff;
+        border-radius: 6px;
+        padding: 15px;
+        border: 1px solid #d0d7de;
+        height: calc(100vh - 170px);
+        /* Adjusted */
+    }
+
+    .content-header {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .content-title {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .content-subtitle {
+        font-size: 12px;
+        color: #999;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<div class="layui-row layui-col-space15">
+    <!-- 左侧项目选择 -->
+    <div class="layui-col-md2">
+        <div class="project-panel">
+            <div class="project-title">
+                <i class="layui-icon layui-icon-app" style="margin-right: 8px; color: #1890ff;"></i>项目清单
+            </div>
+            <div style="padding: 10px 12px 5px 12px;">
+                <input type="text" id="inventory-project-search" placeholder="搜索项目..." autocomplete="off"
+                    class="layui-input" style="height: 28px; font-size: 12px; border-radius: 4px;">
+            </div>
+            <div class="project-list-wrapper">
+                <div class="project-item active" data-project-id="">
+                    <i class="layui-icon layui-icon-list"></i>
+                    <span>全部仓库</span>
+                </div>
+                <div id="inventory-project-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧库存数据 -->
+    <div class="layui-col-md10">
+        <div class="main-content">
+            <div class="content-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div class="content-title" id="content-title">所有项目库存台账</div>
+                    <div class="content-subtitle">实时统计当前库内物料余额与估算价值</div>
+                </div>
+                <div id="selection-summary"
+                    style="display: none; background: #f8f9fa; border: 1px dashed #1890ff; padding: 10px 15px; border-radius: 8px; animation: fadeIn 0.3s;">
+                    <div style="font-size: 13px; color: #666; margin-bottom: 5px; font-weight: 500;">
+                        <i class="layui-icon layui-icon-list" style="color: #1890ff; margin-right: 5px;"></i>已选择
+                        <span id="summary-count" style="color: #1890ff; font-weight: bold;">0</span> 项
+                    </div>
+                    <div style="display: flex; gap: 20px;">
+                        <div style="font-size: 12px; color: #555;">不含税合计: <span id="total-ex-tax"
+                                style="font-weight: 600; color: #333;">0.00</span></div>
+                        <div style="font-size: 12px; color: #555;">税额合计: <span id="total-tax-amount"
+                                style="font-weight: 600; color: #333;">0.00</span></div>
+                        <div style="font-size: 12px; color: #555;">含税合计: <span id="total-in-tax"
+                                style="font-weight: 600; color: #f5222d;">0.00</span></div>
+                    </div>
+                </div>
+            </div>
+            <table id="inventory-table" lay-filter="inventory-table"></table>
+        </div>
+    </div>
+</div>
+
+<script type="text/html" id="inventory-toolbar">
+    <button class="pear-btn pear-btn-primary pear-btn-md" lay-event="batch-outbound">
+        <i class="layui-icon layui-icon-export"></i> 批量导出至拟库存计划
+    </button>
+    <button class="pear-btn pear-btn-warm pear-btn-md" lay-event="batch-supplier">
+        <i class="layui-icon layui-icon-friends"></i> 批量拟定销售方
+    </button>
+    <button class="pear-btn pear-btn-success pear-btn-md" lay-event="batch-calculate">
+        <i class="layui-icon layui-icon-engine"></i> 一键计算
+    </button>
+</script>
+<script>
+    layui.use(['table', 'jquery', 'form', 'layer'], function () {
+        var table = layui.table;
+        var $ = layui.jquery;
+        var form = layui.form;
+        var layer = layui.layer;
+        var isRestoringSelection = false;
+        var MODULE_PATH = '/api/v1/material/';
+        var currentProjectId = '';
+        var serverProjects = [];
+        var serverSuppliers = [];
+
+        // Fetch options data first (Matching planning.html)
+        $.getJSON(MODULE_PATH + 'options', function (res) {
+            if (res.code === 0) {
+                // Robustly handle data format
+                if (Array.isArray(res.data)) {
+                    serverProjects = res.data;
+                    serverSuppliers = [];
+                } else if (res.data) {
+                    serverProjects = res.data.projects || [];
+                    serverSuppliers = res.data.suppliers || [];
+                }
+                loadProjects(); // Re-render projects list after fetching
+            } else {
+                layer.msg('加载选项数据失败: ' + res.msg);
+            }
+        }).fail(function (err) {
+            console.error("Inventory页面 - API请求失败:", err);
+        });
+
+        // 2. 渲染左侧项目列表 (Renamed to loadProjects to match Planning)
+        function loadProjects() {
+            var val = $('#inventory-project-search').val();
+            var searchKeyword = val ? val.toLowerCase().trim() : '';
+            var html = '';
+
+            if (serverProjects && serverProjects.length > 0) {
+                serverProjects.forEach(function (p) {
+                    var pName = p.name || '未命名项目';
+                    // Safe search
+                    if (searchKeyword && pName.toLowerCase().indexOf(searchKeyword) === -1) {
+                        return;
+                    }
+
+                    html += '<div class="project-item" data-project-id="' + p.id + '">';
+                    html += '<i class="layui-icon layui-icon-read"></i>';
+                    html += '<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; margin-right: 5px;" title="' + pName + '">' + pName + '</span>';
+
+                    html += '<div style="margin-left: auto; display: flex; align-items: center; gap: 4px;">';
+                    // 待入库 (橙色)
+                    var inb = parseInt(p.inbound_count) || 0;
+                    if (inb > 0) {
+                        html += '<span class="project-count" style="background-color: #ffb800; color: #fff; margin: 0; padding: 0 6px; border-radius: 10px; font-size: 11px;" title="待入库">' + inb + '</span>';
+                    }
+                    // 当前库存 (灰色)
+                    var inv = parseInt(p.inventory_count) || 0;
+                    if (inv > 0) {
+                        html += '<span class="project-count" style="background-color: #f0f0f0; color: #666; margin: 0; padding: 0 6px; border-radius: 10px; font-size: 11px;" title="当前库存">' + inv + '</span>';
+                    }
+                    html += '</div>';
+
+                    html += '</div>';
+                });
+                $('#inventory-project-list').html(html);
+            } else {
+                $('#inventory-project-list').html('<div style="padding: 10px; color: #999; text-align: center;">暂无项目数据</div>');
+            }
+        }
+
+        // 3. 项目搜索事件
+        $('#inventory-project-search').on('input', function () {
+            loadProjects();
+        });
+
+        // 4. 项目切换点击事件 (委托) - Scoped to project panel
+        $('.project-panel').on('click', '.project-item', function () {
+            $('.project-panel .project-item').removeClass('active');
+            $(this).addClass('active');
+
+            currentProjectId = $(this).data('project-id');
+            var projectName = $(this).find('span').first().text();
+
+            updateContentTitle(projectName);
+            refreshTable();
+        });
+
+        function updateContentTitle(projectName) {
+            if (currentProjectId) {
+                $('#content-title').text(projectName + ' 库存台账');
+            } else {
+                $('#content-title').text('所有项目库存台账');
+            }
+        }
+
+        // 5. 初始化表格
+        table.render({
+            elem: '#inventory-table',
+            url: MODULE_PATH + 'inventory',
+            page: true,
+            limit: 20,
+            toolbar: '#inventory-toolbar',
+            cols: [[
+                { type: 'checkbox' },
+                {
+                    field: 'material_name', title: '材料名称', minWidth: 150, templet: function (d) {
+                        return '<div style="font-weight: bold; color: #333;">' + d.material_name + '</div>';
+                    }
+                },
+                { field: 'material_spec', title: '规格型号', minWidth: 120, align: 'center' },
+                { field: 'material_unit', title: '单位', width: 80, align: 'center' },
+                {
+                    field: 'current_stock',
+                    title: '当前库存',
+                    width: 120,
+                    align: 'center',
+                    edit: 'text',
+                    style: 'font-weight: bold; color: #009688; font-size: 15px; background-color: #fdfdfd;'
+                },
+                {
+                    field: 'latest_price',
+                    title: '入库单价 (均)',
+                    width: 140,
+                    align: 'center',
+                    hide: true,
+                    templet: function (d) {
+                        return '￥' + (parseFloat(d.latest_price) || 0).toFixed(2);
+                    }
+                },
+                {
+                    field: 'total_value',
+                    title: '库存合价',
+                    width: 150,
+                    align: 'center',
+                    hide: true,
+                    style: 'color: #ff5722; font-weight: 600;',
+                    templet: function (d) {
+                        var val = parseFloat(d.total_value) || 0;
+                        return '￥' + val.toLocaleString(undefined, { minimumFractionDigits: 2 });
+                    }
+                },
+                {
+                    field: 'latest_invoice_number',
+                    title: '进项发票',
+                    minWidth: 160,
+                    hide: true,
+                    templet: function (d) {
+                        if (d.latest_invoice_file_path) {
+                            return '<a href="' + d.latest_invoice_file_path + '" target="_blank" style="color: #01AAED; text-decoration: underline;" title="点击查看发票">' +
+                                '<i class="layui-icon layui-icon-file-text" style="font-size: 14px; margin-right: 4px;"></i>' +
+                                (d.latest_invoice_number || '查看发票') +
+                                '</a>';
+                        } else if (d.latest_invoice_number) {
+                            return '<span style="color: #666;">' + d.latest_invoice_number + '</span>';
+                        } else {
+                            return '<span style="color: #ccc;">-</span>';
+                        }
+                    }
+                },
+                {
+                    field: 'supplier_name',
+                    title: '供应商',
+                    minWidth: 160,
+                    hide: true,
+                    templet: function (d) {
+                        return d.supplier_name ? '<span class="layui-badge layui-bg-blue">' + d.supplier_name + '</span>' : '<span style="color: #ccc;">-</span>';
+                    }
+                },
+                {
+                    field: 'seller_name',
+                    title: '销售商',
+                    minWidth: 160,
+                    templet: function (d) {
+                        var content = d.seller_name ? '<span class="layui-badge layui-bg-cyan">' + d.seller_name + '</span>' : '<span style="color: #ccc;">-</span>';
+                        return '<div class="edit-seller-btn" data-id="' + d.id + '" style="cursor: pointer; width: 100%; height: 100%;">' + content + '</div>';
+                    }
+                },
+                {
+                    field: 'seller_quantity',
+                    title: '销售数量',
+                    minWidth: 120, // Increased width for button
+                    align: 'center',
+                    edit: 'text',
+                    style: 'background-color: #fdfdfd;',
+                    templet: function (d) {
+                        var val = (parseFloat(d.seller_quantity) || 0) == 0 ? '-' : parseFloat(d.seller_quantity).toFixed(2);
+                        return '<div style="position: relative; padding-right: 20px;">' +
+                            val +
+                            '<i class="layui-icon layui-icon-download-circle copy-stock-btn" ' +
+                            'onclick="event.stopPropagation(); window.handleCopyStock && window.handleCopyStock(' + d.id + ', ' + d.current_stock + ');" ' +
+                            'style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); cursor: pointer; color: #1E9FFF; font-size: 16px; z-index: 9999;" ' +
+                            'title="一键填入库存量"></i>' +
+                            '</div>';
+                    }
+                },
+                {
+                    field: 'seller_price',
+                    title: '含税销售单价',
+                    minWidth: 100,
+                    align: 'center',
+                    edit: 'text',
+                    style: 'background-color: #fdfdfd;',
+                    templet: function (d) {
+                        return (parseFloat(d.seller_price) || 0) == 0 ? '-' : parseFloat(d.seller_price).toFixed(2);
+                    }
+                },
+                {
+                    field: 'tax_rate',
+                    title: '税率',
+                    minWidth: 80,
+                    align: 'center',
+                    edit: 'text',
+                    style: 'background-color: #fdfdfd;',
+                    templet: function (d) {
+                        var rate = parseFloat(d.tax_rate) || 0;
+                        return rate === 0 ? '-' : (rate * 100).toFixed(2) + '%';
+                    }
+                },
+                {
+                    field: 'tax_amount',
+                    title: '税额',
+                    minWidth: 80,
+                    align: 'center',
+                    edit: 'text',
+                    style: 'background-color: #fdfdfd;',
+                    templet: function (d) {
+                        return (parseFloat(d.tax_amount) || 0) == 0 ? '-' : parseFloat(d.tax_amount).toFixed(2);
+                    }
+                },
+                {
+                    field: 'price_no_tax',
+                    title: '不含税单价',
+                    minWidth: 100,
+                    align: 'center',
+                    edit: 'text',
+                    style: 'background-color: #fdfdfd;',
+                    templet: function (d) {
+                        return (parseFloat(d.price_no_tax) || 0) == 0 ? '-' : parseFloat(d.price_no_tax).toFixed(2);
+                    }
+                },
+                {
+                    title: '不含税合计',
+                    minWidth: 100,
+                    align: 'center',
+                    templet: function (d) {
+                        var price = parseFloat(d.price_no_tax) || 0;
+                        var qty = parseFloat(d.seller_quantity) || 0;
+                        var total = price * qty;
+                        return total === 0 ? '-' : total.toFixed(2);
+                    }
+                },
+                {
+                    title: '税额合计',
+                    minWidth: 100,
+                    align: 'center',
+                    templet: function (d) {
+                        var tax = parseFloat(d.tax_amount) || 0;
+                        var qty = parseFloat(d.seller_quantity) || 0;
+                        var total = tax * qty;
+                        return total === 0 ? '-' : total.toFixed(2);
+                    }
+                },
+                {
+                    title: '含税合计',
+                    minWidth: 100,
+                    align: 'center',
+                    templet: function (d) {
+                        var price = parseFloat(d.seller_price) || 0;
+                        var qty = parseFloat(d.seller_quantity) || 0;
+                        var total = price * qty;
+                        return total === 0 ? '-' : total.toFixed(2);
+                    }
+                },
+                {
+                    field: 'profit_ratio',
+                    title: '利润系数',
+                    minWidth: 100,
+                    align: 'center',
+                    edit: 'text',
+                    style: 'background-color: #fdfdfd;',
+                    templet: function (d) {
+                        return d.profit_ratio;
+                    }
+                },
+                {
+                    field: 'create_at',
+                    title: '最后变动',
+                    width: 170,
+                    align: 'center',
+                    hide: true,
+                    style: 'color: #999; font-size: 12px;'
+                },
+                {
+                    title: '操作',
+                    width: 120,
+                    align: 'center',
+                    templet: function (d) {
+                        return '<button class="pear-btn pear-btn-primary pear-btn-xs" lay-event="outbound"><i class="layui-icon layui-icon-export"></i> 生成出库</button>';
+                    }
+                }
+            ]],
+            skin: 'line',
+            size: 'lg',
+            done: function () {
+                // 表格渲染后的回调
+            }
+        });
+
+
+
+        // Listen to toolbar event
+        table.on('toolbar(inventory-table)', function (obj) {
+            if (obj.event === 'batch-outbound') {
+                var checkStatus = table.checkStatus('inventory-table');
+                var data = checkStatus.data;
+                if (data.length === 0) {
+                    layer.msg('请先选择要导出的物料', { icon: 3 });
+                    return;
+                }
+
+                layer.confirm('确定要将选中的 ' + data.length + ' 项导出至拟出库计划吗？', {
+                    icon: 3,
+                    title: '导出确认'
+                }, function (index) {
+                    var items = data.map(function (item) { return { inventory_id: item.id }; });
+                    var loading = layer.load();
+                    $.ajax({
+                        url: '/api/v1/material/outbound/batch',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            items: items,
+                            remark: '',
+                            direct_confirm: false
+                        }),
+                        success: function (res) {
+                            layer.close(loading);
+                            if (res.code === 0) {
+                                layer.msg(res.msg, { icon: 1, time: 1000 });
+                                refreshTable();
+                            } else {
+                                layer.msg(res.msg, { icon: 2 });
+                            }
+                        },
+                        error: function () {
+                            layer.close(loading);
+                            layer.msg('操作失败', { icon: 2 });
+                        }
+                    });
+                    layer.close(index);
+                });
+            } else if (obj.event === 'batch-supplier') {
+                var checkStatus = table.checkStatus('inventory-table');
+                var data = checkStatus.data;
+                if (data.length === 0) {
+                    layer.msg('请先选择要设置的记录', { icon: 3 });
+                    return;
+                }
+                var ids = data.map(function (item) { return item.id; });
+                openSellerDialog(ids);
+
+            } else if (obj.event === 'batch-calculate') {
+                var checkStatus = table.checkStatus('inventory-table');
+                var data = checkStatus.data;
+                if (data.length === 0) {
+                    layer.msg('请先选择要计算的记录', { icon: 3 });
+                    return;
+                }
+                var ids = data.map(function (item) { return item.id; });
+
+                layer.confirm('确定要根据库存和利润系数自动计算销售信息吗？', function (index) {
+                    var loading = layer.load();
+                    $.ajax({
+                        url: '/api/v1/material/inventory/batch_calculate',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ ids: ids }),
+                        success: function (res) {
+                            layer.close(loading);
+                            if (res.code === 0) {
+                                layer.msg(res.msg, { icon: 1, time: 1000 });
+                                refreshTable();
+                            } else {
+                                layer.msg(res.msg, { icon: 2 });
+                            }
+                        },
+                        error: function () {
+                            layer.close(loading);
+                            layer.msg('操作失败', { icon: 2 });
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+
+        // Listen to tool event (Single Outbound)
+        table.on('tool(inventory-table)', function (obj) {
+            var data = obj.data;
+            if (obj.event === 'outbound') {
+                layer.confirm('确定要为 [' + data.material_name + '] 生成出库单吗？', {
+                    title: '生成出库单',
+                    icon: 3
+                }, function (index) {
+                    var loading = layer.load();
+                    var items = [{ inventory_id: data.id }];
+                    $.ajax({
+                        url: '/api/v1/material/outbound/batch',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ items: items }),
+                        success: function (res) {
+                            layer.close(loading);
+                            if (res.code === 0) {
+                                layer.msg(res.msg, { icon: 1, time: 1000 });
+                            } else {
+                                layer.msg(res.msg, { icon: 2 });
+                            }
+                        },
+                        error: function () {
+                            layer.close(loading);
+                            layer.msg('操作失败', { icon: 2 });
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+
+        // 6. Copy Stock Button Handler
+        window.handleCopyStock = function (id, stock) {
+            stock = parseFloat(stock) || 0;
+
+            $.ajax({
+                url: MODULE_PATH + 'inventory/' + id,
+                type: 'GET',
+                success: function (res) {
+                    if (res.code === 0) {
+                        var item = res.data;
+                        var serverStock = parseFloat(item.current_stock) || 0;
+                        var serverSales = parseFloat(item.seller_quantity) || 0;
+
+                        // User Request: Sales = Current Stock + Sales (Sell All Remaining)
+                        var newSales = serverStock + serverSales;
+                        var delta = newSales - serverSales;
+                        var newStock = serverStock - delta;
+
+                        var updatePayload = {
+                            seller_quantity: newSales,
+                            current_stock: newStock
+                        };
+
+                        $.ajax({
+                            url: MODULE_PATH + 'inventory/' + id,
+                            type: 'PUT',
+                            contentType: 'application/json',
+                            data: JSON.stringify(updatePayload),
+                            success: function (res) {
+                                if (res.code === 0) {
+                                    layer.msg('已全额拟定销售', { icon: 1, time: 800 });
+                                    refreshTable();
+                                } else {
+                                    layer.msg(res.msg, { icon: 2 });
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        };
+
+        // 7. Seller Column Click Handler
+        $(document).on('click', '.edit-seller-btn', function (e) {
+            e.stopPropagation();
+            var id = $(this).data('id');
+            openSellerDialog([id]);
+        });
+
+        // 8. Reusable Dialog Function
+        function openSellerDialog(ids) {
+            var optionsHtml = '<option value="">请选择供应商</option>';
+            (serverSuppliers || []).forEach(function (s) {
+                optionsHtml += '<option value="' + s.id + '">' + s.name + '</option>';
+            });
+
+            layer.open({
+                type: 1,
+                title: '批量拟定销售方',
+                area: ['400px', '250px'],
+                content: '<div style="padding: 20px;">' +
+                    '<form class="layui-form" lay-filter="supplier-form">' +
+                    '  <div class="layui-form-item">' +
+                    '    <select name="supplier_id" lay-search>' + optionsHtml + '</select>' +
+                    '  </div>' +
+                    '</form>' +
+                    '</div>',
+                btn: ['确定', '取消'],
+                success: function () {
+                    form.render('select');
+                },
+                yes: function (index, layero) {
+                    var val = layero.find('select[name="supplier_id"]').val();
+                    if (!val) {
+                        layer.msg('请选择供应商');
+                        return;
+                    }
+
+                    var loading = layer.load();
+                    $.ajax({
+                        url: '/api/v1/material/inventory/batch_supplier',
+                        type: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ ids: ids, supplier_id: val }),
+                        success: function (res) {
+                            layer.close(loading);
+                            if (res.code === 0) {
+                                layer.msg(res.msg, { icon: 1, time: 1000 });
+                                layer.close(index);
+
+                                // Reload and restore selection if multiple
+                                if (ids.length > 1 || isRestoringSelection) {
+                                    isRestoringSelection = true;
+                                    table.reload('inventory-table', {
+                                        done: function (res, curr, count) {
+                                            var tableView = this.elem.next();
+                                            layui.each(res.data, function (i, item) {
+                                                if (ids.indexOf(item.id) !== -1) {
+                                                    tableView.find('.layui-table-box .layui-table-body tr[data-index="' + i + '"] div.layui-form-checkbox').click();
+                                                }
+                                            });
+                                            isRestoringSelection = false;
+                                        }
+                                    });
+                                } else {
+                                    refreshTable();
+                                }
+                            } else {
+                                layer.msg(res.msg, { icon: 2 });
+                            }
+                        },
+                        error: function () {
+                            layer.close(loading);
+                            layer.msg('操作失败', { icon: 2 });
+                        }
+                    });
+                }
+            });
+        }
+        // Listen to tool event
+        table.on('tool(inventory-table)', function (obj) {
+            if (obj.event === 'outbound') {
+                var data = obj.data;
+                layer.open({
+                    type: 2,
+                    title: '生成出库计划',
+                    shade: 0.1,
+                    area: ['600px', '550px'],
+                    content: '/view/material/outbound/add?inventory_id=' + data.id
+                });
+            }
+        });
+
+        // Listen to edit event
+        table.on('edit(inventory-table)', function (obj) {
+            var value = obj.value;
+            var data = obj.data;
+            var field = obj.field;
+
+            // If profit_ratio changed, re-calculate seller_price
+            var updateData = { field: field, value: value };
+
+            if (field === 'profit_ratio') {
+                var ratio = parseFloat(value) || 1.05;
+                var basePrice = parseFloat(data.latest_price) || 0;
+                var newSellerPrice = (basePrice * ratio).toFixed(2);
+
+                // Auto-calc Tax
+                var rate = parseFloat(data.tax_rate) || 0;
+                var taxAmt = (parseFloat(newSellerPrice) / (1 + rate) * rate).toFixed(2);
+                var priceNoTax = (parseFloat(newSellerPrice) - parseFloat(taxAmt)).toFixed(2);
+
+                var updateData = {
+                    profit_ratio: ratio,
+                    seller_price: newSellerPrice,
+                    tax_amount: taxAmt,
+                    price_no_tax: priceNoTax
+                };
+
+                submitUpdate(data.id, updateData, true);
+
+            } else if (field === 'seller_quantity' || field === 'current_stock') {
+                // Constant Sum Logic: Fetch original -> Calculate Delta -> Apply Inverse
+                $.ajax({
+                    url: MODULE_PATH + 'inventory/' + data.id,
+                    type: 'GET',
+                    success: function (res) {
+                        if (res.code === 0) {
+                            var serverItem = res.data;
+                            var serverSales = parseFloat(serverItem.seller_quantity) || 0;
+                            var serverStock = parseFloat(serverItem.current_stock) || 0;
+                            var newVal = parseFloat(value) || 0;
+                            var updateData = {};
+
+                            if (field === 'seller_quantity') {
+                                var delta = newVal - serverSales;
+                                var newStock = serverStock - delta;
+                                updateData = {
+                                    seller_quantity: newVal,
+                                    current_stock: newStock
+                                };
+                            } else { // current_stock
+                                var delta = newVal - serverStock;
+                                var newSales = serverSales - delta;
+                                updateData = {
+                                    current_stock: newVal,
+                                    seller_quantity: newSales
+                                };
+                            }
+
+                            submitUpdate(data.id, updateData, true);
+                        } else {
+                            layer.msg('获取数据失败，无法同步', { icon: 2 });
+                        }
+                    }
+                });
+            } else if (field === 'tax_rate') {
+                // Update: Input "13" means 13% (0.13)
+                var inputVal = parseFloat(value) || 0;
+                var rate = inputVal / 100;
+
+                var price = parseFloat(data.seller_price) || 0;
+                var taxAmt = (price / (1 + rate) * rate).toFixed(2);
+                var priceNoTax = (price - parseFloat(taxAmt)).toFixed(2);
+
+                var updateData = {
+                    tax_rate: rate,
+                    tax_amount: taxAmt,
+                    price_no_tax: priceNoTax
+                };
+                submitUpdate(data.id, updateData, true);
+
+            } else if (field === 'seller_price') {
+                var price = parseFloat(value) || 0;
+                var rate = parseFloat(data.tax_rate) || 0;
+                var taxAmt = (price / (1 + rate) * rate).toFixed(2);
+                var priceNoTax = (price - parseFloat(taxAmt)).toFixed(2);
+
+                var updateData = {
+                    seller_price: price,
+                    tax_amount: taxAmt,
+                    price_no_tax: priceNoTax
+                };
+                submitUpdate(data.id, updateData, true);
+            } else {
+                submitUpdate(data.id, { field: field, value: value }, false);
+            }
+
+            function submitUpdate(id, data, shouldRefresh) {
+                $.ajax({
+                    url: MODULE_PATH + 'inventory/' + id,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (res) {
+                        if (res.code === 0) {
+                            layer.msg('更新成功', { icon: 1, time: 500 });
+                            if (shouldRefresh) {
+                                refreshTable();
+                            }
+                        } else {
+                            layer.msg(res.msg, { icon: 2 });
+                        }
+                    },
+                    error: function () {
+                        layer.msg('更新失败', { icon: 2 });
+                    }
+                });
+            }
+        });
+
+        // 11. 双击利润系数自动计算价格 (Double-click profit_ratio to auto-calculate)
+        $(document).on('dblclick', 'td[data-field="profit_ratio"]', function (e) {
+            var $td = $(this);
+            var $tr = $td.parents('tr');
+            var index = $tr.data('index');
+
+            // Get row data from table cache
+            var tableData = table.cache['inventory-table'];
+            if (!tableData || !tableData[index]) return;
+
+            var data = tableData[index];
+            var ratio = parseFloat(data.profit_ratio) || 1.05;
+            var basePrice = parseFloat(data.latest_price) || 0;
+
+            if (basePrice <= 0) {
+                layer.msg('入库单价为0，无法计算', { icon: 7 });
+                return;
+            }
+
+            var newSellerPrice = (basePrice * ratio).toFixed(2);
+
+            // Calculate tax components
+            var rate = parseFloat(data.tax_rate) || 0;
+            var taxAmt = (parseFloat(newSellerPrice) / (1 + rate) * rate).toFixed(2);
+            var priceNoTax = (parseFloat(newSellerPrice) - parseFloat(taxAmt)).toFixed(2);
+
+            var updateData = {
+                profit_ratio: ratio,
+                seller_price: newSellerPrice,
+                tax_amount: taxAmt,
+                price_no_tax: priceNoTax
+            };
+
+            // Use the same submitUpdate logic (need to make sure it's accessible or re-implement)
+            // Since submitUpdate is inside layui.use scope, we can move this listener inside or use $.ajax directly
+            layer.confirm('确定要根据利润系数 (' + ratio + ') 自动计算并同步销售单价吗？<br>计算结果: ￥' + newSellerPrice, {
+                title: '自动计算推演',
+                btn: ['确定计算', '取消']
+            }, function (confirmIndex) {
+                var loading = layer.load();
+                $.ajax({
+                    url: MODULE_PATH + 'inventory/' + data.id,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(updateData),
+                    success: function (res) {
+                        layer.close(loading);
+                        if (res.code === 0) {
+                            layer.msg('计算并更新成功', { icon: 1, time: 800 });
+                            // Refresh table
+                            table.reload('inventory-table');
+                            layer.close(confirmIndex);
+                        } else {
+                            layer.msg(res.msg, { icon: 2 });
+                        }
+                    },
+                    error: function () {
+                        layer.close(loading);
+                        layer.msg('连接服务器失败', { icon: 2 });
+                    }
+                });
+            });
+        });
+
+        // 11. 监听勾选状态
+        table.on('checkbox(inventory-table)', function (obj) {
+            updateSelectionSummary();
+        });
+
+        function updateSelectionSummary() {
+            var checkStatus = table.checkStatus('inventory-table');
+            var data = checkStatus.data;
+            var $summary = $('#selection-summary');
+
+            if (data.length > 0) {
+                var totalExTax = 0;
+                var totalTax = 0;
+                var totalInTax = 0;
+
+                data.forEach(function (item) {
+                    var qty = parseFloat(item.seller_quantity) || 0;
+                    var priceNoTax = parseFloat(item.price_no_tax) || 0;
+                    var taxAmount = parseFloat(item.tax_amount) || 0;
+                    var sellerPrice = parseFloat(item.seller_price) || 0;
+
+                    totalExTax += priceNoTax * qty;
+                    totalTax += taxAmount * qty;
+                    totalInTax += sellerPrice * qty;
+                });
+
+                $('#summary-count').text(data.length);
+                $('#total-ex-tax').text(totalExTax.toFixed(2));
+                $('#total-tax-amount').text(totalTax.toFixed(2));
+                $('#total-in-tax').text(totalInTax.toFixed(2));
+
+                if ($summary.css('display') === 'none') {
+                    $summary.fadeIn(200);
+                }
+            } else {
+                $summary.fadeOut(200);
+            }
+        }
+
+        // 数据渲染完成后重置合计
+        table.on('done(inventory-table)', function () {
+            updateSelectionSummary();
+        });
+
+        // 6. 刷新表格
+        function refreshTable() {
+            table.reload('inventory-table', {
+                where: { project_id: currentProjectId },
+                page: { curr: 1 }
+            });
+        }
+    });
+</script>

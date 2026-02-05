@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="utf-8">
+    <title>付款审批单</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <!-- Google Fonts: Inter for UI, JetBrains Mono for Data, Noto Serif SC for headings -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif+SC:wght@700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        :root {
+            --font-ui: 'Inter', -apple-system, sans-serif;
+            --font-data: 'JetBrains Mono', monospace;
+            --font-heading: 'Noto Serif SC', serif;
+            --color-black: #000;
+            --color-gray: #444;
+            --color-light-gray: #f2f2f2;
+            --border-width: 0.5pt;
+        }
+
+        @page {
+            size: A5 landscape;
+            /* 210mm x 148mm */
+            margin: 0;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            font-family: var(--font-ui);
+            font-size: 9pt;
+            color: var(--color-black);
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            /* White background for print */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .print-canvas {
+            width: 210mm;
+            height: 148mm;
+            /* Fixed height for A5 Landscape */
+            padding: 10mm;
+            /* Reduced padding */
+            background: white;
+            position: relative;
+            /* Flex layout for vertical distribution */
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            /* Tighter gap */
+        }
+
+        /* Screen-only Container Styling */
+        @media screen {
+            body {
+                background-color: #525659;
+                /* Browser reader gray */
+            }
+
+            .print-canvas {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+                margin: 20px;
+            }
+
+            .no-print {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 999;
+            }
+
+            .print-btn {
+                background: #000;
+                color: #fff;
+                border: none;
+                padding: 10px 20px;
+                font-family: var(--font-ui);
+                font-weight: 500;
+                cursor: pointer;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                border-radius: 4px;
+            }
+
+            .print-btn:hover {
+                background: #333;
+            }
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                margin: 0;
+                background-color: white;
+            }
+
+            .print-canvas {
+                margin: 0;
+                box-shadow: none;
+                page-break-after: avoid;
+                /* Prevent simple page break */
+            }
+        }
+
+        /* Header Section - Modern & Compact */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 6px;
+            border-bottom: 2pt solid var(--color-black);
+            margin-bottom: 2px;
+        }
+
+        .logo-area h1 {
+            font-family: var(--font-heading);
+            font-size: 18pt;
+            /* Reduced from 26pt */
+            margin: 0;
+            line-height: 1;
+            letter-spacing: 0.5px;
+        }
+
+        .logo-area .subtitle {
+            font-size: 8pt;
+            color: var(--color-gray);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-top: 4px;
+        }
+
+        .meta-area {
+            text-align: right;
+            font-family: var(--font-data);
+            font-size: 8pt;
+            color: var(--color-gray);
+        }
+
+        .meta-area .pay-no {
+            font-weight: 700;
+            color: var(--color-black);
+            font-size: 10pt;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        /* Swiss Grid Layout */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            /* Left (Pay Info) wider than Right (Order Info) */
+            gap: 10px;
+            flex: 1;
+            /* Take remaining space */
+        }
+
+        .panel {
+            border: var(--border-width) solid var(--color-black);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            font-family: var(--font-ui);
+            font-size: 8pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            background-color: var(--color-light-gray);
+            padding: 4px 8px;
+            border-bottom: var(--border-width) solid var(--color-black);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Data Rows */
+        .data-row {
+            display: flex;
+            border-bottom: var(--border-width) solid #ddd;
+        }
+
+        .data-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            width: 70px;
+            /* Fixed label width */
+            padding: 4px 6px;
+            font-size: 8pt;
+            color: var(--color-gray);
+            border-right: var(--border-width) solid #ddd;
+            display: flex;
+            align-items: center;
+        }
+
+        .value {
+            flex: 1;
+            padding: 4px 8px;
+            font-family: var(--font-data);
+            font-size: 9pt;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Amount Emphasis */
+        .amount-highlight {
+            font-size: 14pt;
+            font-weight: 700;
+        }
+
+        .amount-cap {
+            font-size: 9pt;
+            font-family: var(--font-heading);
+            margin-left: 8px;
+            color: var(--color-gray);
+        }
+
+        /* Order Panel specific adjustments */
+        .order-panel .label {
+            width: 60px;
+        }
+
+        /* Approval Grid - Compact */
+        .approval-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border: var(--border-width) solid var(--color-black);
+            height: 35mm;
+            /* Fixed efficient height ~130px */
+        }
+
+        .approve-box {
+            border-right: var(--border-width) solid var(--color-black);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .approve-box:last-child {
+            border-right: none;
+        }
+
+        .approve-title {
+            font-size: 8pt;
+            font-weight: 600;
+            text-align: center;
+            background: var(--color-light-gray);
+            padding: 2px 0;
+            border-bottom: var(--border-width) solid var(--color-black);
+        }
+
+        .approve-sign-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Brush Script MT', cursive;
+            /* Fallback for signature style */
+            font-size: 14pt;
+        }
+
+        .approve-date {
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-family: var(--font-data);
+            font-size: 7pt;
+            color: #888;
+        }
+
+        /* Footer */
+        .footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-end;
+            margin-top: 0;
+            gap: 10px;
+        }
+
+        .uuid {
+            font-family: var(--font-data);
+            font-size: 7pt;
+            color: #888;
+            max-width: 200px;
+            text-align: right;
+            line-height: 1.1;
+        }
+
+        /* Utility */
+        .text-truncate {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Print Button -->
+    <div class="no-print">
+        <button class="print-btn" onclick="window.print()">
+            <svg style="width:16px;height:16px;vertical-align:middle;margin-right:5px;" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                </path>
+            </svg>
+            打印单据 (A5)
+        </button>
+    </div>
+
+    <!-- Main Canvas -->
+    <div class="print-canvas">
+
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-area">
+                <h1>付款审批单</h1>
+                <div class="subtitle">PAYMENT APPROVAL SHEET</div>
+            </div>
+            <div class="meta-area">
+                <span class="pay-no" id="pay-number">PAY-LOADING</span>
+                <div>DATE: <span id="create-date">YYYY-MM-DD</span></div>
+            </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="info-grid">
+
+            <!-- Left: Payment Info -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>资金往来信息</span>
+                    <span>PAYMENT DETAILS</span>
+                </div>
+
+                <div class="data-row" style="background: #fdfdfd;">
+                    <div class="label" style="font-weight: 700;">付款总额</div>
+                    <div class="value">
+                        <span class="amount-highlight">¥ <span id="amount-small">0.00</span></span>
+                        <span class="amount-cap" id="amount-big">零元整</span>
+                    </div>
+                </div>
+
+                <div class="data-row">
+                    <div class="label">收款单位</div>
+                    <div class="value" style="font-weight: 600;" id="payee-name">loading...</div>
+                </div>
+
+                <div class="data-row">
+                    <div class="label">银行账号</div>
+                    <div class="value">
+                        <div style="display:flex; flex-direction:column; width: 100%;">
+                            <span id="bank-account" style="font-weight:500;"></span>
+                            <span id="bank-name" style="font-size:8pt; color:#666; margin-top:2px;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-row">
+                    <div class="label">付款单位</div>
+                    <div class="value" id="payer-name">loading...</div>
+                </div>
+
+                <div class="data-row" style="flex:1;">
+                    <div class="label">款项用途</div>
+                    <div class="value" style="align-items: flex-start; line-height: 1.4;" id="payment-purpose"></div>
+                </div>
+            </div>
+
+            <!-- Right: Order & Project Info -->
+            <div class="panel order-panel">
+                <div class="panel-header">
+                    <span>关联项目概要</span>
+                    <span style="font-size:7pt; color:#666;">PROJECT REF</span>
+                </div>
+
+                <div class="data-row">
+                    <div class="label">项目名称</div>
+                    <div class="value text-truncate" style="font-weight:600;" id="project-name">-</div>
+                </div>
+
+                <div class="data-row">
+                    <div class="label">订单编号</div>
+                    <div class="value" id="order-number">-</div>
+                </div>
+
+                <div class="data-row">
+                    <div class="label">材料服务</div>
+                    <div class="value text-truncate" id="material-name">-</div>
+                </div>
+
+                <div class="data-row">
+                    <div class="label">订单总额</div>
+                    <div class="value">¥ <span id="order-amount">0.00</span></div>
+                </div>
+
+                <div class="data-row">
+                    <div class="label">累计已付</div>
+                    <div class="value">
+                        <span style="font-weight:500;">¥ <span id="paid-total">0.00</span></span>
+                        <span style="font-size:7pt; color:#888; margin-left:4px;">(含本次)</span>
+                    </div>
+                </div>
+
+                <div class="data-row" style="flex:1; border-bottom:none;">
+                    <div class="label">付款进度</div>
+                    <div class="value">
+                        <div style="width:100%;">
+                            <div style="font-weight:700; font-size:12pt;" id="pay-ratio">0%</div>
+                            <div style="font-size:7pt; color:#888;">剩余未付: ¥<span id="order-balance">0.00</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approval Grid -->
+        <div class="panel" style="border:none;">
+            <!-- <div class="panel-header" style="border: var(--border-width) solid var(--color-black); border-bottom:none;">
+                <span>审批流程 / APPROVAL FLOW</span>
+            </div> -->
+            <div class="approval-grid">
+                <div class="approve-box">
+                    <div class="approve-title">经办人 / Handler</div>
+                    <div class="approve-sign-area" id="handler-sign"></div>
+                    <div class="approve-date">Date: . . . . / . . / . .</div>
+                </div>
+                <div class="approve-box">
+                    <div class="approve-title">项目负责人 / PM</div>
+                    <div class="approve-sign-area"></div>
+                    <div class="approve-date">Date: . . . . / . . / . .</div>
+                </div>
+                <div class="approve-box">
+                    <div class="approve-title">财务审核 / Finance</div>
+                    <div class="approve-sign-area"></div>
+                    <div class="approve-date">Date: . . . . / . . / . .</div>
+                </div>
+                <div class="approve-box">
+                    <div class="approve-title">总经理审批 / GM</div>
+                    <div class="approve-sign-area"></div>
+                    <div class="approve-date">Date: . . . . / . . / . .</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="uuid">
+                <div>UNIQUE ID VERIFICATION</div>
+                <div style="letter-spacing:1px; margin-top:2px;" id="uuid-text">UUID-GENERATING-0000</div>
+            </div>
+            <div id="qrcode"></div>
+        </div>
+
+    </div>
+
+    <!-- Script same as before but adapted IDs -->
+    <script>
+        function getQueryVariable(variable) {
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i = 0; i < vars.length; i++) {
+                var pair = vars[i].split("=");
+                if (pair[0] == variable) return pair[1];
+            }
+            return (false);
+        }
+
+        function digitUppercase(n) {
+            var fraction = ['角', '分'];
+            var digit = [
+                '零', '壹', '贰', '叁', '肆',
+                '伍', '陆', '柒', '捌', '玖'
+            ];
+            var unit = [
+                ['元', '万', '亿'],
+                ['', '拾', '佰', '仟']
+            ];
+            var head = n < 0 ? '欠' : '';
+            n = Math.abs(n);
+            var s = '';
+            for (var i = 0; i < fraction.length; i++) {
+                s += (digit[Math.floor(n * 10 * Math.pow(10, i)) % 10] + fraction[i]).replace(/零./, '');
+            }
+            s = s || '整';
+            n = Math.floor(n);
+            for (var i = 0; i < unit[0].length && n > 0; i++) {
+                var p = '';
+                for (var j = 0; j < unit[1].length && n > 0; j++) {
+                    p = digit[n % 10] + unit[1][j] + p;
+                    n = Math.floor(n / 10);
+                }
+                s = p.replace(/(零.)*零$/, '').replace(/^$/, '零') + unit[0][i] + s;
+            }
+            return head + s.replace(/(零.)*零元/, '元')
+                .replace(/(零.)+/g, '零')
+                .replace(/^整$/, '零元整');
+        }
+
+        var payId = getQueryVariable("id");
+        var token = localStorage.getItem("access_token");
+
+        if (payId) {
+            $.ajax({
+                url: "/api/v1/pay/" + payId,
+                type: "GET",
+                headers: { Authorization: "Bearer " + token },
+                success: function (res) {
+                    if (res.code === 0 && res.data) {
+                        var pay = res.data;
+
+                        // Basic Info
+                        $('#pay-number').text(pay.pay_number);
+                        $('#create-date').text(pay.create_at.split(' ')[0]);
+                        $('#amount-small').text(parseFloat(pay.current_payment_amount).toLocaleString(undefined, { minimumFractionDigits: 2 }));
+                        $('#amount-big').text(digitUppercase(pay.current_payment_amount));
+                        $('#payment-purpose').text(pay.payment_purpose || '');
+                        $('#handler-sign').text(pay.handler);
+                        $('#payer-name').text(pay.payer_supplier_name || '我方公司');
+                        $('#payee-name').text(pay.payee_supplier_name || '收款单位');
+                        $('#uuid-text').text("UID: " + (pay.id * 1234567).toString(16).toUpperCase() + "-" + new Date().getTime().toString(36).toUpperCase());
+
+                        // Supplier / Bank
+                        if (pay.payee_supplier_id) {
+                            $.ajax({
+                                url: "/api/v1/supplier/" + pay.payee_supplier_id,
+                                headers: { Authorization: "Bearer " + token },
+                                success: function (supRes) {
+                                    if (supRes.code === 0 && supRes.data) {
+                                        $('#bank-name').text(supRes.data.bank_name || '未录入开户行');
+                                        var acc = supRes.data.account_number || '未录入账号';
+                                        $('#bank-account').text(acc.replace(/(\d{4})(?=\d)/g, "$1 "));
+                                    }
+                                }
+                            });
+                        }
+
+                        // Order Info
+                        if (pay.order_id) {
+                            $.ajax({
+                                url: "/api/v1/order/" + pay.order_id,
+                                headers: { Authorization: "Bearer " + token },
+                                success: function (ordRes) {
+                                    if (ordRes.code === 0 && ordRes.data) {
+                                        var o = ordRes.data;
+                                        $('#project-name').text(o.project_name || '-');
+                                        $('#order-number').text(o.order_number || '-');
+                                        $('#material-name').text(o.material_name || '-');
+                                        $('#project-name').attr('title', o.project_name || ''); // Tooltip for truncate
+
+                                        var orderAmt = parseFloat(o.order_amount || 0);
+                                        $('#order-amount').text(orderAmt.toLocaleString(undefined, { minimumFractionDigits: 2 }));
+
+                                        // Balance
+                                        var balance = parseFloat(o.order_balance || 0);
+                                        $('#order-balance').text(balance.toLocaleString(undefined, { minimumFractionDigits: 2 }));
+                                        $('#paid-total').text((orderAmt - balance).toLocaleString(undefined, { minimumFractionDigits: 2 }));
+
+                                        if (orderAmt > 0) {
+                                            var ratio = ((orderAmt - balance) / orderAmt * 100).toFixed(1) + '%';
+                                            $('#pay-ratio').text(ratio);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        // QR Code - Smaller
+                        new QRCode(document.getElementById("qrcode"), {
+                            text: "PAY:" + pay.pay_number + "|" + pay.current_payment_amount,
+                            width: 48,
+                            height: 48,
+                            correctLevel: QRCode.CorrectLevel.M
+                        });
+
+                        document.title = "PAY-" + pay.pay_number;
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

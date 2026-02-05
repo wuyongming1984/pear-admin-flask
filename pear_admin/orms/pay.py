@@ -5,6 +5,16 @@ from pear_admin.extensions import db
 from ._base import BaseORM
 
 
+# 付款单与发票的中间关联表
+pay_invoice_relation = db.Table(
+    "pay_invoice_relation",
+    db.Column("id", db.Integer, primary_key=True, autoincrement=True),
+    db.Column("pay_id", db.Integer, db.ForeignKey("ums_pay.id", ondelete="CASCADE")),
+    db.Column("invoice_id", db.Integer, db.ForeignKey("material_invoice.id", ondelete="CASCADE")),
+    db.Column("create_at", db.DateTime, default=datetime.now)
+)
+
+
 class PayORM(BaseORM):
     __tablename__ = "ums_pay"
 
@@ -50,6 +60,9 @@ class PayORM(BaseORM):
     # 经办人
     handler = db.Column(db.String(64), nullable=True, comment="经办人")
     
+    # 附件
+    attachments = db.Column(db.Text, nullable=True, comment="附件")
+    
     create_at = db.Column(
         db.DateTime,
         nullable=False,
@@ -71,8 +84,18 @@ class PayORM(BaseORM):
         backref="payee_pays",
         lazy="select"
     )
+    
+    # 与发票的多对多关系
+    invoices = db.relationship(
+        "MaterialInvoiceORM",
+        secondary="pay_invoice_relation",
+        backref="related_pays",
+        lazy="select"
+    )
 
     def json(self):
+        import json as json_lib
+        
         # 处理datetime字段 - 可能是datetime对象或bytes类型
         def format_datetime(datetime_field):
             if not datetime_field:
@@ -93,11 +116,38 @@ class PayORM(BaseORM):
             else:
                 return str(numeric_field)
         
+        # 解析附件数据
+        attachments_data = []
+        if self.attachments:
+            try:
+                attachments_data = json_lib.loads(self.attachments) if isinstance(self.attachments, str) else self.attachments
+                if not isinstance(attachments_data, list):
+                    attachments_data = []
+            except:
+                attachments_data = []
+        
+        # 获取关联的发票列表
+        invoices_list = []
+        if self.invoices:
+            for invoice in self.invoices:
+                invoices_list.append({
+                    "id": invoice.id,
+                    "invoice_number": invoice.invoice_number,
+                    "invoice_code": invoice.invoice_code,
+                    "invoice_date": invoice.invoice_date.strftime("%Y-%m-%d") if invoice.invoice_date else None,
+                    "total_amount": format_numeric(invoice.total_amount),
+                    "seller_name": invoice.seller_name,
+                    "file_path": invoice.file_path,
+                })
+        
         return {
             "id": self.id,
             "pay_number": self.pay_number,
             "order_id": self.order_id,
             "order_number": self.order.order_number if self.order else None,
+            "order_amount": format_numeric(self.order.order_amount) if self.order else None,
+            "project_name": self.order.project.project_name if self.order and self.order.project else None,
+            "supplier_contact_person": self.order.supplier_contact_person if self.order else None,
             "payer_supplier_id": self.payer_supplier_id,
             "payer_supplier_name": self.payer.name if self.payer else None,
             "payee_supplier_id": self.payee_supplier_id,
@@ -108,4 +158,7 @@ class PayORM(BaseORM):
             "payment_status": self.payment_status,
             "handler": self.handler,
             "create_at": format_datetime(self.create_at),
+            "attachments_list": attachments_data,
+            "invoices_list": invoices_list,
         }
+

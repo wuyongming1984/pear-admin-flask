@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="utf-8" />
+    <title>批量出库</title>
+    <link rel="stylesheet" href="/static/component/pear/css/pear.css" />
+    <style>
+        .input-error {
+            border-color: #ff5722 !important;
+        }
+    </style>
+</head>
+
+<body class="pear-container">
+    <form class="layui-form" action="">
+        <div class="mainBox">
+            <div class="main-container">
+                <!-- Removed Recipient and Remark inputs as requested -->
+
+                <div class="layui-form-item">
+                    <div class="layui-input-block" style="margin-left: 0;">
+                        <table class="layui-table">
+                            <colgroup>
+                                <col width="50">
+                                <col>
+                                <col width="60">
+                                <col width="120">
+                                <col width="120">
+                                <col width="90">
+                                <col width="90">
+                                <col width="100">
+                                <col width="100">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>材料名称/规格</th>
+                                    <th>单位</th>
+                                    <th>所属项目</th>
+                                    <th>销售商</th>
+                                    <th>含税销售单价</th>
+                                    <th>销售数量</th>
+                                    <th>销售合价</th>
+                                    <th>批次</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in inventory_items %}
+                                <tr class="item-row" data-id="{{ item.id }}">
+                                    <td>{{ item.id }}</td>
+                                    <td>
+                                        <div style="font-weight: bold;">{{ item.material_name }}</div>
+                                        <div style="font-size: 12px; color: #999;">{{ item.material_spec }}</div>
+                                    </td>
+                                    <td>{{ item.material_unit or '-' }}</td>
+                                    <td>{{ item.project.project_name if item.project else '-' }}</td>
+                                    <td>{{ item.seller.name if item.seller else '-' }}</td>
+                                    <td>{{ '￥%.2f'|format(item.seller_price) if item.seller_price else '-' }}</td>
+                                    <td>{{ '%.2f'|format(item.seller_quantity) if item.seller_quantity else '-' }}</td>
+                                    <td>{{ '￥%.2f'|format(item.seller_price * item.seller_quantity) if item.seller_price
+                                        and item.seller_quantity else '-' }}</td>
+                                    <td><span class="layui-badge layui-bg-blue">自动生成</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bottom">
+            <div class="button-container">
+                <button type="button" class="pear-btn pear-btn-primary pear-btn-sm" id="btn-submit">
+                    <i class="layui-icon layui-icon-ok"></i> 提交批量出库
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <script src="/static/component/layui/layui.js"></script>
+    <script src="/static/component/pear/pear.js"></script>
+    <script>
+        layui.use(['form', 'jquery', 'layer'], function () {
+            var $ = layui.jquery;
+            var layer = layui.layer;
+
+            $('#btn-submit').click(function () {
+                // recipient and remark removed
+
+                var items = [];
+                // var hasError = false;
+
+                $('.item-row').each(function () {
+                    var $row = $(this);
+                    var id = $row.data('id');
+                    // No input validation needed, outbound quantity determined by backend (sales quantity)
+
+                    items.push({
+                        inventory_id: id
+                        // outbound_quantity removed
+                    });
+                });
+
+                // if (hasError) return;
+
+                if (items.length === 0) {
+                    layer.msg("请至少填写一项有效的出库数量", { icon: 2 });
+                    return;
+                }
+
+                var payload = {
+                    recipient: "", // Empty as requested
+                    remark: "",
+                    items: items
+                };
+
+                var loading = layer.load();
+                $.ajax({
+                    url: '/api/v1/material/outbound/batch',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function (res) {
+                        layer.close(loading);
+                        if (res.code === 0) {
+                            layer.msg(res.msg, { icon: 1, time: 1000 }, function () {
+                                parent.layer.close(parent.layer.getFrameIndex(window.name));
+                                parent.layui.table.reload("inventory-table");
+                            });
+                        } else {
+                            layer.msg(res.msg, { icon: 2 });
+                        }
+                    },
+                    error: function (err) {
+                        layer.close(loading);
+                        layer.msg("提交失败: " + err.statusText, { icon: 2 });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

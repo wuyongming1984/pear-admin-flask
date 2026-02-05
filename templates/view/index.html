@@ -15,6 +15,122 @@
   <script src="/static/component/layui/layui.js"></script>
   <script src="/static/component/pear/pear.js"></script>
   <script src="/static/js/pear_admin_flask.js"></script>
+  <style>
+    /* ==================== 赛博工业风格侧边栏升级 v3 ==================== */
+    /* 使用 body.pear-admin 确保优先级高于 admin.dark.css (0,3,0) */
+
+    /* 侧边栏整体背景 */
+    body.pear-admin .layui-layout-admin .layui-side {
+      background-color: #1e2630 !important;
+      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3) !important;
+      border-right: 1px solid rgba(0, 229, 255, 0.05) !important;
+    }
+
+    /* Logo 区域 */
+    body.pear-admin .layui-layout-admin .layui-logo {
+      background-color: #151b22 !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+      color: #00e5ff !important;
+      font-weight: 700;
+      letter-spacing: 1px;
+      box-shadow: 0 1px 10px rgba(0, 0, 0, 0.2) !important;
+      border-right: none !important;
+    }
+
+    /* 菜单滚动区域及导航树 - 覆盖默认主题背景 */
+    body.pear-admin .layui-side .layui-side-scroll,
+    body.pear-admin .layui-side .layui-side-scroll .layui-nav-tree {
+      background-color: transparent !important;
+    }
+
+    /* 顶级菜单项 */
+    body.pear-admin .layui-side-menu .layui-nav-item>a {
+      color: #94a3b8 !important;
+      border-left: 3px solid transparent;
+      transition: all 0.3s ease;
+      height: 50px;
+      line-height: 50px;
+      margin: 4px 10px;
+      border-radius: 8px;
+    }
+
+    /* 顶级菜单悬停 */
+    body.pear-admin .layui-side-menu .layui-nav-item>a:hover {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+      color: #f8fafc !important;
+      border-left-color: rgba(0, 229, 255, 0.5) !important;
+    }
+
+    /* 顶级菜单选中/展开状态 */
+    body.pear-admin .layui-side-menu .layui-nav-item.layui-nav-itemed>a,
+    body.pear-admin .layui-side-menu .layui-nav-item.layui-this>a {
+      background: linear-gradient(90deg, rgba(0, 229, 255, 0.1), transparent) !important;
+      color: #00e5ff !important;
+      border-left-color: #00e5ff !important;
+      text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+    }
+
+    /* 图标样式 */
+    body.pear-admin .layui-side-menu .layui-nav-item i {
+      color: #64748b;
+      margin-right: 10px;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    body.pear-admin .layui-side-menu .layui-nav-item.layui-nav-itemed>a i,
+    body.pear-admin .layui-side-menu .layui-nav-item.layui-this>a i,
+    body.pear-admin .layui-side-menu .layui-nav-item>a:hover i {
+      color: #00e5ff !important;
+    }
+
+    /* 子菜单区域 */
+    body.pear-admin .layui-side-menu .layui-nav-child {
+      background-color: rgba(0, 0, 0, 0.2) !important;
+      padding: 5px 0 5px 0 !important;
+      box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    /* 子菜单项 */
+    body.pear-admin .layui-side-menu .layui-nav-child dd a {
+      color: #94a3b8 !important;
+      padding-left: 50px !important;
+      transition: all 0.2s;
+      margin: 2px 10px;
+      border-radius: 6px;
+      height: 40px;
+      line-height: 40px;
+    }
+
+    /* 子菜单悬停 */
+    body.pear-admin .layui-side-menu .layui-nav-child dd a:hover {
+      background-color: rgba(0, 229, 255, 0.08) !important;
+      color: #00e5ff !important;
+    }
+
+    /* 子菜单选中 */
+    body.pear-admin .layui-side-menu .layui-nav-child dd.layui-this a {
+      background-color: rgba(0, 229, 255, 0.15) !important;
+      color: #00e5ff !important;
+      font-weight: 600;
+      text-shadow: 0 0 5px rgba(0, 229, 255, 0.2);
+    }
+
+    /* 滚动条美化 */
+    body.pear-admin .layui-side-scroll::-webkit-scrollbar {
+      width: 4px;
+      background-color: transparent;
+    }
+
+    body.pear-admin .layui-side-scroll::-webkit-scrollbar-thumb {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+
+    body.pear-admin .layui-side-scroll::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  </style>
 </head>
 <!-- 结 构 代 码 -->
 
@@ -68,7 +184,7 @@
       </ul>
     </div>
     <!-- 侧 边 区 域 -->
-    <div class="layui-side layui-bg-black">
+    <div class="layui-side">
       <!-- 菜 单 顶 部 -->
       <div class="layui-logo">
         <!-- 图 标 -->

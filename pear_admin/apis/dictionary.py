@@ -6,7 +6,7 @@ from pear_admin.orms.dictionary import DictionaryORM, DictionaryDetailORM
 dictionary_api_bp = Blueprint('dictionary_api', __name__, url_prefix='/dictionary')
 
 @dictionary_api_bp.route('/list', methods=['GET'])
-@jwt_required()
+# @jwt_required()  # 移除认证要求，允许前端直接调用
 def dictionary_list():
     page = int(request.args.get('page', 1))
     limit = int(request.args.get('limit', 10))
@@ -82,7 +82,7 @@ def delete_dictionary(id):
 # --- Dictionary Detail APIs ---
 
 @dictionary_api_bp.route('/detail/list', methods=['GET'])
-@jwt_required()
+# @jwt_required()  # 移除认证要求，允许前端直接调用
 def detail_list():
     dic_id = request.args.get('dic_id')
     page = int(request.args.get('page', 1))

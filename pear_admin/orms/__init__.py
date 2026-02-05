@@ -27,5 +27,11 @@ role_rights = db.Table(
 
 from .payer import PayerORM
 from .nursery import NurseryPlantORM, NurseryTransactionORM
+from .material import MaterialPlanningORM, MaterialInboundORM, MaterialInventoryORM, MaterialOutboundORM, MaterialInvoiceORM, MaterialInvoiceDetailORM
 
-__all__ = ["DepartmentORM", "RightsORM", "RoleORM", "UserORM", "SupplierORM", "ProjectORM", "AttachmentORM", "OrderORM", "PayORM", "PayerORM", "DictionaryORM", "DictionaryDetailORM", "NurseryPlantORM", "NurseryTransactionORM"]
+__all__ = [
+    "DepartmentORM", "RightsORM", "RoleORM", "UserORM", "SupplierORM", "ProjectORM", 
+    "AttachmentORM", "OrderORM", "PayORM", "PayerORM", "DictionaryORM", "DictionaryDetailORM", 
+    "NurseryPlantORM", "NurseryTransactionORM",
+    "MaterialPlanningORM", "MaterialInboundORM", "MaterialInventoryORM", "MaterialOutboundORM", "MaterialInvoiceORM", "MaterialInvoiceDetailORM"
+]

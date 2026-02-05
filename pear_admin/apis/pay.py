@@ -28,6 +28,8 @@ def pay_list():
     payee_supplier_name = request.args.get("payee_supplier_name", type=str)
     payment_status = request.args.get("payment_status", type=str)
     handler = request.args.get("handler", type=str)
+    project_name = request.args.get("project_name", type=str)
+    supplier_contact_person = request.args.get("supplier_contact_person", type=str)
     create_at = request.args.get("create_at", type=str)
     
     # 构建查询（按ID倒序，新的在前）
@@ -60,6 +62,19 @@ def pay_list():
         q = q.where(PayORM.payment_status.like(f"%{payment_status}%"))
     if handler:
         q = q.where(PayORM.handler.like(f"%{handler}%"))
+    if project_name:
+        # 通过关联订单的项目名称筛选
+        from pear_admin.orms import ProjectORM
+        subquery = db.select(OrderORM.id).join(ProjectORM).where(
+            ProjectORM.project_name.like(f"%{project_name}%")
+        ).scalar_subquery()
+        q = q.where(PayORM.order_id.in_(subquery))
+    if supplier_contact_person:
+        # 通过关联订单的供应商联系人筛选
+        subquery = db.select(OrderORM.id).where(
+            OrderORM.supplier_contact_person.like(f"%{supplier_contact_person}%")
+        ).scalar_subquery()
+        q = q.where(PayORM.order_id.in_(subquery))
     if create_at:
         # 创建时间筛选（精确匹配日期部分）
         try:
@@ -95,15 +110,20 @@ def get_pay(pid):
 @pay_api.post("/")
 @jwt_required()
 def create_pay():
+    from pear_admin.orms.material import MaterialInvoiceORM
+    
     data = request.get_json()
     if data.get("id"):
         del data["id"]
+    
+    # 提取发票ID列表
+    invoice_ids = data.pop("invoice_ids", [])
     
     # 定义允许的字段 (白名单)
     valid_fields = [
         "pay_number", "order_id", "payer_supplier_id", "payee_supplier_id",
         "payment_purpose", "current_payment_amount", "invoice_amount",
-        "payment_status", "handler", "create_at"
+        "payment_status", "handler", "create_at", "attachments"
     ]
     
     clean_data = {}
@@ -141,6 +161,15 @@ def create_pay():
     try:
         pay = PayORM(**clean_data)
         db.session.add(pay)
+        db.session.flush()  # 获取pay的ID
+        
+        # 关联发票
+        if invoice_ids and isinstance(invoice_ids, list):
+            for invoice_id in invoice_ids:
+                invoice = db.session.get(MaterialInvoiceORM, int(invoice_id))
+                if invoice:
+                    pay.invoices.append(invoice)
+        
         db.session.commit()
     except Exception as e:
         db.session.rollback()
@@ -155,12 +184,17 @@ def create_pay():
 @pay_api.put("/")
 @jwt_required()
 def change_pay(pid=None):
+    from pear_admin.orms.material import MaterialInvoiceORM
+    
     data = request.get_json()
     pid = data.get("id") or pid
     
     pay_obj = db.session.get(PayORM, pid)
     if not pay_obj:
         return {"code": -1, "msg": "付款单不存在"}
+    
+    # 提取发票ID列表
+    invoice_ids = data.pop("invoice_ids", None)
     
     # 更新字段
     for key, value in data.items():
@@ -175,7 +209,21 @@ def change_pay(pid=None):
             value = Decimal(str(value))
         elif key == "invoice_amount" and value:
             value = Decimal(str(value))
+        elif key == "attachments":
+            # attachments 是 JSON 字符串,直接保存
+            pass
         setattr(pay_obj, key, value)
+    
+    # 更新发票关联
+    if invoice_ids is not None:
+        # 清除现有关联
+        pay_obj.invoices.clear()
+        # 添加新关联
+        if isinstance(invoice_ids, list):
+            for invoice_id in invoice_ids:
+                invoice = db.session.get(MaterialInvoiceORM, int(invoice_id))
+                if invoice:
+                    pay_obj.invoices.append(invoice)
     
     pay_obj.save()
     return {"code": 0, "msg": "修改付款单信息成功"}

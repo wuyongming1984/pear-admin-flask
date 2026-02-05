@@ -25,6 +25,8 @@ services:
     build: .
     container_name: pear_admin_web
     restart: always
+    env_file:
+      - .env
     environment:
       - FLASK_ENV=production
       - FLASK_APP=pear_admin:create_app("prod")

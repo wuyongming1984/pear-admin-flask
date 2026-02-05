@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="utf-8">
+    <title>采购订单打印单</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+    <!-- 引入字体（可选，为了更好的美感） -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #1a1a1a;
+            --accent-color: #555;
+            --border-color: #000;
+            --table-border: 1px solid #000;
+            --font-serif: 'Noto Serif SC', 'SimSun', serif;
+            --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            font-family: var(--font-serif);
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* 打印容器 - A4 尺寸视觉模拟 */
+        .print-container {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            margin: 20mm auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        /* 标题头 */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 24pt;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 5px;
+        }
+
+        .header .sub-title {
+            font-size: 12pt;
+            margin-top: 10px;
+            color: var(--accent-color);
+        }
+
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-family: var(--font-mono);
+            font-size: 10pt;
+        }
+
+        /* 表格样式 */
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5px;
+        }
+
+        .order-table th,
+        .order-table td {
+            border: var(--table-border);
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 11pt;
+            vertical-align: top;
+        }
+
+        .order-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            width: 120px;
+            text-align: right;
+            border-bottom-width: 2px;
+            /* 强调表头分割 */
+        }
+
+        .order-table td.strong {
+            font-weight: bold;
+            font-size: 12pt;
+        }
+
+        .order-table td.numeric {
+            font-family: var(--font-mono);
+        }
+
+        /* 布局控制 */
+        .row-group {
+            display: table-row-group;
+        }
+
+        .full-width {
+            width: 100%;
+        }
+
+        /* 审批签字栏 */
+        .approval-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+        }
+
+        .signature-box {
+            width: 23%;
+            text-align: center;
+        }
+
+        .signature-title {
+            font-size: 11pt;
+            font-weight: bold;
+            margin-bottom: 40px;
+            color: #333;
+        }
+
+        .signature-line {
+            border-bottom: 1px solid #000;
+            height: 30px;
+            margin: 0 10px;
+        }
+
+        .date-line {
+            margin-top: 5px;
+            font-size: 9pt;
+            color: #666;
+        }
+
+        /* 打印控制 */
+        @media print {
+            body {
+                background: none;
+                display: block;
+                height: auto;
+            }
+
+            .print-container {
+                width: 100%;
+                height: auto;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+    <script src="/static/component/layui/layui.js"></script>
+    <script src="/static/component/pear/pear.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+
+    <div class="print-container">
+        <!-- 打印按钮 (屏幕显示，打印隐藏) -->
+        <div class="no-print" style="position: absolute; right: -80px; top: 0;">
+            <button onclick="window.print()"
+                style="padding: 10px 20px; cursor: pointer; background: #000; color: #fff; border: none; font-family: sans-serif; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">打印</button>
+        </div>
+
+        <div class="header">
+            <h1>采购订单审批单</h1>
+            <div class="sub-title" id="company-name">项目管理系统标准单据</div>
+        </div>
+
+        <div class="meta-info">
+            <div>单据编号：<span id="order-number" style="font-weight: bold;">LOADING...</span></div>
+            <div>打印日期：<span id="print-date"></span></div>
+        </div>
+
+        <!-- 详细信息表格 -->
+        <table class="order-table">
+            <tbody>
+                <tr>
+                    <th>项目名称</th>
+                    <td colspan="3" id="project-name" class="strong"></td>
+                </tr>
+                <tr>
+                    <th>材料名称</th>
+                    <td id="material-name" class="strong"></td>
+                    <th>供应商</th>
+                    <td id="supplier-name"></td>
+                </tr>
+                <tr>
+                    <th>材料明细</th>
+                    <td colspan="3" id="material-details" style="height: 80px;"></td>
+                </tr>
+                <tr>
+                    <th>订单金额</th>
+                    <td id="order-amount" class="strong numeric"></td>
+                    <th>当前余额</th>
+                    <td id="order-balance" class="numeric"></td>
+                </tr>
+                <tr>
+                    <th>下料日期</th>
+                    <td id="cutting-time"></td>
+                    <th>到场日期</th>
+                    <td id="arrival-time"></td>
+                </tr>
+                <tr>
+                    <th>供应商联系人</th>
+                    <td id="contact-person"></td>
+                    <th>联系电话</th>
+                    <td id="contact-phone" class="numeric"></td>
+                </tr>
+                <tr>
+                    <th>材料负责人</th>
+                    <td id="material-manager"></td>
+                    <th>分项目负责人</th>
+                    <td id="sub-project-manager"></td>
+                </tr>
+                <tr>
+                    <th>付款记录</th>
+                    <td colspan="3" id="payment-history" style="font-size: 10pt; color: #555;">
+                        <!-- JS 填充 -->
+                    </td>
+                </tr>
+                <tr>
+                    <th>附件文件</th>
+                    <td colspan="3" id="attachment-list" style="font-size: 10pt; font-style: italic;">
+                        <!-- JS 填充 -->
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- 审批栏 -->
+        <div class="approval-section">
+            <div class="signature-box">
+                <div class="signature-title">材料员 / 经办人</div>
+                <div class="signature-line"></div>
+                <div class="date-line">
+                    日期：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-title">项目经理审批</div>
+                <div class="signature-line"></div>
+                <div class="date-line">
+                    日期：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-title">财务审核</div>
+                <div class="signature-line"></div>
+                <div class="date-line">
+                    日期：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-title">公司领导审批</div>
+                <div class="signature-line"></div>
+                <div class="date-line">
+                    日期：&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 40px; text-align: center;">
+            <div id="qrcode"></div>
+            <div style="font-size: 8pt; margin-top: 5px; color: #999;">扫码查看电子版详情</div>
+        </div>
+    </div>
+
+    <script>
+        // 获取 URL 参数
+        function getQueryVariable(variable) {
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i = 0; i < vars.length; i++) {
+                var pair = vars[i].split("=");
+                if (pair[0] == variable) { return pair[1]; }
+            }
+            return (false);
+        }
+
+        var orderId = getQueryVariable("id");
+
+        function formatDate(date) {
+            var d = new Date(date),
+                month = '' + (d.getMonth() + 1),
+                day = '' + d.getDate(),
+                year = d.getFullYear();
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+            return [year, month, day].join('-');
+        }
+
+        document.getElementById('print-date').innerText = formatDate(new Date());
+
+        if (orderId) {
+            $.ajax({
+                url: "/api/v1/order/" + orderId,
+                type: "GET",
+                headers: {
+                    Authorization: "Bearer " + localStorage.getItem("access_token"),
+                },
+                success: function (res) {
+                    if (res.code === 0 && res.data) {
+                        var data = res.data;
+
+                        // 填充数据
+                        $('#order-number').text(data.order_number || '-');
+                        $('#project-name').text(data.project_name || '-');
+                        $('#material-name').text(data.material_name || '-');
+                        $('#supplier-name').text(data.supplier_name || '-');
+                        $('#material-details').text(data.material_details || '无详细说明');
+
+                        // 金额格式化
+                        $('#order-amount').text(data.order_amount ? '¥' + parseFloat(data.order_amount).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) : '-');
+                        $('#order-balance').text(data.order_balance ? '¥' + parseFloat(data.order_balance).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) : '-');
+
+                        $('#cutting-time').text(data.cutting_time || '-');
+                        $('#arrival-time').text(data.estimated_arrival_time || '-');
+
+                        $('#contact-person').text(data.supplier_contact_person || '-');
+                        $('#contact-phone').text(data.contact_phone || '-');
+
+                        $('#material-manager').text(data.material_manager || '-');
+                        $('#sub-project-manager').text(data.sub_project_manager || '-');
+
+                        // 填充付款记录
+                        if (data.pays_list && data.pays_list.length > 0) {
+                            var payHtml = data.pays_list.map(p =>
+                                `[${p.pay_number}] ${p.payment_status === 'paid' ? '已付' : '未付'} ¥${parseFloat(p.current_payment_amount).toLocaleString()} (${p.create_at.split(' ')[0]})`
+                            ).join('； ');
+                            $('#payment-history').text(payHtml);
+                        } else {
+                            $('#payment-history').text('暂无付款记录');
+                        }
+
+                        // 填充附件
+                        if (data.attachments_list && data.attachments_list.length > 0) {
+                            var attHtml = data.attachments_list.map(a =>
+                                `${a.name || a.filename}`
+                            ).join('， ');
+                            $('#attachment-list').text(attHtml);
+                        } else {
+                            $('#attachment-list').text('无附件');
+                        }
+
+                        // 生成二维码
+                        new QRCode(document.getElementById("qrcode"), {
+                            text: "ORDER:" + data.order_number + "|ID:" + data.id,
+                            width: 64,
+                            height: 64,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+
+                        // 自动更改标题
+                        document.title = "订单打印-" + data.order_number;
+                    } else {
+                        alert('加载失败: ' + res.msg);
+                    }
+                },
+                error: function () {
+                    alert('网络请求失败');
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

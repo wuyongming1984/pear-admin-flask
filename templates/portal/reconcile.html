@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>供应商对账单 | {{ supplier.name }}</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #F3F4F6;
+            --surface-color: #FFFFFF;
+            --primary-color: #3B82F6;
+            --text-main: #111827;
+            --text-secondary: #6B7280;
+            --border-color: #E5E7EB;
+
+            --success-color: #059669;
+            /* Green for Orders */
+            --danger-color: #DC2626;
+            /* Red for Payments */
+
+            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.5;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            /* Wide layout for side-by-side */
+            margin: 0 auto;
+        }
+
+        /* --- Header Section --- */
+        .header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            background: var(--surface-color);
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header-title p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .stat-card {
+            background: #FAFAFA;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-align: right;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .stat-value.balance {
+            color: var(--primary-color);
+        }
+
+        .stat-value.orders {
+            color: var(--success-color);
+        }
+
+        .stat-value.payments {
+            color: var(--danger-color);
+        }
+
+        /* --- Project Group --- */
+        .project-section {
+            margin-bottom: 2rem;
+        }
+
+        .project-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .project-title:hover {
+            background-color: #f9fafb;
+        }
+
+        .project-title .chevron {
+            display: inline-block;
+            margin-right: 0.75rem;
+            transition: transform 0.2s ease;
+            width: 20px;
+            text-align: center;
+            color: var(--primary-color);
+        }
+
+        .project-title.collapsed .chevron {
+            transform: rotate(-90deg);
+            color: var(--text-secondary);
+        }
+
+        .project-title span {
+            margin-left: 0.5rem;
+        }
+
+        /* Utility for toggle */
+        .recon-grid.hidden {
+            display: none;
+        }
+
+        /* --- The Split Table Grid --- */
+        .recon-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        /* Column Headers */
+        .grid-header {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 0 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.05em;
+        }
+
+        /* Transaction Row - The core component */
+        .tx-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .tx-row:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.08);
+            border-color: #CBD5E1;
+        }
+
+        /* Shared Panel Styles */
+        .tx-panel {
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        /* Left Panel: Order */
+        .tx-panel.left {
+            border-right: 1px dashed var(--border-color);
+            background: linear-gradient(to right, #ffffff, #fafafa);
+        }
+
+        /* Right Panel: Payments */
+        .tx-panel.right {
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Content Styling */
+        .tx-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .tx-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .tx-id {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: #F3F4F6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--text-main);
+        }
+
+        .tx-amount {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .amount-plus {
+            color: var(--success-color);
+        }
+
+        .amount-minus {
+            color: var(--danger-color);
+        }
+
+        .tx-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* Payment List within Row */
+        .pay-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .pay-item:last-child {
+            border-bottom: none;
+        }
+
+        .empty-pay {
+            text-align: center;
+            color: #d1d5db;
+            font-size: 0.875rem;
+            font-style: italic;
+            padding: 1rem;
+        }
+
+        /* Badge Status */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        .badge-paid {
+            background: #ECFDF5;
+            color: #047857;
+        }
+
+        .badge-partial {
+            background: #FFFBEB;
+            color: #B45309;
+        }
+
+        .badge-unpaid {
+            background: #FEF2F2;
+            color: #B91C1C;
+        }
+
+        /* Total Divider */
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--border-color);
+            transform: translateX(-50%);
+            z-index: -1;
+            display: none;
+            /* Hidden for card look */
+        }
+
+        /* Formatter Helper */
+        .money {
+            font-variant-numeric: tabular-nums;
+        }
+
+        @media (max-width: 900px) {
+
+            .recon-grid,
+            .grid-header,
+            .tx-row {
+                grid-template-columns: 1fr;
+            }
+
+            .tx-panel.left {
+                border-right: none;
+                border-bottom: 1px dashed var(--border-color);
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .stat-group {
+                width: 100%;
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+
+            .stat-card {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-title">
+                <h1>对账单</h1>
+                <p>联系人: {{ supplier.contact_person }}</p>
+            </div>
+            <div class="stat-group" style="display: flex; gap: 1rem;">
+                <div class="stat-card">
+                    <div class="stat-label">采购总额</div>
+                    <div class="stat-value orders money">+{{ "{:,.2f}".format(analysis.total_orders) }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">已支付</div>
+                    <div class="stat-value payments money">-{{ "{:,.2f}".format(analysis.total_received) }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">待付余额</div>
+                    <div class="stat-value balance money">{{ "{:,.2f}".format(analysis.outstanding_balance) }}</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Column Headers -->
+        <div class="grid-header">
+            <div>采购订单 (应付)</div>
+            <div>付款记录 (实付)</div>
+        </div>
+
+        <!-- Content -->
+        {% for project_name, p_orders, stats in grouped_orders %}
+        <div class="project-section">
+            <div class="project-title collapsed" onclick="toggleSection(this)">
+                <span class="chevron">▼</span>
+                <div style="flex:1;">
+                    {{ project_name }} <span style="font-weight: normal; color: #9ca3af; font-size: 0.85em;">({{
+                        p_orders|length }} 笔订单)</span>
+                </div>
+
+                <div style="text-align:right; font-size:0.85rem; display:flex; gap:1rem; margin-left: 1rem;">
+                    <abbr title="采购总额" style="text-decoration:none; cursor:help;">
+                        <span class="money" style="color:var(--success-color); font-weight:600;">+{{
+                            "{:,.2f}".format(stats.total_orders) }}</span>
+                    </abbr>
+                    <abbr title="已付总额" style="text-decoration:none; cursor:help;">
+                        <span class="money" style="color:var(--danger-color); font-weight:600;">-{{
+                            "{:,.2f}".format(stats.total_paid) }}</span>
+                    </abbr>
+                    <abbr title="待付余额" style="text-decoration:none; cursor:help;">
+                        <span class="money" style="color:var(--primary-color); font-weight:600;">{{
+                            "{:,.2f}".format(stats.balance) }}</span>
+                    </abbr>
+                </div>
+            </div>
+
+            <div class="recon-grid hidden">
+                <!-- Iterate Orders -->
+                {% for order in p_orders %}
+                <div class="tx-row">
+                    <!-- Left: Order Info -->
+                    <div class="tx-panel left">
+                        <div class="tx-meta">
+                            <span>{{ order.create_at.strftime('%Y-%m-%d') }}</span>
+                            {% if order.payment_status == 'paid' %}
+                            <span class="badge badge-paid">已结清</span>
+                            {% elif order.payment_status == 'partial_paid' %}
+                            <span class="badge badge-partial">部分付</span>
+                            {% else %}
+                            <span class="badge badge-unpaid">未付款</span>
+                            {% endif %}
+                        </div>
+
+                        <div style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="tx-id" title="订单编号">{{ order.order_number }}</span>
+                        </div>
+
+                        <div class="tx-main">
+                            <div style="display:flex; flex-direction:column;">
+                                <span style="font-weight:600; font-size:1rem;">{{ order.material_name }}</span>
+                                {% if order.material_details %}
+                                <span style="font-size:0.8rem; color:#64748b; margin-top:2px;">{{ order.material_details
+                                    }}</span>
+                                {% endif %}
+                            </div>
+                            <span class="tx-amount amount-plus money">+{{ "{:,.2f}".format(order.order_amount) }}</span>
+                        </div>
+
+                        <div class="tx-desc">
+                            数量: {{ order.quantity }} {{ order.material_unit|default('') }}
+                            {% if order.price %}<span style="color:#d1d5db; margin:0 4px;">|</span> 单价: {{ order.price
+                            }}{% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Right: Linked Payments -->
+                    <div class="tx-panel right">
+                        {% if order.pays %}
+                        {% for pay in order.pays %}
+                        <div class="pay-item" style="display:block;">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
+                                <div>
+                                    <div class="tx-meta" style="margin-bottom:2px;">
+                                        {{ pay.create_at.strftime('%Y-%m-%d') }}
+                                        <span
+                                            style="background:#f1f5f9; padding:0 4px; border-radius:2px; margin-left:6px; font-family:var(--font-mono);">{{
+                                            pay.pay_number }}</span>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: #475569;">
+                                        {{ pay.payer.name|default('-') }} <span style="color:#cbd5e1;">&rarr;</span> {{
+                                        pay.payee_supplier.name|default('-') }}
+                                    </div>
+                                </div>
+                                <div class="tx-amount amount-minus money">-{{
+                                    "{:,.2f}".format(pay.current_payment_amount) }}</div>
+                            </div>
+
+                            {% if pay.payment_purpose %}
+                            <div
+                                style="font-size: 0.75rem; color: #94a3b8; background:#f8fafc; padding:4px 8px; border-radius:4px; margin-top:4px;">
+                                备注: {{ pay.payment_purpose }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="empty-pay">暂无付款记录</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Unlinked Payments Section -->
+        {% if unlinked_payments %}
+        <div class="project-section">
+            {% set unlinked_total = unlinked_payments | map(attribute='current_payment_amount') | sum %}
+            <div class="project-title collapsed" style="border-color: #64748b;" onclick="toggleSection(this)">
+                <span class="chevron">▼</span>
+                <div style="flex:1;">
+                    未关联/预付款项 <span style="font-weight: normal; color: #9ca3af;">(Unlinked Payments)</span>
+                </div>
+                <div style="text-align:right; font-size:0.85rem; margin-left:1rem;">
+                    <span style="color:var(--text-secondary); margin-right:4px;">合计:</span>
+                    <span class="money" style="color:var(--danger-color); font-weight:600;">-{{
+                        "{:,.2f}".format(unlinked_total) }}</span>
+                </div>
+            </div>
+            <div class="recon-grid hidden">
+                {% for pay in unlinked_payments %}
+                <div class="tx-row">
+                    <!-- Left: Empty/Note -->
+                    <div class="tx-panel left"
+                        style="display: flex; align-items: center; justify-content: center; background: #fafafa;">
+                        <div style="color: #9ca3af; font-size: 0.875rem;">
+                            <span
+                                style="display:inline-block; padding: 4px 8px; border: 1px solid #e5e7eb; border-radius: 4px;">无关联订单</span>
+                        </div>
+                    </div>
+                    <!-- Right: Payment -->
+                    <div class="tx-panel right">
+                        <div class="pay-item" style="display:block; border-bottom: none;">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
+                                <div>
+                                    <div class="tx-meta" style="margin-bottom:2px;">
+                                        {{ pay.create_at.strftime('%Y-%m-%d') }}
+                                        <span
+                                            style="background:#f1f5f9; padding:0 4px; border-radius:2px; margin-left:6px; font-family:var(--font-mono);">{{
+                                            pay.pay_number }}</span>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: #475569;">
+                                        {{ pay.payer.name|default('-') }} <span style="color:#cbd5e1;">&rarr;</span> {{
+                                        pay.payee_supplier.name|default('-') }}
+                                    </div>
+                                </div>
+                                <div class="tx-amount amount-minus money">-{{
+                                    "{:,.2f}".format(pay.current_payment_amount) }}</div>
+                            </div>
+
+                            {% if pay.payment_purpose %}
+                            <div
+                                style="font-size: 0.75rem; color: #94a3b8; background:#f8fafc; padding:4px 8px; border-radius:4px; margin-top:4px;">
+                                备注: {{ pay.payment_purpose }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div style="text-align: center; margin-top: 4rem; color: #9ca3af; font-size: 0.875rem;">
+            <p>— 已显示全部记录 —</p>
+        </div>
+    </div>
+
+    <script>
+        function toggleSection(header) {
+            header.classList.toggle('collapsed');
+            const content = header.nextElementSibling;
+            if (content) {
+                content.classList.toggle('hidden');
+            }
+        }
+    </script>
+</body>
+
+</html>

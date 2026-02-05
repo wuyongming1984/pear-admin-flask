@@ -33,11 +33,6 @@ services:
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5050
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
-      - MYSQL_HOST=mysql
-      - MYSQL_PORT=3306
-      - MYSQL_USER=${MYSQL_USER:-pear_admin}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-pear_admin123}
-      - MYSQL_DATABASE=${MYSQL_DATABASE:-pear_admin}
     # ports:  # web 不再直接暴露端口，改由 nginx 代理
     #   - "5050:5050"
     volumes:

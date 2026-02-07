@@ -373,15 +373,16 @@
             <div class="stat-group" style="display: flex; gap: 1rem;">
                 <div class="stat-card">
                     <div class="stat-label">采购总额</div>
-                    <div class="stat-value orders money">+{{ "{:,.2f}".format(analysis.total_orders) }}</div>
+                    <div class="stat-value orders money">+{{ "{:,.2f}".format(analysis.total_orders or 0) }}</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">已支付</div>
-                    <div class="stat-value payments money">-{{ "{:,.2f}".format(analysis.total_received) }}</div>
+                    <div class="stat-value payments money">-{{ "{:,.2f}".format(analysis.total_received or 0) }}</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">待付余额</div>
-                    <div class="stat-value balance money">{{ "{:,.2f}".format(analysis.outstanding_balance) }}</div>
+                    <div class="stat-value balance money">{{ "{:,.2f}".format(analysis.outstanding_balance or 0) }}
+                    </div>
                 </div>
             </div>
         </header>
@@ -405,15 +406,15 @@
                 <div style="text-align:right; font-size:0.85rem; display:flex; gap:1rem; margin-left: 1rem;">
                     <abbr title="采购总额" style="text-decoration:none; cursor:help;">
                         <span class="money" style="color:var(--success-color); font-weight:600;">+{{
-                            "{:,.2f}".format(stats.total_orders) }}</span>
+                            "{:,.2f}".format(stats.total_orders or 0) }}</span>
                     </abbr>
                     <abbr title="已付总额" style="text-decoration:none; cursor:help;">
                         <span class="money" style="color:var(--danger-color); font-weight:600;">-{{
-                            "{:,.2f}".format(stats.total_paid) }}</span>
+                            "{:,.2f}".format(stats.total_paid or 0) }}</span>
                     </abbr>
                     <abbr title="待付余额" style="text-decoration:none; cursor:help;">
                         <span class="money" style="color:var(--primary-color); font-weight:600;">{{
-                            "{:,.2f}".format(stats.balance) }}</span>
+                            "{:,.2f}".format(stats.balance or 0) }}</span>
                     </abbr>
                 </div>
             </div>
@@ -425,7 +426,8 @@
                     <!-- Left: Order Info -->
                     <div class="tx-panel left">
                         <div class="tx-meta">
-                            <span>{{ order.create_at.strftime('%Y-%m-%d') }}</span>
+                            <span>{% if order.create_at %}{{ order.create_at.strftime('%Y-%m-%d') }}{% else %}-{% endif
+                                %}</span>
                             {% if order.payment_status == 'paid' %}
                             <span class="badge badge-paid">已结清</span>
                             {% elif order.payment_status == 'partial_paid' %}
@@ -447,7 +449,8 @@
                                     }}</span>
                                 {% endif %}
                             </div>
-                            <span class="tx-amount amount-plus money">+{{ "{:,.2f}".format(order.order_amount) }}</span>
+                            <span class="tx-amount amount-plus money">+{{ "{:,.2f}".format(order.order_amount or 0)
+                                }}</span>
                         </div>
 
                         <div class="tx-desc">
@@ -466,7 +469,8 @@
                                 style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
                                 <div>
                                     <div class="tx-meta" style="margin-bottom:2px;">
-                                        {{ pay.create_at.strftime('%Y-%m-%d') }}
+                                        {% if pay.create_at %}{{ pay.create_at.strftime('%Y-%m-%d') }}{% else %}-{%
+                                        endif %}
                                         <span
                                             style="background:#f1f5f9; padding:0 4px; border-radius:2px; margin-left:6px; font-family:var(--font-mono);">{{
                                             pay.pay_number }}</span>
@@ -477,7 +481,7 @@
                                     </div>
                                 </div>
                                 <div class="tx-amount amount-minus money">-{{
-                                    "{:,.2f}".format(pay.current_payment_amount) }}</div>
+                                    "{:,.2f}".format(pay.current_payment_amount or 0) }}</div>
                             </div>
 
                             {% if pay.payment_purpose %}
@@ -510,7 +514,7 @@
                 <div style="text-align:right; font-size:0.85rem; margin-left:1rem;">
                     <span style="color:var(--text-secondary); margin-right:4px;">合计:</span>
                     <span class="money" style="color:var(--danger-color); font-weight:600;">-{{
-                        "{:,.2f}".format(unlinked_total) }}</span>
+                        "{:,.2f}".format(unlinked_total or 0) }}</span>
                 </div>
             </div>
             <div class="recon-grid hidden">
@@ -531,7 +535,8 @@
                                 style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
                                 <div>
                                     <div class="tx-meta" style="margin-bottom:2px;">
-                                        {{ pay.create_at.strftime('%Y-%m-%d') }}
+                                        {% if pay.create_at %}{{ pay.create_at.strftime('%Y-%m-%d') }}{% else %}-{%
+                                        endif %}
                                         <span
                                             style="background:#f1f5f9; padding:0 4px; border-radius:2px; margin-left:6px; font-family:var(--font-mono);">{{
                                             pay.pay_number }}</span>
@@ -542,7 +547,7 @@
                                     </div>
                                 </div>
                                 <div class="tx-amount amount-minus money">-{{
-                                    "{:,.2f}".format(pay.current_payment_amount) }}</div>
+                                    "{:,.2f}".format(pay.current_payment_amount or 0) }}</div>
                             </div>
 
                             {% if pay.payment_purpose %}

@@ -42,13 +42,21 @@ class AttachmentORM(BaseORM):
             else:
                 return str(datetime_field)
         
+        # 生成签名URL
+        from pear_admin.extensions import oss
+        signed_url = self.file_path
+        if oss and oss.bucket:
+            s_url = oss.generate_signed_url(self.file_path)
+            if s_url:
+                signed_url = s_url
+
         return {
             "id": self.id,
             "project_id": self.project_id,
             "code": self.attachment_code,
             "name": self.original_filename,
             "filename": self.filename,
-            "url": self.file_path,
+            "url": signed_url,
             "size": self.file_size,
             "create_at": format_datetime(self.create_at),
         }

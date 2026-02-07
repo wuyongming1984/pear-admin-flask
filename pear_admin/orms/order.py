@@ -83,6 +83,15 @@ class OrderORM(BaseORM):
                 attachments_data = json_lib.loads(self.attachments) if isinstance(self.attachments, str) else self.attachments
                 if not isinstance(attachments_data, list):
                     attachments_data = []
+                
+                # 为附件生成签名URL
+                from pear_admin.extensions import oss
+                if oss and oss.bucket:
+                    for att in attachments_data:
+                        if isinstance(att, dict) and att.get('url'):
+                            s_url = oss.generate_signed_url(att['url'])
+                            if s_url:
+                                att['url'] = s_url
             except:
                 attachments_data = []
         

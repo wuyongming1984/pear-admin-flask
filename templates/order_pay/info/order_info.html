@@ -342,6 +342,7 @@
           <select name="project_name" id="project_name" lay-search lay-verify="required">
             <option value="">请选择项目名称</option>
           </select>
+          <input type="hidden" name="project_name_hidden" id="project_name_hidden" />
         </div>
         <div class="form-item">
           <label>供应商联系人<span style="color: #ff5252;"> *</span></label>
@@ -658,7 +659,11 @@
         // 自动填充项目和联系人 (确保在数据加载完成后执行)
         var projParam = urlParams.get('project_name');
         var contactParam = urlParams.get('contact');
-        if (projParam) $('#project_name').val(projParam);
+        if (projParam) {
+          $('#project_name').val(projParam);
+          $('#project_name_hidden').val(projParam);
+          $('#project_name').attr('disabled', 'disabled');
+        }
         if (contactParam) {
           $('#supplier_contact_person').val(contactParam);
           // 确保 Layui 已经准备好下拉选项
@@ -670,11 +675,35 @@
         }
         form.render('select');
       }
+
+      // 编辑模式下锁定项目名称
+      if (orderId && orderId !== '0') {
+        setTimeout(function () {
+          var currentProj = $('#project_name').val();
+          if (currentProj) {
+            $('#project_name').attr('disabled', 'disabled');
+            $('#project_name_hidden').val(currentProj);
+            form.render('select');
+          }
+        }, 500); // 稍微延迟确保数据已填入
+      }
+    });
+
+    // 监听项目下拉变化，同步隐藏域 (虽然禁用了，但为了严谨性保留)
+    form.on('select', function (data) {
+      if (data.elem.id === 'project_name') {
+        $('#project_name_hidden').val(data.value);
+      }
     });
 
     // 提交逻辑
     form.on('submit(order-form-btn)', function (data) {
       var field = data.field;
+
+      // 如果 select 被禁用，field.project_name 可能为空，从隐藏域补齐
+      if (!field.project_name && $('#project_name_hidden').val()) {
+        field.project_name = $('#project_name_hidden').val();
+      }
 
       // 前端兜底：将空字符串转换为 null，防止后端严格模式报错
       if (!field.supplier_id) field.supplier_id = null;

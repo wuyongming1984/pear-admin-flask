@@ -57,8 +57,10 @@ def backup_db():
         send_email(zip_filename)
         
         # 5. 清理临时文件
-        os.remove(backup_filename)
-        # os.remove(zip_filename) # 如果想保留本地备份可注释此行
+        if os.path.exists(backup_filename):
+            os.remove(backup_filename)
+        if os.path.exists(zip_filename):
+            os.remove(zip_filename)
         
         print("✅ 数据库备份并发送成功！")
         

@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     poppler-utils \
     libgl1 \
+    mariadb-client \
     && rm -rf /var/lib/apt/lists/*
 
 # 配置 pip 使用国内镜像源

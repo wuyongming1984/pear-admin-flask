@@ -327,7 +327,7 @@
           <input type="text" class="layui-input" name="cutting_time" id="cutting_time" placeholder="yyyy-MM-dd" />
         </div>
         <div class="form-item">
-          <label>材料名称</label>
+          <label>材料名称<span style="color: #ff5252;"> *</span></label>
           <select name="material_name" id="material_name" lay-search lay-verify="required">
             <option value="">请选择材料名称</option>
           </select>
@@ -338,15 +338,15 @@
             placeholder="yyyy-MM-dd" />
         </div>
         <div class="form-item">
-          <label>项目名称</label>
-          <select name="project_name" id="project_name" lay-search>
+          <label>项目名称<span style="color: #ff5252;"> *</span></label>
+          <select name="project_name" id="project_name" lay-search lay-verify="required">
             <option value="">请选择项目名称</option>
           </select>
         </div>
         <div class="form-item">
-          <label>供应商联系人</label>
+          <label>供应商联系人<span style="color: #ff5252;"> *</span></label>
           <select name="supplier_contact_person" id="supplier_contact_person" lay-search
-            lay-filter="supplier_contact_person">
+            lay-filter="supplier_contact_person" lay-verify="required">
             <option value="">请选择供应商联系人</option>
           </select>
         </div>
@@ -383,8 +383,9 @@
       <div class="section-title">财务结算</div>
       <div class="financial-grid">
         <div class="form-item">
-          <label>订单金额 (CNY)</label>
-          <input type="number" class="layui-input" name="order_amount" id="order-amount" step="0.01" />
+          <label>订单金额 (CNY)<span style="color: #ff5252;"> *</span></label>
+          <input type="number" class="layui-input" name="order_amount" id="order-amount" step="0.01"
+            lay-verify="required" />
         </div>
         <div class="form-item">
           <label>人民币大写</label>
@@ -566,11 +567,13 @@
       }
     });
 
-    // 生成订单号
+    // 生成订单号 (前端初始值)
     function generateOrderNumber() {
       var now = new Date();
       var dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
-      return 'D' + dateStr + String(now.getTime() % 1000).padStart(3, '0');
+      // 使用 6 位随机数提高初次碰撞概率
+      var randomStr = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+      return 'D' + dateStr + randomStr;
     }
 
     // 加载下拉数据

@@ -39,6 +39,31 @@ class OrderORM(BaseORM):
         default=datetime.now,
     )
 
+    @staticmethod
+    def generate_unique_number():
+        """
+        生成唯一的订单编号: D + YYYYMMDD + 4位顺序号
+        """
+        today_str = datetime.now().strftime("%Y%m%d")
+        prefix = f"D{today_str}"
+        
+        # 查询当天最大的编号
+        latest_order = db.session.query(OrderORM).filter(
+            OrderORM.order_number.like(f"{prefix}%")
+        ).order_by(OrderORM.order_number.desc()).first()
+        
+        if latest_order:
+            try:
+                # 提取后4位顺序号并递增
+                last_seq = int(latest_order.order_number[-4:])
+                new_seq = last_seq + 1
+            except (ValueError, IndexError):
+                new_seq = 1
+        else:
+            new_seq = 1
+            
+        return f"{prefix}{str(new_seq).zfill(4)}"
+
     # 关系属性（延迟导入避免循环依赖）
     project = db.relationship("ProjectORM", backref="orders", lazy="select")
     supplier = db.relationship("SupplierORM", backref="orders", lazy="select")

@@ -133,6 +133,9 @@ def create_pay():
         if key not in valid_fields:
             continue
             
+        if key in ["order_id", "payer_supplier_id", "payee_supplier_id", "current_payment_amount"] and (value == "" or value is None):
+            return {"code": -1, "msg": f"{key} 不能为空"}
+            
         # 跳过空值，使用数据库默认值或NULL
         if value == "" or value is None:
             clean_data[key] = None
@@ -192,6 +195,14 @@ def change_pay(pid=None):
     pay_obj = db.session.get(PayORM, pid)
     if not pay_obj:
         return {"code": -1, "msg": "付款单不存在"}
+    
+    # 验证必填字段 (如果提供更新)
+    if "payer_supplier_id" in data and not data.get("payer_supplier_id"):
+        return {"code": -1, "msg": "付款主体单位不能为空"}
+    if "payee_supplier_id" in data and not data.get("payee_supplier_id"):
+        return {"code": -1, "msg": "收款单位名称不能为空"}
+    if "current_payment_amount" in data and not data.get("current_payment_amount"):
+        return {"code": -1, "msg": "本次实付金额不能为空"}
     
     # 提取发票ID列表
     invoice_ids = data.pop("invoice_ids", None)

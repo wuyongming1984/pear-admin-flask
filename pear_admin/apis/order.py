@@ -146,16 +146,24 @@ def create_order():
         
         # 验证必填字段
         if not data.get("order_number"):
-            return {"code": -1, "msg": "订单编号不能为空"}
+            data["order_number"] = OrderORM.generate_unique_number()
         if not data.get("material_name"):
             return {"code": -1, "msg": "材料名称不能为空"}
+        if not data.get("order_amount"):
+            return {"code": -1, "msg": "订单金额不能为空"}
+        if not data.get("project_name") and not data.get("project_id"):
+            return {"code": -1, "msg": "项目名称不能为空"}
+        if not data.get("supplier_contact_person") and not data.get("supplier_id"):
+            return {"code": -1, "msg": "供应商联系人不能为空"}
         
-        # 检查订单编号是否已存在
+        # 检查订单编号是否已存在，如果冲突则自动生成一个新的
         existing_order = db.session.scalar(
             db.select(OrderORM).where(OrderORM.order_number == data.get("order_number"))
         )
         if existing_order:
-            return {"code": -1, "msg": f"订单编号 {data.get('order_number')} 已存在"}
+            # 仅在新增时自动处理冲突
+            data["order_number"] = OrderORM.generate_unique_number()
+            # print(f"Order number collision detected, regenerated: {data['order_number']}")
         
         # 保存附件数据（如果有）
         attachments_data = None
@@ -261,6 +269,14 @@ def change_order(oid=None):
         order_obj = db.session.get(OrderORM, oid)
         if not order_obj:
             return {"code": -1, "msg": "订单不存在"}
+        
+        # 验证必选字段（如果提供）
+        if "order_amount" in data and not data.get("order_amount"):
+            return {"code": -1, "msg": "订单金额不能为空"}
+        if ("project_name" in data or "project_id" in data) and not (data.get("project_name") or data.get("project_id")):
+            return {"code": -1, "msg": "项目名称不能为空"}
+        if ("supplier_contact_person" in data or "supplier_id" in data) and not (data.get("supplier_contact_person") or data.get("supplier_id")):
+            return {"code": -1, "msg": "供应商联系人不能为空"}
         
         # 向后兼容：如果提供了 project_name，转换为 project_id
         if 'project_name' in data and data['project_name']:

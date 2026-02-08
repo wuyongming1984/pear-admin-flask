@@ -360,7 +360,7 @@
     <div class="info-section">
       <div class="section-title">关联订单摘要</div>
       <div class="info-grid" style="margin-top: 20px;">
-        <div class="form-item">
+        <div class="form-item" style="display: none;">
           <label>选择订单</label>
           <select name="order_id" lay-filter="order_select" id="order-select" lay-search>
             <option value="">请选择订单</option>
@@ -407,15 +407,16 @@
         </div>
 
         <div class="form-item">
-          <label>付款主体单位</label>
-          <select name="payer_supplier_id" id="payer-supplier-select" lay-search>
+          <label>付款主体单位<span style="color: #ff5252;"> *</span></label>
+          <select name="payer_supplier_id" id="payer-supplier-select" lay-search lay-verify="required">
             <option value="">请选择付款单位</option>
           </select>
         </div>
 
         <div class="form-item">
-          <label>收款单位名称</label>
-          <select name="payee_supplier_id" id="payee-supplier-select" lay-filter="payee_unit" lay-search>
+          <label>收款单位名称<span style="color: #ff5252;"> *</span></label>
+          <select name="payee_supplier_id" id="payee-supplier-select" lay-filter="payee_unit" lay-search
+            lay-verify="required">
             <option value="">请选择或搜索</option>
           </select>
         </div>
@@ -441,8 +442,8 @@
         </div>
 
         <div class="form-item">
-          <label>本次实付金额</label>
-          <input type="number" name="current_payment_amount" step="0.01" autocomplete="off">
+          <label>本次实付金额<span style="color: #ff5252;"> *</span></label>
+          <input type="number" name="current_payment_amount" step="0.01" autocomplete="off" lay-verify="required">
         </div>
 
         <div class="form-item">

@@ -37,7 +37,7 @@ def backup_db():
         print(f"正在备份数据库 {DB_NAME}...")
         dump_cmd = [
             MYSQLDUMP_PATH,
-            "--ssl-mode=DISABLED",
+            "--skip-ssl",
             "-h", DB_HOST,
             "-u", DB_USER,
             f"-p{DB_PASS}",

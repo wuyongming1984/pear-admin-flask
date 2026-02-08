@@ -25,107 +25,43 @@ SOURCE_SQL_FILE = 'sf_db_prod20260206.sql'
 LEGACY_FILE_BASE_URL = "http://139.224.226.63/"
 
 def parse_sql_dump():
-    print(f"Parsing {SOURCE_SQL_FILE}...")
+    print(f"Parsing {SOURCE_SQL_FILE} for file info...")
     
-    pay_files = {} # map pay_number (fksqbh) -> fjid
     file_map = {} # map fjid -> {fjdz, fjmc}
     
     with open(SOURCE_SQL_FILE, 'r', encoding='utf-8', errors='ignore') as f:
         for line in f:
-            line = line.strip()
-            
-            # Parse wym_cwfkxx (Payment Table)
-            # INSERT INTO `wym_cwfkxx` VALUES (..., 'fksqbh', ..., 'fjid', ...);
-            if line.startswith("INSERT INTO `wym_cwfkxx`"):
-                # Extract values content: (123, 'PAY001', ...)
-                values_part = line[line.find("VALUES")+6:].strip()
-                # Split by "), (" to handle multiple inserts if needed (dump usually one per line or block)
-                # But mysql dump usually has one long value string, let's assume one line one insert or standard format
-                
-                # Regex to capture values is tricky. Let's do a simpler approach if format is consistent.
-                # Assuming `fksqbh` is distinct enough.
-                # Let's try to extract string values.
-                
-                parts = split_sql_values(values_part)
-                for p in parts:
-                    # Index check based on schema, but schema is huge.
-                    # Let's rely on finding 'CW' or similar pattern for pay_number if index is unknown?
-                    # Or better: `fksqbh` is usually index 1 (2nd col) or similar.
-                    # wym_cwfkxx schema keys not fully known relative to index.
-                    
-                    # Wait, verify schema index from `peek_table_schema.py` output?
-                    # Output showed create table. Let's assume:
-                    # `fksqid` int (0)
-                    # `fksqbh` varchar (1)
-                    # ...
-                    # `fjid` varchar (15) -- Found in previous analysis? 
-                    # Actually peek output for wym_cwfkxx had `fjid`!
-                    # `fjid` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '附件id',
-                    
-                    # We need the INDEX of fksqbh and fjid.
-                    # Based on standard create table order, let's find them.
-                    pass 
-    
-    # Re-reading schema to determine column indices
-    columns = get_column_indices()
-    fksqbh_idx = columns.get('fksqbh')
-    fjid_idx = columns.get('fjid')
-    
-    if fksqbh_idx is None or fjid_idx is None:
-        print("Could not find fksqbh or fjid column index.")
-        return
-
-    print(f"Column Mapping: fksqbh={fksqbh_idx}, fjid={fjid_idx}")
-
-    count_pay = 0
-    with open(SOURCE_SQL_FILE, 'r', encoding='utf-8', errors='ignore') as f:
-        for line in f:
-            if line.startswith("INSERT INTO `wym_cwfkxx`"):
-                values_part = line[line.find("VALUES")+6:].strip()
-                rows = split_sql_values(values_part)
-                for row in rows:
-                    if len(row) > max(fksqbh_idx, fjid_idx):
-                        pay_num = row[fksqbh_idx]
-                        fjid = row[fjid_idx]
-                        
-                        if pay_num and fjid and fjid != 'NULL':
-                            pay_files[pay_num] = fjid
-                            count_pay += 1
-
             # Parse core_file_info logic (same as before)
             if line.startswith("INSERT INTO `core_file_info`"):
                  rows = split_sql_values(line[line.find("VALUES")+6:].strip())
                  for row in rows:
-                     # ID is 0, fjdz is 2, fjmc is 1 (based on previous script)
-                     if len(row) >= 3:
+                     # ID is 0, fjdz is 1, fjmc is 4
+                     if len(row) >= 5:
                          fid = str(row[0])
-                         fjmc = row[1]
-                         fjdz = row[2]
+                         fjdz = row[1]
+                         fjmc = row[4]
                          file_map[fid] = {'fjdz': fjdz, 'fjmc': fjmc}
                          
-    print(f"Found {len(pay_files)} payments with attachments.")
     print(f"Found {len(file_map)} files details.")
     
-    return pay_files, file_map
+    return file_map
 
-def get_column_indices():
-    cols = {}
-    idx = 0
-    with open(SOURCE_SQL_FILE, 'r', encoding='utf-8', errors='ignore') as f:
-        in_table = False
-        for line in f:
-            if "CREATE TABLE `wym_cwfkxx`" in line:
-                in_table = True
-                continue
-            if in_table:
-                line = line.strip()
-                if line.startswith("`"):
-                    col_name = line.split("`")[1]
-                    cols[col_name] = idx
-                    idx += 1
-                if ";" in line:
-                    break
-    return cols
+def split_concatenated_ids(s, valid_ids):
+    if not s: return []
+    if s in valid_ids: return [s]
+    
+    # Try matching from the start with all possible lengths
+    for i in range(1, len(s) + 1):
+        prefix = s[:i]
+        if prefix in valid_ids:
+            remaining = s[i:]
+            if not remaining:
+                return [prefix]
+            sub = split_concatenated_ids(remaining, valid_ids)
+            if sub:
+                return [prefix] + sub
+    return [s] # Fallback to original if cannot split perfectly
+
 
 def split_sql_values(value_str):
     # Basic SQL value splitter - handles ('a', 1), ('b', 2)
@@ -185,10 +121,27 @@ def migrate():
     if not oss_utils.bucket:
         print("OSS not configured!")
         return
-        
-    pay_files, file_map = parse_sql_dump()
+    
+    # Load file map from SQL dump
+    file_map = parse_sql_dump()
     
     with app.app_context():
+        # Get fjid mapping from DB raw sql
+        from sqlalchemy import text
+        print("Fetching fjid from ums_pay...")
+        # Check if fjid column exists first (although verified)
+        # Just assume it exists as per verifying step
+        fjids_data = {}
+        try:
+            result = db.session.execute(text("SELECT id, fjid FROM ums_pay WHERE fjid IS NOT NULL AND fjid != ''"))
+            for row in result:
+                # row is (id, fjid)
+                fjids_data[row[0]] = row[1]
+            print(f"Loaded {len(fjids_data)} payments with fjid from DB.")
+        except Exception as e:
+            print(f"Error fetching fjid from DB: {e}")
+            return
+
         # Iterate PayORM
         pays = PayORM.query.all()
         print(f"Scanning {len(pays)} payments in DB...")
@@ -197,11 +150,17 @@ def migrate():
         
         for pay in pays:
             pay_num = pay.pay_number
-            if pay_num in pay_files:
-                fjid_str = pay_files[pay_num]
+            
+            # Check if this payment has fjid in DB
+            if pay.id in fjids_data:
+                fjid_str = str(fjids_data[pay.id])
                 
-                # Handle comma separated
-                fjids = [x.strip() for x in fjid_str.split(',') if x.strip()]
+                # Handle comma separated AND concatenated IDs
+                fjids_raw = [x.strip() for x in fjid_str.split(',') if x.strip()]
+                fjids = []
+                valid_ids = set(file_map.keys())
+                for f in fjids_raw:
+                    fjids.extend(split_concatenated_ids(f, valid_ids))
                 
                 attachments_list = []
                 current_attachments = []
@@ -218,9 +177,45 @@ def migrate():
                 # The requirement says "add", implies overwrite or append.
                 # Given migration context, usually populate empty.
                 # Let's check duplicates by name?
-                existing_names = set(a.get('name') for a in current_attachments if isinstance(a, dict))
+                # Identify expected files for this payment
+                expected_files = [] 
                 
-                modified = False
+                # Check valid IDs
+                valid_ids_for_pay = []
+                for fjid in fjids:
+                    if fjid in file_map:
+                        finfo = file_map[fjid]
+                        valid_ids_for_pay.append(finfo)
+                        expected_files.append(finfo['fjmc'])
+                
+                # Filter existing attachments
+                # Keep manual uploads (not containing 'pay_attachments/') 
+                # OR migration uploads that match expected files
+                cleaned_attachments = []
+                
+                # Helper to check if url is a migration url
+                def is_migration_url(url):
+                    return 'pay_attachments/' in url
+
+                for att in current_attachments:
+                    if isinstance(att, dict):
+                        url = att.get('url', '')
+                        name = att.get('name', '')
+                        
+                        if is_migration_url(url):
+                            # It's a migration file. Only keep if it matches one of our expected files
+                            # Check by name is fuzzy but workable. Ideally check by content hash but hard.
+                            # Or we can just re-add verified ones later and drop all old migration ones?
+                            # Re-adding ensures URL is fresh.
+                            # Let's drop ALL 'pay_attachments/' entries and let the loop below re-add them if valid.
+                            pass
+                        else:
+                            cleaned_attachments.append(att)
+                
+                # Now append valid files (checking if we already have them in cleaned to avoid dupes? No, cleaned has no migration files)
+                current_attachments = cleaned_attachments
+                
+                modified = True # We are rebuilding migration parts
                 
                 for fjid in fjids:
                     if fjid not in file_map:
@@ -233,45 +228,69 @@ def migrate():
                     
                     if not fjdz: 
                         continue
-                        
-                    if fjmc in existing_names:
-                        continue
-                        
+                    
                     # Download
-                    full_url = LEGACY_FILE_BASE_URL + fjdz.lstrip('/')
-                    print(f"  Processing Pay {pay_num}: {fjmc}")
+                    if fjdz.startswith('http'):
+                        full_url = fjdz
+                    else:
+                        full_url = LEGACY_FILE_BASE_URL + fjdz.lstrip('/')
+                    
+                    # Encode URL for special characters
+                    from urllib.parse import urlparse, quote
+                    p = urlparse(full_url)
+                    full_url = f"{p.scheme}://{p.netloc}{quote(p.path)}"
+                    if p.query:
+                        full_url += f"?{p.query}"
+                    
+                    print(f"  Processing Pay {pay_num}: {fjmc} ({full_url})")
                     
                     try:
                         # Upload to /pay_attachments/
-                        res = requests.get(full_url, timeout=30)
-                        if res.status_code == 200:
-                            content = res.content
-                            ext = os.path.splitext(fjmc)[1]
-                            if not ext:
-                                ext = os.path.splitext(fjdz)[1]
-                            if not ext:
-                                ext = ".bin"
-                                
-                            filename = f"pay_attachments/{uuid.uuid4().hex}{ext}"
-                            
-                            # Upload
-                            # oss_utils.bucket.put_object(filename, content) 
-                            # Better use internal method if possible or raw bucket
-                            oss_utils.bucket.put_object(filename, content)
-                            
-                            # Construct URL
-                            domain = oss_utils.bucket.endpoint.replace('http://', '').replace('https://', '')
-                            new_url = f"https://{oss_utils.bucket.bucket_name}.{domain}/{filename}"
-                            
-                            attachments_list.append({
-                                "name": fjmc,
-                                "url": new_url,
-                                "size": len(content)
-                            })
-                            modified = True
-                            print(f"    Uploaded to {new_url}")
-                        else:
-                            print(f"    Download failed: {res.status_code}")
+                        retries = 3
+                        for attempt in range(retries):
+                            try:
+                                res = requests.get(full_url, timeout=30)
+                                if res.status_code == 200:
+                                    content = res.content
+                                    content_type = res.headers.get('Content-Type')
+                                    ext = os.path.splitext(fjmc)[1]
+                                    if not ext:
+                                        ext = os.path.splitext(fjdz)[1]
+                                    if not ext:
+                                        ext = ".bin"
+                                        
+                                    filename = f"pay_attachments/{uuid.uuid4().hex}{ext}"
+                                    
+                                    # Upload with explicit content type to avoid mimetypes hang on windows
+                                    headers = {}
+                                    if content_type:
+                                        headers['Content-Type'] = content_type
+                                    
+                                    oss_utils.bucket.put_object(filename, content, headers=headers)
+                                    
+                                    # Construct URL
+                                    domain = oss_utils.bucket.endpoint.replace('http://', '').replace('https://', '')
+                                    new_url = f"https://{oss_utils.bucket.bucket_name}.{domain}/{filename}"
+                                    
+                                    attachments_list.append({
+                                        "name": fjmc,
+                                        "url": new_url,
+                                        "size": len(content)
+                                    })
+                                    modified = True
+                                    print(f"    Uploaded to {new_url}")
+                                    break # Success
+                                elif res.status_code == 503:
+                                    print(f"    503 Service Unavailable, retrying ({attempt+1}/{retries})...")
+                                    import time
+                                    time.sleep(2 * (attempt + 1))
+                                else:
+                                    print(f"    Download failed: {res.status_code}")
+                                    break # Other error, no retry
+                            except requests.RequestException as e:
+                                print(f"    Request error: {e}, retrying ({attempt+1}/{retries})...")
+                                import time
+                                time.sleep(2 * (attempt + 1))
                     except Exception as e:
                         print(f"    Error: {e}")
                 
@@ -279,12 +298,13 @@ def migrate():
                     final_list = current_attachments + attachments_list
                     pay.attachments = json.dumps(final_list, ensure_ascii=False)
                     updated_count += 1
+                    
+                    if updated_count % 50 == 0:
+                        db.session.commit()
+                        print(f"  --- Batch commit: {updated_count} payments updated ---")
         
-        if updated_count > 0:
-            db.session.commit()
-            print(f"Migration complete. Updated {updated_count} payments.")
-        else:
-            print("No updates needed.")
+        db.session.commit()
+        print(f"Migration complete. Updated {updated_count} payments.")
 
 if __name__ == "__main__":
     migrate()

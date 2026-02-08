@@ -63,6 +63,9 @@ class PayORM(BaseORM):
     # 附件
     attachments = db.Column(db.Text, nullable=True, comment="附件")
     
+    # 附件ID (Legacy)
+    fjid = db.Column(db.String(200), nullable=True, comment="附件ID")
+    
     create_at = db.Column(
         db.DateTime,
         nullable=False,
@@ -117,12 +120,22 @@ class PayORM(BaseORM):
                 return str(numeric_field)
         
         # 解析附件数据
+        from pear_admin.extensions import oss
+        
         attachments_data = []
         if self.attachments:
             try:
-                attachments_data = json_lib.loads(self.attachments) if isinstance(self.attachments, str) else self.attachments
-                if not isinstance(attachments_data, list):
-                    attachments_data = []
+                raw_attachments = json_lib.loads(self.attachments) if isinstance(self.attachments, str) else self.attachments
+                if isinstance(raw_attachments, list):
+                    for att in raw_attachments:
+                        if isinstance(att, dict):
+                            url = att.get('url')
+                            if url:
+                                # Sign the URL
+                                signed_url = oss.generate_signed_url(url)
+                                if signed_url:
+                                    att['url'] = signed_url
+                            attachments_data.append(att)
             except:
                 attachments_data = []
         

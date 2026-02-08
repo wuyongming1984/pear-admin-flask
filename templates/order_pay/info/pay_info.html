@@ -647,10 +647,24 @@
             }
           }
         });
+        // 4. 加载材料名称映射
+        makeRequest({
+          url: API.DICT,
+          type: 'GET',
+          data: { dic_id: 35, limit: 1000 },
+          success: function (res) {
+            if (res.code === 0 && res.data) {
+              window.materialNamesMap = {};
+              res.data.forEach(function (m) {
+                window.materialNamesMap[m.code] = m.value;
+                window.materialNamesMap[m.value] = m.value;
+              });
+            }
+          }
+        });
       }
 
       // 加载单个订单详情
-      // savedPayeeId: 如果是编辑付款单，传入已保存的收款单位ID
       function loadOrderInfo(orderId, savedPayeeId) {
         if (!orderId) {
           resetOrderInfo();
@@ -664,7 +678,14 @@
               var d = res.data;
               $('input[name="order_number"]').val(d.order_number || '');
               $('input[name="project_name"]').val(d.project_name || '');
-              $('input[name="material_name"]').val(d.material_name || '');
+
+              // 处理材料名称映射
+              var matName = d.material_name || '';
+              if (window.materialNamesMap && window.materialNamesMap[matName]) {
+                matName = window.materialNamesMap[matName];
+              }
+              $('input[name="material_name"]').val(matName);
+
               $('input[name="supplier_contact_person"]').val(d.supplier_contact_person || '');
               $('input[name="order_amount"]').val(d.order_amount || '');
 

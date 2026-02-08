@@ -200,11 +200,12 @@
               materialNamesMap = {};
               var html = '<option value="">请选择材料名称</option>';
               res.data.forEach(function (material) {
-                // 使用value作为option的value（材料名称文本）
-                html += '<option value="' + material.value + '">' + material.value + '</option>';
-                // 同时建立ID到名称的映射（用于显示旧数据）
-                materialNamesMap[material.id] = material.value;
+                // 使用 code 作为 option 的 value（材料代码）
+                html += '<option value="' + material.code + '">' + material.value + '</option>';
+                // 建立代码到名称的映射（用于显示）
                 materialNamesMap[material.code] = material.value;
+                // 同时保留值到名称的映射，兼容旧数据
+                materialNamesMap[material.value] = material.value;
               });
               $('select[name="material_name"]').html(html);
               form.render('select');

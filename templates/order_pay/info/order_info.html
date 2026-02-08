@@ -605,7 +605,7 @@
         var mRes = results[2];
         if (mRes.code === 0) {
           var mHtml = '<option value="">请选择材料名称</option>';
-          mRes.data.forEach(m => mHtml += `<option value="${m.value}">${m.value}</option>`);
+          mRes.data.forEach(m => mHtml += `<option value="${m.code}">${m.value}</option>`);
           $('#material_name').html(mHtml);
         }
         form.render('select');

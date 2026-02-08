@@ -32,10 +32,13 @@ def create_user():
     if data["id"]:
         del data["id"]
     role = UserORM(**data)
-    create_at = data["create_at"]
+    create_at = data.get("create_at")
     if create_at:
         role.create_at = datetime.strptime(create_at, "%Y-%m-%d %H:%M:%S")
-    role.password = "123456"
+    
+    # 获取密码，如果未提供则使用默认值
+    password = data.get("password")
+    role.password = password if password else "123456"
     role.save()
     return {"code": 0, "msg": "新增用户成功"}
 
@@ -51,6 +54,10 @@ def change_user(uid=None):
     for key, value in data.items():
         if key == "create_at":
             value = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+        if key == "password":
+            if value: # 只有当密码不为空时才更新
+                setattr(user_obj, key, value)
+            continue
         setattr(user_obj, key, value)
     user_obj.save()
     return {"code": 0, "msg": "修改用户信息成功"}

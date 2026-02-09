@@ -35,18 +35,36 @@ def backup_db():
         
         # 2. 执行 mysqldump
         print(f"正在备份数据库 {DB_NAME}...")
-        dump_cmd = [
+        base_cmd = [
             MYSQLDUMP_PATH,
             "-h", DB_HOST,
             "-u", DB_USER,
-            f"-p{DB_PASS}",
-            "--set-gtid-purged=OFF", # Suppress GTID warnings
-            "--column-statistics=0", # Suppress column stats warning in newer MySQL
-            DB_NAME
+            f"-p{DB_PASS}"
         ]
         
-        with open(backup_filename, "w", encoding="utf-8") as f:
-            subprocess.run(dump_cmd, stdout=f, check=True)
+        # 尝试使用新版参数（适用于本地环境/新版MySQL）
+        advanced_args = ["--set-gtid-purged=OFF", "--column-statistics=0"]
+        dump_cmd = base_cmd + advanced_args + [DB_NAME]
+        
+        print(f"尝试执行备份命令 (含高级参数)...")
+        try:
+            with open(backup_filename, "w", encoding="utf-8") as f:
+                subprocess.run(dump_cmd, stdout=f, stderr=subprocess.PIPE, check=True)
+        except subprocess.CalledProcessError as e:
+            # 如果失败，尝试兼容模式（适用于服务器/旧版MySQL）
+            print(f"[WARNING] 高级参数备份失败，尝试使用兼容模式重试... 错误: {e.stderr.decode('utf-8', errors='ignore')}")
+            
+            # 关闭刚才可能创建的空文件
+            try:
+                os.remove(backup_filename)
+            except:
+                pass
+                
+            dump_cmd = base_cmd + [DB_NAME]
+            print(f"尝试执行备份命令 (兼容模式)...")
+            with open(backup_filename, "w", encoding="utf-8") as f:
+                # 如果这次还失败，就直接抛出异常，不再捕获
+                subprocess.run(dump_cmd, stdout=f, check=True)
             
         # 3. 压缩文件
         print(f"正在压缩备份文件...")

@@ -92,12 +92,69 @@
     <script src="/static/component/layui/layui.js"></script>
     <script src="/static/component/pear/pear.js"></script>
     <script>
-        layui.use(['form', 'jquery', 'popup'], function () {
+        // Stage 1: Check basic JS execution
+        console.log("Stage 1: Script loaded");
+        // alert("Stage 1: Page Script Loaded"); // Create visible feedback
+
+        layui.use(['form', 'jquery', 'layer'], function () { // Removed 'popup' to isolate issues
+            // Stage 2: Check Layui init
+            console.log("Stage 2: Layui loaded");
+            // alert("Stage 2: Layui Init Success"); 
+
             var form = layui.form;
             var $ = layui.jquery;
-            var popup = layui.popup;
+            var layer = layui.layer;
 
-            // 获取配置
+            // 按钮点击事件绑定
+            $('#btn-test').on('click', function () {
+                layer.msg("按钮点击收到，开始处理...");
+                console.log("Button clicked");
+
+                var data = form.val("backup-form");
+
+                // 1. 先保存
+                var loadIndex = layer.load(1); // Standard layer loading
+                $.ajax({
+                    url: '/api/v1/system/config/backup',
+                    type: 'POST',
+                    data: JSON.stringify(data),
+                    contentType: "application/json",
+                    headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") },
+                    success: function (res) {
+                        if (res.code === 0) {
+                            layer.msg("配置已保存，正在备份...", { icon: 1, time: 1000 });
+
+                            $.ajax({
+                                url: '/api/v1/system/backup/test',
+                                type: 'POST',
+                                headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") },
+                                success: function (testRes) {
+                                    layer.close(loadIndex);
+                                    var icon = testRes.code === 0 ? 1 : 2;
+                                    layer.alert(testRes.msg, {
+                                        title: '备份详情',
+                                        icon: icon,
+                                        area: ['600px', '400px']
+                                    });
+                                },
+                                error: function (err) {
+                                    layer.close(loadIndex);
+                                    layer.alert("请求失败: " + err.statusText, { icon: 2 });
+                                }
+                            });
+                        } else {
+                            layer.close(loadIndex);
+                            layer.alert("保存失败: " + res.msg, { icon: 2 });
+                        }
+                    },
+                    error: function (err) {
+                        layer.close(loadIndex);
+                        layer.alert("保存请求失败", { icon: 2 });
+                    }
+                });
+            });
+
+            // 获取配置初始化
             $.ajax({
                 url: '/api/v1/system/config/backup',
                 type: 'GET',
@@ -106,14 +163,14 @@
                     if (res.code === 0) {
                         form.val("backup-form", res.data);
                     } else {
-                        popup.failure(res.msg);
+                        layer.msg(res.msg, { icon: 2 });
                     }
                 }
             });
 
-            // 保存配置
+            // 表单提交监听 (保存配置)
             form.on('submit(save)', function (data) {
-                var loadIndex = popup.loading();
+                var loadIndex = layer.load(1);
                 $.ajax({
                     url: '/api/v1/system/config/backup',
                     type: 'POST',
@@ -121,49 +178,19 @@
                     contentType: "application/json",
                     headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") },
                     success: function (res) {
-                        popup.close(loadIndex);
+                        layer.close(loadIndex);
                         if (res.code === 0) {
-                            popup.success("保存成功");
+                            layer.msg("保存成功", { icon: 1 });
                         } else {
-                            popup.failure(res.msg);
+                            layer.msg(res.msg, { icon: 2 });
                         }
                     },
                     error: function (err) {
-                        popup.close(loadIndex);
-                        popup.failure("请求失败");
+                        layer.close(loadIndex);
+                        layer.msg("请求失败", { icon: 2 });
                     }
                 });
                 return false;
-            });
-
-            // 测试备份
-            $('#btn-test').click(function () {
-                // 先触发保存，再触发测试
-                $('[lay-filter="save"]').click();
-
-                // 延迟一下等待保存（简单处理，实际应该在保存成功回调中）
-                setTimeout(function () {
-                    var loadIndex = popup.loading();
-                    popup.success("正在生成备份并发送邮件，请耐心等待...", 5000);
-
-                    $.ajax({
-                        url: '/api/v1/system/backup/test',
-                        type: 'POST',
-                        headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") },
-                        success: function (res) {
-                            popup.close(loadIndex);
-                            if (res.code === 0) {
-                                popup.success(res.msg);
-                            } else {
-                                popup.failure(res.msg);
-                            }
-                        },
-                        error: function (err) {
-                            popup.close(loadIndex);
-                            popup.failure("请求超时或失败");
-                        }
-                    });
-                }, 1000);
             });
         });
     </script>

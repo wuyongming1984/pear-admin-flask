@@ -56,7 +56,7 @@ def backup_db():
             print(f"正在发送邮件至 {MAIL_RECEIVER}...")
             send_email(zip_filename)
         else:
-            print("❌ 压缩文件创建失败，跳过发送邮件")
+            print("[ERROR] 压缩文件创建失败，跳过发送邮件")
             return
         
         # 5. 清理临时文件
@@ -65,10 +65,10 @@ def backup_db():
         if os.path.exists(zip_filename):
             os.remove(zip_filename)
         
-        print("✅ 数据库备份并发送成功！")
+        print("[INFO] 数据库备份并发送成功！")
         
     except Exception as e:
-        print(f"❌ 备份失败: {str(e)}")
+        print(f"[ERROR] 备份失败: {str(e)}")
         import sys
         sys.exit(1)
 
@@ -99,6 +99,6 @@ def send_email(attachment_path):
 
 if __name__ == "__main__":
     if not all([MAIL_USER, MAIL_PASS, MAIL_RECEIVER, MAIL_SERVER]):
-        print("❌ 错误: 请先在 .env 文件中配置邮件相关参数（MAIL_SERVER, MAIL_USERNAME, MAIL_PASSWORD, MAIL_RECEIVER）")
+        print("[ERROR] 请先在 .env 文件中配置邮件相关参数（MAIL_SERVER, MAIL_USERNAME, MAIL_PASSWORD, MAIL_RECEIVER）")
     else:
         backup_db()

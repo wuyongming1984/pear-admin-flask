@@ -518,83 +518,107 @@
 
         var payId = getQueryVariable("id");
         var token = localStorage.getItem("access_token");
+        var materialMap = {};
 
-        if (payId) {
-            $.ajax({
-                url: "/api/v1/pay/" + payId,
-                type: "GET",
+        // Load material dictionary first
+        function loadMaterials() {
+            return $.ajax({
+                url: "/api/v1/dictionary/detail/list",
+                data: { dic_id: 35, limit: 1000 },
                 headers: { Authorization: "Bearer " + token },
-                success: function (res) {
-                    if (res.code === 0 && res.data) {
-                        var pay = res.data;
-
-                        // Basic Info
-                        $('#pay-number').text(pay.pay_number);
-                        $('#create-date').text(pay.create_at.split(' ')[0]);
-                        $('#amount-small').text(parseFloat(pay.current_payment_amount).toLocaleString(undefined, { minimumFractionDigits: 2 }));
-                        $('#amount-big').text(digitUppercase(pay.current_payment_amount));
-                        $('#payment-purpose').text(pay.payment_purpose || '');
-                        $('#handler-sign').text(pay.handler);
-                        $('#payer-name').text(pay.payer_supplier_name || '我方公司');
-                        $('#payee-name').text(pay.payee_supplier_name || '收款单位');
-                        $('#uuid-text').text("UID: " + (pay.id * 1234567).toString(16).toUpperCase() + "-" + new Date().getTime().toString(36).toUpperCase());
-
-                        // Supplier / Bank
-                        if (pay.payee_supplier_id) {
-                            $.ajax({
-                                url: "/api/v1/supplier/" + pay.payee_supplier_id,
-                                headers: { Authorization: "Bearer " + token },
-                                success: function (supRes) {
-                                    if (supRes.code === 0 && supRes.data) {
-                                        $('#bank-name').text(supRes.data.bank_name || '未录入开户行');
-                                        var acc = supRes.data.account_number || '未录入账号';
-                                        $('#bank-account').text(acc.replace(/(\d{4})(?=\d)/g, "$1 "));
-                                    }
-                                }
-                            });
-                        }
-
-                        // Order Info
-                        if (pay.order_id) {
-                            $.ajax({
-                                url: "/api/v1/order/" + pay.order_id,
-                                headers: { Authorization: "Bearer " + token },
-                                success: function (ordRes) {
-                                    if (ordRes.code === 0 && ordRes.data) {
-                                        var o = ordRes.data;
-                                        $('#project-name').text(o.project_name || '-');
-                                        $('#order-number').text(o.order_number || '-');
-                                        $('#material-name').text(o.material_name || '-');
-                                        $('#project-name').attr('title', o.project_name || ''); // Tooltip for truncate
-
-                                        var orderAmt = parseFloat(o.order_amount || 0);
-                                        $('#order-amount').text(orderAmt.toLocaleString(undefined, { minimumFractionDigits: 2 }));
-
-                                        // Balance
-                                        var balance = parseFloat(o.order_balance || 0);
-                                        $('#order-balance').text(balance.toLocaleString(undefined, { minimumFractionDigits: 2 }));
-                                        $('#paid-total').text((orderAmt - balance).toLocaleString(undefined, { minimumFractionDigits: 2 }));
-
-                                        if (orderAmt > 0) {
-                                            var ratio = ((orderAmt - balance) / orderAmt * 100).toFixed(1) + '%';
-                                            $('#pay-ratio').text(ratio);
-                                        }
-                                    }
-                                }
-                            });
-                        }
-
-                        // QR Code - Smaller
-                        new QRCode(document.getElementById("qrcode"), {
-                            text: "PAY:" + pay.pay_number + "|" + pay.current_payment_amount,
-                            width: 48,
-                            height: 48,
-                            correctLevel: QRCode.CorrectLevel.M
+                success: function(res) {
+                    if (res.code === 0) {
+                        res.data.forEach(function(item) {
+                            materialMap[item.code] = item.value;
                         });
-
-                        document.title = "PAY-" + pay.pay_number;
                     }
                 }
+            });
+        }
+
+        if (payId) {
+            // Load materials then load pay info
+            $.when(loadMaterials()).then(function() {
+                $.ajax({
+                    url: "/api/v1/pay/" + payId,
+                    type: "GET",
+                    headers: { Authorization: "Bearer " + token },
+                    success: function (res) {
+                        if (res.code === 0 && res.data) {
+                            var pay = res.data;
+
+                            // Basic Info
+                            $('#pay-number').text(pay.pay_number);
+                            $('#create-date').text(pay.create_at.split(' ')[0]);
+                            $('#amount-small').text(parseFloat(pay.current_payment_amount).toLocaleString(undefined, { minimumFractionDigits: 2 }));
+                            $('#amount-big').text(digitUppercase(pay.current_payment_amount));
+                            $('#payment-purpose').text(pay.payment_purpose || '');
+                            $('#handler-sign').text(pay.handler);
+                            $('#payer-name').text(pay.payer_supplier_name || '我方公司');
+                            $('#payee-name').text(pay.payee_supplier_name || '收款单位');
+                            $('#uuid-text').text("UID: " + (pay.id * 1234567).toString(16).toUpperCase() + "-" + new Date().getTime().toString(36).toUpperCase());
+
+                            // Supplier / Bank
+                            if (pay.payee_supplier_id) {
+                                $.ajax({
+                                    url: "/api/v1/supplier/" + pay.payee_supplier_id,
+                                    headers: { Authorization: "Bearer " + token },
+                                    success: function (supRes) {
+                                        if (supRes.code === 0 && supRes.data) {
+                                            $('#bank-name').text(supRes.data.bank_name || '未录入开户行');
+                                            var acc = supRes.data.account_number || '未录入账号';
+                                            $('#bank-account').text(acc.replace(/(\d{4})(?=\d)/g, "$1 "));
+                                        }
+                                    }
+                                });
+                            }
+
+                            // Order Info
+                            if (pay.order_id) {
+                                $.ajax({
+                                    url: "/api/v1/order/" + pay.order_id,
+                                    headers: { Authorization: "Bearer " + token },
+                                    success: function (ordRes) {
+                                        if (ordRes.code === 0 && ordRes.data) {
+                                            var o = ordRes.data;
+                                            $('#project-name').text(o.project_name || '-');
+                                            $('#order-number').text(o.order_number || '-');
+                                            
+                                            // Implement Material Name Mapping
+                                            var matName = materialMap[o.material_name] || o.material_name || '-';
+                                            $('#material-name').text(matName);
+                                            
+                                            $('#project-name').attr('title', o.project_name || ''); // Tooltip for truncate
+
+                                            var orderAmt = parseFloat(o.order_amount || 0);
+                                            $('#order-amount').text(orderAmt.toLocaleString(undefined, { minimumFractionDigits: 2 }));
+
+                                            // Balance
+                                            var balance = parseFloat(o.order_balance || 0);
+                                            $('#order-balance').text(balance.toLocaleString(undefined, { minimumFractionDigits: 2 }));
+                                            $('#paid-total').text((orderAmt - balance).toLocaleString(undefined, { minimumFractionDigits: 2 }));
+
+                                            if (orderAmt > 0) {
+                                                var ratio = ((orderAmt - balance) / orderAmt * 100).toFixed(1) + '%';
+                                                $('#pay-ratio').text(ratio);
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+
+                            // QR Code - Smaller
+                            new QRCode(document.getElementById("qrcode"), {
+                                text: "PAY:" + pay.pay_number + "|" + pay.current_payment_amount,
+                                width: 48,
+                                height: 48,
+                                correctLevel: QRCode.CorrectLevel.M
+                            });
+
+                            document.title = "PAY-" + pay.pay_number;
+                        }
+                    }
+                });
             });
         }
     </script>

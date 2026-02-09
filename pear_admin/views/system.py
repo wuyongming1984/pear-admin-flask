@@ -21,3 +21,13 @@ def department_view():
 @system_bp.get("/views/user.html")
 def user_view():
     return render_template("system/user/index.html")
+
+
+@system_bp.get("/views/backup.html")
+def backup_view():
+    return render_template("system/backup/index.html")
+
+
+@system_bp.get("/system/views/backup.html")
+def system_backup_view():
+    return render_template("system/backup/index.html")

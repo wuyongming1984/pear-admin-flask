@@ -37,7 +37,6 @@ def backup_db():
         print(f"正在备份数据库 {DB_NAME}...")
         dump_cmd = [
             MYSQLDUMP_PATH,
-            "--skip-ssl",
             "-h", DB_HOST,
             "-u", DB_USER,
             f"-p{DB_PASS}",
@@ -53,8 +52,12 @@ def backup_db():
             zf.write(backup_filename)
         
         # 4. 发送邮件
-        print(f"正在发送邮件至 {MAIL_RECEIVER}...")
-        send_email(zip_filename)
+        if os.path.exists(zip_filename):
+            print(f"正在发送邮件至 {MAIL_RECEIVER}...")
+            send_email(zip_filename)
+        else:
+            print("❌ 压缩文件创建失败，跳过发送邮件")
+            return
         
         # 5. 清理临时文件
         if os.path.exists(backup_filename):
@@ -66,6 +69,8 @@ def backup_db():
         
     except Exception as e:
         print(f"❌ 备份失败: {str(e)}")
+        import sys
+        sys.exit(1)
 
 def send_email(attachment_path):
     msg = MIMEMultipart()

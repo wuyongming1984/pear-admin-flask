@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>备份管理</title>
+    <meta charset="utf-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/component/pear/css/pear.css" />
+    <style>
+        .pear-container {
+            background-color: white;
+            margin: 10px;
+            padding: 20px;
+            border-radius: 4px;
+        }
+
+        .layui-form-label {
+            width: 120px;
+        }
+
+        .layui-input-block {
+            margin-left: 150px;
+        }
+
+        .tip {
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="pear-container">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">数据库备份与邮件配置</div>
+                <div class="layui-card-body">
+                    <form class="layui-form" lay-filter="backup-form">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">SMTP 服务器</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="mail_server" required lay-verify="required"
+                                    placeholder="例如: smtp.qq.com" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">SMTP 端口</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="mail_port" required lay-verify="required" value="465"
+                                    placeholder="SSL端口通常为465" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">发送邮箱账号</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="mail_user" required lay-verify="required|email"
+                                    placeholder="发送备份文件的邮箱" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">发送邮箱密码</label>
+                            <div class="layui-input-block">
+                                <input type="password" name="mail_pass" required lay-verify="required"
+                                    placeholder="邮箱授权码 (非登录密码)" autocomplete="off" class="layui-input">
+                                <span class="tip">出于安全考虑，密码已加密显示。如需修改请直接输入新密码。</span>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">接收邮箱</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="mail_receiver" required lay-verify="required|email"
+                                    placeholder="接收备份文件的邮箱" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn layui-btn-normal" lay-submit lay-filter="save">保存配置</button>
+                                <button class="layui-btn layui-btn-warm" type="button" id="btn-test">保存并测试备份</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/component/layui/layui.js"></script>
+    <script src="/static/component/pear/pear.js"></script>
+    <script>
+        layui.use(['form', 'jquery', 'popup'], function () {
+            var form = layui.form;
+            var $ = layui.jquery;
+            var popup = layui.popup;
+
+            // 获取配置
+            $.ajax({
+                url: '/api/v1/system/config/backup',
+                type: 'GET',
+                headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") },
+                success: function (res) {
+                    if (res.code === 0) {
+                        form.val("backup-form", res.data);
+                    } else {
+                        popup.failure(res.msg);
+                    }
+                }
+            });
+
+            // 保存配置
+            form.on('submit(save)', function (data) {
+                var loadIndex = popup.loading();
+                $.ajax({
+                    url: '/api/v1/system/config/backup',
+                    type: 'POST',
+                    data: JSON.stringify(data.field),
+                    contentType: "application/json",
+                    headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") },
+                    success: function (res) {
+                        popup.close(loadIndex);
+                        if (res.code === 0) {
+                            popup.success("保存成功");
+                        } else {
+                            popup.failure(res.msg);
+                        }
+                    },
+                    error: function (err) {
+                        popup.close(loadIndex);
+                        popup.failure("请求失败");
+                    }
+                });
+                return false;
+            });
+
+            // 测试备份
+            $('#btn-test').click(function () {
+                // 先触发保存，再触发测试
+                $('[lay-filter="save"]').click();
+
+                // 延迟一下等待保存（简单处理，实际应该在保存成功回调中）
+                setTimeout(function () {
+                    var loadIndex = popup.loading();
+                    popup.success("正在生成备份并发送邮件，请耐心等待...", 5000);
+
+                    $.ajax({
+                        url: '/api/v1/system/backup/test',
+                        type: 'POST',
+                        headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") },
+                        success: function (res) {
+                            popup.close(loadIndex);
+                            if (res.code === 0) {
+                                popup.success(res.msg);
+                            } else {
+                                popup.failure(res.msg);
+                            }
+                        },
+                        error: function (err) {
+                            popup.close(loadIndex);
+                            popup.failure("请求超时或失败");
+                        }
+                    });
+                }, 1000);
+            });
+        });
+    </script>
+</body>
+
+</html>

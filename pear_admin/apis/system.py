@@ -43,22 +43,14 @@ def save_backup_config():
     try:
         req_data = request.get_json()
         
-        # 验证必填
-        required = ["mail_server", "mail_port", "mail_user", "mail_receiver"]
+        # 验证必填 (移除 mail_user)
+        required = ["mail_server", "mail_port", "mail_receiver"]
         for r in required:
             if not req_data.get(r):
                 return {"code": -1, "msg": f"{r} 不能为空"}
         
         # 获取现有配置
         config = db.session.scalar(db.select(SysConfigORM).where(SysConfigORM.key == 'backup_email_config'))
-        
-        # 处理密码：如果是 '******'，保留原密码；否则更新
-        if req_data.get("mail_pass") == "******":
-            if config and config.value:
-                old_data = json.loads(config.value)
-                req_data["mail_pass"] = old_data.get("mail_pass", "")
-            else:
-                req_data["mail_pass"] = "" # Should not happen usually
         
         json_str = json.dumps(req_data)
         
@@ -93,11 +85,14 @@ def test_backup():
         
         # 2. 临时设置环境变量 (仅对子进程有效)
         env = os.environ.copy()
-        env['MAIL_SERVER'] = conf_data.get('mail_server')
-        env['MAIL_PORT'] = str(conf_data.get('mail_port'))
-        env['MAIL_USERNAME'] = conf_data.get('mail_user')
-        env['MAIL_PASSWORD'] = conf_data.get('mail_pass')
+        # 优先使用配置中的值，如果没有则不设置（让脚本去读 .env）或者强制从当前环境读
+        env['MAIL_SERVER'] = conf_data.get('mail_server', os.getenv("MAIL_SERVER"))
+        env['MAIL_PORT'] = str(conf_data.get('mail_port', os.getenv("MAIL_PORT")))
         env['MAIL_RECEIVER'] = conf_data.get('mail_receiver')
+        
+        # 强制使用 .env 中的发送账号密码
+        env['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME", "")
+        env['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD", "")
         
         # 3. 调用备份脚本
         script_path = os.path.join(os.getcwd(), 'scripts', 'backup_db.py')

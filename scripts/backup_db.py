@@ -40,6 +40,8 @@ def backup_db():
             "-h", DB_HOST,
             "-u", DB_USER,
             f"-p{DB_PASS}",
+            "--set-gtid-purged=OFF", # Suppress GTID warnings
+            "--column-statistics=0", # Suppress column stats warning in newer MySQL
             DB_NAME
         ]
         
@@ -68,34 +70,44 @@ def backup_db():
         print("[INFO] 数据库备份并发送成功！")
         
     except Exception as e:
-        print(f"[ERROR] 备份失败: {str(e)}")
+        print(f"[ERROR] 备份流程失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
         import sys
         sys.exit(1)
 
 def send_email(attachment_path):
-    msg = MIMEMultipart()
-    msg['From'] = MAIL_USER
-    msg['To'] = MAIL_RECEIVER
-    msg['Subject'] = f"【系统备份】SF管理系统数据库备份_{datetime.datetime.now().strftime('%Y-%m-%d')}"
-    
-    body = f"您好，这是系统自动生成的每日数据库备份文件。\n备份时间：{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    msg.attach(MIMEText(body, 'plain'))
-    
-    with open(attachment_path, "rb") as attachment:
-        part = MIMEBase("application", "octet-stream")
-        part.set_payload(attachment.read())
-        encoders.encode_base64(part)
-        part.add_header(
-            "Content-Disposition",
-            f"attachment; filename= {os.path.basename(attachment_path)}",
-        )
-        msg.attach(part)
-    
-    # 使用 SSL 发送
-    server = smtplib.SMTP_SSL(MAIL_SERVER, int(MAIL_PORT))
-    server.login(MAIL_USER, MAIL_PASS)
-    server.send_message(msg)
-    server.quit()
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = MAIL_USER
+        msg['To'] = MAIL_RECEIVER
+        msg['Subject'] = f"【系统备份】SF管理系统数据库备份_{datetime.datetime.now().strftime('%Y-%m-%d')}"
+        
+        body = f"您好，这是系统自动生成的每日数据库备份文件。\n备份时间：{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        msg.attach(MIMEText(body, 'plain'))
+        
+        with open(attachment_path, "rb") as attachment:
+            part = MIMEBase("application", "octet-stream")
+            part.set_payload(attachment.read())
+            encoders.encode_base64(part)
+            part.add_header(
+                "Content-Disposition",
+                f"attachment; filename= {os.path.basename(attachment_path)}",
+            )
+            msg.attach(part)
+        
+        # 使用 SSL 发送
+        print(f"正在连接 SMTP 服务器 {MAIL_SERVER}:{MAIL_PORT} ...")
+        server = smtplib.SMTP_SSL(MAIL_SERVER, int(MAIL_PORT), timeout=30)
+        print("连接成功，正在登录...")
+        server.login(MAIL_USER, MAIL_PASS)
+        print("登录成功，正在发送邮件...")
+        server.send_message(msg)
+        print("发送成功，断开连接...")
+        server.quit()
+    except Exception as e:
+        print(f"[ERROR] 邮件发送失败: {str(e)}")
+        raise e
 
 if __name__ == "__main__":
     if not all([MAIL_USER, MAIL_PASS, MAIL_RECEIVER, MAIL_SERVER]):

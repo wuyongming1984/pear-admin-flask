@@ -62,9 +62,27 @@ def backup_db():
                 
             dump_cmd = base_cmd + [DB_NAME]
             print(f"尝试执行备份命令 (兼容模式)...")
-            with open(backup_filename, "w", encoding="utf-8") as f:
-                # 如果这次还失败，就直接抛出异常，不再捕获
-                subprocess.run(dump_cmd, stdout=f, check=True)
+            try:
+                with open(backup_filename, "w", encoding="utf-8") as f:
+                    subprocess.run(dump_cmd, stdout=f, stderr=subprocess.PIPE, check=True)
+            except subprocess.CalledProcessError as e2:
+                # 如果还失败，尝试禁用 SSL (针对 2026 TLS/SSL error)
+                error_msg = e2.stderr.decode('utf-8', errors='ignore')
+                print(f"[WARNING] 兼容模式备份失败，尝试禁用 SSL 重试... 错误: {error_msg}")
+                
+                 # 关闭刚才可能创建的空文件
+                try:
+                    os.remove(backup_filename)
+                except:
+                    pass
+                
+                # 尝试 --skip-ssl (旧版) 或 --ssl-mode=DISABLED (新版)
+                # 直接尝试两个参数都加，或者根据错误信息判断。这里简单起见，加 --skip-ssl
+                dump_cmd = base_cmd + [DB_NAME, "--skip-ssl"]
+                print(f"尝试执行备份命令 (禁用 SSL)...")
+                with open(backup_filename, "w", encoding="utf-8") as f:
+                     # 如果这次还失败，就直接抛出异常，不再捕获
+                     subprocess.run(dump_cmd, stdout=f, check=True)
             
         # 3. 压缩文件
         print(f"正在压缩备份文件...")

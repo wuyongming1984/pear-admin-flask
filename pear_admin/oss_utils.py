@@ -3,6 +3,7 @@ import oss2
 import uuid
 from flask import current_app
 import os
+from urllib.parse import quote
 
 class OSSUtils:
     def __init__(self, app=None):
@@ -59,8 +60,11 @@ class OSSUtils:
             # Default: Endpoint is like https://oss-cn-hangzhou.aliyuncs.com
             
             # Extract domain from endpoint
+            # Extract domain from endpoint
             domain = self.bucket.endpoint.replace('http://', '').replace('https://', '')
-            url = f"https://{self.bucket.bucket_name}.{domain}/{filename}"
+            # URL encode the filename to handle special characters (e.g. Chinese), but keep slashes safe
+            encoded_filename = quote(filename, safe='/')
+            url = f"https://{self.bucket.bucket_name}.{domain}/{encoded_filename}"
             return url
         else:
             raise Exception(f"OSS Upload Failed: {result.status}")

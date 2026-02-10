@@ -58,7 +58,7 @@ services:
     container_name: pear_admin_nginx
     restart: always
     ports:
-      - "5050:80" # 将主机 5050 映射到 Nginx 的 80
+      - "80:80" # 将主机 80 映射到 Nginx 的 80
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - ./static:/app/static

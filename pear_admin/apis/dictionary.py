@@ -102,6 +102,26 @@ def detail_list():
         'data': [item.json() for item in pagination.items]
     })
 
+@dictionary_api_bp.route('/options', methods=['GET'])
+# @jwt_required()
+def get_options():
+    codes = request.args.get('codes', '')
+    if not codes:
+        return jsonify({'code': 0, 'data': {}})
+    
+    code_list = codes.split(',')
+    result = {}
+    
+    for code in code_list:
+        dic = DictionaryORM.query.filter_by(code=code).first()
+        if dic:
+            details = DictionaryDetailORM.query.filter_by(dic_id=dic.id).order_by(DictionaryDetailORM.order_no.asc()).all()
+            result[code] = [{'label': d.value, 'value': d.code} for d in details]
+        else:
+            result[code] = []
+            
+    return jsonify({'code': 0, 'data': result})
+
 @dictionary_api_bp.route('/detail', methods=['POST'])
 @jwt_required()
 def add_detail():

@@ -146,71 +146,253 @@
     background: rgba(148, 163, 184, 0.5);
   }
 
-  /* ==================== 按钮样式重构 (实心 Neon) ==================== */
-  #project-page-root .layui-btn {
+  /* ==================== 赛博工业 (Cyber Industrial) 列表卡片样式 ==================== */
+  #project-page-root .project-card-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100vh - 120px);
+  }
+
+  /* 列表项卡片 */
+  #project-page-root .project-card {
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 229, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px 20px;
+    position: relative;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    min-height: 80px;
+  }
+
+  #project-page-root .project-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0, 229, 255, 0.1);
+    border-color: rgba(0, 229, 255, 0.4);
+    background: rgba(30, 41, 59, 0.8);
+  }
+
+  /* 左侧：ID + 标题 + 状态 */
+  #project-page-root .card-left {
+    flex: 1;
+    min-width: 0;
+    /* 允许文本截断 */
+    margin-right: 20px;
+  }
+
+  #project-page-root .card-header-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  #project-page-root .card-id {
+    font-family: 'Consolas', monospace;
+    color: var(--accent-cyan);
+    font-size: 14px;
+    opacity: 0.8;
+  }
+
+  #project-page-root .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f1f5f9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+  }
+
+  #project-page-root .card-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin-left: 2px;
+  }
+
+  /* 状态标签 (嵌入行内) */
+  #project-page-root .card-status {
+    position: static;
+    padding: 2px 8px;
     border-radius: 4px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    /* 实心按钮，不透明 */
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    line-height: normal;
+  }
+
+  #project-page-root .status-active {
+    background: rgba(0, 229, 255, 0.1);
+    color: #00e5ff;
+    border-color: rgba(0, 229, 255, 0.3);
+  }
+
+  #project-page-root .status-completed {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+    border-color: rgba(34, 197, 94, 0.3);
+  }
+
+  #project-page-root .status-paused {
+    background: rgba(234, 179, 8, 0.1);
+    color: #eab308;
+    border-color: rgba(234, 179, 8, 0.3);
+  }
+
+  #project-page-root .status-cancelled {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  /* 中间：数据项 */
+  #project-page-root .card-middle {
+    display: flex;
+    gap: 40px;
+    margin-right: 40px;
+    flex-shrink: 0;
+  }
+
+  #project-page-root .card-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 100px;
+  }
+
+  #project-page-root .card-label {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+
+  #project-page-root .card-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #e2e8f0;
+    white-space: nowrap;
+  }
+
+  #project-page-root .card-amount {
+    font-family: 'Consolas', monospace;
+    color: var(--accent-cyan);
+    font-weight: 700;
+  }
+
+  /* 右侧：操作区 */
+  #project-page-root .card-actions {
+    display: flex;
+    gap: 8px;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    margin: 0;
     border: none;
+    padding: 0;
   }
 
-  /* 蓝色编辑按钮 */
-  #project-page-root .layui-bg-blue {
-    background-color: #2196f3 !important;
-    color: #fff !important;
+  #project-page-root .project-card:hover .card-actions {
+    opacity: 1;
   }
 
-  #project-page-root .layui-bg-blue:hover {
-    background-color: #1976d2 !important;
-    box-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
-  }
-
-  /* 红色删除按钮 */
-  #project-page-root .layui-bg-red {
-    background-color: #f44336 !important;
-    color: #fff !important;
-  }
-
-  #project-page-root .layui-bg-red:hover {
-    background-color: #d32f2f !important;
-    box-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
-  }
-
-  /* 顶部工具栏按钮 */
-  #project-page-root .layui-btn-primary {
-    background-color: transparent !important;
-    border: 1px solid var(--accent-cyan) !important;
-    color: var(--accent-cyan) !important;
-  }
-
-  #project-page-root .layui-btn-primary:hover {
-    background-color: var(--accent-cyan) !important;
-    color: #000 !important;
-    box-shadow: var(--neon-shadow);
-  }
-
-  /* 搜索框与输入框 */
-  #project-page-root .filter-input,
-  #project-page-root .layui-input {
-    background-color: rgba(0, 0, 0, 0.3) !important;
-    border: 1px solid var(--border-color) !important;
-    color: var(--text-primary) !important;
+  #project-page-root .card-actions button {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 6px 12px;
     border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  #project-page-root .card-actions button:hover {
+    color: #f1f5f9;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  #project-page-root .card-actions button.edit-btn:hover {
+    color: #2196f3;
+    border-color: #2196f3;
+    background: rgba(33, 150, 243, 0.1);
+  }
+
+  #project-page-root .card-actions button.del-btn:hover {
+    color: #f44336;
+    border-color: #f44336;
+    background: rgba(244, 67, 54, 0.1);
+  }
+
+  /* 分页栏定制 */
+  #project-page-bar {
+    text-align: right;
+    padding: 10px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 0 0 12px 12px;
+  }
+
+  /* 搜索栏样式 */
+  #project-search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 0 10px;
+  }
+
+  #project-search-bar input {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f1f5f9;
+    padding: 8px 12px;
+    border-radius: 6px;
+    outline: none;
     transition: all 0.3s;
   }
 
-  #project-page-root .filter-input:focus,
-  #project-page-root .layui-input:focus {
-    border-color: var(--accent-cyan) !important;
-    box-shadow: 0 0 5px rgba(0, 229, 255, 0.3) !important;
+  #project-search-bar input:focus {
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
   }
 
-  #project-page-root .filter-input::placeholder {
-    color: rgba(148, 163, 184, 0.5);
+  .add-btn {
+    margin-left: auto;
+    background: linear-gradient(135deg, #00e5ff 0%, #2979ff 100%);
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+    transition: all 0.3s;
   }
 
-  /* 弹窗样式调整 - 虽然弹窗在body下，但我们加!important确保覆盖 */
+  .add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 229, 255, 0.5);
+  }
+
+  /* 去除 Layui 表格相关无用样式 */
+  #project-page-root .layui-table-view,
+  #project-page-root .layui-table-header,
+  #project-page-root .layui-table-body,
+  #project-page-root .layui-table td,
+  #project-page-root .layui-table th {
+    display: none !important;
+  }
+
+  /* 弹窗样式调整 (保持) */
   body .layui-layer {
     background-color: #1e293b !important;
     border: 1px solid rgba(0, 229, 255, 0.3);
@@ -232,211 +414,490 @@
     border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
   }
 
-  /* ==================== 修复固定列错位 & 白色背景问题 (关键) ==================== */
-  /* 强制统一行高 */
-  #project-page-root .layui-table-cell {
-    height: 50px !important;
-    line-height: 50px !important;
-    padding: 0 15px !important;
-    display: flex;
-    align-items: center;
-    color: var(--text-primary) !important;
-    /* 强制文字颜色 */
+  /* 弹窗表单样式修正 */
+  body .layui-layer .layui-form-item .layui-input,
+  body .layui-layer .layui-form-item .layui-textarea,
+  body .layui-layer .layui-form-item .layui-select {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #f1f5f9 !important;
   }
 
-  /* 修复首列复选框/序号无法垂直居中的问题 */
-  #project-page-root .layui-table-cell .layui-form-checkbox,
-  #project-page-root .layui-table-cell .layui-table-sort {
-    margin-top: 0 !important;
+  body .layui-layer .layui-form-select .layui-input {
+    background-color: rgba(255, 255, 255, 0.05) !important;
   }
 
-  /* 操作列 flex */
-  #project-page-root .layui-table-cell .layui-btn-container {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    height: 100%;
-    align-items: center;
+  body .layui-layer .layui-form-select dl {
+    background-color: #1e293b !important;
+    border: 1px solid rgba(0, 229, 255, 0.2) !important;
   }
 
-  /* 强制背景为暗色/透明，防止Layui默认白色背景覆盖 */
-  #project-page-root .layui-table-view,
-  #project-page-root .layui-table-box,
-  #project-page-root .layui-table-body,
-  #project-page-root .layui-table-header,
-  #project-page-root .layui-table {
-    background-color: transparent !important;
+  body .layui-layer .layui-form-select dl dd {
+    color: #f1f5f9 !important;
   }
 
-  /* 确保外层容器有背景 */
-  #project-page-root .layui-table-view {
-    background-color: rgba(20, 20, 20, 0.6) !important;
-  }
-
-  /* 附件上传区域 */
-  #project-page-root .attachment-list {
-    background: rgba(0, 0, 0, 0.2) !important;
-    border: 1px solid var(--border-color) !important;
-    color: var(--text-primary);
-  }
-
-  #project-page-root .attachment-item {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border-color: var(--border-color) !important;
-    color: var(--text-primary) !important;
-  }
-
-  #project-page-root .attachment-item .file-name {
-    color: var(--text-primary) !important;
-  }
-
-  #project-page-root .attachment-empty {
-    color: #666;
+  body .layui-layer .layui-form-select dl dd:hover,
+  body .layui-layer .layui-form-select dl dd.layui-this {
+    background-color: rgba(0, 229, 255, 0.2) !important;
   }
 </style>
 
 <div id="project-page-root">
-  <div class="cyber-card">
-    <table class="layui-hide" id="project-table" lay-filter="project-table"></table>
+  <div class="cyber-card" style="padding: 0; background: transparent; border: none; box-shadow: none;">
+
+    <!-- 顶部操作栏 -->
+    <div id="project-search-bar">
+      <input type="text" id="param-project-name" placeholder="搜索项目名称..." style="width: 250px;">
+      <select id="param-project-status"
+        style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: #f1f5f9; padding: 8px; border-radius: 6px; outline: none;">
+        <option value="">所有状态</option>
+        <option value="进行中">进行中</option>
+        <option value="已完成">已完成</option>
+        <option value="已暂停">已暂停</option>
+        <option value="已取消">已取消</option>
+      </select>
+      <button class="add-btn" id="btn-add-project"><i class="layui-icon layui-icon-add-1"></i> 新增项目</button>
+    </div>
+
+    <!-- 卡片容器 -->
+    <div class="project-card-container" id="project-card-container">
+      <!-- 动态生成卡片 -->
+    </div>
+
   </div>
 
-  <!-- 隐藏的表单 -->
-  <form class="layui-form" lay-filter="project-form" id="project-form" action=""
-    style="padding: 20px 30px 0 0; display: none; background-color: #1e293b;">
-    <div class="layui-form-item">
-      <label class="layui-form-label" style="color: var(--text-secondary);">ID</label>
-      <div class="layui-input-block">
-        <input type="text" name="id" value="0" lay-verify="required" autocomplete="off" class="layui-input" disabled
-          style="background-color: rgba(255,255,255,0.05) !important; color: #666 !important;" />
-      </div>
-    </div>
-    <div class="layui-form-item">
-      <label class="layui-form-label" style="color: var(--text-secondary);">项目名称</label>
-      <div class="layui-input-block">
-        <input type="text" name="project_name" placeholder="请输入项目名称" lay-verify="required" autocomplete="off"
-          class="layui-input" />
-      </div>
-    </div>
-    <div class="layui-form-item">
-      <label class="layui-form-label" style="color: var(--text-secondary);">项目全称</label>
-      <div class="layui-input-block">
-        <input type="text" name="project_full_name" placeholder="请输入项目全称" autocomplete="off" class="layui-input" />
-      </div>
-    </div>
-    <div class="layui-form-item">
-      <label class="layui-form-label" style="color: var(--text-secondary);">项目规模</label>
-      <div class="layui-input-block">
-        <input type="text" name="project_scale" placeholder="请输入项目规模" autocomplete="off" class="layui-input" />
-      </div>
-    </div>
-    <div class="layui-form-item">
-      <label class="layui-form-label" style="color: var(--text-secondary);">开始日期</label>
-      <div class="layui-input-block">
-        <input type="text" name="start_date" id="form_start_date" placeholder="yyyy-MM-dd" autocomplete="off"
-          class="layui-input" />
-      </div>
-    </div>
-    <div class="layui-form-item">
-      <label class="layui-form-label" style="color: var(--text-secondary);">结束日期</label>
-      <div class="layui-input-block">
-        <input type="text" name="end_date" id="form_end_date" placeholder="yyyy-MM-dd" autocomplete="off"
-          class="layui-input" />
-      </div>
-    </div>
-    <div class="layui-form-item">
-      <label class="layui-form-label" style="color: var(--text-secondary);">项目状态</label>
-      <div class="layui-input-block">
-        <select name="project_status">
-          <option value="">请选择项目状态</option>
-          <option value="进行中">进行中</option>
-          <option value="已完成">已完成</option>
-          <option value="已暂停">已暂停</option>
-          <option value="已取消">已取消</option>
-        </select>
-      </div>
-    </div>
-    <div class="layui-form-item">
-      <label class="layui-form-label" style="color: var(--text-secondary);">项目金额</label>
-      <div class="layui-input-block">
-        <input type="number" name="project_amount" placeholder="请输入项目金额" step="0.01" autocomplete="off"
-          class="layui-input" />
-      </div>
-    </div>
-    <div class="layui-form-item">
-      <label class="layui-form-label" style="color: var(--text-secondary);">附件</label>
-      <div class="layui-input-block">
-        <div class="attachment-section">
-          <div class="attachment-upload">
-            <button type="button" class="layui-btn layui-btn-normal" id="upload-attachment"
-              style="background-color: var(--accent-cyan); color: #000;">
-              <i class="layui-icon layui-icon-upload"></i> 添加附件
-            </button>
-          </div>
-          <div class="attachment-list" id="attachment-list">
-            <div class="attachment-empty">暂无附件</div>
-          </div>
-        </div>
-        <input type="hidden" name="attachments" id="attachments-data" />
-      </div>
-    </div>
-    <div class="layui-form-item">
-      <div class="layui-input-block">
-        <button type="submit" class="layui-btn" lay-submit lay-filter="project-form-btn"
-          style="background-color: var(--accent-cyan); color: #000;">
-          立即提交
-        </button>
-        <button type="reset" class="layui-btn layui-btn-primary" style="border-color: #666; color: #ccc;">重置</button>
-      </div>
-    </div>
-  </form>
+  <!-- 分页栏 -->
+  <div id="project-page-bar"></div>
+</div>
 </div>
 
-<!-- 头部工具栏模板 -->
-<script type="text/html" id="project-toolbar">
-      <div class="layui-btn-container">
-        <button class="layui-btn layui-btn-sm layui-btn-primary" lay-event="project-toolbar-add">
-          <i class="layui-icon layui-icon-add-1"></i> 新增项目
-        </button>
+<!-- 隐藏的表单 (移出 #project-page-root 防止 z-index 上下文问题) -->
+<form class="layui-form" lay-filter="project-form" id="project-form" action=""
+  style="padding: 20px 30px 0 0; display: none; background-color: #1e293b;">
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="color: var(--text-secondary);">ID</label>
+    <div class="layui-input-block">
+      <input type="text" name="id" value="0" lay-verify="required" autocomplete="off" class="layui-input" disabled
+        style="background-color: rgba(255,255,255,0.05) !important; color: #666 !important;" />
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="color: var(--text-secondary);">项目名称</label>
+    <div class="layui-input-block">
+      <input type="text" name="project_name" placeholder="请输入项目名称" lay-verify="required" autocomplete="off"
+        class="layui-input" />
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="color: var(--text-secondary);">项目全称</label>
+    <div class="layui-input-block">
+      <input type="text" name="project_full_name" placeholder="请输入项目全称" autocomplete="off" class="layui-input" />
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="color: var(--text-secondary);">项目规模</label>
+    <div class="layui-input-block">
+      <select name="project_scale">
+        <option value="">请选择项目规模</option>
+      </select>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="color: var(--text-secondary);">开始日期</label>
+    <div class="layui-input-block">
+      <input type="text" name="start_date" id="form_start_date" placeholder="yyyy-MM-dd" autocomplete="off"
+        class="layui-input" />
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="color: var(--text-secondary);">结束日期</label>
+    <div class="layui-input-block">
+      <input type="text" name="end_date" id="form_end_date" placeholder="yyyy-MM-dd" autocomplete="off"
+        class="layui-input" />
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="color: var(--text-secondary);">项目状态</label>
+    <div class="layui-input-block">
+      <select name="project_status">
+        <option value="">请选择项目状态</option>
+        <option value="进行中">进行中</option>
+        <option value="已完成">已完成</option>
+        <option value="已暂停">已暂停</option>
+        <option value="已取消">已取消</option>
+      </select>
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="color: var(--text-secondary);">合同金额</label>
+    <div class="layui-input-block">
+      <input type="number" name="project_amount" placeholder="请输入合同金额" step="0.01" autocomplete="off"
+        class="layui-input" />
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="color: var(--text-secondary);">审价金额</label>
+    <div class="layui-input-block">
+      <input type="number" name="project_audit_price_amount" placeholder="请输入审价金额" step="0.01" autocomplete="off"
+        class="layui-input" />
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="color: var(--text-secondary);">审计金额</label>
+    <div class="layui-input-block">
+      <input type="number" name="project_audit_amount" placeholder="请输入审计金额" step="0.01" autocomplete="off"
+        class="layui-input" />
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <label class="layui-form-label" style="color: var(--text-secondary);">附件</label>
+    <div class="layui-input-block">
+      <div class="attachment-section">
+        <div class="attachment-upload">
+          <button type="button" class="layui-btn layui-btn-normal" id="upload-attachment"
+            style="background-color: var(--accent-cyan); color: #000;">
+            <i class="layui-icon layui-icon-upload"></i> 添加附件
+          </button>
+        </div>
+        <div class="attachment-list" id="attachment-list">
+          <div class="attachment-empty">暂无附件</div>
+        </div>
       </div>
-    </script>
-
-<!-- 行工具栏模板 -->
-<script type="text/html" id="project-tool">
-      <div class="layui-btn-container">
-        <button
-          class="layui-btn layui-btn-sm layui-bg-blue"
-          lay-event="project-tool-edit"
-        >
-          编辑
-        </button>
-        <button
-          class="layui-btn layui-btn-sm layui-bg-red"
-          lay-event="project-tool-del"
-        >
-          删除
-        </button>
-      </div>
-    </script>
+      <input type="hidden" name="attachments" id="attachments-data" />
+    </div>
+  </div>
+  <div class="layui-form-item">
+    <div class="layui-input-block">
+      <button type="submit" class="layui-btn" lay-submit lay-filter="project-form-btn"
+        style="background-color: var(--accent-cyan); color: #000;">
+        立即提交
+      </button>
+      <button type="reset" class="layui-btn layui-btn-primary" style="border-color: #666; color: #ccc;">重置</button>
+    </div>
+  </div>
+</form>
 
 <script>
-  layui.use(["table", "form", "layer", "laydate", "upload"], function () {
-    var table = layui.table;
+  layui.use(["form", "layer", "laydate", "upload", "laypage"], function () {
     var form = layui.form;
     var layer = layui.layer;
     var laydate = layui.laydate;
     var upload = layui.upload;
+    var laypage = layui.laypage;
     var $ = layui.$;
 
-    var filterParams = {};
+    var filterParams = { page: 1, limit: 12 }; // Default limit for cards
     var attachmentList = [];
     var attachmentSequence = 0;
     var currentProjectName = '';
+    var projectDataMap = {}; // Maps ID to project data object for editing
+    var dictMap = {}; // Dictionary mapping: code -> [{label, value}]
 
     laydate.render({ elem: "#form_start_date", type: "date" });
     laydate.render({ elem: "#form_end_date", type: "date" });
 
-    // 格式化文件大小
+    // 格式化金额
+    function formatMoney(amount) {
+      if (!amount) return '0.00';
+      return parseFloat(amount).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // 字典格式化
+    function formatDict(dictCode, value) {
+      if (!dictMap[dictCode]) return value;
+      var item = dictMap[dictCode].find(d => d.value == value);
+      return item ? item.label : value;
+    }
+
+    // 获取状态 class
+    function getStatusClass(statusValue) {
+      // 根据字典值判断样式，这里假设 statusValue 是字典的 code
+      // 简单映射逻辑，或者根据字典 label 来判断
+      var label = formatDict('xmzt', statusValue);
+      if (!label) return '';
+      if (label.indexOf('进行') > -1 || label.indexOf('开工') > -1) return 'status-active';
+      if (label.indexOf('完成') > -1 || label.indexOf('竣工') > -1) return 'status-completed';
+      if (label.indexOf('暂停') > -1) return 'status-paused';
+      if (label.indexOf('取消') > -1) return 'status-cancelled';
+      return '';
+    }
+
+    // 加载字典数据
+    function loadDicts() {
+      $.ajax({
+        url: "/api/v1/dictionary/options?codes=xmgm,xmzt",
+        type: "GET",
+        async: false, // 同步加载，确保渲染前有字典数据
+        success: function (res) {
+          if (res.code === 0) {
+            dictMap = res.data;
+            renderSelectOptions();
+          }
+        }
+      });
+    }
+
+    // 渲染下拉框选项
+    function renderSelectOptions() {
+      // 渲染搜索栏状态
+      var statusOptions = '<option value="">所有状态</option>';
+      if (dictMap['xmzt']) {
+        dictMap['xmzt'].forEach(function (item) {
+          statusOptions += `<option value="${item.value}">${item.label}</option>`;
+        });
+      }
+      $('#param-project-status').html(statusOptions);
+
+      // 渲染表单状态
+      var formStatusOptions = '<option value="">请选择项目状态</option>';
+      if (dictMap['xmzt']) {
+        dictMap['xmzt'].forEach(function (item) {
+          formStatusOptions += `<option value="${item.value}">${item.label}</option>`;
+        });
+      }
+      $('select[name="project_status"]').html(formStatusOptions);
+
+      // 渲染表单规模 (需将 input 改为 select)
+      var scaleOptions = '<option value="">请选择项目规模</option>';
+      if (dictMap['xmgm']) {
+        dictMap['xmgm'].forEach(function (item) {
+          scaleOptions += `<option value="${item.value}">${item.label}</option>`;
+        });
+      }
+      //如果有select
+      if ($('select[name="project_scale"]').length > 0) {
+        $('select[name="project_scale"]').html(scaleOptions);
+      }
+
+      form.render('select');
+    }
+
+    // 核心：加载数据
+    function loadData() {
+      var loading = layer.load(2, { shade: 0.1 });
+      $.ajax({
+        url: "/api/v1/project/",
+        type: "GET",
+        data: filterParams,
+        headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+        success: function (res) {
+          layer.close(loading);
+          if (res.code === 0) {
+            renderCards(res.data);
+            renderPage(res.count);
+          } else {
+            layer.msg(res.msg, { icon: 2 });
+          }
+        },
+        error: function () {
+          layer.close(loading);
+          layer.msg("数据加载失败", { icon: 2 });
+        }
+      });
+    }
+
+    // 核心：渲染卡片 (列表模式)
+    function renderCards(data) {
+      var $container = $('#project-card-container');
+      $container.empty();
+      projectDataMap = {};
+
+      if (!data || data.length === 0) {
+        $container.html('<div style="color: #94a3b8; text-align: center; width: 100%; padding: 50px;">暂无项目数据</div>');
+        return;
+      }
+
+      data.forEach(function (item) {
+        projectDataMap[item.id] = item;
+        var statusLabel = formatDict('xmzt', item.project_status);
+        var scaleLabel = formatDict('xmgm', item.project_scale);
+        var statusClass = getStatusClass(item.project_status);
+        var cardHtml = `
+            <div class="project-card">
+                <!-- 左侧 -->
+                <div class="card-left">
+                    <div class="card-header-row">
+                        <span class="card-id">#${item.id}</span>
+                        <span class="card-title" title="${item.project_full_name || ''}">${item.project_name}</span>
+                        <span class="card-status ${statusClass}">${statusLabel || '未知'}</span>
+                    </div>
+                    <div class="card-subtitle">${item.project_full_name || '暂无全称'}</div>
+                </div>
+                
+                <!-- 中间数据 -->
+                <div class="card-middle">
+                    <div class="card-item">
+                        <span class="card-label">项目规模</span>
+                        <span class="card-value">${scaleLabel || '-'}</span>
+                    </div>
+                    <div class="card-item">
+                        <span class="card-label">合同金额</span>
+                        <span class="card-value card-amount">¥ ${formatMoney(item.project_amount)}</span>
+                    </div>
+                    <div class="card-item">
+                        <span class="card-label">审价金额</span>
+                        <span class="card-value card-amount">¥ ${formatMoney(item.project_audit_price_amount)}</span>
+                    </div>
+                    <div class="card-item">
+                        <span class="card-label">审计金额</span>
+                        <span class="card-value card-amount">¥ ${formatMoney(item.project_audit_amount)}</span>
+                    </div>
+                    <div class="card-item" style="min-width: 150px;">
+                        <span class="card-label">项目周期</span>
+                        <span class="card-value">${item.start_date || '-'} ~ ${item.end_date || '-'}</span>
+                    </div>
+                </div>
+
+                <!-- 右侧操作 -->
+                <div class="card-actions">
+                    <button class="edit-btn" onclick="editProject(${item.id})"><i class="layui-icon layui-icon-edit"></i> 编辑</button>
+                    <button class="del-btn" onclick="delProject(${item.id})"><i class="layui-icon layui-icon-delete"></i> 删除</button>
+                </div>
+            </div>
+            `;
+        $container.append(cardHtml);
+      });
+    }
+
+    // 核心：渲染分页
+    function renderPage(count) {
+      laypage.render({
+        elem: 'project-page-bar',
+        count: count,
+        curr: filterParams.page,
+        limit: filterParams.limit,
+        layout: ['count', 'prev', 'page', 'next', 'refresh', 'skip'],
+        jump: function (obj, first) {
+          if (!first) {
+            filterParams.page = obj.curr;
+            loadData();
+          }
+        }
+      });
+    }
+
+    // 初始化加载
+    loadDicts();
+    loadData();
+
+    // 弹窗状态标记
+    var isLayerOpening = false;
+
+    // 全局函数：编辑
+    window.editProject = function (id) {
+      if (isLayerOpening) return;
+      isLayerOpening = true;
+
+      var data = projectDataMap[id];
+      if (!data) {
+        isLayerOpening = false;
+        return;
+      }
+
+      // 先关闭所有弹窗
+      layer.closeAll();
+
+      form.val("project-form", data);
+      currentProjectName = data.project_name;
+      attachmentList = data.attachments_list || (data.attachments ? JSON.parse(data.attachments) : []);
+      renderAttachmentList();
+
+      layer.open({
+        type: 1, title: '编辑项目', content: $('#project-form'),
+        area: ['600px', '700px'], shade: 0.8,
+        shadeClose: false,
+        success: function (layero, index) {
+          // 关键修复：移动到 body
+          $('body').append(layero);
+          var mask = $('.layui-layer-shade');
+          mask.appendTo('body');
+
+          form.render(null, 'project-form');
+          $('#project-form').show();
+          isLayerOpening = false;
+        },
+        end: function () {
+          isLayerOpening = false;
+          $('#project-form').hide();
+        }
+      });
+    };
+
+    // 全局函数：删除
+    window.delProject = function (id) {
+      layer.confirm('确定删除该项目？', { icon: 3, title: '提示', skin: 'layui-layer-molv' }, function (index) {
+        $.ajax({
+          url: `/api/v1/project/${id}`, type: "DELETE",
+          headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+          success: function (res) {
+            if (res.code === 0) {
+              layer.msg(res.msg, { icon: 1 });
+              loadData();
+            } else {
+              layer.msg(res.msg, { icon: 2 });
+            }
+          }
+        });
+        layer.close(index);
+      });
+    };
+
+    // 事件：新增 (使用 off 解绑防止重复)
+    $('#btn-add-project').off('click').on('click', function () {
+      if (isLayerOpening) return;
+      isLayerOpening = true;
+
+      // 先关闭所有弹窗
+      layer.closeAll();
+
+      form.val("project-form", {
+        "id": "0", "project_name": "", "project_full_name": "", "project_scale": "",
+        "start_date": "", "end_date": "", "project_status": "", "project_amount": "", "attachments": ""
+      });
+      attachmentList = []; attachmentSequence = 0; currentProjectName = '';
+      renderAttachmentList();
+
+      layer.open({
+        type: 1, title: '新增项目', content: $('#project-form'),
+        area: ['600px', '700px'], shade: 0.8,
+        shadeClose: false,
+        success: function (layero, index) {
+          // 关键修复：移动到 body
+          $('body').append(layero);
+          var mask = $('.layui-layer-shade');
+          mask.appendTo('body');
+
+          form.render(null, 'project-form');
+          $('#project-form').show();
+          isLayerOpening = false;
+        },
+        end: function () {
+          isLayerOpening = false;
+          $('#project-form').hide();
+        }
+      });
+    });
+
+    // 事件：搜索 (防抖)
+    var searchTimer;
+    $('#param-project-name').on('input', function () {
+      clearTimeout(searchTimer);
+      var val = $(this).val();
+      searchTimer = setTimeout(function () {
+        filterParams.project_name = val;
+        filterParams.page = 1;
+        loadData();
+      }, 500);
+    });
+
+    // 事件：筛选状态
+    $('#param-project-status').on('change', function () {
+      filterParams.project_status = $(this).val();
+      filterParams.page = 1;
+      loadData();
+    });
+
+    // ------------- 附件相关逻辑 (保持不变) -------------
     function formatFileSize(bytes) {
       if (bytes === 0) return '0 B';
       var k = 1024;
@@ -556,84 +1017,12 @@
       }
     });
 
-    // 渲染表格
-    table.render({
-      elem: "#project-table",
-      url: window.location.origin + "/api/v1/project/",
-      height: 'full-32', // 适应容器高度
-      skin: 'nob', // 无边框风格
-      toolbar: "#project-toolbar",
-      defaultToolbar: [], // 隐藏筛选、导出、打印按钮
-      page: true,
-      headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-      where: filterParams,
-      cols: [[
-        { field: "id", title: "ID", sort: true, width: 80 },
-        { field: "project_name", title: "项目名称", edit: 'text', width: 200 },
-        { field: "project_full_name", title: "项目全称", edit: 'text', width: 250, hide: true },
-        { field: "project_scale", title: "项目规模", edit: 'text', width: 120 },
-        { field: "start_date", title: "开始日期", width: 120 },
-        { field: "end_date", title: "结束日期", width: 120 },
-        { field: "project_status", title: "项目状态", width: 100 },
-        { field: "project_amount", title: "项目金额", edit: 'text', width: 150 },
-        { field: "create_at", title: "创建时间", sort: true, width: 180, hide: true },
-        { title: "操作", align: "center", toolbar: "#project-tool", width: 180, fixed: 'right' }
-      ]],
-      done: function (res, curr, count) {
-        addFilterInputs();
-      }
-    });
-
-    // 监听工具栏
-    table.on('toolbar(project-table)', function (obj) {
-      if (obj.event === 'project-toolbar-add') {
-        form.val("project-form", {
-          "id": "0", "project_name": "", "project_full_name": "", "project_scale": "",
-          "start_date": "", "end_date": "", "project_status": "", "project_amount": "", "attachments": ""
-        });
-        attachmentList = []; attachmentSequence = 0; currentProjectName = '';
-        renderAttachmentList();
-        layer.open({
-          type: 1, title: '新增项目', content: $('#project-form'),
-          area: ['600px', '700px'], shade: 0.8
-        });
-      }
-    });
-
-    // 监听行工具
-    table.on('tool(project-table)', function (obj) {
-      if (obj.event === 'project-tool-del') {
-        layer.confirm('确定删除该项目？', { icon: 3, title: '提示', skin: 'layui-layer-molv' }, function (index) {
-          $.ajax({
-            url: `/api/v1/project/${obj.data.id}`, type: "DELETE",
-            headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-            success: function (res) {
-              layer.msg(res.msg);
-              if (res.code === 0) obj.del();
-            }
-          });
-          layer.close(index);
-        });
-      } else if (obj.event === 'project-tool-edit') {
-        form.val("project-form", obj.data);
-        currentProjectName = obj.data.project_name;
-        // 加载附件... (此处简化，需调用后端接口获取附件列表)
-        layer.open({
-          type: 1, title: '编辑项目', content: $('#project-form'),
-          area: ['600px', '700px'], shade: 0.8
-        });
-      }
-    });
-
     // 监听表单提交
     form.on('submit(project-form-btn)', function (data) {
       var method = data.field.id === "0" ? "POST" : "PUT";
       var url = method === "POST" ? "/api/v1/project/" : `/api/v1/project/${data.field.id}`;
 
-      // 处理附件数据
-      try {
-        data.field.attachments = attachmentList;
-      } catch (e) { }
+      try { data.field.attachments = attachmentList; } catch (e) { }
 
       $.ajax({
         url: window.location.origin + url, type: method,
@@ -644,7 +1033,7 @@
           if (res.code === 0) {
             layer.msg('操作成功', { icon: 1 });
             layer.closeAll('page');
-            table.reload('project-table');
+            loadData(); // 刷新卡片
           } else {
             layer.msg(res.msg, { icon: 2 });
           }
@@ -653,29 +1042,8 @@
       return false;
     });
 
-    // 筛选输入框逻辑
-    function addFilterInputs() {
-      var $th = $('.layui-table-header th');
-      $th.each(function () {
-        var field = $(this).data('field');
-        if (['project_name', 'project_status'].includes(field)) {
-          if ($(this).find('.filter-input').length === 0) {
-            var $input = $(`<input class="filter-input" placeholder="筛选" style="width:100%; height:24px; margin-top:5px; padding:0 5px;">`);
-            $input.on('click', function (e) { e.stopPropagation(); });
-            $input.on('input', function () {
-              filterParams[field] = $(this).val();
-              // 防抖重载
-              clearTimeout(this.timer);
-              this.timer = setTimeout(() => {
-                table.reload('project-table', { where: filterParams, done: addFilterInputs });
-              }, 800);
-            });
-            $(this).append($input);
-            if (filterParams[field]) $input.val(filterParams[field]);
-          }
-        }
-      });
-    }
+    // 初始化加载
+    loadData();
 
   });
 </script>

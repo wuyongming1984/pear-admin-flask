@@ -17,6 +17,8 @@ class ProjectORM(BaseORM):
     end_date = db.Column(db.Date, nullable=True, comment="结束日期")
     project_status = db.Column(db.String(32), nullable=True, comment="项目状态")
     project_amount = db.Column(db.Numeric(18, 2), nullable=True, comment="项目金额")
+    project_audit_price_amount = db.Column(db.Numeric(18, 2), nullable=True, comment="审价金额")
+    project_audit_amount = db.Column(db.Numeric(18, 2), nullable=True, comment="审计金额")
     attachments = db.Column(db.Text, nullable=True, comment="附件")
     create_at = db.Column(
         db.DateTime,
@@ -68,6 +70,8 @@ class ProjectORM(BaseORM):
             "end_date": format_date(self.end_date),
             "project_status": self.project_status,
             "project_amount": str(self.project_amount) if self.project_amount else None,
+            "project_audit_price_amount": str(self.project_audit_price_amount) if self.project_audit_price_amount else None,
+            "project_audit_amount": str(self.project_audit_amount) if self.project_audit_amount else None,
             "attachments": json.dumps(attachments_data, ensure_ascii=False) if attachments_data else None,  # 保持向后兼容
             "attachments_list": attachments_data,  # 新增附件列表字段
             "create_at": format_datetime(self.create_at),

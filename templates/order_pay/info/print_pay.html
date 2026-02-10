@@ -450,7 +450,7 @@
                     <div class="approve-date">Date: . . . . / . . / . .</div>
                 </div>
                 <div class="approve-box">
-                    <div class="approve-title">财务审核 / Finance</div>
+                    <div class="approve-title">副总经经理审 / Finance</div>
                     <div class="approve-sign-area"></div>
                     <div class="approve-date">Date: . . . . / . . / . .</div>
                 </div>
@@ -526,9 +526,9 @@
                 url: "/api/v1/dictionary/detail/list",
                 data: { dic_id: 35, limit: 1000 },
                 headers: { Authorization: "Bearer " + token },
-                success: function(res) {
+                success: function (res) {
                     if (res.code === 0) {
-                        res.data.forEach(function(item) {
+                        res.data.forEach(function (item) {
                             materialMap[item.code] = item.value;
                         });
                     }
@@ -538,7 +538,7 @@
 
         if (payId) {
             // Load materials then load pay info
-            $.when(loadMaterials()).then(function() {
+            $.when(loadMaterials()).then(function () {
                 $.ajax({
                     url: "/api/v1/pay/" + payId,
                     type: "GET",
@@ -583,11 +583,11 @@
                                             var o = ordRes.data;
                                             $('#project-name').text(o.project_name || '-');
                                             $('#order-number').text(o.order_number || '-');
-                                            
+
                                             // Implement Material Name Mapping
                                             var matName = materialMap[o.material_name] || o.material_name || '-';
                                             $('#material-name').text(matName);
-                                            
+
                                             $('#project-name').attr('title', o.project_name || ''); // Tooltip for truncate
 
                                             var orderAmt = parseFloat(o.order_amount || 0);

@@ -110,12 +110,25 @@ def create_project():
                 data["project_amount"] = float(data["project_amount"])
             except ValueError:
                 data["project_amount"] = 0
+        
+        if data.get("project_audit_price_amount"):
+            try:
+                data["project_audit_price_amount"] = float(data["project_audit_price_amount"])
+            except ValueError:
+                data["project_audit_price_amount"] = 0
+                
+        if data.get("project_audit_amount"):
+            try:
+                data["project_audit_amount"] = float(data["project_audit_amount"])
+            except ValueError:
+                data["project_audit_amount"] = 0
 
         # 过滤掉非法字段
         allowed_fields = {
             'project_name', 'project_full_name', 'project_scale', 
             'start_date', 'end_date', 'project_status', 
-            'project_amount', 'attachments', 'create_at'
+            'project_amount', 'project_audit_price_amount', 'project_audit_amount',
+            'attachments', 'create_at'
         }
         project_data = {k: v for k, v in data.items() if k in allowed_fields}
     
@@ -185,6 +198,10 @@ def change_project(pid=None):
         elif key == "end_date" and value:
             value = datetime.strptime(value, "%Y-%m-%d").date()
         elif key == "project_amount" and value:
+            value = float(value)
+        elif key == "project_audit_price_amount" and value:
+            value = float(value)
+        elif key == "project_audit_amount" and value:
             value = float(value)
         setattr(project_obj, key, value)
     

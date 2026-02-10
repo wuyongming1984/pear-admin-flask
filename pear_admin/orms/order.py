@@ -179,4 +179,5 @@ class OrderORM(BaseORM):
             "pays_count": len(pays_list),  # 付款单数量
             "is_order": True,  # 标记这是订单行
             "create_at": format_datetime(self.create_at),
+            "paid_amount": str(round(total_payment_amount, 2)),  # 已付金额
         }

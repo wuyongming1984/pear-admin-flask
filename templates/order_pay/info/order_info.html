@@ -146,8 +146,13 @@
   /* 财务特定样式 */
   .financial-grid {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
+    align-items: flex-start;
+  }
+
+  .financial-grid .full-width {
+    grid-column: 1 / -1;
   }
 
   #amount-in-words {
@@ -389,6 +394,14 @@
             lay-verify="required" />
         </div>
         <div class="form-item">
+          <label>已付金额 (CNY)</label>
+          <input type="text" class="layui-input" name="paid_amount" id="paid-amount" readonly placeholder="0.00" />
+        </div>
+        <div class="form-item">
+          <label>当前余额 (CNY)</label>
+          <input type="text" class="layui-input" name="order_balance" id="order-balance" readonly placeholder="0.00" />
+        </div>
+        <div class="form-item full-width">
           <label>人民币大写</label>
           <input type="text" class="layui-input" name="amount_in_words" id="amount-in-words" readonly />
         </div>
@@ -647,6 +660,10 @@
               attachmentList = data.attachments_list || [];
               renderAttachmentList();
               $('#order-amount').trigger('input');
+
+              // 填充只读字段
+              $('#paid-amount').val(data.paid_amount || '0.00');
+              $('#order-balance').val(data.order_balance || '0.00');
             }
           }
         });

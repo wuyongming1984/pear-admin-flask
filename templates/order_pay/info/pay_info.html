@@ -360,7 +360,7 @@
     <div class="info-section">
       <div class="section-title">关联订单摘要</div>
       <div class="info-grid" style="margin-top: 20px;">
-        <div class="form-item" style="display: none;">
+        <div class="form-item">
           <label>选择订单</label>
           <select name="order_id" lay-filter="order_select" id="order-select" lay-search>
             <option value="">请选择订单</option>
@@ -537,6 +537,7 @@
       // 已选发票列表
       var selectedInvoices = [];
       var currentPaymentNumber = '';
+      var savedOrderId = null; // Store order_id from loaded details for edit fallback
 
       // 获取URL参数
       var urlParams = new URLSearchParams(window.location.search);
@@ -782,6 +783,7 @@
 
               // 手动设置一些没有自动匹配上的或者需要额外逻辑的
               if (data.order_id) {
+                savedOrderId = data.order_id; // Capture for fallback
                 // 加载订单列表并选中当前订单
                 loadOrderList(function () {
                   $('#order-select').val(data.order_id);
@@ -1060,7 +1062,8 @@
         var payload = {
           id: (id && id !== "0") ? parseInt(id) : null,
           pay_number: field.pay_number,
-          order_id: field.order_id ? parseInt(field.order_id) : null,
+
+          order_id: field.order_id ? parseInt(field.order_id) : (initialOrderId ? parseInt(initialOrderId) : (savedOrderId ? parseInt(savedOrderId) : null)),
           payer_supplier_id: field.payer_supplier_id ? parseInt(field.payer_supplier_id) : null,
           payee_supplier_id: field.payee_supplier_id ? parseInt(field.payee_supplier_id) : null,
           current_payment_amount: field.current_payment_amount ? parseFloat(field.current_payment_amount) : 0,

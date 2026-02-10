@@ -569,7 +569,7 @@
 
     $('#pay-contact-search').on('input', function () {
       var v = $(this).val().toLowerCase();
-      renderContactList(allContacts.filter(c => c.toLowerCase().includes(v)));
+      renderContactList(allContacts.filter(c => c.name.toLowerCase().includes(v)));
     });
 
     // 新增：付款单号搜索事件

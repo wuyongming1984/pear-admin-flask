@@ -114,7 +114,26 @@
   #supplier-page-root .layui-table-hover {
     background-color: rgba(0, 229, 255, 0.05) !important;
     box-shadow: inset 2px 0 0 var(--accent-primary);
-    /* 左侧亮条 */
+  }
+
+  /* 选中行样式 (Fix: readable text on selection) - High Specificity Override */
+  body .layui-table-view .layui-table tbody tr.layui-table-click,
+  body .layui-table-view .layui-table tbody tr.layui-table-click:hover {
+    background-color: rgba(0, 229, 255, 0.15) !important;
+  }
+
+  body .layui-table-view .layui-table tbody tr.layui-table-click td,
+  body .layui-table-view .layui-table tbody tr.layui-table-click:hover td {
+    background-color: transparent !important;
+    /* Ensure row color shows through */
+    color: #fff !important;
+    box-shadow: inset 4px 0 0 var(--accent-primary) !important;
+  }
+
+  /* Ensure links/buttons inside selected row are also readable */
+  body .layui-table-view .layui-table tbody tr.layui-table-click a,
+  body .layui-table-view .layui-table tbody tr.layui-table-click .layui-btn {
+    color: var(--accent-primary) !important;
   }
 
   /* 底部工具栏 (分页) */
@@ -491,15 +510,21 @@
     // 工具栏事件
     table.on('toolbar(supplier-table)', function (obj) {
       if (obj.event === 'supplier-toolbar-add') {
+        layer.closeAll();
         $("#supplier-form")[0].reset();
         $("#supplier-form input[name='id']").val(0);
         layer.open({
           type: 1,
           title: '<span style="color:#00e5ff; font-weight:bold;">新增供应商</span>',
-          shade: 0.8,
+          shade: 0, // Disable shade entirely to prevent freezing
           area: ["600px", "85%"],
+          zIndex: 19891014, // Force high z-index
           content: $("#supplier-form"),
-          skin: 'layui-layer-molv' // 使用深色皮肤基础，配合CSS覆盖
+          success: function (layero, index) {
+            // Force removal of any accidental shades and bring layer to front
+            $(".layui-layer-shade").remove();
+            layer.setTop(layero);
+          }
         });
       }
     });
@@ -508,13 +533,19 @@
     table.on('tool(supplier-table)', function (obj) {
       var data = obj.data;
       if (obj.event === 'supplier-tool-edit') {
+        layer.closeAll();
         form.val("supplier-form", data);
         layer.open({
           type: 1,
           title: '<span style="color:#00e5ff; font-weight:bold;">编辑供应商</span>',
-          shade: 0.8,
+          shade: 0, // Disable shade entirely
           area: ["600px", "85%"],
-          content: $("#supplier-form")
+          zIndex: 19891014,
+          content: $("#supplier-form"),
+          success: function (layero, index) {
+            $(".layui-layer-shade").remove();
+            layer.setTop(layero);
+          }
         });
       } else if (obj.event === 'supplier-tool-del') {
         layer.confirm('<span style="color:#fff;">确定要删除这个供应商吗？</span>', {

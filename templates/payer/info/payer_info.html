@@ -242,6 +242,25 @@
     #payer-page-root .layui-table-view {
         background-color: rgba(20, 20, 20, 0.6) !important;
     }
+
+    /* 选中行样式 (Fix: readable text on selection) - High Specificity Override */
+    body .layui-table-view .layui-table tbody tr.layui-table-click,
+    body .layui-table-view .layui-table tbody tr.layui-table-click:hover {
+        background-color: rgba(0, 229, 255, 0.15) !important;
+    }
+
+    body .layui-table-view .layui-table tbody tr.layui-table-click td,
+    body .layui-table-view .layui-table tbody tr.layui-table-click:hover td {
+        background-color: transparent !important;
+        color: #fff !important;
+        box-shadow: inset 4px 0 0 var(--accent-cyan) !important;
+    }
+
+    /* Ensure links/buttons inside selected row are also readable */
+    body .layui-table-view .layui-table tbody tr.layui-table-click a,
+    body .layui-table-view .layui-table tbody tr.layui-table-click .layui-btn {
+        color: var(--accent-cyan) !important;
+    }
 </style>
 
 <div id="payer-page-root">
@@ -371,9 +390,16 @@
             if (obj.event === 'payer-toolbar-add') {
                 $("#payer-form")[0].reset();
                 $("#payer-form input[name='id']").val(0);
+                layer.closeAll();
                 layer.open({
                     type: 1, title: '新增付款单位', content: $("#payer-form"),
-                    area: ["500px", "600px"], shade: 0.8
+                    area: ["500px", "600px"], 
+                    shade: 0, // Disable shade entirely
+                    zIndex: 19891014, // Force high z-index
+                    success: function (layero, index) {
+                        $(".layui-layer-shade").remove();
+                        layer.setTop(layero);
+                    }
                 });
             }
         });
@@ -382,9 +408,16 @@
             var data = obj.data;
             if (obj.event === 'payer-tool-edit') {
                 form.val("payer-form", data);
+                layer.closeAll();
                 layer.open({
                     type: 1, title: '编辑付款单位', content: $("#payer-form"),
-                    area: ["500px", "600px"], shade: 0.8
+                    area: ["500px", "600px"], 
+                    shade: 0, // Disable shade entirely
+                    zIndex: 19891014, // Force high z-index
+                    success: function (layero, index) {
+                        $(".layui-layer-shade").remove();
+                        layer.setTop(layero);
+                    }
                 });
             } else if (obj.event === 'payer-tool-del') {
                 layer.confirm('确定删除该付款单位？', { icon: 3, title: '提示', skin: 'layui-layer-molv' }, function (idx) {

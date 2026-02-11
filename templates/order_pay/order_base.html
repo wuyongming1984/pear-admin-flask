@@ -492,13 +492,80 @@
       renderProjectList(filtered);
     });
 
-    // 新增：模糊搜索联系人
-    $('#order-contact-search').on('input', function () {
-      var val = $(this).val().toLowerCase();
-      var filtered = allContacts.filter(function (c) {
-        return c.name.toLowerCase().includes(val);
+    // --- 新增：建立 联系人 -> 项目 索引 ---
+    // 为了实现“输入联系人筛选项目”的功能，我们需要知道哪些项目包含该联系人
+    var contactToProjectsMap = {}; // key: contactName, value: Set(projectName)
+    var isIndexBuilt = false;
+
+    function buildContactProjectIndex() {
+      // 获取所有订单用于建立索引 (只获取一次)
+      if (isIndexBuilt) return;
+
+      console.log('正在构建 联系人-项目 索引...');
+      $.ajax({
+        url: window.location.origin + "/api/v1/order/",
+        type: "GET",
+        headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+        data: { limit: 5000 }, // 获取足够多的订单以建立关系
+        success: function (res) {
+          if (res.code === 0 && res.data) {
+            contactToProjectsMap = {};
+            res.data.forEach(function (o) {
+              var pName = o.project_name;
+              var cName = o.supplier_contact_person;
+              if (pName && cName) {
+                if (!contactToProjectsMap[cName]) {
+                  contactToProjectsMap[cName] = new Set();
+                }
+                contactToProjectsMap[cName].add(pName);
+              }
+            });
+            isIndexBuilt = true;
+            console.log('索引构建完成，包含联系人数量:', Object.keys(contactToProjectsMap).length);
+          }
+        }
       });
-      renderContactList(filtered);
+    }
+
+    // 启动索引构建
+    buildContactProjectIndex();
+
+    // 新增：模糊搜索联系人 + 联动筛选项目
+    $('#order-contact-search').on('input', function () {
+      var val = $(this).val().toLowerCase().trim();
+
+      // 1. 筛选联系人列表 (原有逻辑)
+      var filteredContacts = allContacts.filter(function (c) {
+        return c.name && c.name.toLowerCase().includes(val);
+      });
+      renderContactList(filteredContacts);
+
+      // 2. 联动筛选项目列表 (新功能)
+      if (!val) {
+        // 如果输入为空，显示所有项目
+        renderProjectList(allProjects);
+        return;
+      }
+
+      // 找出所有匹配联系人关联的项目
+      var allowedProjects = new Set();
+
+      // 遍历所有已知的联系人关系
+      // 注意：这里我们不仅使用 filteredContacts，还需要查找 contactToProjectsMap 中所有匹配的 key
+      // 因为 filteredContacts 只包含供应商表中的联系人，而订单中可能有没有在其列的联系人（虽然理论上应该一致）
+      // 为了准确，我们遍历索引中的 key
+      Object.keys(contactToProjectsMap).forEach(function (cName) {
+        if (cName.toLowerCase().includes(val)) {
+          contactToProjectsMap[cName].forEach(p => allowedProjects.add(p));
+        }
+      });
+
+      // 过滤项目列表
+      var filteredProjects = allProjects.filter(function (p) {
+        return allowedProjects.has(p.project_name);
+      });
+
+      renderProjectList(filteredProjects);
     });
 
     // 新增：订单号搜索事件
@@ -516,7 +583,7 @@
       $('#order-project-list .project-item').removeClass('active');
       $(this).addClass('active');
       currentProject = $(this).data('id');
-      currentContact = 'all'; // 切换项目时，重置联系人为全部，但不重新加载联系人列表（因为要求固定排序）
+      // currentContact = 'all'; // 移除此行：切换项目时，保留当前选中的联系人（如果已选）
 
       updateHeader();
       loadOrders();
@@ -563,6 +630,19 @@
       $('#order-contact-list .project-item').removeClass('active');
       $(this).addClass('active');
       currentContact = $(this).data('id');
+
+      // 联动筛选项目列表
+      if (currentContact === 'all') {
+        renderProjectList(allProjects);
+      } else {
+        // 利用已构建的索引筛选项目
+        var allowedProjects = contactToProjectsMap[currentContact] || new Set();
+        var filteredProjects = allProjects.filter(function (p) {
+          return allowedProjects.has(p.project_name);
+        });
+        renderProjectList(filteredProjects);
+      }
+
       updateHeader();
       loadOrders();
     });

@@ -103,10 +103,17 @@ def order_list():
     
     pages: Pagination = db.paginate(q, page=page, per_page=per_page, error_out=False)
     
+    # 支持瘦身模式
+    mode = request.args.get("mode", type=str)
+    if mode == "slim":
+        data_list = [item.slim_json() for item in pages.items]
+    else:
+        data_list = [item.json() for item in pages.items]
+
     return {
         "code": 0,
         "msg": "获取订单数据成功",
-        "data": [item.json() for item in pages.items],
+        "data": data_list,
         "count": pages.total,
     }
 

@@ -568,11 +568,11 @@
       }
 
       function fetchSuppliers() {
-        return makeRequest({ url: API.SUPPLIER, type: 'GET', data: { limit: 9999 } });
+        return makeRequest({ url: API.SUPPLIER, type: 'GET', data: { limit: 9999, mode: 'slim' } });
       }
 
       function fetchOrders() {
-        return makeRequest({ url: API.ORDER, type: 'GET', data: { limit: 9999 } });
+        return makeRequest({ url: API.ORDER, type: 'GET', data: { limit: 9999, mode: 'slim' } });
       }
 
       function fetchMaterialDict() {
@@ -582,11 +582,13 @@
       // 主初始化函数：并行启动所有请求
       function initAllData() {
         var loading = layer.load(1);
+        var shouldSkipOrders = !!(currentPaymentId || initialOrderId);
+
         var promises = [
           fetchDicts(),
           fetchPayers(),
           fetchSuppliers(),
-          fetchOrders(),
+          shouldSkipOrders ? Promise.resolve({ code: 0, data: [] }) : fetchOrders(),
           fetchMaterialDict()
         ];
 
@@ -622,24 +624,20 @@
             $('#payer-supplier-select').html(html);
           }
 
-          // 3. 处理收款单位 (供应商)
+          // 3. 处理收款单位 (供应商) - 采用分时渲染
           if (supplierRes.code === 0 && supplierRes.data) {
-            var html = '<option value="">请选择收款单位</option>';
             supplierDataMap = {};
-            supplierRes.data.forEach(function (item) {
-              html += '<option value="' + item.id + '">' + item.name + '</option>';
+            renderSelectInChunks('#payee-supplier-select', '请选择收款单位', supplierRes.data, function (item) {
               supplierDataMap[item.id] = item;
+              return '<option value="' + item.id + '">' + item.name + '</option>';
             });
-            $('#payee-supplier-select').html(html);
           }
 
-          // 4. 处理订单列表
+          // 4. 处理订单列表 - 采用分时渲染
           if (orderRes.code === 0 && orderRes.data) {
-            var html = '<option value="">请选择订单</option>';
-            orderRes.data.forEach(function (item) {
-              html += '<option value="' + item.id + '">' + item.order_number + (item.project_name ? ' - ' + item.project_name : '') + '</option>';
+            renderSelectInChunks('#order-select', '请选择订单', orderRes.data, function (item) {
+              return '<option value="' + item.id + '">' + item.order_number + (item.project_name ? ' - ' + item.project_name : '') + '</option>';
             });
-            $('#order-select').html(html);
           }
 
           // 5. 处理材料字典
@@ -653,6 +651,12 @@
 
           // 渲染 Select
           form.render('select');
+
+          // 核心点：如果是编辑模式或预设订单模式，禁用订单选择框
+          if (currentPaymentId || initialOrderId) {
+            $('#order-select').attr('disabled', true);
+            form.render('select');
+          }
 
           // 6. 执行详情填充逻辑
           if (detailRes && detailRes.code === 0 && detailRes.data) {
@@ -672,6 +676,41 @@
           console.error("数据初始化失败:", err);
           layer.msg("数据加载过程中出现错误", { icon: 2 });
         });
+      }
+
+      /**
+       * 分时渲染函数：将大量数据分批插入 DOM，避免主线程阻塞导致页面假死
+       */
+      function renderSelectInChunks(selector, placeholder, data, mapFn) {
+        var $el = $(selector);
+        var html = '<option value="">' + placeholder + '</option>';
+        var chunkSize = 500; // 每批处理 500 条
+        var index = 0;
+
+        function renderNextChunk() {
+          var end = Math.min(index + chunkSize, data.length);
+          var chunkHtml = '';
+          for (var i = index; i < end; i++) {
+            chunkHtml += mapFn(data[i]);
+          }
+          $el.append(chunkHtml);
+          index = end;
+
+          if (index < data.length) {
+            // 下一帧继续渲染
+            requestAnimationFrame(renderNextChunk);
+          } else {
+            // 全部渲染完成，执行一次 form.render 确保 Layui 样式更新
+            form.render('select');
+          }
+        }
+
+        $el.html(html);
+        if (data && data.length > 0) {
+          renderNextChunk();
+        } else {
+          form.render('select');
+        }
       }
 
       // 将原来的填充逻辑提取出来
@@ -744,6 +783,13 @@
 
               $('input[name="supplier_contact_person"]').val(d.supplier_contact_person || '');
               $('input[name="order_amount"]').val(d.order_amount || '');
+
+              // 确保 order-select 中有当前项（即便没加载全量列表）
+              if ($('#order-select option[value="' + d.id + '"]').length === 0) {
+                $('#order-select').append('<option value="' + d.id + '">' + d.order_number + (d.project_name ? ' - ' + d.project_name : '') + '</option>');
+                $('#order-select').val(d.id);
+                form.render('select');
+              }
 
               // 核心修改优化：不再盲目重新请求全量联系人，优先查找 supplierDataMap 寻找当前联系人的关联供应商
               if (d.supplier_contact_person) {

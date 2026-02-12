@@ -1,9 +1,9 @@
 ﻿/* 
- * 璁㈠崟涓庝粯娆惧崟閲嶆瀯涓撴湁鏍峰紡 - 鐜颁唬宸ヤ笟闈㈡澘椋庢牸 (Control Panel Aesthetic)
+ * 订单与付款单重构专有样式 - 现代工业面板风格 (Control Panel Aesthetic)
  */
 
 :root {
-  /* 璋冭壊鐩橈細娣遍們銆佺簿瀵嗐€佹暟瀛楁劅 */
+  /* 调色盘：深邃、精密、数字感 */
   --bg-deep: #0f172a;
   --bg-surface: rgba(30, 41, 59, 0.7);
   --bg-sidebar: rgba(15, 23, 42, 0.95);
@@ -428,11 +428,9 @@ body {
 .card-body {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  /* 增加最小宽度，确保对齐 */
-  gap: 15px 30px;
-  /* 增加列间距，提升辨识度 */
-  padding: 20px 24px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 15px 25px;
+  padding: 20px;
   align-items: start;
 }
 

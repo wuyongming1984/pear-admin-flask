@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="/static/admin/css/order_pay_refined.css?v=2.0" />
+<link rel="stylesheet" href="/static/admin/css/order_pay_refined.css" />
 <style>
   /* 解决 Pear Admin Tab 覆盖问题 - Scoped */
   #order-page-root {
@@ -397,36 +397,26 @@
 
       // 从 localStorage 恢复配置
       var savedFilter = localStorage.getItem('order_field_filter');
-      var filterConfig = {};
-
       if (savedFilter) {
-        filterConfig = JSON.parse(savedFilter);
-      } else {
-        // [修复] 如果没有配置，默认为全部开启
+        var filterConfig = JSON.parse(savedFilter);
         $dropdown.find('input[type="checkbox"]').each(function () {
-          filterConfig[$(this).data('field')] = true;
+          var field = $(this).data('field');
+          if (filterConfig[field] === false) {
+            $(this).prop('checked', false);
+            $container.addClass('hide-' + field);
+          }
         });
-        localStorage.setItem('order_field_filter', JSON.stringify(filterConfig));
       }
 
-      // 同步 UI 状态
-      $dropdown.find('input[type="checkbox"]').each(function () {
-        var field = $(this).data('field');
-        if (filterConfig[field] === false) {
-          $(this).prop('checked', false);
-          $container.addClass('hide-' + field);
-        } else {
-          $(this).prop('checked', true);
-          $container.removeClass('hide-' + field);
-        }
-      });
-
-      // 切换下拉菜单
+      // 切换下拉菜单 (改为悬停模式，与付款单页面一致)
       $btn.on('mouseenter', function () {
         $dropdown.stop().fadeIn(200);
       }).on('mouseleave', function () {
         $dropdown.stop().fadeOut(200);
       });
+
+      // 移除 document click 监听，因为悬停模式不需要
+      // $(document).on('click', function () { ... });
 
       // 监听勾选变化
       $dropdown.find('input[type="checkbox"]').on('change', function () {
@@ -439,6 +429,7 @@
           $container.addClass('hide-' + field);
         }
 
+        // 保存配置
         saveFilterConfig();
       });
 
@@ -841,9 +832,6 @@
           } else {
             $('#order-card-container').html('<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #ff5722;">加载失败: ' + res.msg + '</div>');
           }
-        },
-        error: function (xhr, status, error) {
-          console.error("订单加载失败:", status, error);
         }
       });
     }

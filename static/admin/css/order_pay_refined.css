@@ -9,16 +9,16 @@
   --bg-sidebar: rgba(15, 23, 42, 0.95);
 
   --accent-primary: #00e5ff;
-  /* 璧涘崥钃?*/
+  /* 赛博蓝 */
   --accent-secondary: #7c4dff;
-  /* 闇撹櫣绱?*/
+  /* 霓虹紫 */
 
   --text-primary: #ffffff;
-  /* 绾櫧锛屾渶楂樺姣斿害 */
+  /* 纯白，最高对比度 */
   --text-secondary: #cbd5e1;
-  /* 浜伆钃?*/
+  /* 亮灰蓝 */
   --text-muted: #94a3b8;
-  /* 鏇翠寒鐨勯潤姝㈡枃鏈?*/
+  /* 更亮的静止文本 */
 
   --border-glow: rgba(0, 229, 255, 0.3);
   --border-dim: rgba(255, 255, 255, 0.12);
@@ -30,7 +30,7 @@
   --radius-md: 12px;
 }
 
-/* 椤甸潰鑳屾櫙 */
+/* 页面背景 */
 body {
   background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
   color: var(--text-primary);
@@ -52,7 +52,7 @@ body {
   box-shadow: var(--card-shadow);
 }
 
-/* 宸︿晶椤圭洰鍒楄〃 - 宸ヤ笟椋庝晶鏍?*/
+/* 左侧项目列表 - 工业风侧栏 */
 .side-panel {
   width: 250px;
   background: var(--bg-sidebar);
@@ -139,7 +139,7 @@ body {
   color: var(--text-secondary);
 }
 
-/* 鍙充晶涓诲唴瀹瑰尯 */
+/* 右侧主内容区 */
 .main-content {
   flex: 1;
   padding: 30px;
@@ -164,7 +164,7 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* 鎸夐挳缁勫悎澧炲己 */
+/* 按钮组合增强 */
 .content-actions {
   display: flex;
   gap: 12px;
@@ -193,7 +193,7 @@ body {
   box-shadow: 0 0 10px var(--border-glow);
 }
 
-/* 瀛楁鏄剧ず鎺у埗绫?*/
+/* 字段显示控制类 */
 
 .card-grid.hide-project-name .item-project-name {
   display: none;
@@ -227,7 +227,7 @@ body {
   display: none;
 }
 
-/* 鍏宠仈椤圭洰鏍囩鏍峰紡 */
+/* 关联项目标签样式 */
 .pay-no-tag {
   display: inline-block;
   padding: 1px 6px;
@@ -250,7 +250,7 @@ body {
   transform: translateY(-1px);
 }
 
-/* 涓嬫媺鑿滃崟鏍峰紡 */
+/* 下拉菜单样式 */
 .field-dropdown {
   position: absolute;
   top: 100%;
@@ -304,7 +304,7 @@ body {
   }
 }
 
-/* 璁㈠崟鍗＄墖 - 璧涘崥宸ヤ笟閲嶆瀯 */
+/* 订单卡片 - 赛博工业重构 */
 .card-grid {
   display: flex;
   flex-direction: column;
@@ -321,12 +321,12 @@ body {
   border-radius: var(--radius-lg);
   display: flex;
   flex-wrap: wrap;
-  /* 鍏佽鍦ㄧ獎灞忎笅鎹㈣ */
+  /* 允许在窄屏下换行 */
   align-items: stretch;
   padding: 0;
   min-height: 100px;
   overflow: visible;
-  /* 闃叉鎴柇闃村奖鎴栨搷浣滄寜閽?*/
+  /* 防止截断阴影或操作按钮 */
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
@@ -350,7 +350,7 @@ body {
   box-shadow: -5px 0 20px var(--border-glow), 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
-/* 鍛煎惛鐏姸鎬佹潯 */
+/* 呼吸灯状态条 */
 .card-indicator {
   width: 6px;
   height: 100%;
@@ -439,10 +439,10 @@ body {
   flex-direction: column;
   gap: 4px;
   min-width: 0;
-  /* 闃叉 grid 婧㈠嚭 */
+  /* 防止 grid 溢出 */
 }
 
-/* 閽堝涓嶅悓瀛楁寰皟 */
+/* 针对不同字段微调 */
 .item-material,
 .item-details {
   grid-column: span 2;
@@ -460,7 +460,7 @@ body {
   }
 }
 
-/* 鏂板锛氭潗鏂欐槑缁?*/
+/* 新增：材料明细 */
 
 /* 鏉愭枡鏄庣粏鏂囨湰澶勭悊锛氬厑璁镐袱琛屾樉绀烘垨鑷姩鏀剁缉锛屼繚鎸佽楂樺榻?*/
 .item-details .info-value {
@@ -479,9 +479,9 @@ body {
 
 .info-label {
   color: var(--accent-primary);
-  /* 灏嗘爣绛炬敼涓轰富棰樿壊锛屾瀬澶ф彁鍗囪瘑鍒害 */
+  /* 将标签改为主题色，极大提升识别度 */
   filter: brightness(1.2);
-  /* 杩涗竴姝ュ浜?*/
+  /* 进一步增亮 */
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1.2px;
@@ -501,7 +501,7 @@ body {
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* 鎿嶄綔闈㈡澘鏍峰紡锛堣ˉ鍏級 */
+/* 操作面板样式（补全） */
 .card-actions-panel {
   display: flex;
   flex-direction: column;
@@ -560,7 +560,7 @@ body {
   }
 }
 
-/* 鑷畾涔夋粴鍔ㄦ潯 */
+/* 自定义滚动条 */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -578,7 +578,7 @@ body {
   background: var(--text-muted);
 }
 
-/* 鍝嶅簲寮?*/
+/* 响应式 */
 @media screen and (max-width: 768px) {
   .refined-container {
     flex-direction: column;
@@ -598,9 +598,9 @@ body {
   }
 }
 
-/* ==================== 闄勪欢灞曠ず涓庨瑙堟牱寮?==================== */
+/* ==================== 附件展示与预览样式 ==================== */
 
-/* 闄勪欢鏁伴噺寰界珷 */
+/* 附件数量徽章 */
 .attachment-badge {
   display: inline-flex;
   align-items: center;
@@ -621,7 +621,7 @@ body {
   box-shadow: 0 0 8px var(--border-glow);
 }
 
-/* 闄勪欢鍒楄〃绱у噾灞曠ず */
+/* 附件列表紧凑展示 */
 .attachment-list-compact {
   display: flex;
   flex-direction: column;
@@ -680,7 +680,7 @@ body {
   transform: scale(1.1);
 }
 
-/* 闄勪欢淇℃伅椤圭綉鏍艰皟鏁?*/
+/* 附件信息项网格调整 */
 .item-attachments {
   min-width: 200px;
   flex: 2.5 !important;

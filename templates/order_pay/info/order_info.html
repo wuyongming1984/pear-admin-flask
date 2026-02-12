@@ -592,9 +592,9 @@
 
     // 加载下拉数据
     function loadSelectionData() {
-      var d1 = $.ajax({ url: "/api/v1/project/", data: { limit: 1000 }, headers: { Authorization: "Bearer " + localStorage.getItem("access_token") } });
-      var d2 = $.ajax({ url: "/api/v1/supplier/", data: { limit: 1000 }, headers: { Authorization: "Bearer " + localStorage.getItem("access_token") } });
-      var d3 = $.ajax({ url: "/api/v1/dictionary/detail/list", data: { dic_id: 35, limit: 1000 }, headers: { Authorization: "Bearer " + localStorage.getItem("access_token") } });
+      var d1 = $.ajax({ url: "/api/v1/project/", data: { limit: 9999 }, headers: { Authorization: "Bearer " + localStorage.getItem("access_token") } });
+      var d2 = $.ajax({ url: "/api/v1/supplier/", data: { limit: 9999 }, headers: { Authorization: "Bearer " + localStorage.getItem("access_token") } });
+      var d3 = $.ajax({ url: "/api/v1/dictionary/detail/list", data: { dic_id: 35, limit: 9999 }, headers: { Authorization: "Bearer " + localStorage.getItem("access_token") } });
 
       return Promise.all([d1, d2, d3]).then(function (results) {
         // 项目

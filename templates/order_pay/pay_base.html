@@ -211,7 +211,7 @@
         url: "/api/v1/project/",
         type: "GET",
         headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-        data: { limit: 1000, has_payments: 'true' },
+        data: { limit: 9999, has_payments: 'true' },
 
         success: (res) => {
           if (res.code === 0) {
@@ -250,7 +250,7 @@
         return;
       }
 
-      var params = { page: 1, limit: 1000 };
+      var params = { page: 1, limit: 9999 };
       if (currentProject !== 'all') params.project_name = currentProject;
       if (currentContact !== 'all') params.supplier_contact_person = currentContact;
       if (payNumber) {
@@ -320,7 +320,7 @@
         url: "/api/v1/supplier/",
         type: "GET",
         headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-        data: { limit: 1000 },
+        data: { limit: 9999 },
         success: (res) => {
           if (res.code === 0) {
             // 按供应商 ID 倒序排序

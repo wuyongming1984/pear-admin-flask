@@ -581,7 +581,7 @@
         makeRequest({
           url: API.PAYER,
           type: 'GET',
-          data: { limit: 1000 },
+          data: { limit: 9999 },
           success: function (res) {
             if (res.code === 0 && res.data) {
               var html = '<option value="">请选择付款单位</option>';
@@ -598,7 +598,7 @@
         makeRequest({
           url: API.SUPPLIER,
           type: 'GET',
-          data: { limit: 1000 },
+          data: { limit: 9999 },
           success: function (res) {
             if (res.code === 0 && res.data) {
               var html = '<option value="">请选择收款单位</option>';
@@ -635,7 +635,7 @@
         makeRequest({
           url: API.ORDER,
           type: 'GET',
-          data: { limit: 1000 },
+          data: { limit: 9999 },
           success: function (res) {
             if (res.code === 0 && res.data) {
               var html = '<option value="">请选择订单</option>';
@@ -652,7 +652,7 @@
         makeRequest({
           url: API.DICT,
           type: 'GET',
-          data: { dic_id: 35, limit: 1000 },
+          data: { dic_id: 35, limit: 9999 },
           success: function (res) {
             if (res.code === 0 && res.data) {
               window.materialNamesMap = {};
@@ -698,7 +698,7 @@
                   type: 'GET',
                   data: {
                     contact_person: d.supplier_contact_person,
-                    limit: 1000
+                    limit: 9999
                   },
                   success: function (supplierRes) {
                     if (supplierRes.code === 0 && supplierRes.data && supplierRes.data.length > 0) {

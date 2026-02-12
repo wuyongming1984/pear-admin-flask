@@ -177,7 +177,7 @@
           url: window.location.origin + "/api/v1/project/",
           type: "GET",
           data: {
-            limit: 1000  // 获取所有项目，不分页
+            limit: 9999  // 获取所有项目，不分页
           },
           headers: {
             Authorization: "Bearer " + localStorage.getItem("access_token"),
@@ -210,7 +210,7 @@
           type: "GET",
           data: {
             dic_id: 35,  // 材料名称代码字典的ID (clmc)
-            limit: 1000  // 获取所有材料，不分页
+            limit: 9999  // 获取所有材料，不分页
           },
           headers: {
             Authorization: "Bearer " + localStorage.getItem("access_token"),
@@ -247,6 +247,7 @@
       $.ajax({
         url: window.location.origin + "/api/v1/supplier/",
         type: "GET",
+        data: { limit: 9999 },
         headers: {
           Authorization: "Bearer " + localStorage.getItem("access_token"),
         },
@@ -395,7 +396,7 @@
         url: window.location.origin + "/api/v1/project/",
         type: "GET",
         headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-        data: { limit: 1000, has_orders: 'true' },
+        data: { limit: 9999, has_orders: 'true' },
 
         success: function (res) {
           console.log('获取项目请求已返回:', res.code);
@@ -506,7 +507,7 @@
         url: window.location.origin + "/api/v1/order/",
         type: "GET",
         headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-        data: { limit: 5000 }, // 获取足够多的订单以建立关系
+        data: { limit: 9999 }, // 获取足够多的订单以建立关系
         success: function (res) {
           if (res.code === 0 && res.data) {
             contactToProjectsMap = {};
@@ -596,7 +597,7 @@
         url: "/api/v1/supplier/",
         type: "GET",
         headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-        data: { limit: 1000 },
+        data: { limit: 9999 },
         success: function (res) {
           console.log('获取供应商联系人返回:', res.code);
           if (res.code === 0) {
@@ -706,7 +707,7 @@
         return;
       }
 
-      var params = { page: 1, limit: 1000 };
+      var params = { page: 1, limit: 9999 };
       if (currentProject !== 'all') {
         params.project_name = currentProject;
       }

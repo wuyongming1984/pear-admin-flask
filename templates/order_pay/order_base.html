@@ -925,37 +925,32 @@
       $container.html(html);
     }
 
-    // 初始化加载
-    console.log('启动项目侧边栏初始化...');
-    initProjectSidebar();
-    console.log('启动订单数据加载...');
-    loadOrders();
-    console.log('初始化流程完成。');
+    // 初始化加载 (移到最底部统一处理)
 
     // 按钮点击事件统一代理
-    $(document).on('click', '.card-edit-btn', function () {
+    $(document).off('click', '.card-edit-btn').on('click', '.card-edit-btn', function () {
       var id = $(this).data('id');
       editOrder(id);
     });
 
-    $(document).on('click', '.card-del-btn', function () {
+    $(document).off('click', '.card-del-btn').on('click', '.card-del-btn', function () {
       var id = $(this).data('id');
       deleteOrder(id);
     });
 
-    $(document).on('click', '.card-pay-btn', function () {
+    $(document).off('click', '.card-pay-btn').on('click', '.card-pay-btn', function () {
       var id = $(this).data('id');
       var no = $(this).data('no');
       addPayment(id, no);
     });
 
-    $(document).on('click', '.card-print-btn', function () {
+    $(document).off('click', '.card-print-btn').on('click', '.card-print-btn', function () {
       var id = $(this).data('id');
       // 打开独立的打印页面
       window.open('/order_pay/info/print_order.html?id=' + id, '_blank');
     });
 
-    $('#add-order-btn').on('click', function () {
+    $('#add-order-btn').off('click').on('click', function () {
       var url = '/order_pay/info/order_info.html?id=0';
       if (currentProject && currentProject !== 'all') {
         url += '&project_name=' + encodeURIComponent(currentProject);
@@ -971,7 +966,7 @@
     });
 
     // 附件预览逻辑
-    $(document).on('click', '.preview-attachment', function () {
+    $(document).off('click', '.preview-attachment').on('click', '.preview-attachment', function () {
       var url = $(this).data('url');
       var name = $(this).data('name') || '未命名';
       if (!url) {
@@ -1051,7 +1046,7 @@
     }
 
     // 编辑付款单
-    $(document).on('click', '.clickable-pay-no', function (e) {
+    $(document).off('click', '.clickable-pay-no').on('click', '.clickable-pay-no', function (e) {
       e.stopPropagation();
       var payId = $(this).data('id');
       layer.open({
@@ -1070,6 +1065,6 @@
     initContactSidebar();
     console.log('启动订单数据加载...');
     loadOrders();
-    console.log('初始化流程完成。');
+    console.log('初始化流程完成。 (清理后的单次执行版本)');
   });
 </script>

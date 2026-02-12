@@ -545,7 +545,7 @@
 
     // ==================== 事件绑定 ====================
 
-    $(document).on('click', '#pay-project-list .project-item', function () {
+    $(document).off('click', '#pay-project-list .project-item').on('click', '#pay-project-list .project-item', function () {
       $('#pay-project-list .project-item').removeClass('active');
       $(this).addClass('active');
       currentProject = $(this).data('id');
@@ -554,7 +554,7 @@
       loadPayments();
     });
 
-    $(document).on('click', '#pay-contact-list .project-item', function () {
+    $(document).off('click', '#pay-contact-list .project-item').on('click', '#pay-contact-list .project-item', function () {
       $('#pay-contact-list .project-item').removeClass('active');
       $(this).addClass('active');
       currentContact = $(this).data('id');
@@ -581,7 +581,7 @@
     });
 
     // 查看发票详情
-    $(document).on('click', '.view-invoice-detail', function (e) {
+    $(document).off('click', '.view-invoice-detail').on('click', '.view-invoice-detail', function (e) {
       e.stopPropagation();
       var id = $(this).data('id');
       var url = $(this).data('url');
@@ -601,7 +601,7 @@
       });
     });
 
-    $(document).on('click', '.pay-card-edit-btn', function () {
+    $(document).off('click', '.pay-card-edit-btn').on('click', '.pay-card-edit-btn', function () {
       var id = $(this).data('id');
       layer.open({
         type: 2, title: '编辑付款单', area: ['90%', '90%'],
@@ -610,7 +610,7 @@
       });
     });
 
-    $(document).on('click', '.pay-card-del-btn', function () {
+    $(document).off('click', '.pay-card-del-btn').on('click', '.pay-card-del-btn', function () {
       var id = $(this).data('id');
       layer.confirm('确定删除该付款记录？', { icon: 3, title: '警告' }, (idx) => {
         $.ajax({
@@ -626,7 +626,7 @@
     });
 
     // 附件预览逻辑
-    $(document).on('click', '.preview-attachment', function () {
+    $(document).off('click', '.preview-attachment').on('click', '.preview-attachment', function () {
       var url = $(this).data('url');
       var name = $(this).data('name');
       if (!url) return;
@@ -646,13 +646,13 @@
       }
     });
 
-    $(document).on('click', '.pay-card-print-btn', function () {
+    $(document).off('click', '.pay-card-print-btn').on('click', '.pay-card-print-btn', function () {
       var payId = $(this).data('id');
       // 打开独立的 A4 打印页面
       window.open('/order_pay/info/print_pay.html?id=' + payId, '_blank');
     });
 
-    $('#add-pay-btn').on('click', () => {
+    $('#add-pay-btn').off('click').on('click', () => {
       layer.open({
         type: 2, title: '新增付款单', area: ['90%', '90%'],
         content: '/order_pay/info/pay_info.html',

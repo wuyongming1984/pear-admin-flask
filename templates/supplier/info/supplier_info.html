@@ -14,6 +14,7 @@
     --radius-md: 8px;
   }
 
+  /* 页面容器 - 也是深色背景 */
   #supplier-page-root {
     background-color: var(--bg-deep);
     background-image:
@@ -24,218 +25,292 @@
     background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
     color: var(--text-primary);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    padding: 16px;
-    margin: 0;
-    min-height: calc(100vh - 20px);
+    padding: 20px;
+    min-height: 100vh;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
   }
 
-  /* 容器样式：玻璃拟态卡片 */
-  #supplier-page-root .cyber-card {
+  /* 顶部工具栏 */
+  .toolbar-container {
     background: var(--bg-surface);
     backdrop-filter: blur(12px);
     border: 1px solid var(--border-dim);
     border-radius: var(--radius-lg);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    padding: 20px;
-    height: calc(100vh - 40px);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .toolbar-left {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+  }
+
+  .search-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-input-group i {
+    position: absolute;
+    left: 10px;
+    color: var(--accent-primary);
+  }
+
+  .search-input {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-dim);
+    border-radius: 20px;
+    padding: 8px 15px 8px 35px;
+    color: var(--text-primary);
+    font-size: 13px;
+    width: 200px;
+    transition: all 0.3s ease;
+  }
+
+  .search-input:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 10px var(--accent-glow);
+    width: 240px;
+    outline: none;
+  }
+
+  /* 新增按钮 */
+  .btn-cyber {
+    background: linear-gradient(135deg, rgba(0, 229, 255, 0.1), rgba(0, 229, 255, 0.05));
+    border: 1px solid var(--accent-primary);
+    color: var(--accent-primary);
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 12px;
+  }
+
+  .btn-cyber:hover {
+    background: var(--accent-primary);
+    color: #000;
+    box-shadow: 0 0 20px var(--accent-glow);
+    transform: translateY(-2px);
+  }
+
+  /* 卡片网格容器 */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    /* Reduced min-width slightly */
+    gap: 12px;
+    /* Reduced gap */
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 20px;
+  }
+
+  /* 供应商卡片 - 紧凑版 */
+  .supplier-card {
+    background: var(--bg-surface);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    /* Reduced padding */
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    animation: cardEnter 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
-  @keyframes cardEnter {
-    from {
-      transform: translateY(20px);
-      opacity: 0;
-    }
-
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
+  .supplier-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-primary), transparent);
+    opacity: 0.5;
+    transition: all 0.3s;
   }
 
-  /* ==================== Layui Table 深度定制 (Dark Mode) ==================== */
-  #supplier-page-root .layui-table-view {
-    border: none !important;
-    background: transparent !important;
+  .supplier-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    border-color: var(--accent-primary);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(0, 229, 255, 0.05);
+  }
+
+  .supplier-card:hover::before {
+    opacity: 1;
+    height: 6px;
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  /* 卡片头部 */
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    /* Reduced from 15px */
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    /* Added subtle separator */
+  }
+
+  .card-title {
+    font-size: 15px;
+    /* Slightly reduced */
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    /* Show only 1 line */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  }
+
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .card-type-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(0, 229, 255, 0.1);
+    color: var(--accent-primary);
+    border: 1px solid rgba(0, 229, 255, 0.2);
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  /* 卡片内容 */
+  .card-body {
     flex: 1;
-    /* 撑满剩余高度 */
     display: flex;
     flex-direction: column;
-    position: relative;
+    gap: 6px;
+    /* Reduced from 12px */
   }
 
-  /* 去除所有白色背景 */
-  #supplier-page-root .layui-table-view .layui-table,
-  #supplier-page-root .layui-table-header,
-  #supplier-page-root .layui-table-tool,
-  #supplier-page-root .layui-table-page,
-  #supplier-page-root .layui-table-total,
-  #supplier-page-root .layui-table-view .layui-table-body,
-  #supplier-page-root .layui-table-grid-down {
-    background-color: transparent !important;
-    border-color: var(--border-dim) !important;
-    color: var(--text-primary) !important;
+  .info-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    /* Reduced from 13px */
+    color: var(--text-secondary);
+    line-height: 1.4;
   }
 
-  /* 表头 */
-  #supplier-page-root .layui-table-header th {
-    background: rgba(15, 23, 42, 0.8) !important;
-    color: var(--accent-primary) !important;
-    /* 青色表头 */
-    font-weight: 700 !important;
-    font-size: 13px;
-    border-bottom: 2px solid var(--border-glow) !important;
-    border-right: none !important;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    height: 48px;
+  .info-row i {
+    color: var(--accent-primary);
+    width: 16px;
+    text-align: center;
+    opacity: 0.7;
   }
 
-  /* 单元格 */
-  #supplier-page-root .layui-table-cell {
-    height: 48px;
-    line-height: 48px;
-    padding: 0 15px;
+  .info-value {
     color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
   }
 
-  #supplier-page-root .layui-table-body tr td {
-    border-bottom: 1px solid var(--border-dim) !important;
-    border-right: none !important;
+  /* 卡片底部操作栏 */
+  .card-actions {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: all 0.2s;
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+  }
+
+  .supplier-card:hover .card-actions {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .action-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-dim);
+    background: rgba(15, 23, 42, 0.9);
+    color: var(--text-secondary);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
     transition: all 0.2s;
   }
 
-  /* 斑马纹 & 悬停 */
-  #supplier-page-root .layui-table tbody tr:hover,
-  #supplier-page-root .layui-table-hover {
-    background-color: rgba(0, 229, 255, 0.05) !important;
-    box-shadow: inset 2px 0 0 var(--accent-primary);
+  .action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: #fff;
   }
 
-  /* 选中行样式 (Fix: readable text on selection) - High Specificity Override */
-  body .layui-table-view .layui-table tbody tr.layui-table-click,
-  body .layui-table-view .layui-table tbody tr.layui-table-click:hover {
-    background-color: rgba(0, 229, 255, 0.15) !important;
+  .action-btn.edit:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: rgba(0, 229, 255, 0.1);
+    box-shadow: 0 0 10px var(--accent-glow);
   }
 
-  body .layui-table-view .layui-table tbody tr.layui-table-click td,
-  body .layui-table-view .layui-table tbody tr.layui-table-click:hover td {
-    background-color: transparent !important;
-    /* Ensure row color shows through */
-    color: #fff !important;
-    box-shadow: inset 4px 0 0 var(--accent-primary) !important;
+  .action-btn.delete:hover {
+    border-color: #ff4757;
+    color: #ff4757;
+    background: rgba(255, 71, 87, 0.1);
+    box-shadow: 0 0 10px rgba(255, 71, 87, 0.4);
   }
 
-  /* Ensure links/buttons inside selected row are also readable */
-  body .layui-table-view .layui-table tbody tr.layui-table-click a,
-  body .layui-table-view .layui-table tbody tr.layui-table-click .layui-btn {
-    color: var(--accent-primary) !important;
+  .action-btn.portal:hover {
+    border-color: var(--accent-secondary);
+    color: var(--accent-secondary);
+    background: rgba(112, 0, 255, 0.1);
+    box-shadow: 0 0 10px rgba(112, 0, 255, 0.4);
   }
 
-  /* 底部工具栏 (分页) */
-  #supplier-page-root .layui-table-page {
-    border-top: 1px solid var(--border-dim) !important;
-    padding: 10px 0;
+  /* 加载状态 */
+  .loading-container {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 50px;
+    color: var(--accent-primary);
   }
 
-  #supplier-page-root .layui-laypage span,
-  #supplier-page-root .layui-laypage a {
-    color: var(--text-secondary) !important;
-    background: transparent !important;
-    border: 1px solid var(--border-dim) !important;
-  }
-
-  #supplier-page-root .layui-laypage .layui-laypage-curr .layui-laypage-em {
-    background-color: var(--accent-primary) !important;
-  }
-
-  #supplier-page-root .layui-laypage .layui-laypage-curr em {
-    color: #000 !important;
-    /* 选中页码黑色 */
-    font-weight: bold;
-  }
-
-  /* 筛选输入框样式 */
-  #supplier-page-root .filter-input-wrapper {
-    margin-top: 4px;
-  }
-
-  #supplier-page-root .filter-input {
-    background: rgba(0, 0, 0, 0.3) !important;
-    border: 1px solid var(--border-dim) !important;
-    color: var(--text-primary) !important;
-    border-radius: 4px;
-    transition: all 0.3s;
-  }
-
-  #supplier-page-root .filter-input:focus {
-    border-color: var(--accent-primary) !important;
-    box-shadow: 0 0 8px var(--accent-glow) !important;
-  }
-
-  /* 按钮组样式 */
-  #supplier-page-root .layui-btn-container .layui-btn {
-    background: transparent !important;
-    border: 1px solid var(--accent-primary) !important;
-    color: var(--accent-primary) !important;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0);
-    transition: all 0.3s;
-  }
-
-  #supplier-page-root .layui-btn-container .layui-btn:hover {
-    background: var(--accent-primary) !important;
-    color: #000 !important;
-    /* 悬停反色 */
-    box-shadow: 0 0 15px var(--accent-glow);
-    transform: translateY(-1px);
-  }
-
-  /* 红色删除按钮特殊处理 */
-  #supplier-page-root .layui-btn-container .layui-btn-danger,
-  #supplier-page-root .layui-btn-container .layui-bg-red {
-    border-color: #ff4757 !important;
-    color: #ff4757 !important;
-  }
-
-  #supplier-page-root .layui-btn-container .layui-btn-danger:hover,
-  #supplier-page-root .layui-btn-container .layui-bg-red:hover {
-    background: #ff4757 !important;
-    color: #fff !important;
-    box-shadow: 0 0 15px rgba(255, 71, 87, 0.4);
-  }
-
-  /* 门户按钮 (特殊颜色 - 橙色 -> 紫色) */
-  #supplier-page-root .layui-btn-container .layui-bg-orange {
-    border-color: var(--accent-secondary) !important;
-    color: var(--accent-secondary) !important;
-  }
-
-  #supplier-page-root .layui-btn-container .layui-bg-orange:hover {
-    background: var(--accent-secondary) !important;
-    border-color: var(--accent-secondary) !important;
-    color: #fff !important;
-    box-shadow: 0 0 15px rgba(112, 0, 255, 0.4);
-  }
-
-  /* 顶部工具栏 (Add Button) */
-  #supplier-page-root .layui-table-tool {
-    border-bottom: 2px solid var(--border-dim) !important;
-    min-height: 60px;
-    padding: 10px 0;
-  }
-
+  /* 弹窗样式复用之前的，确保一致性 */
   /* ==================== 弹窗表单样式 ==================== */
   body .layui-layer-page .layui-layer-content {
     background: #1e293b !important;
-    /* 弹窗深色背景 */
   }
 
-  /* Scoped since form is inside the page root when hidden, but moved by Layer. 
-       However, we kept id="supplier-form" unique. */
   #supplier-form {
     padding: 25px !important;
     background: #1e293b;
@@ -264,7 +339,6 @@
     box-shadow: 0 0 8px var(--accent-glow) !important;
   }
 
-  /* 弹窗按钮 */
   #supplier-form .layui-btn {
     background: var(--accent-primary);
     color: #000;
@@ -280,11 +354,35 @@
 </style>
 
 <div id="supplier-page-root">
-  <div class="cyber-card">
-    <table class="layui-hide" id="supplier-table" lay-filter="supplier-table"></table>
+  <!-- 顶部工具栏 -->
+  <div class="toolbar-container">
+    <div class="toolbar-left">
+      <div class="search-input-group">
+        <i class="layui-icon layui-icon-search"></i>
+        <input type="text" id="search-name" class="search-input" placeholder="搜索供应商名称..." autocomplete="off">
+      </div>
+      <div class="search-input-group">
+        <i class="layui-icon layui-icon-username"></i>
+        <input type="text" id="search-contact" class="search-input" placeholder="搜索联系人..." autocomplete="off">
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn-cyber" id="btn-add">
+        <i class="layui-icon layui-icon-add-1"></i> 新增供应商
+      </button>
+    </div>
   </div>
 
-  <!-- 编辑表单 -->
+  <!-- 卡片网格 -->
+  <div class="card-grid" id="supplier-grid">
+    <div class="loading-container">
+      <i class="layui-icon layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop"
+        style="font-size: 30px;"></i>
+      <p style="margin-top: 10px;">读取神经网络数据...</p>
+    </div>
+  </div>
+
+  <!-- 编辑表单 (隐藏) -->
   <form class="layui-form" lay-filter="supplier-form" id="supplier-form" action="" style="display: none">
     <div class="layui-form-item">
       <label class="layui-form-label">ID</label>
@@ -313,6 +411,9 @@
       <div class="layui-input-block">
         <input type="text" name="contact_person" placeholder="请输入联系人" lay-verify="required" autocomplete="off"
           class="layui-input" />
+        <div class="layui-word-aux" style="color: #ff4757 !important; font-size: 12px; margin-top: 4px;">
+          <i class="layui-icon layui-icon-tips"></i> 谨慎修改，因为和订单中的供应商联系人关联
+        </div>
       </div>
     </div>
     <div class="layui-form-item">
@@ -361,329 +462,394 @@
   </form>
 </div>
 
-<!-- 顶部工具栏模板 -->
-<script type="text/html" id="supplier-toolbar">
-    <div class="layui-btn-container">
-      <button class="layui-btn layui-btn-sm" lay-event="supplier-toolbar-add">
-        <i class="layui-icon layui-icon-add-1"></i> 新增供应商
-      </button>
-    </div>
-  </script>
-
-<!-- 行工具栏模板 -->
-<script type="text/html" id="supplier-tool">
-    <div class="layui-btn-container">
-      <button class="layui-btn layui-btn-sm layui-bg-blue" lay-event="supplier-tool-edit">编辑</button>
-      <button class="layui-btn layui-btn-sm layui-bg-red" lay-event="supplier-tool-del">删除</button>
-      <button class="layui-btn layui-btn-sm layui-bg-orange" lay-event="supplier-tool-portal">门户</button>
-    </div>
-  </script>
-
-<!-- 引入Layui JS: Removed! -->
 <script>
-  layui.use(["table", "form", "layer"], function () {
-    var table = layui.table;
+  layui.use(["form", "layer", "jquery"], function () {
     var form = layui.form;
     var layer = layui.layer;
     var $ = layui.$;
 
-    // 存储筛选条件
-    var filterParams = {};
-
-    // 字典数据缓存
+    // 状态管理
+    var allSuppliers = [];
     var supplierTypeMap = {};
+    var searchParams = { name: '', contact: '' };
 
-    // 同步加载供应商类型字典 (ID=25)
-    $.ajax({
-      url: window.location.origin + "/api/v1/dictionary/detail/list",
-      data: { dic_id: 25, limit: 100 },
-      headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-      async: false,
-      success: function (res) {
-        if (res.code === 0 && res.data) {
-          var optionsHtml = '<option value="">请选择供应商类型</option>';
-          res.data.forEach(function (item) {
-            supplierTypeMap[item.code] = item.value;
-            optionsHtml += '<option value="' + item.code + '">' + item.value + '</option>';
-          });
-          // 填充下拉框
-          $('select[name="type_id"]').html(optionsHtml);
-          // form.render('select') 将在打开弹窗时或后续逻辑中调用，这里先确保 DOM 存在
-        }
-      }
-    });
+    // 初始化
+    init();
 
-    // 供应商类型渲染模板
-    function renderSupplierType(d) {
-      if (!d.type_id) return '<span style="color: #666;">-</span>';
-      var val = supplierTypeMap[d.type_id];
-      return val ? '<span class="layui-badge layui-bg-blue" style="background: rgba(0, 229, 255, 0.15) !important; color: #00e5ff !important; border: 1px solid rgba(0, 229, 255, 0.3);">' + val + '</span>' : d.type_id;
+    function init() {
+      loadDictionaries();
+      loadSuppliers();
+      bindEvents();
     }
 
-    // 渲染表格
-    table.render({
-      elem: "#supplier-table",
-      id: "supplier-table",
-      url: window.location.origin + "/api/v1/supplier/",
-      height: 'full-40', // 自动适应高度
-      toolbar: "#supplier-toolbar",
-      page: {
-        layout: ['limit', 'count', 'prev', 'page', 'next', 'skip'], // 自定义分页布局
-        groups: 3
-      },
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("access_token"),
-      },
-      defaultToolbar: ['filter', 'exports', 'print'],
-      where: filterParams,
-      skin: 'nob', // 无边框风格，配合我们的CSS
-      cols: [
-        [
-          { field: "id", title: "ID", sort: true, width: 80, align: 'center' },
-          { field: "type_id", title: "供应商类型", templet: renderSupplierType, width: 120, align: 'center' },
-          { field: "name", title: "供应商名称", edit: 'text', minWidth: 200 },
-          { field: "contact_person", title: "联系人", edit: 'text', width: 120 },
-          { field: "phone", title: "联系电话", edit: 'text', width: 140 },
-          { field: "bank_name", title: "开户行名称", edit: 'text', width: 180 },
-          { field: "account_number", title: "银行账号", edit: 'text', width: 180 },
-          { field: "remark", title: "备注", edit: 'text', minWidth: 150, hide: true },
-          { field: "create_at", title: "创建时间", sort: true, width: 180, align: 'center', hide: true },
-          { title: "操作", align: "center", toolbar: "#supplier-tool", width: 220 },
-        ],
-      ],
-      done: function (res, curr, count) {
-        addFilterInputs();
-        // 应用暗色滚动条样式
-        $('.layui-table-body').addClass('custom-scroll');
-      }
-    });
-
-    // 同步列宽逻辑（保留原有的自动列宽逻辑）
-    // ... (此处省略复杂的列宽计算逻辑，因为Layui本身支持width自适应，在暗色主题下简化处理) ...
-
-    // 统一的表格重新加载
-    function reloadTable(options) {
-      options = options || {};
-      var defaultOptions = {
-        where: filterParams,
-        done: function () {
-          addFilterInputs();
-        }
-      };
-      table.reload('supplier-table', $.extend({}, defaultOptions, options));
-    }
-
-    // 添加筛选输入框 (Enhanced)
-    function addFilterInputs() {
-      setTimeout(function () {
-        var filterConfig = {
-          'name': { type: 'text', placeholder: '🔍 搜名称', source: window.location.origin + "/api/v1/supplier/", labelField: 'name', valueField: 'name' },
-          'contact_person': { type: 'text', placeholder: '🔍 搜联系人', source: window.location.origin + "/api/v1/supplier/", labelField: 'contact_person', valueField: 'contact_person', unique: true },
-          'phone': { type: 'text', placeholder: '🔍 搜电话' },
-          'bank_name': { type: 'text', placeholder: '🔍 搜开户行' }
-        };
-
-        Object.keys(filterConfig).forEach(function (field) {
-          var $view = $('.layui-table-view[lay-id="supplier-table"]');
-          var $th = $view.find('th[data-field="' + field + '"]');
-          if ($th.length && !$th.find('.filter-input').length) {
-            var config = filterConfig[field];
-            var $filterDiv = $('<div class="filter-input-wrapper"></div>');
-            var listId = config.source ? 'list-' + field : null;
-            var listAttr = listId ? ' list="' + listId + '"' : '';
-
-            var $input = $('<input type="' + config.type + '" class="layui-input filter-input" placeholder="' + config.placeholder + '" data-field="' + field + '"' + listAttr + ' style="height: 28px; line-height:28px; font-size: 12px; padding: 0 8px;">');
-
-            if (filterParams[field]) $input.val(filterParams[field]);
-            $filterDiv.append($input);
-
-            // Autocomplete logic (Simplified)
-            if (config.source) {
-              var $datalist = $('<datalist id="' + listId + '"></datalist>');
-              $filterDiv.append($datalist);
-              $input.on('focus', function () {
-                var $thisDatalist = $('#' + listId);
-                if ($thisDatalist.children().length > 0) return;
-                $.ajax({
-                  url: config.source, type: 'GET', data: { limit: 100 },
-                  headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-                  success: function (res) {
-                    if (res.code === 0 && res.data) {
-                      res.data.forEach(item => {
-                        if (item[config.valueField])
-                          $thisDatalist.append('<option value="' + item[config.valueField] + '">');
-                      });
-                    }
-                  }
-                });
-              });
-            }
-            $th.append($filterDiv);
-          }
-        });
-      }, 100);
-    }
-
-    // 监听表格筛选输入
-    var filterTimer = null;
-    $(document).on('input', '.filter-input', function () {
-      var $input = $(this);
-      var field = $input.data('field');
-      var value = $input.val().trim();
-      if (value) filterParams[field] = value;
-      else delete filterParams[field];
-
-      clearTimeout(filterTimer);
-      filterTimer = setTimeout(function () {
-        reloadTable({ page: { curr: 1 } });
-      }, 4000);
-    });
-
-    // 工具栏事件
-    table.on('toolbar(supplier-table)', function (obj) {
-      if (obj.event === 'supplier-toolbar-add') {
-        layer.closeAll();
-        $("#supplier-form")[0].reset();
-        $("#supplier-form input[name='id']").val(0);
-        layer.open({
-          type: 1,
-          title: '<span style="color:#00e5ff; font-weight:bold;">新增供应商</span>',
-          shade: 0, // Disable shade entirely to prevent freezing
-          area: ["600px", "85%"],
-          zIndex: 19891014, // Force high z-index
-          content: $("#supplier-form"),
-          success: function (layero, index) {
-            // Force removal of any accidental shades and bring layer to front
-            $(".layui-layer-shade").remove();
-            layer.setTop(layero);
-            form.render('select'); // 重新渲染下拉框
-          }
-        });
-      }
-    });
-
-    // 行工具事件
-    table.on('tool(supplier-table)', function (obj) {
-      var data = obj.data;
-      if (obj.event === 'supplier-tool-edit') {
-        layer.closeAll();
-        form.val("supplier-form", data);
-        layer.open({
-          type: 1,
-          title: '<span style="color:#00e5ff; font-weight:bold;">编辑供应商</span>',
-          shade: 0, // Disable shade entirely
-          area: ["600px", "85%"],
-          zIndex: 19891014,
-          content: $("#supplier-form"),
-          success: function (layero, index) {
-            $(".layui-layer-shade").remove();
-            layer.setTop(layero);
-            form.render('select'); // 重新渲染下拉框
-          }
-        });
-      } else if (obj.event === 'supplier-tool-del') {
-        layer.confirm('<span style="color:#fff;">确定要删除这个供应商吗？</span>', {
-          icon: 3,
-          title: '警告',
-          skin: 'layui-layer-molv',
-          btn: ['确定', '取消']
-        }, function (confirmIndex) {
-          $.ajax({
-            url: window.location.origin + `/api/v1/supplier/${data.id}`,
-            type: "DELETE",
-            contentType: "application/json",
-            headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-            success: function (res) {
-              if (res.code === 0) {
-                layer.msg('删除成功', { icon: 1 });
-                reloadTable();
-              } else {
-                layer.msg(res.msg || '删除失败', { icon: 2 });
-              }
-              layer.close(confirmIndex);
-            }
-          });
-        });
-      } else if (obj.event === 'supplier-tool-portal') {
-        $.ajax({
-          url: window.location.origin + `/api/v1/supplier/${data.id}/token`,
-          type: "POST",
-          headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-          success: function (res) {
-            if (res.code === 0) {
-              var fullUrl = window.location.origin + res.data.url;
-              layer.open({
-                title: '<span style="color:#7000ff; font-weight:bold;">门户访问链接 (Portal Link)</span>',
-                skin: 'layui-layer-molv',
-                content: `<div style="padding:20px; color:#fff;">
-                    <p style="margin-bottom:10px; color:#94a3b8;">请复制以下链接发送给供应商：</p>
-                    <input type="text" class="layui-input" value="${fullUrl}" id="portal-link-input" style="color:#00e5ff; border-color:#00e5ff;">
-                  </div>`,
-                btn: ['复制', '关闭'],
-                yes: function (index) {
-                  var input = document.getElementById('portal-link-input');
-                  input.select();
-                  document.execCommand("copy");
-                  layer.msg('已复制到剪贴板', { icon: 1 });
-                }
-              });
-            } else {
-              layer.msg(res.msg || '获取失败', { icon: 2 });
-            }
-          }
-        });
-      }
-    });
-
-    // 单元格编辑
-    table.on('edit(supplier-table)', function (obj) {
-      var value = obj.value;
-      var data = obj.data;
-      var field = obj.field;
-      var updateData = {};
-      updateData[field] = value;
-      updateData.id = data.id;
-
+    // 加载字典
+    function loadDictionaries() {
       $.ajax({
-        url: window.location.origin + `/api/v1/supplier/${data.id}`,
-        type: "PUT",
-        contentType: "application/json",
-        data: JSON.stringify(updateData),
+        url: window.location.origin + "/api/v1/dictionary/detail/list",
+        data: { dic_id: 25, limit: 100 },
         headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
         success: function (res) {
-          if (res.code === 0) layer.msg('更新成功', { icon: 1, time: 1000 });
-          else { layer.msg(res.msg, { icon: 2 }); reloadTable(); }
+          if (res.code === 0 && res.data) {
+            var optionsHtml = '<option value="">请选择供应商类型</option>';
+            res.data.forEach(function (item) {
+              supplierTypeMap[item.code] = item.value;
+              optionsHtml += '<option value="' + item.code + '">' + item.value + '</option>';
+            });
+            $('select[name="type_id"]').html(optionsHtml);
+          }
         }
       });
-    });
+    }
 
-    // 表单提交
-    form.on("submit(supplier-form-btn)", function (data) {
-      var field = data.field;
-      var id = field.id;
-      var type = (id == 0 || !id) ? "POST" : "PUT";
-      var url = (id == 0 || !id) ? "/api/v1/supplier/" : `/api/v1/supplier/${id}`;
-      if (field.id == 0) delete field.id;
-      if (field.account_number) field.account_number = parseInt(field.account_number) || field.account_number;
+    // 加载供应商数据
+    function loadSuppliers() {
+      // 显示加载中
+      // $('#supplier-grid').html('<div class="loading-container">...</div>');
 
       $.ajax({
-        url: url,
-        type: type,
-        contentType: "application/json",
-        data: JSON.stringify(field),
+        url: window.location.origin + "/api/v1/supplier/",
+        type: "GET",
+        data: { limit: 9999 }, // 获取所有，前端筛选
         headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
         success: function (res) {
           if (res.code === 0) {
-            layer.msg(res.msg, { icon: 1 });
-            layer.closeAll();
-            reloadTable();
+            allSuppliers = res.data.sort((a, b) => b.id - a.id); // ID 倒序
+            renderCards();
           } else {
-            layer.msg(res.msg || '操作失败', { icon: 2 });
+            layer.msg("数据加载失败: " + res.msg, { icon: 2 });
+          }
+        },
+        error: function () {
+          layer.msg("网络请求失败", { icon: 2 });
+        }
+      });
+    }
+
+    // 渲染卡片
+    function renderCards() {
+      var filtered = allSuppliers.filter(s => {
+        var matchName = !searchParams.name || (s.name && s.name.toLowerCase().includes(searchParams.name.toLowerCase()));
+        var matchContact = !searchParams.contact || (s.contact_person && s.contact_person.toLowerCase().includes(searchParams.contact.toLowerCase()));
+        return matchName && matchContact;
+      });
+
+      var $grid = $('#supplier-grid');
+      $grid.empty();
+
+      if (filtered.length === 0) {
+        $grid.html('<div class="loading-container" style="color: var(--text-secondary);">暂无数据</div>');
+        return;
+      }
+
+      filtered.forEach(s => {
+        var typeName = supplierTypeMap[s.type_id] || '未知类型';
+        var cardHtml = `
+          <div class="supplier-card">
+            <div class="card-header">
+              <div style="flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+                <!-- Row 1: Contact Person + Company Name -->
+                <div style="display: flex; align-items: baseline; gap: 8px; min-width: 0;">
+                  <span style="font-size: 18px; font-weight: bold; color: #fff; letter-spacing: 0.5px; white-space: nowrap;">${s.contact_person || '未命名'}</span>
+                  <span style="font-size: 16px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${s.name || ''}">${s.name || '未命名供应商'}</span>
+                </div>
+                <!-- Row 2: Type Badge + ID -->
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span class="card-type-badge">${typeName}</span>
+                  <span style="font-family: 'JetBrains Mono'; opacity: 0.5; font-size: 12px;">#${s.id}</span>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <!-- Contact Person removed from body -->
+              <div class="info-row">
+                <i class="layui-icon layui-icon-cellphone"></i>
+                <span>电话:</span>
+                <span class="info-value">${s.phone || '-'}</span>
+              </div>
+              <div class="info-row">
+                <i class="layui-icon layui-icon-list"></i>
+                <span>银行:</span>
+                <span class="info-value">${s.bank_name || '-'}</span>
+              </div>
+               <div class="info-row">
+                <i class="layui-icon layui-icon-list"></i>
+                <span>账户:</span>
+                <span class="info-value">${s.account_number || '-'}</span>
+              </div>
+            </div>
+            <div class="card-actions">
+              <button class="action-btn portal" title="门户链接" onclick="openPortal(${s.id})">
+                <i class="layui-icon layui-icon-link"></i>
+              </button>
+              <button class="action-btn edit" title="编辑" onclick="editSupplier(${s.id})">
+                <i class="layui-icon layui-icon-edit"></i>
+              </button>
+              <button class="action-btn delete" title="删除" onclick="deleteSupplier(${s.id}, '${s.name}')">
+                <i class="layui-icon layui-icon-delete"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        $grid.append(cardHtml);
+      });
+    }
+
+    // 事件绑定
+    function bindEvents() {
+      // 搜索防抖
+      var timer;
+      $('#search-name, #search-contact').on('input', function () {
+        var nameVal = $('#search-name').val().trim();
+        var contactVal = $('#search-contact').val().trim();
+        searchParams.name = nameVal;
+        searchParams.contact = contactVal;
+
+        clearTimeout(timer);
+        timer = setTimeout(renderCards, 300);
+      });
+
+      // 新增按钮
+      $('#btn-add').on('click', function () {
+        openEditModal();
+      });
+
+      // 表单提交
+      form.on("submit(supplier-form-btn)", function (data) {
+        var field = data.field;
+        var id = field.id;
+        var type = (id == 0 || !id) ? "POST" : "PUT";
+        var url = (id == 0 || !id) ? "/api/v1/supplier/" : `/api/v1/supplier/${id}`;
+
+        if (field.id == 0) delete field.id;
+
+        $.ajax({
+          url: url,
+          type: type,
+          contentType: "application/json",
+          data: JSON.stringify(field),
+          headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+          success: function (res) {
+            console.log("供应商更新响应:", res); // 调试日志
+            if (res.code === 0) {
+              layer.msg(res.msg, { icon: 1 });
+              layer.closeAll();
+              loadSuppliers(); // 重新加载数据
+            } else if (res.code === 1001) {
+              // 需要确认订单更新
+              console.log("检测到关联订单，准备弹窗:", res.data); // 调试日志
+              showOrderConfirmDialog(res.data, field, id);
+            } else {
+              layer.msg(res.msg || '操作失败', { icon: 2 });
+            }
+          },
+          error: function (xhr, status, error) {
+            console.error("请求失败:", xhr, status, error); // 调试日志
+            layer.msg('网络请求失败', { icon: 2 });
+          }
+        });
+        return false;
+      });
+    }
+
+    // 显示订单确认对话框
+    function showOrderConfirmDialog(data, supplierData, supplierId) {
+      var orders = data.related_orders;
+      var oldContact = data.old_contact_person;
+      var newContact = data.new_contact_person;
+
+      // 构建订单列表HTML
+      var orderListHtml = '<div id="order-confirm-container" style="max-height: 400px; overflow-y: auto; padding: 10px;">';
+      orderListHtml += `<p style="color: #fff; margin-bottom: 15px;">检测到 <b style="color: #00e5ff;">${orders.length}</b> 个订单使用联系人 "<b style="color: #ff4757;">${oldContact}</b>"</p>`;
+      orderListHtml += `<p style="color: var(--text-secondary); margin-bottom: 20px;">是否将这些订单的联系人同步更新为 "<b style="color: #00e5ff;">${newContact}</b>"？</p>`;
+
+      orderListHtml += '<div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px;">';
+      orders.forEach(function (order, index) {
+        orderListHtml += `
+          <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-dim); border-radius: 6px; padding: 12px; margin-bottom: 10px; display: flex; gap: 12px;">
+            <div style="flex-shrink: 0; padding-top: 2px;">
+              <input type="checkbox" class="order-checkbox" data-order-id="${order.id}" id="order-check-${index}" style="width: 18px; height: 18px; cursor: pointer;">
+            </div>
+            <div style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label for="order-check-${index}" style="color: #00e5ff; font-family: 'JetBrains Mono'; font-weight: bold; cursor: pointer;">${order.order_number}</label>
+                <span style="color: #ffa502; font-family: 'JetBrains Mono';">¥${order.order_amount.toFixed(2)}</span>
+              </div>
+              <div style="color: var(--text-secondary); font-size: 12px;">
+                <div>材料: ${order.material_name}</div>
+                <div>项目: ${order.project_name}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      orderListHtml += '</div>';
+      orderListHtml += '<p style="color: #ff4757; margin-top: 15px; font-size: 12px;"><i class="layui-icon layui-icon-tips"></i> 必须勾选所有订单才能执行更新操作</p>';
+      orderListHtml += '</div>';
+
+      var confirmIndex = layer.confirm(orderListHtml, {
+        title: '<span style="color:#00e5ff; font-weight:bold;"><i class="layui-icon layui-icon-tips"></i> 联系人变更确认</span>',
+        skin: 'layui-layer-molv',
+        area: ['650px', 'auto'],
+        btn: ['<span id="confirm-btn-text">确认并更新所有订单 (0/' + orders.length + ')</span>', '取消'],
+        btnAlign: 'c',
+        yes: function (index) {
+          // 检查是否所有订单都已勾选
+          var checkedCount = $('#order-confirm-container .order-checkbox:checked').length;
+          if (checkedCount !== orders.length) {
+            layer.msg('请勾选所有订单后再确认', { icon: 0 });
+            return false;
+          }
+
+          // 用户确认，调用批量更新接口
+          var orderIds = orders.map(o => o.id);
+          batchUpdateSupplierAndOrders(supplierId, supplierData, orderIds, index);
+        },
+        success: function (layero, index) {
+          // 对话框打开后，绑定复选框变化事件
+          $('#order-confirm-container .order-checkbox').on('change', function () {
+            var checkedCount = $('#order-confirm-container .order-checkbox:checked').length;
+            var totalCount = orders.length;
+
+            // 更新按钮文本
+            $('#confirm-btn-text').text(`确认并更新所有订单 (${checkedCount}/${totalCount})`);
+
+            // 更新按钮状态
+            var $confirmBtn = $(layero).find('.layui-layer-btn0');
+            if (checkedCount === totalCount) {
+              $confirmBtn.removeClass('layui-btn-disabled').css({
+                'opacity': '1',
+                'cursor': 'pointer'
+              });
+            } else {
+              $confirmBtn.addClass('layui-btn-disabled').css({
+                'opacity': '0.6',
+                'cursor': 'not-allowed'
+              });
+            }
+          });
+
+          // 初始化按钮为禁用状态
+          $(layero).find('.layui-layer-btn0').addClass('layui-btn-disabled').css({
+            'opacity': '0.6',
+            'cursor': 'not-allowed'
+          });
+        }
+      });
+    }
+
+    // 批量更新供应商和订单
+    function batchUpdateSupplierAndOrders(supplierId, supplierData, orderIds, layerIndex) {
+      $.ajax({
+        url: window.location.origin + `/api/v1/supplier/${supplierId}/update-with-orders`,
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({
+          supplier_data: supplierData,
+          confirmed_order_ids: orderIds
+        }),
+        headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+        success: function (res) {
+          console.log("批量更新响应:", res); // 调试日志
+          if (res.code === 0) {
+            layer.msg(res.msg, { icon: 1 });
+            layer.close(layerIndex);
+            layer.closeAll();
+            loadSuppliers();
+          } else {
+            layer.msg(res.msg || '批量更新失败', { icon: 2 });
+          }
+        },
+        error: function (xhr, status, error) {
+          console.error("批量更新请求失败:", xhr, status, error); // 调试日志
+          layer.msg('网络请求失败', { icon: 2 });
+        }
+      });
+    }
+
+    // 暴露给全局的函数 (以便 onclick 调用)
+    window.openPortal = function (id) {
+      $.ajax({
+        url: window.location.origin + `/api/v1/supplier/${id}/token`,
+        type: "POST",
+        headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+        success: function (res) {
+          if (res.code === 0) {
+            var fullUrl = window.location.origin + res.data.url;
+            layer.open({
+              title: '<span style="color:#7000ff; font-weight:bold;">门户访问链接</span>',
+              skin: 'layui-layer-molv',
+              content: `<div style="padding:20px; color:#fff;">
+                    <p style="margin-bottom:10px; color:#94a3b8;">请复制以下链接发送给供应商：</p>
+                    <input type="text" class="layui-input" value="${fullUrl}" id="portal-link-input" style="color:#00e5ff; border-color:#00e5ff;">
+                  </div>`,
+              btn: ['复制', '关闭'],
+              yes: function (index) {
+                var input = document.getElementById('portal-link-input');
+                input.select();
+                document.execCommand("copy");
+                layer.msg('已复制到剪贴板', { icon: 1 });
+              }
+            });
+          } else {
+            layer.msg(res.msg || '获取失败', { icon: 2 });
           }
         }
       });
-      return false;
-    });
+    };
+
+    window.editSupplier = function (id) {
+      var data = allSuppliers.find(s => s.id == id);
+      if (data) {
+        openEditModal(data);
+      }
+    };
+
+    window.deleteSupplier = function (id, name) {
+      layer.confirm(`<span style="color:#fff;">确定要删除供应商 <b style="color:#ff4757">${name}</b> 吗？</span>`, {
+        icon: 3,
+        title: '警告',
+        skin: 'layui-layer-molv',
+        btn: ['确定', '取消']
+      }, function (confirmIndex) {
+        $.ajax({
+          url: window.location.origin + `/api/v1/supplier/${id}`,
+          type: "DELETE",
+          headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+          success: function (res) {
+            if (res.code === 0) {
+              layer.msg('删除成功', { icon: 1 });
+              loadSuppliers();
+            } else {
+              layer.msg(res.msg || '删除失败', { icon: 2 });
+            }
+            layer.close(confirmIndex);
+          }
+        });
+      });
+    };
+
+    function openEditModal(data) {
+      $("#supplier-form")[0].reset();
+      if (data) {
+        form.val("supplier-form", data);
+      } else {
+        $("#supplier-form input[name='id']").val(0);
+      }
+
+      layer.open({
+        type: 1,
+        title: '<span style="color:#00e5ff; font-weight:bold;">' + (data ? '编辑供应商' : '新增供应商') + '</span>',
+        shade: 0,
+        area: ["600px", "85%"],
+        zIndex: 19891014,
+        content: $("#supplier-form"),
+        success: function (layero, index) {
+          $(".layui-layer-shade").remove();
+          layer.setTop(layero);
+          form.render('select');
+        }
+      });
+    }
 
   });
 </script>

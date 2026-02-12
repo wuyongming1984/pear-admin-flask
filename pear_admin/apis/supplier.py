@@ -124,6 +124,46 @@ def change_supplier(sid=None):
     if not supplier_obj:
         return {"code": -1, "msg": "供应商不存在"}
     
+    # 检测联系人是否变更
+    old_contact_person = supplier_obj.contact_person
+    new_contact_person = data.get("contact_person")
+    
+    print(f"[DEBUG] 旧联系人: {old_contact_person}, 新联系人: {new_contact_person}")  # 调试日志
+    
+    if new_contact_person and new_contact_person != old_contact_person:
+        # 查询所有使用旧联系人的订单
+        from pear_admin.orms import OrderORM
+        related_orders = OrderORM.query.filter_by(
+            supplier_contact_person=old_contact_person
+        ).all()
+        
+        print(f"[DEBUG] 找到 {len(related_orders)} 个关联订单")  # 调试日志
+        
+        if related_orders:
+            # 返回需要确认的订单列表
+            order_list = []
+            for order in related_orders:
+                order_list.append({
+                    "id": order.id,
+                    "order_number": order.order_number,
+                    "material_name": order.material_name,
+                    "order_amount": float(order.order_amount) if order.order_amount else 0,
+                    "project_name": order.project.project_name if order.project else "未关联项目"
+                })
+            
+            response_data = {
+                "code": 1001,
+                "msg": f"检测到 {len(related_orders)} 个订单使用联系人 '{old_contact_person}'，需要确认是否同步更新",
+                "data": {
+                    "old_contact_person": old_contact_person,
+                    "new_contact_person": new_contact_person,
+                    "related_orders": order_list
+                }
+            }
+            print(f"[DEBUG] 返回响应: {response_data}")  # 调试日志
+            return response_data
+    
+    # 没有联系人变更或没有关联订单，直接更新
     for key, value in data.items():
         if key == "id":
             continue
@@ -133,6 +173,75 @@ def change_supplier(sid=None):
     
     supplier_obj.save()
     return {"code": 0, "msg": "修改供应商信息成功"}
+
+
+
+@supplier_api.post("/<int:sid>/update-with-orders")
+@jwt_required()
+def update_supplier_with_orders(sid):
+    """批量更新供应商和关联订单的联系人"""
+    data = request.get_json()
+    supplier_data = data.get("supplier_data")
+    confirmed_order_ids = data.get("confirmed_order_ids", [])
+    
+    if not supplier_data:
+        return {"code": -1, "msg": "缺少供应商数据"}
+    
+    supplier_obj = SupplierORM.query.get(sid)
+    if not supplier_obj:
+        return {"code": -1, "msg": "供应商不存在"}
+    
+    # 获取旧联系人
+    old_contact_person = supplier_obj.contact_person
+    new_contact_person = supplier_data.get("contact_person")
+    
+    if not new_contact_person or new_contact_person == old_contact_person:
+        return {"code": -1, "msg": "联系人未变更"}
+    
+    # 查询所有使用旧联系人的订单
+    from pear_admin.orms import OrderORM
+    related_orders = OrderORM.query.filter_by(
+        supplier_contact_person=old_contact_person
+    ).all()
+    
+    # 验证确认的订单ID列表是否完整
+    related_order_ids = {order.id for order in related_orders}
+    confirmed_order_ids_set = set(confirmed_order_ids)
+    
+    if related_order_ids != confirmed_order_ids_set:
+        missing_ids = related_order_ids - confirmed_order_ids_set
+        return {
+            "code": -1, 
+            "msg": f"必须确认所有关联订单才能修改。缺少订单ID: {list(missing_ids)}"
+        }
+    
+    # 开始事务性更新
+    try:
+        # 更新供应商信息
+        for key, value in supplier_data.items():
+            if key == "id":
+                continue
+            if key == "create_at" and value:
+                value = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+            setattr(supplier_obj, key, value)
+        
+        # 批量更新订单的联系人
+        for order in related_orders:
+            order.supplier_contact_person = new_contact_person
+        
+        db.session.commit()
+        
+        result = {
+            "code": 0, 
+            "msg": f"成功更新供应商和 {len(related_orders)} 个订单的联系人"
+        }
+        print(f"[DEBUG] 批量更新成功，返回: {result}")  # 调试日志
+        return result
+    except Exception as e:
+        db.session.rollback()
+        error_result = {"code": -1, "msg": f"更新失败: {str(e)}"}
+        print(f"[DEBUG] 批量更新失败，返回: {error_result}")  # 调试日志
+        return error_result
 
 
 @supplier_api.delete("/<int:sid>")

@@ -558,111 +558,166 @@
         return $.ajax($.extend({}, defaults, options));
       }
 
-      // 加载基础数据（字典、下拉选项）
-      function initData() {
-        // 1. 加载付款状态字典
-        makeRequest({
-          url: API.DICT,
-          type: 'GET',
-          data: { dic_id: 28, limit: 100 }, // fkzt
-          success: function (res) {
-            if (res.code === 0 && res.data) {
-              var html = '<option value="">请选择付款状态</option>';
-              res.data.forEach(function (item) {
-                html += '<option value="' + item.code + '">' + item.value + '</option>';
-              });
-              $('#payment-status-select').html(html);
-              form.render('select');
-            }
-          }
-        });
+      // 加载基础数据（改为返回 Promise 模式）
+      function fetchDicts() {
+        return makeRequest({ url: API.DICT, type: 'GET', data: { dic_id: 28, limit: 100 } });
+      }
 
-        // 2. 加载付款单位
-        makeRequest({
-          url: API.PAYER,
-          type: 'GET',
-          data: { limit: 9999 },
-          success: function (res) {
-            if (res.code === 0 && res.data) {
-              var html = '<option value="">请选择付款单位</option>';
-              res.data.forEach(function (item) {
-                html += '<option value="' + item.id + '">' + item.name + '</option>';
-              });
-              $('#payer-supplier-select').html(html);
-              form.render('select');
-            }
-          }
-        });
+      function fetchPayers() {
+        return makeRequest({ url: API.PAYER, type: 'GET', data: { limit: 9999 } });
+      }
 
-        // 3. 加载收款单位 (供应商)
-        makeRequest({
-          url: API.SUPPLIER,
-          type: 'GET',
-          data: { limit: 9999 },
-          success: function (res) {
-            if (res.code === 0 && res.data) {
-              var html = '<option value="">请选择收款单位</option>';
-              supplierDataMap = {};
-              res.data.forEach(function (item) {
-                html += '<option value="' + item.id + '">' + item.name + '</option>';
-                supplierDataMap[item.id] = item;
-              });
-              $('#payee-supplier-select').html(html);
-              form.render('select');
+      function fetchSuppliers() {
+        return makeRequest({ url: API.SUPPLIER, type: 'GET', data: { limit: 9999 } });
+      }
 
-              // 数据加载完成后，如果还没加载具体付款单，尝试加载
-              if (currentPaymentId) {
-                loadPaymentDetails(currentPaymentId);
-              } else if (initialOrderId) {
-                // 如果是新建但有order_id，先加载orders下拉，再选中
-                loadOrderList(function () {
-                  $('#order-select').val(initialOrderId);
-                  loadOrderInfo(initialOrderId);
-                  form.render('select');
-                });
-                generatePaymentNo();
-              } else {
-                loadOrderList();
-                generatePaymentNo();
-              }
-            }
+      function fetchOrders() {
+        return makeRequest({ url: API.ORDER, type: 'GET', data: { limit: 9999 } });
+      }
+
+      function fetchMaterialDict() {
+        return makeRequest({ url: API.DICT, type: 'GET', data: { dic_id: 35, limit: 9999 } });
+      }
+
+      // 主初始化函数：并行启动所有请求
+      function initAllData() {
+        var loading = layer.load(1);
+        var promises = [
+          fetchDicts(),
+          fetchPayers(),
+          fetchSuppliers(),
+          fetchOrders(),
+          fetchMaterialDict()
+        ];
+
+        // 如果是编辑模式，同时加载详情
+        if (currentPaymentId) {
+          promises.push(makeRequest({ url: API.PAY + currentPaymentId, type: 'GET' }));
+        }
+
+        Promise.all(promises).then(function (results) {
+          layer.close(loading);
+          var dictRes = results[0];
+          var payerRes = results[1];
+          var supplierRes = results[2];
+          var orderRes = results[3];
+          var matDictRes = results[4];
+          var detailRes = currentPaymentId ? results[5] : null;
+
+          // 1. 处理支付状态
+          if (dictRes.code === 0 && dictRes.data) {
+            var html = '<option value="">请选择付款状态</option>';
+            dictRes.data.forEach(function (item) {
+              html += '<option value="' + item.code + '">' + item.value + '</option>';
+            });
+            $('#payment-status-select').html(html);
           }
+
+          // 2. 处理付款单位
+          if (payerRes.code === 0 && payerRes.data) {
+            var html = '<option value="">请选择付款单位</option>';
+            payerRes.data.forEach(function (item) {
+              html += '<option value="' + item.id + '">' + item.name + '</option>';
+            });
+            $('#payer-supplier-select').html(html);
+          }
+
+          // 3. 处理收款单位 (供应商)
+          if (supplierRes.code === 0 && supplierRes.data) {
+            var html = '<option value="">请选择收款单位</option>';
+            supplierDataMap = {};
+            supplierRes.data.forEach(function (item) {
+              html += '<option value="' + item.id + '">' + item.name + '</option>';
+              supplierDataMap[item.id] = item;
+            });
+            $('#payee-supplier-select').html(html);
+          }
+
+          // 4. 处理订单列表
+          if (orderRes.code === 0 && orderRes.data) {
+            var html = '<option value="">请选择订单</option>';
+            orderRes.data.forEach(function (item) {
+              html += '<option value="' + item.id + '">' + item.order_number + (item.project_name ? ' - ' + item.project_name : '') + '</option>';
+            });
+            $('#order-select').html(html);
+          }
+
+          // 5. 处理材料字典
+          if (matDictRes.code === 0 && matDictRes.data) {
+            window.materialNamesMap = {};
+            matDictRes.data.forEach(function (m) {
+              window.materialNamesMap[m.code] = m.value;
+              window.materialNamesMap[m.value] = m.value;
+            });
+          }
+
+          // 渲染 Select
+          form.render('select');
+
+          // 6. 执行详情填充逻辑
+          if (detailRes && detailRes.code === 0 && detailRes.data) {
+            fillFormWithData(detailRes.data);
+          } else if (initialOrderId) {
+            // 新建模式且有初始订单ID
+            $('#order-select').val(initialOrderId);
+            form.render('select');
+            loadOrderInfo(initialOrderId);
+            generatePaymentNo();
+          } else {
+            generatePaymentNo();
+          }
+
+        }).catch(function (err) {
+          layer.close(loading);
+          console.error("数据初始化失败:", err);
+          layer.msg("数据加载过程中出现错误", { icon: 2 });
         });
       }
 
-      // 加载订单列表
+      // 将原来的填充逻辑提取出来
+      function fillFormWithData(data) {
+        // 填充表单基本字段
+        form.val('pay-info-form', {
+          "id": data.id,
+          "pay_number": data.pay_number,
+          "payer_supplier_id": data.payer_supplier_id,
+          "payee_supplier_id": data.payee_supplier_id,
+          "current_payment_amount": data.current_payment_amount,
+          "invoice_amount": data.invoice_amount,
+          "payment_status": data.payment_status,
+          "handler": data.handler,
+          "payment_purpose": data.payment_purpose,
+          "order_id": data.order_id
+        });
+
+        // 显示打印按钮
+        $('#print-btn').show();
+        currentPaymentNumber = data.pay_number;
+
+        if (data.order_id) {
+          savedOrderId = data.order_id;
+          // 注意：此处 loadOrderInfo 内部不再需要重复搜索整个供应商列表，我们已经在 supplierDataMap 中有全量数据
+          loadOrderInfo(data.order_id, data.payee_supplier_id);
+        } else if (data.payee_supplier_id) {
+          updateSupplierInfo(data.payee_supplier_id);
+        }
+
+        // 附件与发票列表
+        if (data.attachments_list) {
+          attachmentList = data.attachments_list || [];
+          renderAttachmentList();
+        }
+        if (data.invoices_list) {
+          selectedInvoices = data.invoices_list || [];
+          renderInvoiceList();
+        }
+
+        form.render('select');
+      }
+
+      // loadOrderList 现已整合到 initAllData 中，仅保留空函数兼容旧逻辑或移除
       function loadOrderList(callback) {
-        makeRequest({
-          url: API.ORDER,
-          type: 'GET',
-          data: { limit: 9999 },
-          success: function (res) {
-            if (res.code === 0 && res.data) {
-              var html = '<option value="">请选择订单</option>';
-              res.data.forEach(function (item) {
-                html += '<option value="' + item.id + '">' + item.order_number + (item.project_name ? ' - ' + item.project_name : '') + '</option>';
-              });
-              $('#order-select').html(html);
-              form.render('select');
-              if (callback) callback();
-            }
-          }
-        });
-        // 4. 加载材料名称映射
-        makeRequest({
-          url: API.DICT,
-          type: 'GET',
-          data: { dic_id: 35, limit: 9999 },
-          success: function (res) {
-            if (res.code === 0 && res.data) {
-              window.materialNamesMap = {};
-              res.data.forEach(function (m) {
-                window.materialNamesMap[m.code] = m.value;
-                window.materialNamesMap[m.value] = m.value;
-              });
-            }
-          }
-        });
+        if (callback) callback();
       }
 
       // 加载单个订单详情
@@ -690,46 +745,56 @@
               $('input[name="supplier_contact_person"]').val(d.supplier_contact_person || '');
               $('input[name="order_amount"]').val(d.order_amount || '');
 
-              // 核心修改：根据供应商联系人从数据库获取相关供应商列表
+              // 核心修改优化：不再盲目重新请求全量联系人，优先查找 supplierDataMap 寻找当前联系人的关联供应商
               if (d.supplier_contact_person) {
-                // 调用API获取该联系人关联的所有供应商
-                makeRequest({
-                  url: API.SUPPLIER,
-                  type: 'GET',
-                  data: {
-                    contact_person: d.supplier_contact_person,
-                    limit: 9999
-                  },
-                  success: function (supplierRes) {
-                    if (supplierRes.code === 0 && supplierRes.data && supplierRes.data.length > 0) {
-                      var html = '<option value="">请选择收款单位</option>';
-                      supplierRes.data.forEach(function (supplier) {
-                        html += '<option value="' + supplier.id + '">' + supplier.name + '</option>';
-                        // 存储供应商数据用于自动填充
-                        supplierDataMap[supplier.id] = supplier;
-                      });
-                      $('#payee-supplier-select').html(html);
-
-                      // 优先使用已保存的收款单位ID（编辑时），否则使用订单关联的供应商ID（新建时）
-                      var payeeToSelect = savedPayeeId || d.supplier_id;
-                      if (payeeToSelect) {
-                        $('#payee-supplier-select').val(payeeToSelect);
-                        updateSupplierInfo(payeeToSelect);
-                      }
-                      form.render('select');
-                    } else {
-                      // 没有找到匹配的供应商
-                      $('#payee-supplier-select').html('<option value="">未找到该联系人关联的供应商</option>');
-                      updateSupplierInfo(null);
-                      form.render('select');
-                    }
-                  },
-                  error: function () {
-                    $('#payee-supplier-select').html('<option value="">加载供应商失败</option>');
-                    form.render('select');
+                // 筛选出所有与当前联系人同名的供应商
+                var relatedSuppliers = [];
+                for (var sid in supplierDataMap) {
+                  if (supplierDataMap[sid].contact_person === d.supplier_contact_person) {
+                    relatedSuppliers.push(supplierDataMap[sid]);
                   }
-                });
-              } else {
+                }
+
+                if (relatedSuppliers.length > 0) {
+                  var html = '<option value="">请选择收款单位</option>';
+                  relatedSuppliers.forEach(function (supplier) {
+                    html += '<option value="' + supplier.id + '">' + supplier.name + '</option>';
+                  });
+                  $('#payee-supplier-select').html(html);
+
+                  // 优先使用已保存的收款单位ID（编辑时），否则使用订单关联的供应商ID（新建时）
+                  var payeeToSelect = savedPayeeId || d.supplier_id;
+                  if (payeeToSelect) {
+                    $('#payee-supplier-select').val(payeeToSelect);
+                    updateSupplierInfo(payeeToSelect);
+                  }
+                  form.render('select');
+                } else {
+                  // 如果缓存中没找到（可能新联系人尚未在全量预加载中，或者缓存未就绪），则进行兜底请求
+                  makeRequest({
+                    url: API.SUPPLIER,
+                    type: 'GET',
+                    data: { contact_person: d.supplier_contact_person, limit: 9999 },
+                    success: function (supplierRes) {
+                      if (supplierRes.code === 0 && supplierRes.data && supplierRes.data.length > 0) {
+                        var html = '<option value="">请选择收款单位</option>';
+                        supplierRes.data.forEach(function (supplier) {
+                          html += '<option value="' + supplier.id + '">' + supplier.name + '</option>';
+                          supplierDataMap[supplier.id] = supplier;
+                        });
+                        $('#payee-supplier-select').html(html);
+                        var payeeToSelect = savedPayeeId || d.supplier_id;
+                        if (payeeToSelect) {
+                          $('#payee-supplier-select').val(payeeToSelect);
+                          updateSupplierInfo(payeeToSelect);
+                        }
+                        form.render('select');
+                      }
+                    }
+                  });
+                }
+              }
+              else {
                 $('#payee-supplier-select').html('<option value="">该订单未设置供应商联系人</option>');
                 updateSupplierInfo(null);
                 form.render('select');
@@ -747,76 +812,8 @@
         $('input[name="order_amount"]').val('');
       }
 
-      // 加载付款单详情
-      function loadPaymentDetails(id) {
-        var loading = layer.load(1);
-        makeRequest({
-          url: API.PAY + id,
-          type: 'GET',
-          success: function (res) {
-            layer.close(loading);
-            if (res.code === 0 && res.data) {
-              var data = res.data;
-
-              // 填充表单
-              form.val('pay-info-form', {
-                "id": data.id,
-                "pay_number": data.pay_number,
-                "payer_supplier_id": data.payer_supplier_id,
-                "payee_supplier_id": data.payee_supplier_id,
-                "current_payment_amount": data.current_payment_amount,
-                "invoice_amount": data.invoice_amount,
-                "payment_status": data.payment_status,
-                "handler": data.handler,
-                "payment_purpose": data.payment_purpose,
-                "order_id": data.order_id
-              });
-
-              // 显示打印按钮
-              $('#print-btn').show();
-
-              // 保存当前付款单号用于附件编码
-              currentPaymentNumber = data.pay_number;
-
-              // 保存当前付款单的收款单位ID，用于后续选中
-              var savedPayeeId = data.payee_supplier_id;
-
-              // 手动设置一些没有自动匹配上的或者需要额外逻辑的
-              if (data.order_id) {
-                savedOrderId = data.order_id; // Capture for fallback
-                // 加载订单列表并选中当前订单
-                loadOrderList(function () {
-                  $('#order-select').val(data.order_id);
-                  form.render('select');
-                  // 加载订单详情，传入已保存的收款单位ID
-                  loadOrderInfo(data.order_id, savedPayeeId);
-                });
-              } else {
-                loadOrderList();
-                // 如果没有订单，直接设置收款单位
-                if (savedPayeeId && supplierDataMap[savedPayeeId]) {
-                  updateSupplierInfo(savedPayeeId);
-                }
-              }
-
-              // 加载附件列表
-              if (data.attachments_list) {
-                attachmentList = data.attachments_list || [];
-                renderAttachmentList();
-              }
-
-              // 加载关联发票已保存数据
-              if (data.invoices_list) {
-                selectedInvoices = data.invoices_list || [];
-                renderInvoiceList();
-              }
-            }
-          },
-          error: function () {
-            layer.close(loading);
-          }
-        });
-      }
+      // loadPaymentDetails 现已整合到 initAllData/fillFormWithData 中，保留空函数兼容或移除
+      function loadPaymentDetails(id) { }
 
       function updateSupplierInfo(supplierId) {
         var s = supplierDataMap[supplierId];
@@ -1103,7 +1100,7 @@
       $('.layui-form').attr('lay-filter', 'pay-info-form');
 
       // 启动初始化
-      initData();
+      initAllData();
 
     });
   </script>

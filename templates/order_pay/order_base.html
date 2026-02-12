@@ -822,7 +822,12 @@
         headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
         data: params,
         success: function (res) {
+          console.log("[DEBUG] 订单API响应内容:", res);
           if (res.code === 0) {
+            // 检查字典加载状态
+            console.log("[DEBUG] 当前材料名称映射表 (materialNamesMap):", materialNamesMap);
+            console.log("[DEBUG] 当前字段过滤配置:", localStorage.getItem('order_field_filter'));
+
             renderOrderCards(res.data);
             updateHeaderStatistics(res.data);
             // 触发侧边栏更新 (仅当没有选定具体联系人时更新，避免列表收缩)
@@ -830,8 +835,12 @@
               updateContactSidebarList(res.data);
             }
           } else {
+            console.error("[DEBUG] 订单加载失败响应:", res);
             $('#order-card-container').html('<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #ff5722;">加载失败: ' + res.msg + '</div>');
           }
+        },
+        error: function (xhr, status, error) {
+          console.error("[DEBUG] 订单加载网络错误:", status, error, xhr.responseText);
         }
       });
     }

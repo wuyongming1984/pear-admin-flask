@@ -296,8 +296,9 @@
     <div class="layui-form-item">
       <label class="layui-form-label">供应商类型</label>
       <div class="layui-input-block">
-        <input type="number" name="type_id" placeholder="请输入供应商类型" lay-verify="required" autocomplete="off"
-          class="layui-input" />
+        <select name="type_id" lay-verify="required" lay-search lay-filter="type_id">
+          <option value="">请选择供应商类型</option>
+        </select>
       </div>
     </div>
     <div class="layui-form-item">
@@ -389,6 +390,36 @@
     // 存储筛选条件
     var filterParams = {};
 
+    // 字典数据缓存
+    var supplierTypeMap = {};
+
+    // 同步加载供应商类型字典 (ID=25)
+    $.ajax({
+      url: window.location.origin + "/api/v1/dictionary/detail/list",
+      data: { dic_id: 25, limit: 100 },
+      headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+      async: false,
+      success: function (res) {
+        if (res.code === 0 && res.data) {
+          var optionsHtml = '<option value="">请选择供应商类型</option>';
+          res.data.forEach(function (item) {
+            supplierTypeMap[item.code] = item.value;
+            optionsHtml += '<option value="' + item.code + '">' + item.value + '</option>';
+          });
+          // 填充下拉框
+          $('select[name="type_id"]').html(optionsHtml);
+          // form.render('select') 将在打开弹窗时或后续逻辑中调用，这里先确保 DOM 存在
+        }
+      }
+    });
+
+    // 供应商类型渲染模板
+    function renderSupplierType(d) {
+      if (!d.type_id) return '<span style="color: #666;">-</span>';
+      var val = supplierTypeMap[d.type_id];
+      return val ? '<span class="layui-badge layui-bg-blue" style="background: rgba(0, 229, 255, 0.15) !important; color: #00e5ff !important; border: 1px solid rgba(0, 229, 255, 0.3);">' + val + '</span>' : d.type_id;
+    }
+
     // 渲染表格
     table.render({
       elem: "#supplier-table",
@@ -409,6 +440,7 @@
       cols: [
         [
           { field: "id", title: "ID", sort: true, width: 80, align: 'center' },
+          { field: "type_id", title: "供应商类型", templet: renderSupplierType, width: 120, align: 'center' },
           { field: "name", title: "供应商名称", edit: 'text', minWidth: 200 },
           { field: "contact_person", title: "联系人", edit: 'text', width: 120 },
           { field: "phone", title: "联系电话", edit: 'text', width: 140 },
@@ -524,6 +556,7 @@
             // Force removal of any accidental shades and bring layer to front
             $(".layui-layer-shade").remove();
             layer.setTop(layero);
+            form.render('select'); // 重新渲染下拉框
           }
         });
       }
@@ -545,6 +578,7 @@
           success: function (layero, index) {
             $(".layui-layer-shade").remove();
             layer.setTop(layero);
+            form.render('select'); // 重新渲染下拉框
           }
         });
       } else if (obj.event === 'supplier-tool-del') {

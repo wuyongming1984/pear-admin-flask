@@ -538,6 +538,7 @@
       var selectedInvoices = [];
       var currentPaymentNumber = '';
       var savedOrderId = null; // Store order_id from loaded details for edit fallback
+      var isPrintAfterSave = false; // 是否在保存后执行打印
 
       // 获取URL参数
       var urlParams = new URLSearchParams(window.location.search);
@@ -1086,11 +1087,9 @@
 
       // 打印按钮事件
       $('#print-btn').on('click', function () {
-        if (currentPaymentId) {
-          window.open('/order_pay/info/print_pay.html?id=' + currentPaymentId, '_blank');
-        } else {
-          layer.msg('请先保存付款单后再打印', { icon: 0 });
-        }
+        // 设置打印标志并触发保存按钮点击
+        isPrintAfterSave = true;
+        $('[lay-filter="save"]').click();
       });
 
       // 取消按钮
@@ -1135,6 +1134,23 @@
           data: JSON.stringify(payload),
           success: function (res) {
             if (res.code === 0) {
+              // 提交成功后，如果是由打印触发，则先跳转打印
+              if (isPrintAfterSave) {
+                var printId = currentPaymentId || (res.data ? res.data.id : null);
+                if (printId) {
+                  window.open('/order_pay/info/print_pay.html?id=' + printId, '_blank');
+                  layer.msg('保存成功，正在生成打印预览...', { icon: 1, time: 1000 }, function () {
+                    // 跳转后关闭当前窗口
+                    var index = parent.layer.getFrameIndex(window.name);
+                    if (index) parent.layer.close(index);
+                  });
+                } else {
+                  layer.msg('保存成功，但获取打印ID失败', { icon: 0 });
+                }
+                isPrintAfterSave = false; // 重置状态
+                return;
+              }
+
               layer.msg('保存成功', { icon: 1, time: 1000 }, function () {
                 var index = parent.layer.getFrameIndex(window.name);
                 if (index) {
@@ -1142,8 +1158,14 @@
                 }
               });
             } else {
+              isPrintAfterSave = false; // 保存失败也要重置状态
               layer.msg(res.msg || '保存失败', { icon: 2 });
             }
+          },
+          error: function (xhr) {
+            isPrintAfterSave = false; // 网络错误也要重置状态
+            console.error('Request failed:', xhr);
+            layer.msg('请求失败: ' + (xhr.responseJSON ? xhr.responseJSON.msg : xhr.statusText), { icon: 2 });
           }
         });
         return false;

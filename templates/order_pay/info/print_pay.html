@@ -380,9 +380,14 @@
                     <div class="value" id="payer-name">loading...</div>
                 </div>
 
-                <div class="data-row" style="flex:1;">
+                <div class="data-row" style="flex:1; max-height: 80pt; overflow: hidden;">
                     <div class="label">款项用途</div>
-                    <div class="value" style="align-items: flex-start; line-height: 1.4;" id="payment-purpose"></div>
+                    <div class="value"
+                        style="align-items: flex-start; line-height: 1.2; padding: 4px 8px; height: 80pt; max-height: 80pt; overflow: hidden;"
+                        id="payment-purpose-container">
+                        <div id="payment-purpose"
+                            style="width: 100%; word-break: break-all; white-space: pre-wrap; display: block;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -553,6 +558,10 @@
                             $('#amount-small').text(parseFloat(pay.current_payment_amount).toLocaleString(undefined, { minimumFractionDigits: 2 }));
                             $('#amount-big').text(digitUppercase(pay.current_payment_amount));
                             $('#payment-purpose').text(pay.payment_purpose || '');
+
+                            // 延时执行字体调整，确保文本已被插入且布局已初步完成
+                            setTimeout(adjustFontSize, 100);
+
                             $('#handler-sign').text(pay.handler);
                             $('#payer-name').text(pay.payer_supplier_name || '我方公司');
                             $('#payee-name').text(pay.payee_supplier_name || '收款单位');
@@ -620,6 +629,34 @@
                     }
                 });
             });
+        }
+
+        function adjustFontSize() {
+            var $container = $('#payment-purpose-container');
+            var $content = $('#payment-purpose');
+
+            var text = $content.text().trim();
+            if (!text) return;
+
+            // 锁定最大高度为 106px (对应约 80pt)
+            // 这样即使容器因为布局原因暂时被撑开，计算依然会按照 106px 进行，从而强制字号缩小
+            var maxHeight = 106;
+            var currentSize = 9; // 初始字号 9pt
+
+            $content.css({
+                'font-size': currentSize + 'pt',
+                'line-height': '1.2'
+            });
+
+            // 循环检测，强制缩小字号直到内容高度满足硬性指标
+            var count = 0;
+            while ($content[0].scrollHeight > maxHeight && currentSize > 2 && count < 100) {
+                currentSize -= 0.1; // 步长减小，增加匹配精度
+                $content.css('font-size', currentSize + 'pt');
+                count++;
+            }
+
+            console.log('Font size finalized at:', currentSize + 'pt', 'to fit in', maxHeight, 'px');
         }
     </script>
 </body>

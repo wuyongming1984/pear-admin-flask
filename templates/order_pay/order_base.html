@@ -992,11 +992,11 @@
             </div>
 
             <!--悬浮操作面板 -->
-          <div class="card-actions-panel">
+            <div class="card-actions-panel">
             <div class="action-icon-btn edit card-edit-btn" title="编辑订单" data-id="${o.id}">
               <i class="layui-icon layui-icon-edit"></i>
             </div>
-            <div class="action-icon-btn pay card-pay-btn" title="记账付款" data-id="${o.id}" data-no="${o.order_number}">
+            <div class="action-icon-btn pay card-pay-btn" title="记账付款" data-id="${o.id}" data-no="${o.order_number}" data-details="${o.material_details || ''}">
               <i class="layui-icon layui-icon-rmb"></i>
             </div>
             <div class="action-icon-btn print card-print-btn" title="打印单据" data-id="${o.id}">
@@ -1028,7 +1028,8 @@
     $(document).off('click', '.card-pay-btn').on('click', '.card-pay-btn', function () {
       var id = $(this).data('id');
       var no = $(this).data('no');
-      addPayment(id, no);
+      var details = $(this).data('details');
+      addPayment(id, no, details);
     });
 
     $(document).off('click', '.card-print-btn').on('click', '.card-print-btn', function () {
@@ -1123,8 +1124,11 @@
       });
     }
 
-    function addPayment(orderId, orderNo) {
+    function addPayment(orderId, orderNo, materialDetail) {
       var payUrl = '/order_pay/info/pay_info.html?order_id=' + orderId + '&order_number=' + encodeURIComponent(orderNo);
+      if (materialDetail) {
+        payUrl += '&material_detail=' + encodeURIComponent(materialDetail);
+      }
       layer.open({
         type: 2, title: '新增付款单', shade: 0.1,
         area: ['90%', '90%'], content: payUrl,

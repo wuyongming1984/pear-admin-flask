@@ -20,7 +20,7 @@
       --radius-md: 8px;
     }
 
-    }
+
 
     /* 修复弹窗文字颜色 */
     .layui-layer {
@@ -666,6 +666,13 @@
             $('#order-select').val(initialOrderId);
             form.render('select');
             loadOrderInfo(initialOrderId);
+
+            // 自动同步订单的材料明细到付款备注 (由 URL 参数 material_detail 传入)
+            var materialDetailParam = urlParams.get('material_detail');
+            if (materialDetailParam) {
+              $('textarea[name="payment_purpose"]').val("订单中的说明：" + materialDetailParam);
+            }
+
             generatePaymentNo();
           } else {
             generatePaymentNo();

@@ -1079,14 +1079,15 @@
           anim: 5
         });
       } else {
-        // 其他类（PDF 等）通过 iframe 预览
+        // PDF 等文件通过代理接口以 inline 方式预览
+        var proxyUrl = window.location.origin + '/api/v1/attachment/proxy-preview?url=' + encodeURIComponent(url) + '&name=' + encodeURIComponent(name);
         layer.open({
-          type: 2,
+          type: 1,
           title: '<i class="layui-icon layui-icon-file" style="color: var(--accent-primary);"></i> 预览: ' + name,
           shadeClose: true,
           maxmin: true,
-          area: ['80%', '90%'],
-          content: url
+          area: ['85%', '92%'],
+          content: '<embed src="' + proxyUrl + '" type="application/pdf" width="100%" height="100%" style="display:block;min-height:600px;"><p style="text-align:center;padding:20px;color:#999;"><a href="' + proxyUrl + '" target="_blank">在新窗口打开</a></p>'
         });
       }
     });

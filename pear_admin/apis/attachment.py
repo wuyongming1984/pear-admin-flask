@@ -61,7 +61,14 @@ def proxy_preview():
         # 优先用 OSS SDK 直接读取（path 参数或从 URL 提取 key）
         if oss and oss.bucket:
             from urllib.parse import urlparse, unquote
-            object_key = file_path.lstrip('/') if file_path else None
+            object_key = None
+            if file_path:
+                if file_path.startswith('http'):
+                    # file_path 本身是完整 URL，提取 path 部分
+                    parsed = urlparse(file_path)
+                    object_key = unquote(parsed.path.lstrip('/'))
+                else:
+                    object_key = file_path.lstrip('/')
             if not object_key and file_url and file_url.startswith('http'):
                 parsed = urlparse(file_url)
                 object_key = unquote(parsed.path.lstrip('/'))

@@ -509,7 +509,7 @@
                 <span class="info-label">附件列表</span>
                 <div class="attachment-list-compact">
                   ${attachmentsList.map(att => `
-                    <div class="attachment-item-compact preview-attachment" title="${att.name || att.filename || '未命名'}" data-url="${att.url}" data-name="${att.name || att.filename}">
+                    <div class="attachment-item-compact preview-attachment" title="${att.name || att.filename || '未命名'}" data-url="${att.url || ''}" data-path="${att.file_path || ''}" data-name="${att.name || att.filename}">
                       <i class="layui-icon layui-icon-file"></i>
                       <span class="attachment-name" title="点击预览">${att.name || att.filename || '未命名'}</span>
                       ${att.url ? `<a href="${att.url}" target="_blank" class="attachment-download" onclick="event.stopPropagation();" title="下载附件"><i class="layui-icon layui-icon-download-circle"></i></a>` : ''}
@@ -628,11 +628,12 @@
     // 附件预览逻辑
     $(document).off('click', '.preview-attachment').on('click', '.preview-attachment', function () {
       var url = $(this).data('url');
-      var name = $(this).data('name');
-      if (!url) return;
+      var filePath = $(this).data('path');
+      var name = $(this).data('name') || '未命名';
+      if (!url && !filePath) return;
 
       var ext = name.split('.').pop().toLowerCase();
-      if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].indexOf(ext) > -1) {
+      if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].indexOf(ext) > -1) {
         layer.photos({
           photos: {
             title: "预览图片",
@@ -642,7 +643,19 @@
           anim: 5
         });
       } else {
-        window.open(url, '_blank');
+        // PDF 等文件通过代理接口以 inline 方式预览
+        var proxyBase = window.location.origin + '/api/v1/attachment/proxy-preview?name=' + encodeURIComponent(name);
+        var proxyUrl = filePath
+          ? (proxyBase + '&path=' + encodeURIComponent(filePath))
+          : (proxyBase + '&url=' + encodeURIComponent(url));
+        layer.open({
+          type: 1,
+          title: '<i class="layui-icon layui-icon-file" style="color: var(--accent-primary);"></i> 预览: ' + name,
+          shadeClose: true,
+          maxmin: true,
+          area: ['85%', '92%'],
+          content: '<div style="width:100%;height:100%;min-height:600px;"><iframe src="' + proxyUrl + '" width="100%" height="100%" style="border:none;min-height:600px;display:block;" allowfullscreen></iframe></div>'
+        });
       }
     });
 

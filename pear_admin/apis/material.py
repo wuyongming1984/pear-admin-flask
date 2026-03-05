@@ -1274,6 +1274,64 @@ def get_invoice_list():
     except Exception as e:
         return jsonify({"code": 1, "msg": str(e)})
 
+@material_api.route("/invoice/preview/<int:invoice_id>", methods=["GET"])
+def preview_invoice_file(invoice_id):
+    """代理获取发票原件并以内联方式返回，用于弹窗预览"""
+    try:
+        inv = MaterialInvoiceORM.query.get(invoice_id)
+        if not inv or not inv.file_path:
+            return "发票不存在或无附件", 404
+
+        file_path = inv.file_path
+        
+        # 确定文件扩展名
+        ext = file_path.rstrip('/').split('?')[0].rsplit('.', 1)[-1].lower() if '.' in file_path else 'pdf'
+        mime_map = {
+            'pdf': 'application/pdf',
+            'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
+            'png': 'image/png', 'gif': 'image/gif',
+        }
+        content_type = mime_map.get(ext, 'application/octet-stream')
+
+        # 若是 OSS 文件，直接用 oss SDK 获取内容流
+        if file_path.startswith('http'):
+            from pear_admin.extensions import oss
+            from urllib.parse import urlparse, unquote
+            import requests
+            
+            if oss and oss.bucket:
+                parsed = urlparse(file_path)
+                object_key = unquote(parsed.path.lstrip('/'))
+                # 获取对象内容（流式）
+                oss_obj = oss.bucket.get_object(object_key)
+                data = oss_obj.read()
+            else:
+                # 无OSS配置，直接请求原URL
+                r = requests.get(file_path, timeout=15)
+                data = r.content
+        else:
+            # 本地文件
+            import os
+            local_path = os.path.join(os.getcwd(), file_path.lstrip('/'))
+            with open(local_path, 'rb') as f:
+                data = f.read()
+
+        from flask import Response
+        filename = inv.invoice_number or str(inv.id)
+        response = Response(
+            data,
+            content_type=content_type,
+            headers={
+                'Content-Disposition': f'inline; filename="{filename}.{ext}"',
+                'Cache-Control': 'no-cache'
+            }
+        )
+        return response
+    except Exception as e:
+        from flask import current_app
+        current_app.logger.error(f"[Invoice Preview] Error: {e}", exc_info=True)
+        return str(e), 500
+
 @material_api.route("/invoice/upload", methods=["POST"])
 def upload_invoice():
     """上传发票文件"""

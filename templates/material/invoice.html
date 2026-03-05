@@ -658,7 +658,9 @@
                 html += '  <div class="item-footer">';
                 html += '    <div class="item-actions">';
                 if (inv.file_url) {
-                    html += '      <i class="layui-icon layui-icon-search action-icon view" data-url="' + inv.file_url + '" title="查看原件"></i>';
+                    // 使用服务端代理URL，绕过OSS attachment强制下载问题
+                    var previewUrl = window.location.origin + '/api/v1/material/invoice/preview/' + inv.id;
+                    html += '      <i class="layui-icon layui-icon-search action-icon view" data-id="' + inv.id + '" data-preview="' + previewUrl + '" title="查看原件"></i>';
                 }
                 html += '      <i class="layui-icon layui-icon-delete action-icon del" data-id="' + inv.id + '" title="删除发票"></i>';
                 html += '    </div>';
@@ -869,30 +871,17 @@
         // View Invoice File (Sidebar)
         $(document).on('click', '.action-icon.view', function (e) {
             e.stopPropagation();
-            var url = $(this).data('url');
-            if (url) {
-                var ext = url.split('?')[0].split('.').pop().toLowerCase();
-                if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].indexOf(ext) > -1) {
-                    layer.photos({
-                        photos: {
-                            "title": "发票原件预览",
-                            "data": [{ "src": url }]
-                        },
-                        shade: 0.7,
-                        anim: 5
-                    });
-                } else {
-                    // PDF/其他文件：使用 embed 标签内嵌，绕过下载问题
-                    layer.open({
-                        type: 1,
-                        title: '<i class="layui-icon layui-icon-file" style="color: var(--accent-primary);"></i> 发票原件预览',
-                        shadeClose: true,
-                        maxmin: true,
-                        area: ['85%', '92%'],
-                        content: '<embed src="' + url + '" type="application/pdf" width="100%" height="100%" style="display:block;min-height:600px;">' +
-                            '<p style="display:none;text-align:center;padding:20px;color:#999;">浏览器不支持内嵌预览，<a href="' + url + '" target="_blank">点击此处下载查看</a></p>'
-                    });
-                }
+            var previewUrl = $(this).data('preview');
+            if (previewUrl) {
+                layer.open({
+                    type: 1,
+                    title: '<i class="layui-icon layui-icon-file" style="color: var(--accent-primary);"></i> 发票原件预览',
+                    shadeClose: true,
+                    maxmin: true,
+                    area: ['85%', '92%'],
+                    content: '<embed src="' + previewUrl + '" type="application/pdf" width="100%" height="100%" style="display:block;min-height:600px;">' +
+                        '<p style="text-align:center;padding:20px;color:#999;"><a href="' + previewUrl + '" target="_blank">在新窗口打开</a></p>'
+                });
             } else {
                 layer.msg('暂无文件', { icon: 0 });
             }

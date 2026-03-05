@@ -57,6 +57,7 @@ class AttachmentORM(BaseORM):
             "name": self.original_filename,
             "filename": self.filename,
             "url": signed_url,
+            "file_path": self.file_path,  # 保留原始路oss key，用于代理接口读取
             "size": self.file_size,
             "create_at": format_datetime(self.create_at),
         }

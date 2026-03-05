@@ -985,7 +985,7 @@
                 <span class="info-label">附件列表</span>
                 <div class="attachment-list-compact">
                   ${attachmentsList.map(att => `
-                    <div class="attachment-item-compact preview-attachment" title="${att.name || att.filename || '未命名'}" data-url="${att.url}" data-name="${att.name || att.filename}">
+                    <div class="attachment-item-compact preview-attachment" title="${att.name || att.filename || '未命名'}" data-url="${att.url}" data-path="${att.file_path || ''}" data-name="${att.name || att.filename}">
                       <i class="layui-icon layui-icon-file"></i>
                       <span class="attachment-name" title="点击预览">${att.name || att.filename || '未命名'}</span>
                       ${att.url ? `<a href="${att.url}" target="_blank" class="attachment-download" onclick="event.stopPropagation();" title="下载附件"><i class="layui-icon layui-icon-download-circle"></i></a>` : ''}
@@ -1061,8 +1061,9 @@
     // 附件预览逻辑
     $(document).off('click', '.preview-attachment').on('click', '.preview-attachment', function () {
       var url = $(this).data('url');
+      var filePath = $(this).data('path');
       var name = $(this).data('name') || '未命名';
-      if (!url) {
+      if (!url && !filePath) {
         layer.msg('该附件无有效路径，无法预览', { icon: 5 });
         return;
       }
@@ -1080,14 +1081,22 @@
         });
       } else {
         // PDF 等文件通过代理接口以 inline 方式预览
-        var proxyUrl = window.location.origin + '/api/v1/attachment/proxy-preview?url=' + encodeURIComponent(url) + '&name=' + encodeURIComponent(name);
+        var proxyBase = window.location.origin + '/api/v1/attachment/proxy-preview?name=' + encodeURIComponent(name);
+        var proxyUrl;
+        if (filePath) {
+          // 使用原始OSS路径（最可靠）
+          proxyUrl = proxyBase + '&path=' + encodeURIComponent(filePath);
+        } else {
+          // 回退到签名 URL
+          proxyUrl = proxyBase + '&url=' + encodeURIComponent(url);
+        }
         layer.open({
           type: 1,
           title: '<i class="layui-icon layui-icon-file" style="color: var(--accent-primary);"></i> 预览: ' + name,
           shadeClose: true,
           maxmin: true,
           area: ['85%', '92%'],
-          content: '<embed src="' + proxyUrl + '" type="application/pdf" width="100%" height="100%" style="display:block;min-height:600px;"><p style="text-align:center;padding:20px;color:#999;"><a href="' + proxyUrl + '" target="_blank">在新窗口打开</a></p>'
+          content: '<embed src="' + proxyUrl + '" type="application/pdf" width="100%" height="100%" style="display:block;min-height:600px;"><p style="text-align:center;padding:20px;color:#999;"><a href="' + (url || proxyUrl) + '" target="_blank">在新窗口打开</a></p>'
         });
       }
     });

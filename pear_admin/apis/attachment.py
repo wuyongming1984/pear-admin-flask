@@ -38,14 +38,15 @@ def proxy_preview():
     from urllib.parse import urlparse, unquote
 
     file_url = request.args.get('url', '').strip()
+    file_path = request.args.get('path', '').strip()  # 原始 OSS object key，优先使用
     filename = request.args.get('name', 'file').strip()
 
-    if not file_url:
-        return "缺少 url 参数", 400
+    if not file_url and not file_path:
+        return "缺少 url 或 path 参数", 400
 
     try:
         ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else \
-              file_url.split('?')[0].rsplit('.', 1)[-1].lower()
+              (file_url or file_path).split('?')[0].rsplit('.', 1)[-1].lower()
         mime_map = {
             'pdf': 'application/pdf',
             'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
@@ -54,22 +55,32 @@ def proxy_preview():
         }
         content_type = mime_map.get(ext, 'application/octet-stream')
 
-        # 尝试用 OSS SDK 直接读取（避免下载 URL 问题）
         from pear_admin.extensions import oss
         data = None
-        if oss and oss.bucket and file_url.startswith('http'):
-            try:
+
+        # 优先用 OSS SDK 直接读取（path 参数或从 URL 提取 key）
+        if oss and oss.bucket:
+            from urllib.parse import urlparse, unquote
+            object_key = file_path.lstrip('/') if file_path else None
+            if not object_key and file_url and file_url.startswith('http'):
                 parsed = urlparse(file_url)
                 object_key = unquote(parsed.path.lstrip('/'))
-                oss_obj = oss.bucket.get_object(object_key)
-                data = oss_obj.read()
-            except Exception as e:
-                current_app.logger.warning(f"[Proxy] OSS SDK fallback: {e}, 尝试直接请求")
+            if object_key:
+                try:
+                    oss_obj = oss.bucket.get_object(object_key)
+                    data = oss_obj.read()
+                except Exception as e:
+                    current_app.logger.warning(f"[Proxy] OSS get_object failed for '{object_key}': {e}")
 
-        if data is None:
+        # 最终 fallback：直接 HTTP 请求 URL
+        if data is None and file_url:
+            import requests as req
             r = req.get(file_url, timeout=20)
             r.raise_for_status()
             data = r.content
+
+        if data is None:
+            return "无法获取文件内容", 500
 
         response = Response(
             data,

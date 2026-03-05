@@ -871,7 +871,26 @@
             e.stopPropagation();
             var url = $(this).data('url');
             if (url) {
-                window.open(url, '_blank');
+                var ext = url.split('.').pop().split('?')[0].toLowerCase();
+                if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].indexOf(ext) > -1) {
+                    layer.photos({
+                        photos: {
+                            "title": "发票原件预览",
+                            "data": [{ "src": url }]
+                        },
+                        shade: 0.7,
+                        anim: 5
+                    });
+                } else {
+                    layer.open({
+                        type: 2,
+                        title: '<i class="layui-icon layui-icon-file" style="color: var(--accent-primary);"></i> 发票原件预览',
+                        shadeClose: true,
+                        maxmin: true,
+                        area: ['80%', '90%'],
+                        content: url
+                    });
+                }
             } else {
                 layer.msg('暂无文件', { icon: 0 });
             }

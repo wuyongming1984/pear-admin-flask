@@ -960,12 +960,15 @@
             if (res.code === 0 && res.data && res.data.length > 0) {
               var html = '';
               res.data.forEach(function (inv) {
+                postTaxAmountListSearch = inv.post_tax_amount || (parseFloat(inv.total_amount || 0) + parseFloat(inv.tax_amount || 0));
+                postTaxAmountListSearch = parseFloat(postTaxAmountListSearch).toFixed(2);
+
                 // 检查是否已在列表中
                 var isSelected = selectedInvoices.some(function (si) { return si.id === inv.id; });
                 if (!isSelected) {
                   html += `<div class="search-result-item" data-id="${inv.id}" data-info='${JSON.stringify(inv).replace(/'/g, "&#39;")}'>
                     <span class="res-number">${inv.invoice_number}</span>
-                    <span class="res-info">¥${inv.total_amount} | 购: ${inv.buyer_name || '-'} | 销: ${inv.seller_name || '-'}</span>
+                    <span class="res-info">¥${postTaxAmountListSearch} | 购: ${inv.buyer_name || '-'} | 销: ${inv.seller_name || '-'}</span>
                   </div>`;
                 }
               });
@@ -991,6 +994,8 @@
 
         var html = '';
         selectedInvoices.forEach(function (inv, index) {
+          var postTaxAmountList = inv.post_tax_amount || (parseFloat(inv.total_amount || 0) + parseFloat(inv.tax_amount || 0));
+
           html += `<div class="attachment-item" style="display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-dim); background: rgba(255,152,0,0.05); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
             <div class="attachment-info" style="flex: 1; display: flex; align-items: center; gap: 10px;">
               <i class="layui-icon layui-icon-file-b" style="color: #ff9800; font-size: 20px;"></i>
@@ -1000,7 +1005,7 @@
               </div>
             </div>
             <div style="display: flex; align-items: center; gap: 15px;">
-              <span style="font-family: 'JetBrains Mono'; color: #ff9800; font-weight: bold; font-size: 13px;">¥${parseFloat(inv.total_amount || 0).toLocaleString()}</span>
+              <span style="font-family: 'JetBrains Mono'; color: #ff9800; font-weight: bold; font-size: 13px;">¥${postTaxAmountList.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               <button type="button" class="layui-btn layui-btn-xs layui-btn-primary remove-invoice" data-index="${index}" style="background: transparent; color: #ff5722; border: none;"><i class="layui-icon layui-icon-delete"></i></button>
             </div>
           </div>`;

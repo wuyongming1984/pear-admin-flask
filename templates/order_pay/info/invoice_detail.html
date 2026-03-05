@@ -236,7 +236,9 @@
 
                 $('#v-remarks').text(t(inv.remarks, ocr.remarks));
                 $('#v-words').text(t(inv.amount_in_words, ocr.amount_in_words));
-                $('#v-total').text('¥' + (inv.total_amount || 0));
+
+                var postTaxAmount = ocr.amount_in_figuers || (parseFloat(inv.total_amount || 0) + parseFloat(inv.tax_amount || 0)).toFixed(2);
+                $('#v-total').text('¥' + postTaxAmount);
 
                 var details = [];
                 try { if (inv.details_json) details = JSON.parse(inv.details_json); } catch (e) { }

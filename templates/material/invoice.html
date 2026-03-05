@@ -617,9 +617,10 @@
                 var seller = inv.seller_name || '未知销售方';
                 var buyer = inv.buyer_name || '';
                 var amt = '';
-                if (inv.total_amount) {
-                    var val = parseFloat(inv.total_amount);
-                    amt = (val / 10000).toFixed(2) + ' 万元';
+                var postTaxAmountList = inv.post_tax_amount || (parseFloat(inv.total_amount || 0) + parseFloat(inv.tax_amount || 0));
+
+                if (postTaxAmountList) {
+                    amt = (postTaxAmountList / 10000).toFixed(2) + ' 万元';
                 }
 
                 if (searchNum && invNum.toLowerCase().indexOf(searchNum) === -1) return;
@@ -639,8 +640,8 @@
 
                 // Unit conversion to 万元
                 var amtVal = '0.00';
-                if (inv.total_amount) {
-                    amtVal = (parseFloat(inv.total_amount) / 10000).toFixed(2);
+                if (postTaxAmountList) {
+                    amtVal = (postTaxAmountList / 10000).toFixed(2);
                 }
 
                 html += '<div class="project-item" data-id="' + inv.id + '">';
@@ -770,7 +771,9 @@
             $('#v-checker').text(t(inv.checker, ocr.checker));
             $('#v-drawer').text(t(inv.drawer, ocr.note_drawer));
             $('#v-words').text(t(inv.amount_in_words, ocr.amount_in_words));
-            $('#v-total').text('¥' + (inv.total_amount || 0));
+
+            var postTaxAmount = ocr.amount_in_figuers || (parseFloat(inv.total_amount || 0) + parseFloat(inv.tax_amount || 0)).toFixed(2);
+            $('#v-total').text('¥' + postTaxAmount);
 
             // Items Render
             var details = [];
@@ -899,7 +902,8 @@
             { field: 'seller_name', title: '销售方', width: 150 },
             {
                 field: 'total_amount', title: '金额', width: 120, align: 'right', templet: function (d) {
-                    return '¥' + parseFloat(d.total_amount || 0).toFixed(2);
+                    var postTaxAmountListSearch = d.post_tax_amount || (parseFloat(d.total_amount || 0) + parseFloat(d.tax_amount || 0));
+                    return '¥' + parseFloat(postTaxAmountListSearch).toFixed(2);
                 }
             },
             { title: '操作', toolbar: '#operation-bar', width: 120, align: 'center' }

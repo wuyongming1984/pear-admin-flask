@@ -1248,12 +1248,24 @@ def get_invoice_list():
         invoices = MaterialInvoiceORM.query.order_by(MaterialInvoiceORM.id.desc()).all()
         data = []
         for inv in invoices:
+            post_tax_amount = float(inv.total_amount or 0) + float(inv.tax_amount or 0)
+            try:
+                if inv.ocr_result:
+                    import json
+                    ocr_data = json.loads(inv.ocr_result)
+                    if ocr_data.get('amount_in_figuers'):
+                        post_tax_amount = float(ocr_data.get('amount_in_figuers'))
+            except:
+                pass
+                
             data.append({
                 "id": inv.id,
                 "invoice_number": inv.invoice_number or "无编号",
                 "seller_name": inv.seller_name or "-",
                 "buyer_name": inv.buyer_name or "-",
-                "total_amount": inv.total_amount or 0,
+                "total_amount": float(inv.total_amount or 0),
+                "tax_amount": float(inv.tax_amount or 0),
+                "post_tax_amount": round(post_tax_amount, 2),
                 "file_url": inv._get_signed_url(),  # Use signed URL for private OSS files
                 "invoice_category": inv.invoice_category,  # 添加发票大类
                 "deductible": inv.deductible  # 添加可否抵扣

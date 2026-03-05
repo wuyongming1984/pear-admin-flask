@@ -1317,12 +1317,17 @@ def preview_invoice_file(invoice_id):
                 data = f.read()
 
         from flask import Response
+        from urllib.parse import quote
+        
         filename = inv.invoice_number or str(inv.id)
+        # RFC 5987 编码
+        quoted_filename = quote(f"{filename}.{ext}")
+        
         response = Response(
             data,
             content_type=content_type,
             headers={
-                'Content-Disposition': f'inline; filename="{filename}.{ext}"',
+                'Content-Disposition': f'inline; filename="{quoted_filename}"; filename*=UTF-8\'\'{quoted_filename}',
                 'Cache-Control': 'no-cache'
             }
         )

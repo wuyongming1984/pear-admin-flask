@@ -101,13 +101,18 @@ def proxy_preview():
         if data is None:
             return "无法获取文件内容", 500
 
+        from urllib.parse import quote
+        # RFC 5987 编码文件名，解决中文文件名导致部分 WSGI 服务器报 500 错误的问题
+        quoted_filename = quote(filename)
+        headers = {
+            'Content-Disposition': f'inline; filename="{quoted_filename}"; filename*=UTF-8\'\'{quoted_filename}',
+            'Cache-Control': 'no-cache'
+        }
+        
         response = Response(
             data,
             content_type=content_type,
-            headers={
-                'Content-Disposition': f'inline; filename="{filename}"',
-                'Cache-Control': 'no-cache'
-            }
+            headers=headers
         )
         return response
 

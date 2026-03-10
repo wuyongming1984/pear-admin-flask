@@ -20,7 +20,9 @@ def get_backup_config():
         "mail_port": os.getenv("MAIL_PORT", "465"),
         "mail_user": os.getenv("MAIL_USERNAME", ""),
         "mail_pass": os.getenv("MAIL_PASSWORD", ""),
-        "mail_receiver": os.getenv("MAIL_RECEIVER", "")
+        "mail_receiver": os.getenv("MAIL_RECEIVER", ""),
+        "enable_auto_backup": False,
+        "backup_time": "01:00"
     }
     
     if config and config.value:
@@ -66,6 +68,12 @@ def save_backup_config():
             db.session.add(config)
             
         db.session.commit()
+        
+        # 实时刷新调度任务
+        from pear_admin.extensions.init_scheduler import refresh_backup_scheduler_job
+        from flask import current_app
+        refresh_backup_scheduler_job(current_app)
+        
         return {"code": 0, "msg": "保存成功"}
     except Exception as e:
         db.session.rollback()

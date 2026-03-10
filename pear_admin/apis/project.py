@@ -105,23 +105,16 @@ def create_project():
                 del data["end_date"]
     
         # 处理金额字段
-        if data.get("project_amount"):
-            try:
-                data["project_amount"] = float(data["project_amount"])
-            except ValueError:
-                data["project_amount"] = 0
-        
-        if data.get("project_audit_price_amount"):
-            try:
-                data["project_audit_price_amount"] = float(data["project_audit_price_amount"])
-            except ValueError:
-                data["project_audit_price_amount"] = 0
-                
-        if data.get("project_audit_amount"):
-            try:
-                data["project_audit_amount"] = float(data["project_audit_amount"])
-            except ValueError:
-                data["project_audit_amount"] = 0
+        for field in ["project_amount", "project_audit_price_amount", "project_audit_amount"]:
+            if field in data:
+                val = data.get(field)
+                if val == "" or val is None:
+                    data[field] = None
+                else:
+                    try:
+                        data[field] = float(val)
+                    except ValueError:
+                        data[field] = 0
 
         # 过滤掉非法字段
         allowed_fields = {
@@ -191,18 +184,26 @@ def change_project(pid=None):
     for key, value in data.items():
         if key == "id":
             continue
+            
+        if value == "":
+            value = None
+
         if key == "create_at" and value:
-            value = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
-        elif key == "start_date" and value:
-            value = datetime.strptime(value, "%Y-%m-%d").date()
-        elif key == "end_date" and value:
-            value = datetime.strptime(value, "%Y-%m-%d").date()
-        elif key == "project_amount" and value:
-            value = float(value)
-        elif key == "project_audit_price_amount" and value:
-            value = float(value)
-        elif key == "project_audit_amount" and value:
-            value = float(value)
+            try:
+                value = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                pass
+        elif key in ["start_date", "end_date"] and value:
+            try:
+                value = datetime.strptime(value, "%Y-%m-%d").date()
+            except ValueError:
+                pass
+        elif key in ["project_amount", "project_audit_price_amount", "project_audit_amount"] and value is not None:
+            try:
+                value = float(value)
+            except ValueError:
+                value = 0
+                
         setattr(project_obj, key, value)
     
     project_obj.save()

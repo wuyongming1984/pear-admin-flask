@@ -93,24 +93,31 @@ def backup_db():
         if os.path.exists(zip_filename):
             print(f"正在发送邮件至 {MAIL_RECEIVER}...")
             send_email(zip_filename)
+            print("[INFO] 数据库备份并发送成功！")
         else:
             print("[ERROR] 压缩文件创建失败，跳过发送邮件")
             return
-        
-        # 5. 清理临时文件
-        if os.path.exists(backup_filename):
-            os.remove(backup_filename)
-        if os.path.exists(zip_filename):
-            os.remove(zip_filename)
-        
-        print("[INFO] 数据库备份并发送成功！")
-        
+            
     except Exception as e:
         print(f"[ERROR] 备份流程失败: {str(e)}")
         import traceback
         traceback.print_exc()
         import sys
         sys.exit(1)
+    finally:
+        # 5. 无论成功失败，确保清理临时文件
+        if 'backup_filename' in locals() and os.path.exists(backup_filename):
+            try:
+                os.remove(backup_filename)
+                print(f"[INFO] 已清理本地文件: {backup_filename}")
+            except:
+                pass
+        if 'zip_filename' in locals() and os.path.exists(zip_filename):
+            try:
+                os.remove(zip_filename)
+                print(f"[INFO] 已清理本地文件: {zip_filename}")
+            except:
+                pass
 
 def send_email(attachment_path):
     try:

@@ -25,6 +25,8 @@ fi
 
 # An explicit caller override supports rollback; existing .env remains untouched.
 export DESKTOP_DEFAULT="${DESKTOP_DEFAULT:-true}"
+# 保留完整构建日志，让依赖下载超时等错误立即可见。
+export BUILDKIT_PROGRESS="${BUILDKIT_PROGRESS:-plain}"
 "${compose[@]}" config --quiet
 "${compose[@]}" up -d --no-deps --build web
 "${compose[@]}" ps web

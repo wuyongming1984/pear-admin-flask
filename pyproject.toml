@@ -28,6 +28,12 @@ Flask-APScheduler = "^1.13.1"
 pre-commit = "^3.4.0"
 commitizen = "^3.10.0"
 
+# Poetry（含源码包的隔离构建）不会使用 Dockerfile 中的 pip 镜像配置。
+[[tool.poetry.source]]
+name = "aliyun"
+url = "https://mirrors.aliyun.com/pypi/simple/"
+priority = "primary"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

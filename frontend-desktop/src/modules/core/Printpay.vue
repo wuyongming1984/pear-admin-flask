@@ -87,6 +87,11 @@ defineProps<{values:Record<string,any>;qr:string}>()
                 </div>
 
                 <div class="data-row">
+                    <div class="label">供应商联系人</div>
+                    <div class="value" id="contact-person">{{ values['contact-person'] || '—' }}</div>
+                </div>
+
+                <div class="data-row">
                     <div class="label">材料服务</div>
                     <div class="value" id="material-name">{{ values['material-name'] ?? '—' }}</div>
                 </div>
@@ -192,7 +197,7 @@ defineProps<{values:Record<string,any>;qr:string}>()
             width: 210mm;
             min-height: 148mm;
             /* Fixed height for A5 Landscape */
-            padding: 10mm;
+            padding: 7mm 10mm;
             /* Reduced padding */
             background: white;
             position: relative;
@@ -372,7 +377,13 @@ defineProps<{values:Record<string,any>;qr:string}>()
 
         /* Order Panel specific adjustments */
         .order-panel .label {
-            width: 60px;
+            width: 84px;
+            flex-shrink: 0;
+        }
+
+        .order-panel .value {
+            min-width: 0;
+            overflow-wrap: anywhere;
         }
 
         /* Approval Grid - Compact */

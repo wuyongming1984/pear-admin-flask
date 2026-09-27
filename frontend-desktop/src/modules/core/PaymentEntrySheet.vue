@@ -37,6 +37,7 @@ const date = computed(() => props.record.create_at?.split(/[T ]/)[0] || (props.r
           <h3>关联项目概要 <small>PROJECT REF</small></h3>
           <div class="entry-row"><span class="entry-label">项目名称</span><div class="entry-value"><strong>{{order?.project_name || '选择关联订单后显示'}}</strong></div></div>
           <div class="entry-row"><label for="entry-order">订单编号 <span class="required">*</span></label><div class="entry-value"><el-select id="entry-order" aria-label="关联订单" filterable clearable placeholder="选择关联订单" :model-value="record.order_id" :disabled="disabled" @update:model-value="update('order_id', $event)"><el-option v-for="o in options.orders" :key="o.id" :value="o.id" :label="o.label"/></el-select></div></div>
+          <div class="entry-row"><span class="entry-label">供应商联系人</span><div class="entry-value" data-testid="payment-order-contact">{{order?.supplier_contact_person || '—'}}</div></div>
           <div class="entry-row"><span class="entry-label">材料服务</span><div class="entry-value">{{materialName}}</div></div>
           <div class="entry-row"><span class="entry-label">订单总额</span><div class="entry-value entry-money">{{order ? '¥ ' + formatMoney(order.order_amount) : '—'}}</div></div>
           <div class="entry-row"><span class="entry-label">累计已付</span><div class="entry-value"><strong class="entry-money" data-testid="payment-total-preview">{{paymentTotal !== null ? '¥ ' + paymentTotal : '—'}}</strong><small>含本次填写金额，保存后生效</small></div></div>

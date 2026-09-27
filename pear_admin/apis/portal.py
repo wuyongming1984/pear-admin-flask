@@ -8,7 +8,8 @@ portal_bp = Blueprint('portal', __name__, url_prefix='/portal')
 from sqlalchemy import func
 
 @portal_bp.route('/reconcile/<token>')
-def reconcile(token):
+@portal_bp.route('/reconcile/<token>/data', defaults={'as_data': True})
+def reconcile(token, as_data=False):
     # 1. Validate Token & Identify Anchor
     anchor_supplier = db.session.scalar(
         db.select(SupplierORM).where(SupplierORM.access_token == token)
@@ -115,6 +116,44 @@ def reconcile(token):
         
     total_received = total_received_linked + total_received_unlinked
     outstanding_balance = total_orders - total_received
+
+    if as_data:
+        # Match the legacy page's token scope and expose only its visible fields.
+        def supplier_data(s):
+            return {'id': s.id, 'name': s.name, 'contact_person': s.contact_person}
+
+        def pay_data(p):
+            return {
+                'id': p.id, 'pay_number': p.pay_number,
+                'current_payment_amount': str(p.current_payment_amount or 0),
+                'payment_status': p.payment_status, 'payment_purpose': p.payment_purpose,
+                'create_at': p.create_at.isoformat() if p.create_at else None,
+                'payer_supplier_name': p.payer.name if p.payer else None,
+                'payee_supplier_name': p.payee_supplier.name if p.payee_supplier else None,
+            }
+
+        def order_data(o):
+            return {
+                'id': o.id, 'order_number': o.order_number,
+                'project_name': o.project.project_name if o.project else None,
+                'material_name': o.material_name, 'material_details': o.material_details,
+                'order_amount': str(o.order_amount or 0),
+                'cutting_time': o.cutting_time.isoformat() if o.cutting_time else None,
+                'estimated_arrival_time': o.estimated_arrival_time.isoformat() if o.estimated_arrival_time else None,
+                'create_at': o.create_at.isoformat() if o.create_at else None,
+                'temp_paid_amount': o.temp_paid_amount, 'temp_balance': o.temp_balance,
+                'pays': [pay_data(p) for p in o.pays],
+            }
+
+        return {'code': 0, 'data': {
+            'supplier': supplier_data(anchor_supplier),
+            'related_suppliers': [supplier_data(s) for s in related_suppliers],
+            'grouped_orders': [{'project_name': name, 'orders': [order_data(o) for o in records], 'stats': stats}
+                               for name, records, stats in grouped_orders],
+            'unlinked_payments': [pay_data(p) for p in unlinked_payments],
+            'analysis': {'total_orders': total_orders, 'total_received': total_received,
+                         'outstanding_balance': outstanding_balance},
+        }}
 
     # 5. Render Template
     return render_template(

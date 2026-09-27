@@ -1,268 +1,4 @@
-<style>
-    /* ==================== 赛博工业 (Cyber Industrial) 全局变量 ==================== */
-    :root {
-        --bg-dark: #0f172a;
-        --bg-card: rgba(30, 41, 59, 0.7);
-        --bg-card-hover: rgba(51, 65, 85, 0.8);
-        --text-primary: #f1f5f9;
-        --text-secondary: #94a3b8;
-        --accent-cyan: #00e5ff;
-        --accent-cyan-dim: rgba(0, 229, 255, 0.1);
-        --border-color: rgba(148, 163, 184, 0.2);
-        --neon-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
-    }
-
-    /* 整体背景 - Scoped */
-    #payer-page-root {
-        background-color: var(--bg-dark);
-        background-image:
-            radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.05) 0%, transparent 20%),
-            radial-gradient(circle at 90% 80%, rgba(255, 0, 150, 0.05) 0%, transparent 20%);
-        color: var(--text-primary);
-        font-family: "Inter", "Microsoft YaHei", sans-serif;
-        margin: 0;
-        padding: 16px;
-        min-height: calc(100vh - 20px);
-        box-sizing: border-box;
-    }
-
-    /* 玻璃拟态卡片容器 */
-    #payer-page-root .cyber-card {
-        background: var(--bg-card);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        height: calc(100vh - 40px);
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-    }
-
-    /* ==================== 深度定制 Layui 表格 ==================== */
-    #payer-page-root .layui-table-view {
-        background-color: #000000 !important;
-        border: none !important;
-        margin: 0 !important;
-        flex: 1;
-    }
-
-    /* 表头样式 */
-    #payer-page-root .layui-table-header {
-        background-color: rgba(15, 23, 42, 0.8) !important;
-        border-bottom: 2px solid var(--accent-cyan) !important;
-    }
-
-    #payer-page-root .layui-table thead tr {
-        background-color: transparent !important;
-    }
-
-    #payer-page-root .layui-table th {
-        background-color: transparent !important;
-        color: var(--accent-cyan) !important;
-        font-weight: 600 !important;
-        border: none !important;
-        padding: 12px 15px !important;
-    }
-
-    /* 表体样式 */
-    #payer-page-root .layui-table-body {
-        background-color: transparent !important;
-    }
-
-    #payer-page-root .layui-table td {
-        border: none !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-        color: var(--text-primary) !important;
-        padding: 10px 15px !important;
-    }
-
-    /* 悬停高亮 */
-    #payer-page-root .layui-table-hover,
-    #payer-page-root .layui-table-click,
-    #payer-page-root .layui-table tbody tr:hover {
-        background-color: rgba(0, 229, 255, 0.05) !important;
-    }
-
-    /* 去除空隙 */
-    #payer-page-root .layui-table-view .layui-table {
-        width: 100%;
-    }
-
-    #payer-page-root .layui-table-init {
-        background-color: transparent !important;
-    }
-
-    /* 分页栏定制 */
-    #payer-page-root .layui-table-page {
-        border-top: 1px solid var(--border-color) !important;
-        padding: 10px 0 0 0 !important;
-        height: 50px;
-    }
-
-    #payer-page-root .layui-laypage .layui-laypage-curr .layui-laypage-em {
-        background-color: var(--accent-cyan) !important;
-    }
-
-    #payer-page-root .layui-laypage a,
-    #payer-page-root .layui-laypage span {
-        background-color: transparent !important;
-        color: var(--text-secondary) !important;
-        border: 1px solid var(--border-color) !important;
-    }
-
-    #payer-page-root .layui-laypage a:hover {
-        color: var(--accent-cyan) !important;
-        border-color: var(--accent-cyan) !important;
-    }
-
-    /* ==================== 按钮样式重构 (实心 Neon) ==================== */
-    #payer-page-root .layui-btn {
-        border-radius: 4px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        border: none;
-    }
-
-    /* 蓝色编辑按钮 */
-    #payer-page-root .layui-bg-blue {
-        background-color: #2196f3 !important;
-        color: #fff !important;
-    }
-
-    #payer-page-root .layui-bg-blue:hover {
-        background-color: #1976d2 !important;
-        box-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
-    }
-
-    /* 红色删除按钮 */
-    #payer-page-root .layui-bg-red {
-        background-color: #f44336 !important;
-        color: #fff !important;
-    }
-
-    #payer-page-root .layui-bg-red:hover {
-        background-color: #d32f2f !important;
-        box-shadow: 0 0 8px rgba(244, 67, 54, 0.5);
-    }
-
-    /* 顶部工具栏按钮 */
-    #payer-page-root .layui-btn-primary {
-        background-color: transparent !important;
-        border: 1px solid var(--accent-cyan) !important;
-        color: var(--accent-cyan) !important;
-    }
-
-    #payer-page-root .layui-btn-primary:hover {
-        background-color: var(--accent-cyan) !important;
-        color: #000 !important;
-        box-shadow: var(--neon-shadow);
-    }
-
-    /* 搜索框与输入框 */
-    #payer-page-root .filter-input,
-    #payer-page-root .layui-input,
-    #payer-page-root .layui-textarea {
-        background-color: rgba(0, 0, 0, 0.3) !important;
-        border: 1px solid var(--border-color) !important;
-        color: var(--text-primary) !important;
-        border-radius: 4px;
-        transition: all 0.3s;
-    }
-
-    #payer-page-root .filter-input:focus,
-    #payer-page-root .layui-input:focus,
-    #payer-page-root .layui-textarea:focus {
-        border-color: var(--accent-cyan) !important;
-        box-shadow: 0 0 5px rgba(0, 229, 255, 0.3) !important;
-    }
-
-    /* 弹窗样式修正 */
-    body .layui-layer {
-        background-color: #1e293b !important;
-        border: 1px solid rgba(0, 229, 255, 0.3);
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.8) !important;
-    }
-
-    body .layui-layer-title {
-        background-color: #0f172a !important;
-        color: var(--accent-cyan) !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-    }
-
-    body .layui-layer-content {
-        color: var(--text-primary);
-    }
-
-    body .layui-layer-btn {
-        background-color: #0f172a !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-    }
-
-    /* ==================== 修复固定列错位 & 白色背景问题 (关键) ==================== */
-    /* 强制统一行高，防止因内容高度不同导致的错位 */
-    #payer-page-root .layui-table-cell {
-        height: 50px !important;
-        line-height: 50px !important;
-        padding: 0 15px !important;
-        display: flex;
-        align-items: center;
-        color: var(--text-primary) !important;
-        /* 强制文字颜色 */
-    }
-
-    /* 修复首列复选框/序号无法垂直居中的问题 */
-    #payer-page-root .layui-table-cell .layui-form-checkbox,
-    #payer-page-root .layui-table-cell .layui-table-sort {
-        margin-top: 0 !important;
-    }
-
-    /* 操作列 flex 布局调整 */
-    #payer-page-root .layui-table-cell .layui-btn-container {
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        width: 100%;
-        height: 100%;
-        align-items: center;
-    }
-
-    /* 强制背景为暗色/透明，防止Layui默认白色背景覆盖 */
-    #payer-page-root .layui-table-view,
-    #payer-page-root .layui-table-box,
-    #payer-page-root .layui-table-body,
-    #payer-page-root .layui-table-header,
-    #payer-page-root .layui-table {
-        background-color: transparent !important;
-    }
-
-    /* 确保外层容器有背景 */
-    #payer-page-root .layui-table-view {
-        background-color: rgba(20, 20, 20, 0.6) !important;
-    }
-
-    /* 选中行样式 (Fix: readable text on selection) - High Specificity Override */
-    body .layui-table-view .layui-table tbody tr.layui-table-click,
-    body .layui-table-view .layui-table tbody tr.layui-table-click:hover {
-        background-color: rgba(0, 229, 255, 0.15) !important;
-    }
-
-    body .layui-table-view .layui-table tbody tr.layui-table-click td,
-    body .layui-table-view .layui-table tbody tr.layui-table-click:hover td {
-        background-color: transparent !important;
-        color: #fff !important;
-        box-shadow: inset 4px 0 0 var(--accent-cyan) !important;
-    }
-
-    /* Ensure links/buttons inside selected row are also readable */
-    body .layui-table-view .layui-table tbody tr.layui-table-click a,
-    body .layui-table-view .layui-table tbody tr.layui-table-click .layui-btn {
-        color: var(--accent-cyan) !important;
-    }
-</style>
-
+<header class="sf-page-heading"><div><h1>付款单位</h1><p>管理付款主体、开户行与银行账户</p></div></header>
 <div id="payer-page-root">
     <div class="cyber-card">
         <table class="layui-hide" id="payer-table" lay-filter="payer-table"></table>
@@ -451,7 +187,11 @@
             });
         });
 
+        var formSubmitting = false;
         form.on("submit(payer-form-btn)", function (data) {
+          if (formSubmitting) return false;
+          formSubmitting = true;
+          $('[lay-filter="payer-form-btn"]').prop('disabled', true).addClass('layui-btn-disabled');
             var method = data.field.id == 0 ? "POST" : "PUT";
             var url = method === "POST" ? "/api/v1/payer/" : `/api/v1/payer/${data.field.id}`;
             if (method === "POST") delete data.field.id;
@@ -460,6 +200,11 @@
                 url: window.location.origin + url, type: method,
                 contentType: "application/json", data: JSON.stringify(data.field),
                 headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+                error: function () { layer.msg('保存失败，请检查网络后重试', { icon: 2 }); },
+                complete: function () {
+                  formSubmitting = false;
+                  $('[lay-filter="payer-form-btn"]').prop('disabled', false).removeClass('layui-btn-disabled');
+                },
                 success: function (res) {
                     if (res.code === 0) {
                         layer.closeAll(); layer.msg('操作成功', { icon: 1 });
@@ -482,7 +227,7 @@
                             filterParams[field] = $(this).val();
                             clearTimeout(this.timer);
                             this.timer = setTimeout(() => {
-                                table.reload('payer-table', { where: filterParams, done: addFilterInputs });
+                                table.reload('payer-table', { where: filterParams, page: { curr: 1 }, done: addFilterInputs });
                             }, 800);
                         });
                         $(this).append($input);
@@ -493,3 +238,5 @@
         }
     });
 </script>
+
+{% include 'shared/presentation.html' %}

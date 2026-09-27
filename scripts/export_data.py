@@ -64,16 +64,11 @@ def export_data():
         role_rights_table = RoleORM.rights_list.property.secondary
         results = db.session.query(role_rights_table).all()
         
-        # results are tuples like (role_id, right_id)
-        # Assuming column names are role_id and rights_id based on previous context 
-        # (need to verify if unsure, but typically likely)
-        # Inspecting table columns to be safe
+        # 按列名读取，避免将关联记录的 id 误当成 role_id。
         for row in results:
-            # row is a keyed tuple or object depending on SQLAlchemy version
-            # Let's convert to dict
             data['ums_role_rights'].append({
-                'role_id': row[0],
-                'rights_id': row[1]
+                'role_id': row._mapping['role_id'],
+                'rights_id': row._mapping['rights_id']
             })
         logger.info(f"  - Role-Rights: {len(data['ums_role_rights'])}")
 

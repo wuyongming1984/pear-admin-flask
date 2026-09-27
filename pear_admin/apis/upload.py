@@ -1,4 +1,5 @@
 import os
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -52,7 +53,6 @@ def upload_file():
         if custom_path in ['order_attachments', 'pay_attachments']:
              # Rule: Date_UniqueSequence_OriginalFilename
              # 日期_不重复的流水号_原文件名
-             import uuid
              import re
              
              date_str = datetime.now().strftime("%Y%m%d")
@@ -69,12 +69,13 @@ def upload_file():
                  
              filename = f"{date_str}_{unique_seq}_{original_name}"
         else:
-             # Default Rule: OriginalName_Timestamp
-             # Keep secure_filename for other paths as fallback
-             safe_name = secure_filename(file.filename)
+             # Split before sanitizing: a Chinese-only basename must not consume
+             # the extension. UUID also prevents same-second upload overwrites.
+             original_stem, original_ext = os.path.splitext(file.filename)
+             name = secure_filename(original_stem) or "file"
+             ext = secure_filename(original_ext.lstrip('.'))
              timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-             name, ext = os.path.splitext(safe_name)
-             filename = f"{name}_{timestamp}{ext}"
+             filename = f"{name}_{timestamp}_{uuid.uuid4().hex}.{ext}"
         
         # 获取存储路径 (e.g. "order_attachments")
         custom_path = request.form.get("path", "").strip()
@@ -148,4 +149,3 @@ def upload_file():
         }
     except Exception as e:
         return {"code": -1, "msg": f"上传失败: {str(e)}"}
-

@@ -1,0 +1,1 @@
+<template><main class="page" style="max-width:680px;margin:60px auto"><section class="panel"><h1>账号开通说明</h1><p>本系统供内部员工使用，账号由管理员统一开通。</p><p>请向管理员提供姓名和所属部门，由管理员设置账号及对应权限。忘记密码或需要调整访问范围时，请联系管理员处理。</p><router-link to="/login"><el-button type="primary">返回登录</el-button></router-link></section></main></template>

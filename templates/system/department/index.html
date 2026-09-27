@@ -7,9 +7,12 @@
   <meta name="renderer" content="webkit" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+{% include 'shared/presentation.html' %}
 </head>
 
 <body>
+<header class="sf-page-heading"><div><h1>部门管理</h1><p>维护组织结构与部门负责人</p></div></header>
+
   <div style="padding: 16px">
     <div class="layui-card">
       <div class="layui-card-body">
@@ -23,7 +26,7 @@
     <div class="layui-form-item">
       <label class="layui-form-label">ID</label>
       <div class="layui-input-block">
-        <input type="text" name="id" value="0" lay-verify="required" autocomplete="off" class="layui-input" disabled />
+        <input type="text" name="id" value="0" lay-verify="required" autocomplete="off" class="layui-input" readonly />
       </div>
     </div>
     <div class="layui-form-item">
@@ -93,6 +96,17 @@
     layui.use(["treeTable", "form", "jquery", "layer"], function () {
       var treeTable = layui.treeTable;
       var $ = layui.jquery;
+      function systemRequest(options) {
+        options.headers = Object.assign({Authorization: "Bearer " + localStorage.getItem("access_token")}, options.headers || {});
+        var success = options.success;
+        options.success = function (res) {
+          if (res.code && res.code !== 0) { if (options.onFailure) options.onFailure(); layer.msg(res.msg || "操作失败，请重试", {icon: 2}); return; }
+          if (success) success(res);
+        };
+        options.error = function (xhr) { if (options.onFailure) options.onFailure(); layer.msg((xhr.responseJSON && (xhr.responseJSON.msg || xhr.responseJSON.message)) || "请求失败，请检查网络后重试", {icon: 2}); };
+        return $.ajax(options);
+      }
+
       var form = layui.form;
       var layer = layui.layer;
 
@@ -112,7 +126,7 @@
             { field: "id", title: "ID", width: 80, sort: true },
             { field: "name", title: "部门名", width: 220 },
             { field: "leader", title: "负责人", width: 160 },
-            { field: "enable", title: "状态", width: 80 },
+            { field: "enable", title: "状态", width: 80, templet: function(d) { return d.enable ? "启用" : "禁用"; } },
             {
               fixed: "right",
               title: "操作",
@@ -139,6 +153,7 @@
 
       treeTable.on("tool(department-table)", function (obj) {
         if (obj.event === "department-tool-edit") {
+          $("#department-form")[0].reset();
           form.val("department-form", obj.data);
           layer.open({
             type: 1,
@@ -147,7 +162,7 @@
             area: ["50%", "80%"],
           });
         } else if (obj.event === "department-tool-del") {
-          $.ajax({
+          systemRequest({
             url: window.location.origin + `/api/v1/department/${obj.data.id}`,
             type: "DELETE",
             contentType: "application/json",
@@ -176,7 +191,7 @@
           method = "PUT";
           url = window.location.origin + `/api/v1/department/`;
         }
-        $.ajax({
+        systemRequest({
           url: url,
           type: method,
           contentType: "application/json",

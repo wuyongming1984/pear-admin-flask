@@ -1,0 +1,125 @@
+/* Screen presentation only: document fields and print geometry are untouched. */
+@media screen {
+  :root {
+    --n-primary: var(--sf-primary);
+    --n-primary-hover: var(--sf-primary-hover);
+    --n-primary-light: var(--sf-primary-soft);
+    --n-primary-ring: #087f7820;
+    --n-slate-50: var(--sf-canvas);
+    --n-slate-100: #edf3ef;
+    --n-slate-200: var(--sf-border);
+    --n-slate-500: var(--sf-muted);
+    --n-slate-700: var(--sf-secondary);
+    --n-slate-900: var(--sf-text);
+  }
+  body:not(.sf-document-page) { color: var(--sf-text); font-family: var(--sf-font); }
+  body.pear-admin .layui-side .layui-logo { letter-spacing: .2px; }
+  body.pear-admin .layui-side .layui-logo .title { font-size: 16px; }
+  body.pear-admin .layui-side .layui-this > a { box-shadow: inset 3px 0 #71c8ab; }
+  body.pear-admin .layui-side .layui-this { background: transparent !important; }
+  body.pear-admin .layui-header .layui-nav-item > a { border-radius: 8px; }
+  body.pear-admin .layui-header .layui-nav-item > a:hover { background: var(--sf-surface-soft); }
+  .pear-admin #content > .layui-tab > .layui-tab-title li { border-radius: 7px 7px 0 0; }
+  .pear-admin #content > .layui-tab > .layui-tab-title .layui-this { background: var(--sf-primary-soft); }
+  .sf-page-heading { display: flex; align-items: center; gap: 16px; margin: 0; padding: 24px 22px 18px; }
+  .sf-page-heading::before { content: ''; width: 4px; height: 38px; border-radius: 4px; background: var(--sf-primary); flex: 0 0 4px; }
+  .sf-page-heading h1 { margin: 0 0 6px; font-size: 23px; line-height: 1.4; font-weight: 650; letter-spacing: -.4px; color: var(--sf-text); }
+  .sf-page-heading p { margin: 0; color: var(--sf-muted); font-size: 13px; line-height: 1.6; }
+  .sf-page-heading + div[style] { padding-top: 0 !important; }
+  .layui-card { border-radius: var(--sf-radius); box-shadow: var(--sf-shadow); }
+  .layui-card-header { color: var(--sf-text); font-size: 15px; }
+  .layui-card-body > .layui-form { padding: 12px 0 6px; }
+  .layui-table-view { background: #fff; }
+  .layui-table-header .layui-table th { background: #f0f5f2; }
+  .layui-table-tool { background: #fff; }
+  .layui-table-view .layui-table td { color: #39584b; }
+  .layui-table-view .layui-table-cell { font-size: 13px; }
+  .layui-table-view .layui-table td .layui-btn { box-shadow: none; }
+  .layui-table-view .layui-table td .layui-btn-primary { background: #f6faf8; }
+  .layui-table-view .layui-table td .layui-btn-normal,
+  .layui-table-view .layui-table td .layui-btn.layui-bg-blue { background: #e8f4ef !important; color: #087266 !important; }
+  .layui-table-view .layui-table td .layui-btn-danger,
+  .layui-table-view .layui-table td .layui-btn.layui-bg-red { background: #fcf0ed !important; color: #b54d45 !important; }
+  .layui-table-none { padding: 56px 20px; color: var(--sf-muted); background: #fff; line-height: 1.7; }
+  .layui-table-tool-self .layui-inline { border-color: var(--sf-border); border-radius: 6px; color: var(--sf-secondary); }
+  .layui-table-page .layui-laypage a, .layui-table-page .layui-laypage span { border-radius: 5px; }
+  .layui-form-item { margin-bottom: 20px; }
+  .layui-form-label { font-weight: 500; color: var(--sf-secondary); }
+  .layui-input::placeholder, .layui-textarea::placeholder { color: #8a9b92; }
+  .layui-input[readonly] { background: #f4f7f5; color: #637a6e; }
+  .layui-textarea { line-height: 1.7; padding: 10px 12px; }
+  .layui-btn { transition: background-color .15s, border-color .15s; }
+  .layui-btn-danger { background: var(--sf-danger); }
+  .layui-btn-disabled, .layui-btn-disabled:hover { opacity: .55; cursor: not-allowed; }
+  .layui-layer-title { font-size: 16px; padding-left: 22px; }
+  .layui-layer-btn { background: #fafcfb; }
+  .layui-layer-content .layui-form { padding-top: 22px; }
+  .layui-layer-content .layui-form-item:last-child { margin-bottom: 8px; }
+  .layui-upload-drag { border: 1px dashed #a9c7b8; border-radius: 12px; background: #f7fbf9; }
+  .layui-upload-drag .layui-icon { color: var(--sf-primary); }
+  .layui-upload-drag p { color: var(--sf-secondary); }
+  .layui-tab-brief > .layui-tab-title .layui-this { color: var(--sf-primary); }
+  .layui-tab-brief > .layui-tab-title .layui-this::after { border-color: var(--sf-primary); }
+  .layui-form-checked[lay-skin=primary] i, .layui-form-onswitch { background: var(--sf-primary); border-color: var(--sf-primary); }
+  .layui-form-radio:hover *, .layui-form-radioed > i { color: var(--sf-primary); }
+  /* Project selectors used throughout materials and purchasing. */
+  .project-panel .project-title { background: #f5f9f6; color: var(--sf-text); border-color: var(--sf-border); }
+  .project-panel .project-item:hover, .project-panel .project-item.active,
+  .refined-container .project-item.active { color: var(--sf-primary); background: var(--sf-primary-soft); }
+  .refined-container { box-shadow: var(--sf-shadow); border-color: var(--sf-border); border-radius: 14px; }
+  .refined-container .side-panel-header { background: #f8fbf9; }
+  .refined-container .card-grid { background: #f7faf8; }
+  #project-page-root .project-card, #supplier-page-root .supplier-card { box-shadow: var(--sf-shadow); }
+  #project-page-root .card-label, #supplier-page-root .info-row { color: var(--sf-muted); }
+  #project-page-root .card-title, #supplier-page-root .card-title { line-height: 1.5; }
+  .n-page { background: var(--sf-canvas); font-family: var(--sf-font); }
+  .n-page .n-header { text-align: left; margin-bottom: 24px; padding: 4px 0 0; }
+  .n-page .n-title { font-size: 24px; font-weight: 650; }
+  .n-page .n-subtitle { color: var(--sf-muted); font-size: 13px; line-height: 1.7; margin-top: 8px; }
+  .n-page .n-card, .n-page .n-stat-card { border-color: var(--sf-border); border-radius: 12px; box-shadow: var(--sf-shadow); }
+  .n-page .n-card__header { background: #f9fbfa; border-color: var(--sf-border); }
+  .n-page .n-stat-value { font-variant-numeric: tabular-nums; letter-spacing: -.6px; }
+  .n-page .n-stat-card { border-top: 3px solid #a3cbb9; }
+  .pear-admin .dashboard-container .chart-card { box-shadow: var(--sf-shadow); }
+  .pear-admin .dashboard-container .stat-card:hover { transform: none; }
+  .desktop-page-heading h1 { font-size: 25px; }
+  .desktop-eyebrow { color: var(--sf-muted); }
+  .pear-exception { margin: 48px auto; padding: 40px; max-width: 850px; background: #fff; border: 1px solid var(--sf-border); border-radius: 18px; box-shadow: var(--sf-shadow); }
+  .pear-exception .content .title { color: var(--sf-text); }
+  /* Public entry pages use the same identity as the authenticated workspace. */
+  .login-container { --primary-600: #087f78; --primary-500: #0c968a; }
+  .login-container .brand-section { background: linear-gradient(140deg, #173c37, #22594b); }
+  .login-container .brand-section::before { background: radial-gradient(circle, #77c3a630, transparent 70%); }
+  .login-container .brand-section::after { background: radial-gradient(circle, #a7d3b320, transparent 70%); }
+  .login-container .brand-title { font-size: clamp(32px, 3vw, 46px); letter-spacing: -1px; }
+  .login-container .brand-desc { color: #c0d9ce; line-height: 1.9; }
+  .login-container .form-section { background: #f8faf9; }
+  .login-container .login-wrapper { padding: 36px; background: #fff; border: 1px solid var(--sf-border); border-radius: 20px; box-shadow: 0 16px 60px #173c3708; }
+  .login-container .form-title { color: var(--sf-text); }
+  .login-container .form-subtitle { color: var(--sf-muted); }
+  .sf-account-help { background: var(--sf-canvas); }
+  .sf-account-help .card { border-color: var(--sf-border); box-shadow: var(--sf-shadow); }
+  .sf-account-help h1 { color: var(--sf-text); }
+  .sf-account-help a { background: var(--sf-primary); }
+  .sf-document-page .no-print, .sf-document-page .print-actions { border-radius: 10px; }
+  .sf-document-page .no-print button, .sf-document-page .print-actions button { border-radius: 7px; cursor: pointer; }
+  .sf-portal-page { background: var(--sf-canvas); }
+  .sf-portal-page .header { border-color: var(--sf-border); }
+  .sf-portal-page .header-title h1 { color: var(--sf-text); }
+  .sf-portal-page .project-title { color: var(--sf-primary); border-color: #9bc4b1; }
+  @media (max-width: 900px) {
+    .sf-page-heading { padding: 20px 16px 14px; }
+    .sf-page-heading h1 { font-size: 21px; }
+    .n-page { padding: 18px; }
+    .layui-layer-page { max-width: calc(100vw - 24px); }
+    .pear-exception { margin: 20px; padding: 24px; }
+  }
+  @media (max-width: 600px) {
+    .login-container .login-wrapper { padding: 24px; }
+    .login-container .form-section { padding: 24px 16px; }
+    .sf-page-heading p { font-size: 12px; }
+    .layui-form .layui-inline { margin-right: 0; max-width: 100%; }
+    .pear-exception { display: flex; flex-direction: column; gap: 24px; }
+  }
+}
+@media print { .sf-page-heading { display: none !important; } }

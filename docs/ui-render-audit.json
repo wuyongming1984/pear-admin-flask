@@ -1,0 +1,256 @@
+{
+  "date": "2026-09-25",
+  "templates": [
+    {
+      "name": "error/403.html",
+      "styled": true,
+      "scriptsChecked": 0
+    },
+    {
+      "name": "error/404.html",
+      "styled": true,
+      "scriptsChecked": 0
+    },
+    {
+      "name": "error/500.html",
+      "styled": true,
+      "scriptsChecked": 0
+    },
+    {
+      "name": "material/dashboard.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "material/inbound.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "material/inbound_add.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "material/inventory.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "material/invoice.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "material/invoice_add.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "material/outbound.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "material/outbound_add.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "material/outbound_batch_add.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "material/outbound_records.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "material/planning.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "material/planning_add.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "nursery/dashboard.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "nursery/history.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "nursery/inbound.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "nursery/inventory.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "nursery/logs.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "nursery/orders.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "nursery/outbound.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "nursery/settings.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "order_pay/order_base.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "order_pay/pay_base.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "view/index.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "view/login.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "view/register.html",
+      "styled": true,
+      "scriptsChecked": 0
+    },
+    {
+      "name": "nursery/operate/inbound.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "nursery/operate/outbound.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "order_pay/info/invoice_detail.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "order_pay/info/order_info.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "order_pay/info/pay_info.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "order_pay/info/print_order.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "order_pay/info/print_pay.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "payer/info/payer_info.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "project/info/project_info.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "supplier/info/supplier_info.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "system/backup/index.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "system/department/index.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "system/dictionary/index.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "system/rights/index.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "system/role/index.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "system/user/index.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "view/analysis/index.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "view/console/index.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "view/dashboard/index.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "view/system/person.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "material/inbound_edit.html",
+      "styled": true,
+      "scriptsChecked": 1
+    },
+    {
+      "name": "portal/reconcile.html",
+      "styled": true,
+      "scriptsChecked": 1
+    }
+  ],
+  "inlineScriptsChecked": 46
+}

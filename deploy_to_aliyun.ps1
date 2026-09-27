@@ -2,7 +2,7 @@
 # Automatically upload all necessary files
 
 $SERVER = "root@8.159.138.234"
-$PROJECT_DIR = "d:\pear_admin\pear-admin-flask"
+$PROJECT_DIR = $PSScriptRoot
 
 Write-Host "=========================================="
 Write-Host "Aliyun One-Click Deployment Script"

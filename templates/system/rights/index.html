@@ -23,9 +23,12 @@
       color: #333 !important;
     }
   </style>
+{% include 'shared/presentation.html' %}
 </head>
 
 <body>
+<header class="sf-page-heading"><div><h1>菜单与权限</h1><p>维护菜单层级、功能入口和权限标识</p></div></header>
+
   <div style="padding: 16px">
     <div class="layui-card">
       <div class="layui-card-body">
@@ -137,6 +140,17 @@
     layui.use(["treeTable", "form", "jquery", "layer"], function () {
       var treeTable = layui.treeTable;
       var $ = layui.jquery;
+      function systemRequest(options) {
+        options.headers = Object.assign({Authorization: "Bearer " + localStorage.getItem("access_token")}, options.headers || {});
+        var success = options.success;
+        options.success = function (res) {
+          if (res.code && res.code !== 0) { if (options.onFailure) options.onFailure(); layer.msg(res.msg || "操作失败，请重试", {icon: 2}); return; }
+          if (success) success(res);
+        };
+        options.error = function (xhr) { if (options.onFailure) options.onFailure(); layer.msg((xhr.responseJSON && (xhr.responseJSON.msg || xhr.responseJSON.message)) || "请求失败，请检查网络后重试", {icon: 2}); };
+        return $.ajax(options);
+      }
+
       var form = layui.form;
       var layer = layui.layer;
 
@@ -211,6 +225,7 @@
       treeTable.on("toolbar(rights-table)", function (obj) {
         if (obj.event === "rights-toolbar-add") {
           $("#rights-form")[0].reset();
+          updateRightsFields("menu");
           layer.open({
             type: 1,
             shade: false,
@@ -247,7 +262,7 @@
           method = "PUT";
           url = window.location.origin + `/api/v1/rights/`;
         }
-        $.ajax({
+        systemRequest({
           url: url,
           type: method,
           contentType: "application/json",
@@ -269,7 +284,10 @@
       treeTable.on("tool(rights-table)", function (obj) {
         var layEvent = obj.event;
         if (layEvent === "rights-tool-edit") {
+          $("#rights-form")[0].reset();
+          updateRightsFields("menu");
           form.val("rights-form", obj.data);
+          updateRightsFields(obj.data.type);
           layer.open({
             type: 1,
             shade: false,
@@ -277,7 +295,7 @@
             area: ["50%", "80%"],
           });
         } else if (layEvent === "rights-tool-del") {
-          $.ajax({
+          systemRequest({
             url: window.location.origin + `/api/v1/rights/${obj.data.id}`,
             type: "DELETE",
             contentType: "application/json",
@@ -293,9 +311,7 @@
         }
       });
 
-      form.on("radio(form-rights-filter)", function (data) {
-        var elem = data.elem;
-        var value = elem.value;
+      function updateRightsFields(value) {
 
         switch (value) {
           case "menu":
@@ -311,6 +327,11 @@
             $('[name="icon_sign"]').parent().parent().hide();
             break;
         }
+      }
+      form.on("radio(form-rights-filter)", function (data) { updateRightsFields(data.value); });
+      form.on("switch(rights-table-switch-status)", function (data) {
+        var checked = data.elem.checked;
+        systemRequest({url: "/api/v1/rights/" + data.value, type: "PUT", contentType: "application/json", data: JSON.stringify({status: checked}), success: function () { treeTable.reloadData("rights-table"); }, onFailure: function () { data.elem.checked = !checked; form.render("checkbox"); }});
       });
     });
   </script>

@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="/static/admin/css/order_pay_refined.css" />
+<link rel="stylesheet" href="/static/admin/css/order_pay_refined.css?v=2026.02.13.v1" />
 <style>
   /* 解决 Pear Admin Tab 覆盖问题 - Scoped */
   #pay-page-root {
@@ -10,12 +10,14 @@
   /* Scope global body resets if any */
   #pay-page-root .refined-container {
     margin: 0 !important;
-    height: calc(100vh - 20px) !important;
+    height: calc(100vh - 146px) !important;
+    min-height: 420px;
     border-radius: 0 !important;
     box-sizing: border-box;
   }
 </style>
 
+<header class="sf-page-heading"><div><h1>付款管理</h1><p>核对订单付款、关联发票与支付状态</p></div></header>
 <div id="pay-page-root">
   <div class="refined-container">
     <!-- 左侧项目侧边栏 -->
@@ -175,7 +177,7 @@
     });
 
     // 勾选切换
-    $(document).on('change', '.field-option input', function () {
+    $(document).off('change', '#pay-page-root .field-option input').on('change', '#pay-page-root .field-option input', function () {
       var field = $(this).data('field');
       var isChecked = $(this).prop('checked');
       fieldSettings[field] = isChecked;
@@ -364,7 +366,7 @@
     }
 
     // 门户按钮点击事件
-    $(document).on('click', '.portal-btn', function (e) {
+    $(document).off('click', '#pay-page-root .portal-btn').on('click', '#pay-page-root .portal-btn', function (e) {
       e.stopPropagation(); // 阻止冒泡，防止触发联系人选择
       var id = $(this).data('id');
       var name = $(this).data('name');
@@ -509,7 +511,7 @@
                 <span class="info-label">附件列表</span>
                 <div class="attachment-list-compact">
                   ${attachmentsList.map(att => `
-                    <div class="attachment-item-compact preview-attachment" title="${att.name || att.filename || '未命名'}" data-url="${att.url}" data-name="${att.name || att.filename}">
+                    <div class="attachment-item-compact preview-attachment" title="${att.name || att.filename || '未命名'}" data-url="${att.url || ''}" data-path="${att.file_path || ''}" data-name="${att.name || att.filename}">
                       <i class="layui-icon layui-icon-file"></i>
                       <span class="attachment-name" title="点击预览">${att.name || att.filename || '未命名'}</span>
                       ${att.url ? `<a href="${att.url}" target="_blank" class="attachment-download" onclick="event.stopPropagation();" title="下载附件"><i class="layui-icon layui-icon-download-circle"></i></a>` : ''}
@@ -545,7 +547,7 @@
 
     // ==================== 事件绑定 ====================
 
-    $(document).on('click', '#pay-project-list .project-item', function () {
+    $(document).off('click', '#pay-project-list .project-item').on('click', '#pay-project-list .project-item', function () {
       $('#pay-project-list .project-item').removeClass('active');
       $(this).addClass('active');
       currentProject = $(this).data('id');
@@ -554,7 +556,7 @@
       loadPayments();
     });
 
-    $(document).on('click', '#pay-contact-list .project-item', function () {
+    $(document).off('click', '#pay-contact-list .project-item').on('click', '#pay-contact-list .project-item', function () {
       $('#pay-contact-list .project-item').removeClass('active');
       $(this).addClass('active');
       currentContact = $(this).data('id');
@@ -581,7 +583,7 @@
     });
 
     // 查看发票详情
-    $(document).on('click', '.view-invoice-detail', function (e) {
+    $(document).off('click', '.view-invoice-detail').on('click', '.view-invoice-detail', function (e) {
       e.stopPropagation();
       var id = $(this).data('id');
       var url = $(this).data('url');
@@ -601,7 +603,7 @@
       });
     });
 
-    $(document).on('click', '.pay-card-edit-btn', function () {
+    $(document).off('click', '.pay-card-edit-btn').on('click', '.pay-card-edit-btn', function () {
       var id = $(this).data('id');
       layer.open({
         type: 2, title: '编辑付款单', area: ['90%', '90%'],
@@ -610,7 +612,7 @@
       });
     });
 
-    $(document).on('click', '.pay-card-del-btn', function () {
+    $(document).off('click', '.pay-card-del-btn').on('click', '.pay-card-del-btn', function () {
       var id = $(this).data('id');
       layer.confirm('确定删除该付款记录？', { icon: 3, title: '警告' }, (idx) => {
         $.ajax({
@@ -626,13 +628,14 @@
     });
 
     // 附件预览逻辑
-    $(document).on('click', '.preview-attachment', function () {
+    $(document).off('click', '#pay-page-root .preview-attachment').on('click', '#pay-page-root .preview-attachment', function () {
       var url = $(this).data('url');
-      var name = $(this).data('name');
-      if (!url) return;
+      var filePath = $(this).data('path');
+      var name = $(this).data('name') || '未命名';
+      if (!url && !filePath) return;
 
       var ext = name.split('.').pop().toLowerCase();
-      if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].indexOf(ext) > -1) {
+      if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].indexOf(ext) > -1) {
         layer.photos({
           photos: {
             title: "预览图片",
@@ -642,17 +645,29 @@
           anim: 5
         });
       } else {
-        window.open(url, '_blank');
+        // PDF 等文件通过代理接口以 inline 方式预览
+        var proxyBase = window.location.origin + '/api/v1/attachment/proxy-preview?name=' + encodeURIComponent(name);
+        var proxyUrl = filePath
+          ? (proxyBase + '&path=' + encodeURIComponent(filePath))
+          : (proxyBase + '&url=' + encodeURIComponent(url));
+        layer.open({
+          type: 1,
+          title: '<i class="layui-icon layui-icon-file" style="color: var(--accent-primary);"></i> 预览: ' + name,
+          shadeClose: true,
+          maxmin: true,
+          area: ['85%', '92%'],
+          content: '<div style="width:100%;height:100%;min-height:600px;"><iframe src="' + proxyUrl + '" width="100%" height="100%" style="border:none;min-height:600px;display:block;" allowfullscreen></iframe></div>'
+        });
       }
     });
 
-    $(document).on('click', '.pay-card-print-btn', function () {
+    $(document).off('click', '.pay-card-print-btn').on('click', '.pay-card-print-btn', function () {
       var payId = $(this).data('id');
       // 打开独立的 A4 打印页面
       window.open('/order_pay/info/print_pay.html?id=' + payId, '_blank');
     });
 
-    $('#add-pay-btn').on('click', () => {
+    $('#add-pay-btn').off('click').on('click', () => {
       layer.open({
         type: 2, title: '新增付款单', area: ['90%', '90%'],
         content: '/order_pay/info/pay_info.html',
@@ -705,3 +720,5 @@
     });
   });
 </script>
+
+{% include 'shared/presentation.html' %}

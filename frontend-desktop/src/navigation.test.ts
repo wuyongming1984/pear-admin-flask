@@ -1,0 +1,5 @@
+import{it,expect}from'vitest';import{allowedMenu,routeForMenu}from'./navigation';
+it('maps aliases but never grants missing menu access',()=>{const menus=[{id:1,title:'system',children:[{id:2,title:'字典',href:'/system/dictionary/'}]}];expect(allowedMenu('/system/dictionary/index.html',menus)).toBe(true);expect(allowedMenu('/views/user.html',menus)).toBe(false)});
+it('unknown menus remain visible with explicit explanation route',()=>{const resolve=routeForMenu([],[{path:'/system/users',meta:{menuPath:'/system/user/index.html'}}]);expect(resolve({id:1,title:'用户',href:'/views/user.html'})).toBe('/system/users');expect(resolve({id:2,title:'未知模块',href:'/old/custom'})).toContain('/unsupported?menu=')});
+
+it('maps own profile menu independently of role grants',()=>{const resolve=routeForMenu([],[{path:'/profile',meta:{menuPath:'',legacyMenuPath:'/view/system/person.html'}}]);expect(resolve({id:1,title:'个人中心',href:'/view/system/person.html'})).toBe('/profile');expect(allowedMenu('',[])).toBe(true)});

@@ -1,3 +1,4 @@
+from ._system_validation import validated, payload, required, record
 from flask import jsonify, request, Blueprint
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from pear_admin.extensions import db
@@ -8,8 +9,8 @@ dictionary_api_bp = Blueprint('dictionary_api', __name__, url_prefix='/dictionar
 @dictionary_api_bp.route('/list', methods=['GET'])
 # @jwt_required()  # 移除认证要求，允许前端直接调用
 def dictionary_list():
-    page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 10))
+    page = max(1, request.args.get('page', 1, type=int))
+    limit = max(1, min(request.args.get('limit', 10, type=int), 200))
     code_desc = request.args.get('code_desc', '')
 
     query = DictionaryORM.query
@@ -32,8 +33,10 @@ def dictionary_list():
 
 @dictionary_api_bp.route('/', methods=['POST'])
 @jwt_required()
+@validated
 def add_dictionary():
-    data = request.json
+    data = payload()
+    required(data, 'code', 'name')
     code = data.get('code')
     name = data.get('name')
     
@@ -54,10 +57,16 @@ def add_dictionary():
 
 @dictionary_api_bp.route('/<int:id>', methods=['PUT'])
 @jwt_required()
+@validated
 def update_dictionary(id):
-    dic = DictionaryORM.query.get_or_404(id)
-    data = request.json
+    dic = record(DictionaryORM, id)
+    data = payload()
     
+    for key in ('code', 'name'):
+        if key in data:
+            required(data, key)
+    if 'code' in data and DictionaryORM.query.filter(DictionaryORM.code == data['code'], DictionaryORM.id != id).first():
+        raise ValueError('字典代码已存在')
     dic.code = data.get('code', dic.code)
     dic.name = data.get('name', dic.name)
     dic.update_user = get_jwt_identity()
@@ -67,8 +76,9 @@ def update_dictionary(id):
 
 @dictionary_api_bp.route('/<int:id>', methods=['DELETE'])
 @jwt_required()
+@validated
 def delete_dictionary(id):
-    dic = DictionaryORM.query.get_or_404(id)
+    dic = record(DictionaryORM, id)
     
     # Check if has details
     if dic.details.count() > 0:
@@ -85,8 +95,8 @@ def delete_dictionary(id):
 # @jwt_required()  # 移除认证要求，允许前端直接调用
 def detail_list():
     dic_id = request.args.get('dic_id')
-    page = int(request.args.get('page', 1))
-    limit = int(request.args.get('limit', 10))
+    page = max(1, request.args.get('page', 1, type=int))
+    limit = max(1, min(request.args.get('limit', 10, type=int), 200))
     
     if not dic_id:
         return jsonify({'code': 0, 'msg': '', 'count': 0, 'data': []})
@@ -124,12 +134,16 @@ def get_options():
 
 @dictionary_api_bp.route('/detail', methods=['POST'])
 @jwt_required()
+@validated
 def add_detail():
-    data = request.json
-    dic_id = data.get('dic_id')
+    data = payload()
+    required(data, 'code', 'value')
+    dic_id = record(DictionaryORM, data.get('dic_id')).id
     code = data.get('code')
     value = data.get('value')
-    order_no = data.get('order_no', 0)
+    order_no = int(data.get('order_no') or 0)
+    if DictionaryDetailORM.query.filter_by(dic_id=dic_id, code=code).first():
+        raise ValueError('明细代码已存在')
     
     if not dic_id or not code or not value:
          return jsonify({'success': False, 'msg': '参数不完整'})
@@ -147,13 +161,19 @@ def add_detail():
 
 @dictionary_api_bp.route('/detail/<int:id>', methods=['PUT'])
 @jwt_required()
+@validated
 def update_detail(id):
-    detail = DictionaryDetailORM.query.get_or_404(id)
-    data = request.json
+    detail = record(DictionaryDetailORM, id)
+    data = payload()
     
+    for key in ('code', 'value'):
+        if key in data:
+            required(data, key)
+    if 'code' in data and DictionaryDetailORM.query.filter(DictionaryDetailORM.dic_id == detail.dic_id, DictionaryDetailORM.code == data['code'], DictionaryDetailORM.id != id).first():
+        raise ValueError('明细代码已存在')
     detail.code = data.get('code', detail.code)
     detail.value = data.get('value', detail.value)
-    detail.order_no = data.get('order_no', detail.order_no)
+    detail.order_no = int(data.get('order_no', detail.order_no) or 0)
     detail.update_user = get_jwt_identity()
     
     db.session.commit()
@@ -161,8 +181,9 @@ def update_detail(id):
 
 @dictionary_api_bp.route('/detail/<int:id>', methods=['DELETE'])
 @jwt_required()
+@validated
 def delete_detail(id):
-    detail = DictionaryDetailORM.query.get_or_404(id)
+    detail = record(DictionaryDetailORM, id)
     db.session.delete(detail)
     db.session.commit()
     return jsonify({'success': True, 'msg': '删除成功'})

@@ -5,351 +5,8 @@
   <meta charset="utf-8">
   <title>付款单</title>
   <link rel="stylesheet" href="/static/component/pear/css/pear.css" />
-  <style>
-    /* ==================== 赛博工业设计规范 ==================== */
-    :root {
-      --accent-primary: #00e5ff;
-      --accent-glow: rgba(0, 229, 255, 0.3);
-      --bg-deep: #0f172a;
-      --bg-surface: rgba(30, 41, 59, 0.7);
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --border-dim: rgba(255, 255, 255, 0.05);
-      --border-glow: rgba(0, 229, 255, 0.2);
-      --radius-lg: 12px;
-      --radius-md: 8px;
-    }
-
-    }
-
-    /* 修复弹窗文字颜色 */
-    .layui-layer {
-      color: #333 !important;
-    }
-
-    body {
-      background-color: var(--bg-deep);
-      background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.02) 1px, transparent 0);
-      background-size: 24px 24px;
-      color: var(--text-primary);
-      font-family: 'Inter', -apple-system, sans-serif;
-      padding: 24px;
-    }
-
-    .order-form-container {
-      max-width: 1100px;
-      margin: 0 auto;
-      background: var(--bg-surface);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--border-dim);
-      border-radius: var(--radius-lg);
-      padding: 30px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-    }
-
-    .main-title {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 35px;
-      padding-left: 15px;
-      border-left: 4px solid var(--accent-primary);
-      letter-spacing: 1px;
-      text-shadow: 0 0 10px var(--accent-glow);
-    }
-
-    /* 区块样式 */
-    .info-section {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-dim);
-      border-radius: var(--radius-md);
-      padding: 24px;
-      margin-bottom: 24px;
-    }
-
-    .section-header {
-      margin-bottom: 20px;
-    }
-
-    .section-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--accent-primary);
-      text-transform: uppercase;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .section-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: linear-gradient(to right, var(--border-glow), transparent);
-    }
-
-    /* 网格布局 */
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px 40px;
-    }
-
-    .form-item {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .form-item label {
-      font-size: 12px;
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-
-    /* 输入框与选择框 */
-    .form-item input,
-    .form-item select,
-    .layui-input,
-    .layui-form-select .layui-input {
-      background: rgba(15, 23, 42, 0.6) !important;
-      border: 1px solid var(--border-dim) !important;
-      color: var(--text-primary) !important;
-      border-radius: var(--radius-md) !important;
-      height: 40px !important;
-      line-height: 40px !important;
-      padding: 0 15px !important;
-      transition: all 0.3s !important;
-    }
-
-    .form-item input:focus,
-    .layui-input:focus,
-    .layui-form-select .layui-input:focus {
-      border-color: var(--accent-primary) !important;
-      box-shadow: 0 0 0 3px var(--accent-glow) !important;
-      background: rgba(15, 23, 42, 0.8) !important;
-    }
-
-    .form-item input[readonly] {
-      background: rgba(255, 255, 255, 0.02) !important;
-      color: var(--text-secondary) !important;
-      cursor: default !important;
-    }
-
-    .form-item.full-width {
-      grid-column: 1 / -1;
-    }
-
-    .form-item textarea {
-      background: rgba(15, 23, 42, 0.6) !important;
-      border: 1px solid var(--border-dim) !important;
-      color: var(--text-primary) !important;
-      border-radius: var(--radius-md) !important;
-      padding: 12px !important;
-      min-height: 80px;
-      resize: vertical;
-      transition: all 0.3s;
-    }
-
-    .form-item textarea:focus {
-      border-color: var(--accent-primary) !important;
-      box-shadow: 0 0 0 3px var(--accent-glow) !important;
-    }
-
-    /* Layui Select 弹出层适配 */
-    .layui-form-select dl {
-      background: var(--bg-deep) !important;
-      border: 1px solid var(--border-dim) !important;
-      color: var(--text-primary) !important;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
-      border-radius: var(--radius-md) !important;
-      padding: 5px 0 !important;
-    }
-
-    .layui-form-select dl dd:hover,
-    .layui-form-select dl dd.layui-this {
-      background: var(--accent-primary) !important;
-      color: #000 !important;
-    }
-
-    /* 底部按钮 */
-    .form-actions {
-      margin-top: 30px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      padding-top: 30px;
-      border-top: 1px solid var(--border-dim);
-    }
-
-    .layui-btn {
-      border-radius: var(--radius-md) !important;
-      height: 40px !important;
-      line-height: 40px !important;
-      padding: 0 24px !important;
-      font-weight: 600 !important;
-      transition: all 0.2s !important;
-    }
-
-    .btn-cancel {
-      background: transparent !important;
-      border: 1px solid var(--border-dim) !important;
-      color: var(--text-secondary) !important;
-    }
-
-    .btn-cancel:hover {
-      border-color: var(--text-secondary) !important;
-      color: var(--text-primary) !important;
-    }
-
-    .btn-confirm {
-      background: var(--accent-primary) !important;
-      color: #000 !important;
-      border: none !important;
-      box-shadow: 0 0 15px var(--accent-glow) !important;
-    }
-
-    .btn-confirm:hover {
-      transform: translateY(-1px) !important;
-      box-shadow: 0 0 25px var(--accent-glow) !important;
-    }
-
-    /* 附件面板样式 */
-    .attachment-panel {
-      margin-top: 20px;
-    }
-
-    .attachment-upload {
-      margin-bottom: 15px;
-    }
-
-    .attachment-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .attachment-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid var(--border-dim);
-      border-radius: var(--radius-md);
-      transition: all 0.2s;
-    }
-
-    .attachment-item:hover {
-      background: rgba(15, 23, 42, 0.8);
-      border-color: var(--accent-primary);
-    }
-
-    .file-icon {
-      font-size: 24px;
-      color: var(--accent-primary);
-    }
-
-    .file-main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      min-width: 0;
-    }
-
-    .file-code {
-      font-size: 11px;
-      color: var(--text-secondary);
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .file-name {
-      font-size: 13px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      color: var(--text-primary);
-    }
-
-    .file-size {
-      font-size: 11px;
-      color: var(--text-secondary);
-    }
-
-    .file-ops {
-      display: flex;
-      gap: 10px;
-    }
-
-    .file-ops i {
-      cursor: pointer;
-      font-size: 16px;
-      transition: 0.2s;
-    }
-
-    .file-ops .layui-icon-download-circle:hover {
-      color: var(--accent-primary);
-    }
-
-    .file-ops .layui-icon-close:hover {
-      color: #ff5252;
-    }
-
-    .attachment-empty {
-      text-align: center;
-      color: var(--text-secondary);
-      padding: 30px;
-      font-size: 13px;
-      border: 1px dashed var(--border-dim);
-      border-radius: var(--radius-md);
-    }
-
-    .search-results-dropdown {
-      position: absolute;
-      top: 40px;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      background: #1a1a1a;
-      border: 1px solid var(--border-dim);
-      border-radius: 4px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      max-height: 250px;
-      overflow-y: auto;
-      display: none;
-    }
-
-    .search-result-item {
-      padding: 10px 15px;
-      cursor: pointer;
-      border-bottom: 1px solid var(--border-dim);
-      transition: background 0.2s;
-    }
-
-    .search-result-item:last-child {
-      border-bottom: none;
-    }
-
-    .search-result-item:hover {
-      background: rgba(255, 152, 0, 0.1);
-    }
-
-    .search-result-item .res-number {
-      display: block;
-      font-weight: bold;
-      color: var(--accent-primary);
-      font-size: 13px;
-    }
-
-    .search-result-item .res-info {
-      display: block;
-      font-size: 11px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-  </style>
-  </style>
+  <link rel="stylesheet" href="/static/admin/css/desktop-forms.css?v=20260924">
+{% include 'shared/presentation.html' %}
 </head>
 
 <body>
@@ -534,10 +191,13 @@
       var currentPaymentId = null;
       // 附件列表
       var attachmentList = [];
+      var formReady = false;
+      var pendingUploads = 0;
       // 已选发票列表
       var selectedInvoices = [];
       var currentPaymentNumber = '';
       var savedOrderId = null; // Store order_id from loaded details for edit fallback
+      var isPrintAfterSave = false; // 是否在保存后执行打印
 
       // 获取URL参数
       var urlParams = new URLSearchParams(window.location.search);
@@ -558,111 +218,218 @@
         return $.ajax($.extend({}, defaults, options));
       }
 
-      // 加载基础数据（字典、下拉选项）
-      function initData() {
-        // 1. 加载付款状态字典
-        makeRequest({
-          url: API.DICT,
-          type: 'GET',
-          data: { dic_id: 28, limit: 100 }, // fkzt
-          success: function (res) {
-            if (res.code === 0 && res.data) {
-              var html = '<option value="">请选择付款状态</option>';
-              res.data.forEach(function (item) {
-                html += '<option value="' + item.code + '">' + item.value + '</option>';
-              });
-              $('#payment-status-select').html(html);
+      // 加载基础数据（改为返回 Promise 模式）
+      function fetchDicts() {
+        return makeRequest({ url: API.DICT, type: 'GET', data: { dic_id: 28, limit: 100 } });
+      }
+
+      function fetchPayers() {
+        return makeRequest({ url: API.PAYER, type: 'GET', data: { limit: 9999 } });
+      }
+
+      function fetchSuppliers() {
+        return makeRequest({ url: API.SUPPLIER, type: 'GET', data: { limit: 9999, mode: 'slim' } });
+      }
+
+      function fetchOrders() {
+        return makeRequest({ url: API.ORDER, type: 'GET', data: { limit: 9999, mode: 'slim' } });
+      }
+
+      function fetchMaterialDict() {
+        return makeRequest({ url: API.DICT, type: 'GET', data: { dic_id: 35, limit: 9999 } });
+      }
+
+      // 主初始化函数：并行启动所有请求
+      function initAllData() {
+        var loading = layer.load(1);
+        var shouldSkipOrders = !!(currentPaymentId || initialOrderId);
+
+        var promises = [
+          fetchDicts(),
+          fetchPayers(),
+          fetchSuppliers(),
+          shouldSkipOrders ? Promise.resolve({ code: 0, data: [] }) : fetchOrders(),
+          fetchMaterialDict()
+        ];
+
+        // 如果是编辑模式，同时加载详情
+        if (currentPaymentId) {
+          promises.push(makeRequest({ url: API.PAY + currentPaymentId, type: 'GET' }));
+        }
+
+        Promise.all(promises).then(async function (results) {
+          layer.close(loading);
+          if (results.some(function (res) { return res.code !== 0; })) throw new Error('基础数据或付款单加载失败');
+          var dictRes = results[0];
+          var payerRes = results[1];
+          var supplierRes = results[2];
+          var orderRes = results[3];
+          var matDictRes = results[4];
+          var detailRes = currentPaymentId ? results[5] : null;
+
+          // 1. 处理支付状态
+          if (dictRes.code === 0 && dictRes.data) {
+            var html = '<option value="">请选择付款状态</option>';
+            dictRes.data.forEach(function (item) {
+              html += '<option value="' + item.code + '">' + item.value + '</option>';
+            });
+            $('#payment-status-select').html(html);
+          }
+
+          // 2. 处理付款单位
+          if (payerRes.code === 0 && payerRes.data) {
+            var html = '<option value="">请选择付款单位</option>';
+            payerRes.data.forEach(function (item) {
+              html += '<option value="' + item.id + '">' + item.name + '</option>';
+            });
+            $('#payer-supplier-select').html(html);
+          }
+
+          // 3. 处理收款单位 (供应商) - 采用分时渲染
+          if (supplierRes.code === 0 && supplierRes.data) {
+            supplierDataMap = {};
+            await renderSelectInChunks('#payee-supplier-select', '请选择收款单位', supplierRes.data, function (item) {
+              supplierDataMap[item.id] = item;
+              return '<option value="' + item.id + '">' + item.name + '</option>';
+            });
+          }
+
+          // 4. 处理订单列表 - 采用分时渲染
+          if (orderRes.code === 0 && orderRes.data) {
+            await renderSelectInChunks('#order-select', '请选择订单', orderRes.data, function (item) {
+              return '<option value="' + item.id + '">' + item.order_number + (item.project_name ? ' - ' + item.project_name : '') + '</option>';
+            });
+          }
+
+          // 5. 处理材料字典
+          if (matDictRes.code === 0 && matDictRes.data) {
+            window.materialNamesMap = {};
+            matDictRes.data.forEach(function (m) {
+              window.materialNamesMap[m.code] = m.value;
+              window.materialNamesMap[m.value] = m.value;
+            });
+          }
+
+          // 渲染 Select
+          form.render('select');
+
+          // 核心点：如果是编辑模式或预设订单模式，禁用订单选择框
+          if (currentPaymentId || initialOrderId) {
+            $('#order-select').attr('disabled', true);
+            form.render('select');
+          }
+
+          // 6. 执行详情填充逻辑
+          if (detailRes && detailRes.code === 0 && detailRes.data) {
+            fillFormWithData(detailRes.data);
+          } else if (initialOrderId) {
+            // 新建模式且有初始订单ID
+            $('#order-select').val(initialOrderId);
+            form.render('select');
+            loadOrderInfo(initialOrderId);
+
+            // 自动同步订单的材料明细到付款备注 (由 URL 参数 material_detail 传入)
+            var materialDetailParam = urlParams.get('material_detail');
+            if (materialDetailParam) {
+              $('textarea[name="payment_purpose"]').val("订单中的说明：" + materialDetailParam);
+            }
+
+            generatePaymentNo();
+          } else {
+            generatePaymentNo();
+          }
+          formReady = true;
+
+        }).catch(function (err) {
+          layer.close(loading);
+          console.error("数据初始化失败:", err);
+          layer.msg("数据加载过程中出现错误", { icon: 2 });
+        });
+      }
+
+      /**
+       * 分时渲染函数：将大量数据分批插入 DOM，避免主线程阻塞导致页面假死
+       */
+      function renderSelectInChunks(selector, placeholder, data, mapFn) {
+        return new Promise(function (resolve) {
+          var $el = $(selector);
+          var html = '<option value="">' + placeholder + '</option>';
+          var chunkSize = 500; // 每批处理 500 条
+          var index = 0;
+
+          function renderNextChunk() {
+            var end = Math.min(index + chunkSize, data.length);
+            var chunkHtml = '';
+            for (var i = index; i < end; i++) {
+              chunkHtml += mapFn(data[i]);
+            }
+            $el.append(chunkHtml);
+            index = end;
+
+            if (index < data.length) {
+              // 下一帧继续渲染
+              requestAnimationFrame(renderNextChunk);
+            } else {
+              // 全部渲染完成，执行一次 form.render 确保 Layui 样式更新
               form.render('select');
+              resolve();
             }
           }
-        });
 
-        // 2. 加载付款单位
-        makeRequest({
-          url: API.PAYER,
-          type: 'GET',
-          data: { limit: 9999 },
-          success: function (res) {
-            if (res.code === 0 && res.data) {
-              var html = '<option value="">请选择付款单位</option>';
-              res.data.forEach(function (item) {
-                html += '<option value="' + item.id + '">' + item.name + '</option>';
-              });
-              $('#payer-supplier-select').html(html);
-              form.render('select');
-            }
-          }
-        });
-
-        // 3. 加载收款单位 (供应商)
-        makeRequest({
-          url: API.SUPPLIER,
-          type: 'GET',
-          data: { limit: 9999 },
-          success: function (res) {
-            if (res.code === 0 && res.data) {
-              var html = '<option value="">请选择收款单位</option>';
-              supplierDataMap = {};
-              res.data.forEach(function (item) {
-                html += '<option value="' + item.id + '">' + item.name + '</option>';
-                supplierDataMap[item.id] = item;
-              });
-              $('#payee-supplier-select').html(html);
-              form.render('select');
-
-              // 数据加载完成后，如果还没加载具体付款单，尝试加载
-              if (currentPaymentId) {
-                loadPaymentDetails(currentPaymentId);
-              } else if (initialOrderId) {
-                // 如果是新建但有order_id，先加载orders下拉，再选中
-                loadOrderList(function () {
-                  $('#order-select').val(initialOrderId);
-                  loadOrderInfo(initialOrderId);
-                  form.render('select');
-                });
-                generatePaymentNo();
-              } else {
-                loadOrderList();
-                generatePaymentNo();
-              }
-            }
+          $el.html(html);
+          if (data && data.length > 0) {
+            renderNextChunk();
+          } else {
+            form.render('select');
+            resolve();
           }
         });
       }
 
-      // 加载订单列表
+      // 将原来的填充逻辑提取出来
+      function fillFormWithData(data) {
+        // 填充表单基本字段
+        form.val('pay-info-form', {
+          "id": data.id,
+          "pay_number": data.pay_number,
+          "payer_supplier_id": data.payer_supplier_id,
+          "payee_supplier_id": data.payee_supplier_id,
+          "current_payment_amount": data.current_payment_amount,
+          "invoice_amount": data.invoice_amount,
+          "payment_status": data.payment_status,
+          "handler": data.handler,
+          "payment_purpose": data.payment_purpose,
+          "order_id": data.order_id
+        });
+
+        // 显示打印按钮
+        $('#print-btn').show();
+        currentPaymentNumber = data.pay_number;
+
+        if (data.order_id) {
+          savedOrderId = data.order_id;
+          // 注意：此处 loadOrderInfo 内部不再需要重复搜索整个供应商列表，我们已经在 supplierDataMap 中有全量数据
+          loadOrderInfo(data.order_id, data.payee_supplier_id);
+        } else if (data.payee_supplier_id) {
+          updateSupplierInfo(data.payee_supplier_id);
+        }
+
+        // 附件与发票列表
+        if (data.attachments_list) {
+          attachmentList = data.attachments_list || [];
+          renderAttachmentList();
+        }
+        if (data.invoices_list) {
+          selectedInvoices = data.invoices_list || [];
+          renderInvoiceList();
+        }
+
+        form.render('select');
+      }
+
+      // loadOrderList 现已整合到 initAllData 中，仅保留空函数兼容旧逻辑或移除
       function loadOrderList(callback) {
-        makeRequest({
-          url: API.ORDER,
-          type: 'GET',
-          data: { limit: 9999 },
-          success: function (res) {
-            if (res.code === 0 && res.data) {
-              var html = '<option value="">请选择订单</option>';
-              res.data.forEach(function (item) {
-                html += '<option value="' + item.id + '">' + item.order_number + (item.project_name ? ' - ' + item.project_name : '') + '</option>';
-              });
-              $('#order-select').html(html);
-              form.render('select');
-              if (callback) callback();
-            }
-          }
-        });
-        // 4. 加载材料名称映射
-        makeRequest({
-          url: API.DICT,
-          type: 'GET',
-          data: { dic_id: 35, limit: 9999 },
-          success: function (res) {
-            if (res.code === 0 && res.data) {
-              window.materialNamesMap = {};
-              res.data.forEach(function (m) {
-                window.materialNamesMap[m.code] = m.value;
-                window.materialNamesMap[m.value] = m.value;
-              });
-            }
-          }
-        });
+        if (callback) callback();
       }
 
       // 加载单个订单详情
@@ -690,48 +457,74 @@
               $('input[name="supplier_contact_person"]').val(d.supplier_contact_person || '');
               $('input[name="order_amount"]').val(d.order_amount || '');
 
-              // 核心修改：根据供应商联系人从数据库获取相关供应商列表
-              if (d.supplier_contact_person) {
-                // 调用API获取该联系人关联的所有供应商
-                makeRequest({
-                  url: API.SUPPLIER,
-                  type: 'GET',
-                  data: {
-                    contact_person: d.supplier_contact_person,
-                    limit: 9999
-                  },
-                  success: function (supplierRes) {
-                    if (supplierRes.code === 0 && supplierRes.data && supplierRes.data.length > 0) {
-                      var html = '<option value="">请选择收款单位</option>';
-                      supplierRes.data.forEach(function (supplier) {
-                        html += '<option value="' + supplier.id + '">' + supplier.name + '</option>';
-                        // 存储供应商数据用于自动填充
-                        supplierDataMap[supplier.id] = supplier;
-                      });
-                      $('#payee-supplier-select').html(html);
+              // 确保 order-select 中有当前项（即便没加载全量列表）
+              if ($('#order-select option[value="' + d.id + '"]').length === 0) {
+                $('#order-select').append('<option value="' + d.id + '">' + d.order_number + (d.project_name ? ' - ' + d.project_name : '') + '</option>');
+                $('#order-select').val(d.id);
+                form.render('select');
+              }
 
-                      // 优先使用已保存的收款单位ID（编辑时），否则使用订单关联的供应商ID（新建时）
-                      var payeeToSelect = savedPayeeId || d.supplier_id;
-                      if (payeeToSelect) {
-                        $('#payee-supplier-select').val(payeeToSelect);
-                        updateSupplierInfo(payeeToSelect);
-                      }
-                      form.render('select');
-                    } else {
-                      // 没有找到匹配的供应商
-                      $('#payee-supplier-select').html('<option value="">未找到该联系人关联的供应商</option>');
-                      updateSupplierInfo(null);
-                      form.render('select');
-                    }
-                  },
-                  error: function () {
-                    $('#payee-supplier-select').html('<option value="">加载供应商失败</option>');
-                    form.render('select');
+              // 核心修改优化：不再盲目重新请求全量联系人，优先查找 supplierDataMap 寻找当前联系人的关联供应商
+              if (d.supplier_contact_person) {
+                // 筛选出所有与当前联系人同名的供应商
+                var relatedSuppliers = [];
+                for (var sid in supplierDataMap) {
+                  if (supplierDataMap[sid].contact_person === d.supplier_contact_person) {
+                    relatedSuppliers.push(supplierDataMap[sid]);
                   }
-                });
-              } else {
-                $('#payee-supplier-select').html('<option value="">该订单未设置供应商联系人</option>');
-                updateSupplierInfo(null);
+                }
+                // 编辑时保留已保存的收款单位，即使供应商联系人后来发生变化。
+                if (savedPayeeId && supplierDataMap[savedPayeeId] && !relatedSuppliers.some(function (s) { return String(s.id) === String(savedPayeeId); })) {
+                  relatedSuppliers.push(supplierDataMap[savedPayeeId]);
+                }
+
+                if (relatedSuppliers.length > 0) {
+                  var html = '<option value="">请选择收款单位</option>';
+                  relatedSuppliers.forEach(function (supplier) {
+                    html += '<option value="' + supplier.id + '">' + supplier.name + '</option>';
+                  });
+                  $('#payee-supplier-select').html(html);
+
+                  // 优先使用已保存的收款单位ID（编辑时），否则使用订单关联的供应商ID（新建时）
+                  var payeeToSelect = savedPayeeId || d.supplier_id;
+                  if (payeeToSelect) {
+                    $('#payee-supplier-select').val(payeeToSelect);
+                    updateSupplierInfo(payeeToSelect);
+                  }
+                  form.render('select');
+                } else {
+                  // 如果缓存中没找到（可能新联系人尚未在全量预加载中，或者缓存未就绪），则进行兜底请求
+                  makeRequest({
+                    url: API.SUPPLIER,
+                    type: 'GET',
+                    data: { contact_person: d.supplier_contact_person, limit: 9999 },
+                    success: function (supplierRes) {
+                      if (supplierRes.code === 0 && supplierRes.data && supplierRes.data.length > 0) {
+                        var html = '<option value="">请选择收款单位</option>';
+                        supplierRes.data.forEach(function (supplier) {
+                          html += '<option value="' + supplier.id + '">' + supplier.name + '</option>';
+                          supplierDataMap[supplier.id] = supplier;
+                        });
+                        $('#payee-supplier-select').html(html);
+                        var payeeToSelect = savedPayeeId || d.supplier_id;
+                        if (payeeToSelect) {
+                          $('#payee-supplier-select').val(payeeToSelect);
+                          updateSupplierInfo(payeeToSelect);
+                        }
+                        form.render('select');
+                      }
+                    }
+                  });
+                }
+              }
+              else {
+                if (savedPayeeId) {
+                  $('#payee-supplier-select').val(savedPayeeId);
+                  updateSupplierInfo(savedPayeeId);
+                } else {
+                  $('#payee-supplier-select').html('<option value="">该订单未设置供应商联系人</option>');
+                  updateSupplierInfo(null);
+                }
                 form.render('select');
               }
             }
@@ -747,76 +540,8 @@
         $('input[name="order_amount"]').val('');
       }
 
-      // 加载付款单详情
-      function loadPaymentDetails(id) {
-        var loading = layer.load(1);
-        makeRequest({
-          url: API.PAY + id,
-          type: 'GET',
-          success: function (res) {
-            layer.close(loading);
-            if (res.code === 0 && res.data) {
-              var data = res.data;
-
-              // 填充表单
-              form.val('pay-info-form', {
-                "id": data.id,
-                "pay_number": data.pay_number,
-                "payer_supplier_id": data.payer_supplier_id,
-                "payee_supplier_id": data.payee_supplier_id,
-                "current_payment_amount": data.current_payment_amount,
-                "invoice_amount": data.invoice_amount,
-                "payment_status": data.payment_status,
-                "handler": data.handler,
-                "payment_purpose": data.payment_purpose,
-                "order_id": data.order_id
-              });
-
-              // 显示打印按钮
-              $('#print-btn').show();
-
-              // 保存当前付款单号用于附件编码
-              currentPaymentNumber = data.pay_number;
-
-              // 保存当前付款单的收款单位ID，用于后续选中
-              var savedPayeeId = data.payee_supplier_id;
-
-              // 手动设置一些没有自动匹配上的或者需要额外逻辑的
-              if (data.order_id) {
-                savedOrderId = data.order_id; // Capture for fallback
-                // 加载订单列表并选中当前订单
-                loadOrderList(function () {
-                  $('#order-select').val(data.order_id);
-                  form.render('select');
-                  // 加载订单详情，传入已保存的收款单位ID
-                  loadOrderInfo(data.order_id, savedPayeeId);
-                });
-              } else {
-                loadOrderList();
-                // 如果没有订单，直接设置收款单位
-                if (savedPayeeId && supplierDataMap[savedPayeeId]) {
-                  updateSupplierInfo(savedPayeeId);
-                }
-              }
-
-              // 加载附件列表
-              if (data.attachments_list) {
-                attachmentList = data.attachments_list || [];
-                renderAttachmentList();
-              }
-
-              // 加载关联发票已保存数据
-              if (data.invoices_list) {
-                selectedInvoices = data.invoices_list || [];
-                renderInvoiceList();
-              }
-            }
-          },
-          error: function () {
-            layer.close(loading);
-          }
-        });
-      }
+      // loadPaymentDetails 现已整合到 initAllData/fillFormWithData 中，保留空函数兼容或移除
+      function loadPaymentDetails(id) { }
 
       function updateSupplierInfo(supplierId) {
         var s = supplierDataMap[supplierId];
@@ -909,12 +634,15 @@
             if (res.code === 0 && res.data && res.data.length > 0) {
               var html = '';
               res.data.forEach(function (inv) {
+                postTaxAmountListSearch = inv.post_tax_amount || (parseFloat(inv.total_amount || 0) + parseFloat(inv.tax_amount || 0));
+                postTaxAmountListSearch = parseFloat(postTaxAmountListSearch).toFixed(2);
+
                 // 检查是否已在列表中
                 var isSelected = selectedInvoices.some(function (si) { return si.id === inv.id; });
                 if (!isSelected) {
                   html += `<div class="search-result-item" data-id="${inv.id}" data-info='${JSON.stringify(inv).replace(/'/g, "&#39;")}'>
                     <span class="res-number">${inv.invoice_number}</span>
-                    <span class="res-info">¥${inv.total_amount} | 购: ${inv.buyer_name || '-'} | 销: ${inv.seller_name || '-'}</span>
+                    <span class="res-info">¥${postTaxAmountListSearch} | 购: ${inv.buyer_name || '-'} | 销: ${inv.seller_name || '-'}</span>
                   </div>`;
                 }
               });
@@ -940,6 +668,8 @@
 
         var html = '';
         selectedInvoices.forEach(function (inv, index) {
+          var postTaxAmountList = inv.post_tax_amount || (parseFloat(inv.total_amount || 0) + parseFloat(inv.tax_amount || 0));
+
           html += `<div class="attachment-item" style="display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-dim); background: rgba(255,152,0,0.05); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
             <div class="attachment-info" style="flex: 1; display: flex; align-items: center; gap: 10px;">
               <i class="layui-icon layui-icon-file-b" style="color: #ff9800; font-size: 20px;"></i>
@@ -949,7 +679,7 @@
               </div>
             </div>
             <div style="display: flex; align-items: center; gap: 15px;">
-              <span style="font-family: 'JetBrains Mono'; color: #ff9800; font-weight: bold; font-size: 13px;">¥${parseFloat(inv.total_amount || 0).toLocaleString()}</span>
+              <span style="font-family: 'JetBrains Mono'; color: #ff9800; font-weight: bold; font-size: 13px;">¥${postTaxAmountList.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               <button type="button" class="layui-btn layui-btn-xs layui-btn-primary remove-invoice" data-index="${index}" style="background: transparent; color: #ff5722; border: none;"><i class="layui-icon layui-icon-delete"></i></button>
             </div>
           </div>`;
@@ -1005,8 +735,11 @@
         accept: 'file',
         multiple: true,
         headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+        before: function () { pendingUploads++; },
+        allDone: function () { pendingUploads = Math.max(0, pendingUploads - 1); },
+        error: function () { layer.msg('附件上传失败，请重试', { icon: 2 }); },
         done: function (res) {
-          if (res.code === 0) {
+          if (res.code === 0 && res.data && res.data.url) {
             attachmentList.push({
               id: res.data.id,
               code: currentPaymentNumber + 'F' + (attachmentList.length + 1).toString().padStart(3, '0'),
@@ -1036,11 +769,9 @@
 
       // 打印按钮事件
       $('#print-btn').on('click', function () {
-        if (currentPaymentId) {
-          window.open('/order_pay/info/print_pay.html?id=' + currentPaymentId, '_blank');
-        } else {
-          layer.msg('请先保存付款单后再打印', { icon: 0 });
-        }
+        // 设置打印标志并触发保存按钮点击
+        isPrintAfterSave = true;
+        $('[lay-filter="save"]').click();
       });
 
       // 取消按钮
@@ -1054,7 +785,14 @@
       });
 
       // 表单提交
+      var formSubmitting = false;
+      var formSaved = false;
       form.on('submit(save)', function (data) {
+        if (!formReady) { layer.msg('数据尚未加载完成，请稍后重试', { icon: 0 }); return false; }
+        if (pendingUploads) { layer.msg('请等待附件上传完成', { icon: 0 }); return false; }
+        if (formSubmitting) return false;
+        formSubmitting = true;
+        $('[lay-filter="save"]').prop('disabled', true).addClass('layui-btn-disabled');
         var field = data.field;
         var id = field.id;
 
@@ -1083,8 +821,31 @@
           type: method,
           contentType: "application/json",
           data: JSON.stringify(payload),
+          complete: function () {
+            if (formSaved) return;
+            formSubmitting = false;
+            $('[lay-filter="save"]').prop('disabled', false).removeClass('layui-btn-disabled');
+          },
           success: function (res) {
             if (res.code === 0) {
+              formSaved = true;
+              // 提交成功后，如果是由打印触发，则先跳转打印
+              if (isPrintAfterSave) {
+                var printId = currentPaymentId || (res.data ? res.data.id : null);
+                if (printId) {
+                  window.open('/order_pay/info/print_pay.html?id=' + printId, '_blank');
+                  layer.msg('保存成功，正在生成打印预览...', { icon: 1, time: 1000 }, function () {
+                    // 跳转后关闭当前窗口
+                    var index = parent.layer.getFrameIndex(window.name);
+                    if (index) parent.layer.close(index);
+                  });
+                } else {
+                  layer.msg('保存成功，但获取打印ID失败', { icon: 0 });
+                }
+                isPrintAfterSave = false; // 重置状态
+                return;
+              }
+
               layer.msg('保存成功', { icon: 1, time: 1000 }, function () {
                 var index = parent.layer.getFrameIndex(window.name);
                 if (index) {
@@ -1092,8 +853,14 @@
                 }
               });
             } else {
+              isPrintAfterSave = false; // 保存失败也要重置状态
               layer.msg(res.msg || '保存失败', { icon: 2 });
             }
+          },
+          error: function (xhr) {
+            isPrintAfterSave = false; // 网络错误也要重置状态
+            console.error('Request failed:', xhr);
+            layer.msg('请求失败: ' + (xhr.responseJSON ? xhr.responseJSON.msg : xhr.statusText), { icon: 2 });
           }
         });
         return false;
@@ -1103,7 +870,7 @@
       $('.layui-form').attr('lay-filter', 'pay-info-form');
 
       // 启动初始化
-      initData();
+      initAllData();
 
     });
   </script>

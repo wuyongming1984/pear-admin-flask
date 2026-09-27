@@ -1,3 +1,4 @@
+from ._system_validation import validated, payload, required, record, parent_id, selected, nested
 from datetime import datetime
 
 from flask import Blueprint, request
@@ -11,12 +12,13 @@ user_api = Blueprint("user", __name__, url_prefix="/user")
 
 
 @user_api.get("/")
+@jwt_required()
 def user_list():
     page = request.args.get("page", default=1, type=int)
     per_page = request.args.get("limit", default=10, type=int)
     q = db.select(UserORM)
 
-    pages: Pagination = db.paginate(q, page=page, per_page=per_page)
+    pages: Pagination = db.paginate(q, page=max(1, page), per_page=max(1, min(per_page, 200)), error_out=False)
 
     return {
         "code": 0,
@@ -27,17 +29,25 @@ def user_list():
 
 
 @user_api.post("/")
+@jwt_required()
+@validated
 def create_user():
-    data = request.get_json()
-    if data["id"]:
-        del data["id"]
-    role = UserORM(**data)
-    create_at = data.get("create_at")
+    data = payload()
+    data.pop("id", None)
+    required(data, "username", "nickname")
+    if db.session.scalar(db.select(UserORM).where(UserORM.username == data["username"])):
+        raise ValueError("用户名已存在")
+    create_at = data.pop("create_at", None)
     if create_at:
-        role.create_at = datetime.strptime(create_at, "%Y-%m-%d %H:%M:%S")
+        data["create_at"] = datetime.strptime(create_at, "%Y-%m-%d %H:%M:%S")
+    data["mobile"] = data.get("mobile") or ""
+    data["email"] = data.get("email") or ""
+    password = data.pop("password", None)
+    if password is not None and not isinstance(password, str):
+        raise ValueError("密码格式错误")
+    role = UserORM(**data)
     
     # 获取密码，如果未提供则使用默认值
-    password = data.get("password")
     role.password = password if password else "123456"
     role.save()
     return {"code": 0, "msg": "新增用户成功"}
@@ -45,14 +55,23 @@ def create_user():
 
 @user_api.put("/<int:uid>")
 @user_api.put("/")
+@jwt_required()
+@validated
 def change_user(uid=None):
-    data = request.get_json()
-    uid = data["id"]
-    del data["id"]
+    data = payload()
+    uid = uid or data.get("id")
+    data.pop("id", None)
 
-    user_obj = UserORM.query.get(uid)
+    user_obj = record(UserORM, uid)
+    for key in ("username", "nickname"):
+        if key in data:
+            required(data, key)
+    if "username" in data and db.session.scalar(db.select(UserORM).where(UserORM.username == data["username"], UserORM.id != user_obj.id)):
+        raise ValueError("用户名已存在")
     for key, value in data.items():
         if key == "create_at":
+            if not value:
+                continue
             value = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
         if key == "password":
             if value: # 只有当密码不为空时才更新
@@ -64,18 +83,24 @@ def change_user(uid=None):
 
 
 @user_api.delete("/<int:rid>")
+@jwt_required()
+@validated
 def del_user(rid):
-    user_obj = UserORM.query.get(rid)
+    user_obj = record(UserORM, rid)
     user_obj.delete()
     return {"code": 0, "msg": "删除用户成功"}
 
 
 @user_api.get("/user_role/<int:uid>")
+@jwt_required()
+@validated
 def get_user_role(uid):
     user: UserORM = db.session.execute(
         db.select(UserORM).where(UserORM.id == uid)
     ).scalar()
 
+    if user is None:
+        raise ValueError("用户不存在")
     wn_role_list = [r.id for r in user.role_list]
 
     return {
@@ -86,17 +111,11 @@ def get_user_role(uid):
 
 
 @user_api.put("/user_role/<int:rid>")
+@jwt_required()
+@validated
 def change_user_role(rid):
-    role_ids = request.json.get("rights_ids", "")
-    role_list = role_ids.split(",")
-
-    user: UserORM = db.session.execute(
-        db.select(UserORM).where(UserORM.id == rid)
-    ).scalar()
-    role_obj_list = db.session.execute(
-        db.select(RoleORM).where(RoleORM.id.in_(role_list))
-    ).all()
-    user.role_list = [r[0] for r in role_obj_list]
+    user = record(UserORM, rid)
+    user.role_list = selected(RoleORM, payload().get("rights_ids", ""))
     user.save()
     return {"code": 0, "msg": "授权成功"}
 
@@ -113,9 +132,10 @@ def user_profile():
 
 @user_api.post("/change-password")
 @jwt_required()
+@validated
 def change_password():
     """修改当前用户密码"""
-    data = request.get_json()
+    data = payload()
     old_password = data.get("old_password")
     new_password = data.get("new_password")
     
@@ -124,6 +144,8 @@ def change_password():
         return {"code": -1, "msg": "请填写原密码和新密码"}, 400
     
     # 验证新密码长度
+    if not isinstance(old_password, str) or not isinstance(new_password, str):
+        raise ValueError("密码格式错误")
     if len(new_password) < 6:
         return {"code": -1, "msg": "新密码长度不能少于6位"}, 400
     

@@ -17,7 +17,7 @@ def user_lookup_callback(_jwt_header, jwt_data):
 
 
 @jwt.expired_token_loader
-def expired_token_callback():
+def expired_token_callback(_jwt_header, _jwt_payload):
     return {"msg": "token 已过期，请重新登录", "code": -1}, 403
 
 

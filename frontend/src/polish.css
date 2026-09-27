@@ -1,0 +1,83 @@
+@import '../../static/admin/css/ui-tokens.css';
+
+@media screen {
+  :root {
+    --van-text-color: var(--sf-text);
+    --van-text-color-2: var(--sf-secondary);
+    --van-text-color-3: var(--sf-muted);
+    --van-border-color: var(--sf-border);
+    --van-background: var(--sf-canvas);
+    --van-button-border-radius: 10px;
+    --van-cell-line-height: 25px;
+    --van-field-error-message-color: var(--sf-danger);
+    font-family: var(--sf-font);
+  }
+  .app-shell, .page { background: var(--sf-canvas); }
+  .home-header { margin-bottom: 28px; }
+  .brand-inline { color: #145c4f; }
+  .brand-inline span { color: var(--sf-secondary); }
+  .avatar { border: 1px solid #d0e3d6; background: #e6f1ea; }
+  .welcome > p:last-child { color: var(--sf-muted); line-height: 1.8; }
+  .overview { background: linear-gradient(120deg, #1b5145, #286c57); border: 1px solid #2e725d; box-shadow: 0 8px 25px #173c3710; }
+  .stat-row { margin: 24px 0; }
+  .stat-row strong { font-size: 30px; }
+  .overview-foot { font-size: 11px; color: #d0e5d9; }
+  .section-heading { margin-top: 29px; }
+  .section-heading span { color: var(--sf-muted); font-size: 11px; }
+  .quick-grid > a { border-color: var(--sf-border); box-shadow: var(--sf-shadow); padding-top: 18px; }
+  .quick-grid b { font-size: 13px; }
+  .quick-grid small { font-size: 11px; color: var(--sf-muted); }
+  .record-card { border-color: var(--sf-border); box-shadow: var(--sf-shadow); padding: 18px; }
+  .record-card:active { background: #f9fcfa; border-color: #a7c8b6; }
+  .record-index { font-size: 10px; color: var(--sf-muted); }
+  .status-pill { font-size: 11px; padding: 4px 8px; }
+  .record-card h3 { font-size: 16px; margin-top: 12px; }
+  .card-subtitle { font-size: 12px; color: #698075; line-height: 1.6; }
+  .card-bottom { padding-top: 14px; margin-top: 14px; }
+  .card-bottom small { font-size: 11px; color: var(--sf-muted); }
+  .card-bottom strong { font-size: 20px; color: #255344; }
+  .card-note { font-size: 11px; color: var(--sf-muted); }
+  .page-header h1 { font-size: 26px; color: var(--sf-text); }
+  .round-add { border-radius: 13px; box-shadow: 0 4px 12px #087f781c; }
+  .van-search__content { border-color: var(--sf-border); border-radius: 11px; }
+  .van-search .van-field__control { min-height: 28px; }
+  .search-button { min-height: 40px; padding: 4px 8px; }
+  .status-filter .van-dropdown-menu__bar { height: 42px; border: 1px solid var(--sf-border); }
+  .list-caption { font-size: 12px; color: var(--sf-muted); align-items: center; }
+  .list-caption button { padding: 9px 6px; font-size: 12px; }
+  .van-nav-bar { background: var(--sf-canvas); }
+  .van-nav-bar__title { font-size: 16px; font-weight: 600; }
+  .van-nav-bar__left, .van-nav-bar__right { min-height: 44px; }
+  .van-cell-group--inset { border: 1px solid var(--sf-border); box-shadow: var(--sf-shadow); }
+  .van-cell__title { font-size: 13px; color: var(--sf-secondary); }
+  .van-field__label { color: var(--sf-secondary); }
+  .van-field__control { line-height: 25px; }
+  .van-field__control::placeholder { color: #8b9b92; }
+  .detail-hero { border-color: var(--sf-border); box-shadow: var(--sf-shadow); border-top: 3px solid #7bb69b; }
+  .detail-hero p { color: var(--sf-muted); font-size: 13px; }
+  .hero-money { font-size: 29px; font-variant-numeric: tabular-nums; }
+  .detail-actions a { font-size: 13px; border: 1px solid #d4e5d9; background: #eaf3ed; }
+  .editor-intro p { color: var(--sf-muted); font-size: 13px; line-height: 1.8; }
+  .section-title { font-size: 16px; margin-bottom: 14px; }
+  .form-actions > .van-button { box-shadow: 0 4px 14px #087f7814; }
+  .error-panel { border: 1px solid #f0d7ce; line-height: 1.7; }
+  .van-empty { padding: 44px 10px; }
+  .van-empty__description { color: var(--sf-muted); line-height: 1.8; }
+  .profile-card { padding: 30px 0; }
+  .profile-card p { color: var(--sf-muted); }
+  .bottom-nav .van-tabbar { box-shadow: 0 -4px 20px #173c3705; border-color: var(--sf-border); }
+  .van-tabbar-item--active { font-weight: 600; background: #f5faf7; }
+  .van-tabbar-item__text { font-size: 12px; }
+  .login-page { background: linear-gradient(155deg, #e9f2ec, #fafcfb 60%); }
+  .login-intro p { color: var(--sf-muted); }
+  .login-page .van-cell-group--inset { box-shadow: var(--sf-shadow); }
+  .desktop-link { min-height: 44px; padding: 12px; margin-top: 10px; }
+  .picker-popup .van-cell { min-height: 52px; }
+  @media (max-width: 374px) {
+    .page { padding-left: 15px; padding-right: 15px; }
+    .quick-grid { gap: 8px; }
+    .quick-grid small { font-size: 10px; }
+    .record-card { padding: 15px; }
+    .stat-row strong { font-size: 27px; }
+  }
+}

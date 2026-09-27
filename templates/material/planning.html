@@ -76,6 +76,7 @@
   }
 </style>
 
+<header class="sf-page-heading"><div><h1>材料计划</h1><p>按项目维护采购需求、计划数量与供应商</p></div></header>
 <div class="layui-row layui-col-space15">
   <!-- 左侧项目面板 -->
   <div class="layui-col-md2">
@@ -103,7 +104,7 @@
       <div class="content-header">
         <div class="content-title">所有项目材料策划</div>
         <div class="content-subtitle">
-          <form class="layui-form" style="display: inline-block; margin-right: 10px;">
+          <form class="layui-form" lay-filter="planning-status-form" style="display: inline-block; width: 200px; margin-right: 10px;">
             <select lay-filter="remaining-filter">
               <option value="">全部余量状态</option>
               <option value=">0" selected>余量 > 0 (未完)</option>
@@ -143,7 +144,7 @@
         <i class="layui-icon layui-icon-user"></i>
         批量拟供应商
     </button>
-    <button class="pear-btn pear-btn-md" style="background: #ccc; color: white;" lay-event="generatePlan" id="generate-btn" disabled>
+    <button class="pear-btn pear-btn-md" lay-event="generatePlan" id="generate-btn" disabled>
         <i class="layui-icon layui-icon-list"></i>
         生成计划
     </button>
@@ -163,6 +164,8 @@
     var table = layui.table;
     var $ = layui.jquery;
     var form = layui.form;
+    // Tab fragments must render their controls after being inserted.
+    form.render('select', 'planning-status-form');
     var upload = layui.upload;
     var layer = layui.layer;
     var MODULE_PATH = '/api/v1/material/';
@@ -437,10 +440,10 @@
       }
 
       if (hasValue) {
-        btn.css({ 'background-color': '#28a745', 'cursor': 'pointer', 'opacity': '1' })
+        btn.addClass('pear-btn-primary')
           .removeClass('layui-btn-disabled');
       } else {
-        btn.css({ 'background-color': '#ccc', 'cursor': 'pointer', 'opacity': '0.8' })
+        btn.removeClass('pear-btn-primary')
           .removeClass('layui-btn-disabled');
       }
       btn.prop('disabled', false);
@@ -804,3 +807,5 @@
     // Expose to global scope for HTML onclick attributes
     window.showImportDialog = showImportDialog;
   });</script>
+
+{% include 'shared/presentation.html' %}

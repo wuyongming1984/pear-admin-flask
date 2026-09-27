@@ -3,6 +3,7 @@ from sqlalchemy import or_
 from pear_admin.extensions import db
 from pear_admin.orms import MaterialPlanningORM, MaterialInboundORM, MaterialInventoryORM, MaterialOutboundORM, MaterialInvoiceORM, MaterialInvoiceDetailORM, ProjectORM, SupplierORM
 from datetime import datetime
+from math import isfinite
 from pear_admin.utils import authorize
 
 material_api = Blueprint("material_api", __name__, url_prefix="/material")
@@ -146,11 +147,11 @@ def generate_inbound_from_planning():
         for item in items:
             planning = MaterialPlanningORM.query.get(item['id'])
             if not planning:
-                continue
+                raise ValueError("策划记录不存在")
                 
             qty = float(item.get('quantity', 0))
-            if qty <= 0:
-                continue
+            if not isfinite(qty) or qty <= 0:
+                raise ValueError("入库数量必须为大于0的有限数字")
                 
             # Check remaining quantity (Optional: Strict check or allow over-planning?)
             # Usually strict: 
@@ -575,7 +576,8 @@ def batch_delete_inbound():
                 planning = MaterialPlanningORM.query.filter_by(
                     project_id=inbound.project_id,
                     material_name=inbound.material_name,
-                    material_spec=inbound.material_spec
+                    material_spec=inbound.material_spec,
+                    material_unit=inbound.material_unit
                 ).first()
                 if planning:
                     current_rem = float(planning.planned_remaining_quantity or 0)
@@ -605,26 +607,31 @@ def update_inbound(id):
         if inbound.status != 'pending':
             return jsonify({"code": 1, "msg": "已入库记录不可编辑"})
             
-        # Capture old quantity before update
         old_qty = float(inbound.inbound_quantity or 0)
-
-        for key, value in data.items():
-            if hasattr(inbound, key):
-                setattr(inbound, key, value)
-        
-        # Calculate delta and update planning if quantity changed
+        old_planning = MaterialPlanningORM.query.filter_by(
+            project_id=inbound.project_id, material_name=inbound.material_name,
+            material_spec=inbound.material_spec, material_unit=inbound.material_unit
+        ).first()
+        editable = {'project_id', 'batch_number', 'batch_sub_number', 'material_name',
+                    'material_spec', 'material_unit', 'supplier_id', 'inbound_quantity', 'inbound_price'}
+        for key in editable & data.keys():
+            value = data[key]
+            if key in ('project_id', 'supplier_id') and value == '':
+                value = None
+            setattr(inbound, key, value)
         new_qty = float(inbound.inbound_quantity or 0)
-        delta = new_qty - old_qty
-        
-        if delta != 0:
-            planning = MaterialPlanningORM.query.filter_by(
-                project_id=inbound.project_id,
-                material_name=inbound.material_name,
-                material_spec=inbound.material_spec
-            ).first()
-            if planning:
-                current_rem = float(planning.planned_remaining_quantity or 0)
-                planning.planned_remaining_quantity = current_rem - delta
+        price = float(inbound.inbound_price or 0)
+        if not isfinite(new_qty) or not isfinite(price) or new_qty <= 0 or price < 0:
+            raise ValueError("数量必须大于0，单价必须为非负有限数字")
+        inbound.inbound_total_amount = new_qty * price
+        if old_planning:
+            old_planning.planned_remaining_quantity = float(old_planning.planned_remaining_quantity or 0) + old_qty
+        new_planning = MaterialPlanningORM.query.filter_by(
+            project_id=inbound.project_id, material_name=inbound.material_name,
+            material_spec=inbound.material_spec, material_unit=inbound.material_unit
+        ).first()
+        if new_planning:
+            new_planning.planned_remaining_quantity = float(new_planning.planned_remaining_quantity or 0) - new_qty
 
         db.session.commit()
         return jsonify({"code": 0, "msg": "修改成功"})
@@ -650,7 +657,8 @@ def remove_inbound(id):
             planning = MaterialPlanningORM.query.filter_by(
                 project_id=inbound.project_id,
                 material_name=inbound.material_name,
-                material_spec=inbound.material_spec
+                material_spec=inbound.material_spec,
+                    material_unit=inbound.material_unit
             ).first()
             if planning:
                 current_rem = float(planning.planned_remaining_quantity or 0)
@@ -665,16 +673,34 @@ def remove_inbound(id):
 
 @material_api.route("/inbound", methods=["POST"])
 def add_inbound():
-    data = request.json
-    # Check if a batch number is provided, if not generate one
-    if not data.get("batch_number"):
-        import time
-        data["batch_number"] = f"BN{int(time.time())}"
-        
-    row = MaterialInboundORM(**data)
-    db.session.add(row)
-    db.session.commit()
-    return jsonify({"code": 0, "msg": "Success"})
+    try:
+        data = dict(request.json or {})
+        qty = float(data.get("inbound_quantity") or 0)
+        price = float(data.get("inbound_price") or 0)
+        if not isfinite(qty) or not isfinite(price) or qty <= 0 or price < 0:
+            raise ValueError("数量必须大于0，单价必须为非负有限数字")
+        data['inbound_quantity'] = qty
+        data['inbound_price'] = price
+        data['inbound_total_amount'] = qty * price
+        for key in ('supplier_id', 'project_id', 'invoice_id'):
+            if data.get(key) == '':
+                data[key] = None
+        data['status'] = 'pending'
+        if not data.get("batch_number"):
+            data["batch_number"] = datetime.now().strftime("BN%Y%m%d%H%M%S%f")
+        row = MaterialInboundORM(**data)
+        planning = MaterialPlanningORM.query.filter_by(
+            project_id=row.project_id, material_name=row.material_name,
+            material_spec=row.material_spec, material_unit=row.material_unit
+        ).first()
+        if planning:
+            planning.planned_remaining_quantity = float(planning.planned_remaining_quantity or 0) - qty
+        db.session.add(row)
+        db.session.commit()
+        return jsonify({"code": 0, "msg": "Success"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"code": 1, "msg": str(e)})
 
 @material_api.route("/inbound/batch_confirm", methods=["POST"])
 def confirm_inbound():
@@ -697,7 +723,8 @@ def confirm_inbound():
             inventory = MaterialInventoryORM.query.filter_by(
                 project_id=item.project_id,
                 material_name=item.material_name,
-                material_spec=item.material_spec
+                material_spec=item.material_spec,
+                material_unit=item.material_unit
             ).first()
             
             inbound_qty = float(item.inbound_quantity or 0)
@@ -734,17 +761,7 @@ def confirm_inbound():
                 )
                 db.session.add(inventory)
             
-            # 3. 核减策划余量
-            planning = MaterialPlanningORM.query.filter_by(
-                project_id=item.project_id,
-                material_name=item.material_name,
-                material_spec=item.material_spec,
-                material_unit=item.material_unit
-            ).first()
-
-            if planning:
-                current_rem = float(planning.planned_remaining_quantity or 0)
-                planning.planned_remaining_quantity = current_rem - inbound_qty
+            # Planning is reserved when the pending inbound is created.
 
         db.session.commit()
         return jsonify({"code": 0, "msg": "批量确认入库成功，已导入库存台账"})
@@ -809,12 +826,19 @@ def add_outbound():
     """新增出库计划"""
     try:
         data = request.json
+        qty = float(data.get("outbound_quantity") or 0)
+        if not isfinite(qty) or qty <= 0:
+            raise ValueError("出库数量必须为大于0的有限数字")
         # 检查库存
-        inventory = MaterialInventoryORM.query.filter_by(
-            project_id=data.get("project_id"),
-            material_name=data.get("material_name"),
-            material_spec=data.get("material_spec")
-        ).first()
+        inventory_id = data.get("material_inventory_id") or data.get("inventory_id")
+        if inventory_id:
+            inventory = db.session.get(MaterialInventoryORM, int(inventory_id))
+        else:
+            inventory = MaterialInventoryORM.query.filter_by(
+                project_id=data.get("project_id"),
+                material_name=data.get("material_name"),
+                material_spec=data.get("material_spec")
+            ).first()
         
         if not inventory or inventory.current_stock < float(data.get("outbound_quantity", 0)):
             return jsonify({"code": 1, "msg": "库存不足"})
@@ -841,6 +865,7 @@ def add_outbound():
         db.session.commit()
         return jsonify({"code": 0, "msg": "添加成功"})
     except Exception as e:
+        db.session.rollback()
         return jsonify({"code": 1, "msg": str(e)})
 
 @material_api.route("/outbound/<int:id>", methods=["DELETE"])
@@ -928,7 +953,8 @@ def batch_add_outbound():
                 material_spec=inventory.material_spec,
                 material_unit=inventory.material_unit,
                 seller_price=inventory.seller_price,
-                seller_quantity=float(qty),
+                seller_quantity=0 if direct_confirm else float(qty),
+                completed_sales_quantity=float(qty) if direct_confirm else 0,
                 seller_id=inventory.seller_id,
                 tax_rate=inventory.tax_rate,
                 status='completed' if direct_confirm else 'pending'
@@ -1227,7 +1253,7 @@ def get_invoice():
             # 添加项目名称
             if invoice.project_id:
                 project = ProjectORM.query.get(invoice.project_id)
-                item['project_name'] = project.name if project else '-'
+                item['project_name'] = project.project_name if project else '-'
             else:
                 item['project_name'] = '-'
             data.append(item)
@@ -1248,12 +1274,24 @@ def get_invoice_list():
         invoices = MaterialInvoiceORM.query.order_by(MaterialInvoiceORM.id.desc()).all()
         data = []
         for inv in invoices:
+            post_tax_amount = float(inv.total_amount or 0) + float(inv.tax_amount or 0)
+            try:
+                if inv.ocr_result:
+                    import json
+                    ocr_data = json.loads(inv.ocr_result)
+                    if ocr_data.get('amount_in_figuers'):
+                        post_tax_amount = float(ocr_data.get('amount_in_figuers'))
+            except:
+                pass
+                
             data.append({
                 "id": inv.id,
                 "invoice_number": inv.invoice_number or "无编号",
                 "seller_name": inv.seller_name or "-",
                 "buyer_name": inv.buyer_name or "-",
-                "total_amount": inv.total_amount or 0,
+                "total_amount": float(inv.total_amount or 0),
+                "tax_amount": float(inv.tax_amount or 0),
+                "post_tax_amount": round(post_tax_amount, 2),
                 "file_url": inv._get_signed_url(),  # Use signed URL for private OSS files
                 "invoice_category": inv.invoice_category,  # 添加发票大类
                 "deductible": inv.deductible  # 添加可否抵扣
@@ -1261,6 +1299,69 @@ def get_invoice_list():
         return jsonify({"code": 0, "msg": "success", "data": data})
     except Exception as e:
         return jsonify({"code": 1, "msg": str(e)})
+
+@material_api.route("/invoice/preview/<int:invoice_id>", methods=["GET"])
+def preview_invoice_file(invoice_id):
+    """代理获取发票原件并以内联方式返回，用于弹窗预览"""
+    try:
+        inv = MaterialInvoiceORM.query.get(invoice_id)
+        if not inv or not inv.file_path:
+            return "发票不存在或无附件", 404
+
+        file_path = inv.file_path
+        
+        # 确定文件扩展名
+        ext = file_path.rstrip('/').split('?')[0].rsplit('.', 1)[-1].lower() if '.' in file_path else 'pdf'
+        mime_map = {
+            'pdf': 'application/pdf',
+            'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
+            'png': 'image/png', 'gif': 'image/gif',
+        }
+        content_type = mime_map.get(ext, 'application/octet-stream')
+
+        # 若是 OSS 文件，直接用 oss SDK 获取内容流
+        if file_path.startswith('http'):
+            from pear_admin.extensions import oss
+            from urllib.parse import urlparse, unquote
+            import requests
+            
+            if oss and oss.bucket:
+                parsed = urlparse(file_path)
+                object_key = unquote(parsed.path.lstrip('/'))
+                # 获取对象内容（流式）
+                oss_obj = oss.bucket.get_object(object_key)
+                data = oss_obj.read()
+            else:
+                # 无OSS配置，直接请求原URL
+                r = requests.get(file_path, timeout=15)
+                data = r.content
+        else:
+            # 本地文件
+            import os
+            local_path = os.path.join(os.getcwd(), file_path.lstrip('/'))
+            with open(local_path, 'rb') as f:
+                data = f.read()
+
+        from flask import Response
+        from urllib.parse import quote
+        
+        filename = inv.invoice_number or str(inv.id)
+        # RFC 5987 编码
+        quoted_filename = quote(f"{filename}.{ext}")
+        
+        response = Response(
+            data,
+            content_type=content_type,
+            headers={
+                'Content-Disposition': f'inline; filename="{quoted_filename}"; filename*=UTF-8\'\'{quoted_filename}',
+                'Cache-Control': 'no-cache'
+            }
+        )
+        return response
+    except Exception as e:
+        from flask import current_app
+        current_app.logger.error(f"[Invoice Preview] Error: {e}", exc_info=True)
+        return str(e), 500
 
 @material_api.route("/invoice/upload", methods=["POST"])
 def upload_invoice():
@@ -1346,10 +1447,7 @@ def upload_invoice():
                 else:
                     new_filename = f"{timestamp_str}_{secure_filename(file.filename)}"
 
-                # 3. 查重逻辑与日志
-                with open("debug_invoice.log", "a", encoding="utf-8") as f:
-                     ocr_num = ocr_result.get('invoice_number', 'None')
-                     f.write(f"\n{datetime.now()}: OCR Result for {new_filename}: Number={ocr_num}\n")
+                # 3. 查重逻辑
 
                 if ocr_result and ocr_result.get('invoice_number'):
                     inv_num = ocr_result.get('invoice_number')
@@ -1360,29 +1458,19 @@ def upload_invoice():
 
                 # 4. 执行上传 (OSS 或 本地)
                 file_path = ""
-                with open("debug_invoice.log", "a", encoding="utf-8") as f:
-                     f.write(f"{datetime.now()}: OSS bucket status: {oss.bucket is not None}\n")
                 
                 if oss.bucket:
                     # --- OSS 上传模式 ---
                     try:
                         oss_path = f"{custom_path}/{datetime.now().strftime('%Y/%m')}/{new_filename}"
-                        with open("debug_invoice.log", "a", encoding="utf-8") as f:
-                             f.write(f"{datetime.now()}: Uploading to OSS: {oss_path}\n")
                         
                         file.seek(0) # 确保上传的是完整内容
                         file_url = oss.upload_file(file, filename=oss_path)
                         file_path = file_url
-                        with open("debug_invoice.log", "a", encoding="utf-8") as f:
-                             f.write(f"{datetime.now()}: OSS upload success: {file_url}\n")
                     except Exception as e:
-                        with open("debug_invoice.log", "a", encoding="utf-8") as f:
-                             f.write(f"{datetime.now()}: OSS upload failed: {str(e)}\n")
                         raise Exception(f"OSS上传失败: {str(e)}")
                 else:
                     # --- 本地存储模式 ---
-                    with open("debug_invoice.log", "a", encoding="utf-8") as f:
-                         f.write(f"{datetime.now()}: Using local storage\n")
                     year_month = datetime.now().strftime('%Y/%m')
                     upload_dir = os.path.join('static', 'uploads', custom_path, year_month)
                     os.makedirs(upload_dir, exist_ok=True)
@@ -1393,8 +1481,6 @@ def upload_invoice():
 
                 # 5. 创建数据库记录 (填充 OCR 数据)
                 # 生成展示用发票号
-                with open("debug_invoice.log", "a", encoding="utf-8") as f:
-                     f.write(f"{datetime.now()}: Preparing to save invoice {new_filename}...\n")
 
                 final_invoice_number = f"TEMP-{timestamp_str}"
                 if ocr_result and ocr_result.get('invoice_number'):
@@ -1473,8 +1559,6 @@ def upload_invoice():
 
                 db.session.commit()
                 
-                with open("debug_invoice.log", "a", encoding="utf-8") as f:
-                     f.write(f"{datetime.now()}: Successfully committed invoice ID: {invoice.id}\n")
                 
                 uploaded.append({
                     "id": invoice.id,
@@ -1562,7 +1646,6 @@ def ocr_invoice():
                 else:
                     ocr_result = ocr.recognize_invoice(invoice.file_path)
                 
-                print(f"OCR识别结果: {ocr_result}")
                 
                 # 更新发票信息
                 if ocr_result.get('invoice_number'):
@@ -1727,6 +1810,8 @@ def ocr_invoice():
 def add_invoice():
     try:
         data = request.json
+        if 'invoice_date' in data:
+            data['invoice_date'] = datetime.strptime(data['invoice_date'], '%Y-%m-%d').date() if data['invoice_date'] else None
         # Check duplicate
         inv_num = data.get("invoice_number")
         if inv_num and MaterialInvoiceORM.query.filter_by(invoice_number=inv_num).first():
@@ -1737,6 +1822,7 @@ def add_invoice():
         db.session.commit()
         return jsonify({"code": 0, "msg": "Success"})
     except Exception as e:
+        db.session.rollback()
         return jsonify({"code": 1, "msg": str(e)})
 
 @material_api.route("/invoice", methods=["DELETE"])

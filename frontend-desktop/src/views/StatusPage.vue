@@ -1,0 +1,2 @@
+<script setup lang="ts">import{useRoute,useRouter}from'vue-router';const route=useRoute(),router=useRouter();</script>
+<template><div class="page"><el-result :icon="route.path==='/forbidden'?'warning':'info'" :title="route.path==='/forbidden'?'没有访问权限':route.path==='/unsupported'?'菜单尚未匹配新版页面':'页面不存在'" :sub-title="route.path==='/unsupported'?String(route.query.menu||'')+'：请联系管理员检查菜单地址':'请从左侧菜单选择可访问的页面。'"><template #extra><el-button @click="router.back()">返回上一页</el-button><a class="el-button" href="/legacy/">旧版后台</a></template></el-result></div></template>

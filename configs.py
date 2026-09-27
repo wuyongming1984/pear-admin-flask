@@ -7,6 +7,8 @@ load_dotenv()
 
 
 class BaseConfig:
+    # Keep legacy default until the independent desktop has passed acceptance.
+    DESKTOP_DEFAULT = os.getenv('DESKTOP_DEFAULT', 'false').lower() in ('1', 'true', 'yes')
     SECRET_KEY = os.getenv("SECRET_KEY", "pear-admin-flask")
 
     SQLALCHEMY_DATABASE_URI = ""
@@ -14,7 +16,6 @@ class BaseConfig:
     ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
     UPLOAD_FOLDER = os.path.join(ROOT_PATH, "uploads")
 
-    JWT_TOKEN_LOCATION = ["headers"]
     JWT_TOKEN_LOCATION = ["headers"]
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=7)
 

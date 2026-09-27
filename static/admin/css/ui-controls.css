@@ -1,0 +1,47 @@
+/* Shared desktop control template. Keep navigation and printed documents independent. */
+@media screen {
+  body :is(.pear-btn, .layui-btn, .n-btn) {
+    box-sizing: border-box;
+    height: var(--sf-control-height);
+    line-height: calc(var(--sf-control-height) - 2px);
+    padding: 0 16px;
+    border: 1px solid var(--sf-border);
+    border-radius: var(--sf-control-radius);
+    font: 500 14px var(--sf-font);
+    vertical-align: middle;
+    white-space: nowrap;
+    cursor: pointer;
+    background: var(--sf-action) !important;
+    color: #fff;
+    box-shadow: none;
+    transition: background-color .15s, border-color .15s;
+  }
+  body :is(.pear-btn, .layui-btn, .n-btn):hover { background: var(--sf-action-hover) !important; color: #fff; }
+  body :is(.layui-btn-primary, .n-btn--secondary, .pear-btn:where(:not(.pear-btn-primary):not(.pear-btn-success):not(.pear-btn-danger):not(.pear-btn-warming))) { background: #fff !important; color: var(--sf-text); border-color: var(--sf-border); }
+  body :is(.layui-btn-danger, .pear-btn-danger, .n-btn--danger) { background: #fff2f0 !important; border-color: #edcbc7 !important; color: var(--sf-danger) !important; }
+  body :is(.layui-btn-warm, .pear-btn-warming) { background: #fff8e9 !important; border-color: #ecd7ac !important; color: var(--sf-warning) !important; }
+  body :is(.pear-btn-success) { background: var(--sf-action) !important; }
+  body :is(.layui-btn-sm, .layui-btn-xs, .pear-btn-sm, .n-btn--sm) { height: var(--sf-control-small); line-height: 28px; padding: 0 10px; font-size: 13px; }
+  body :is(.pear-btn, .layui-btn, .n-btn):is(:disabled, .layui-btn-disabled) { background: #edf1ef !important; color: #8b9c93 !important; border-color: var(--sf-border) !important; cursor: not-allowed !important; opacity: 1; box-shadow: none; }
+  body .pear-btn + .pear-btn { margin-left: 8px; }
+  body .layui-table-tool-temp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  body .layui-table-tool-temp :is(.pear-btn, .layui-btn) { margin-left: 0; }
+  body :is(.layui-input, .layui-select, .search-input, .n-input, .n-select) {
+    box-sizing: border-box;
+    height: var(--sf-control-height) !important;
+    border: 1px solid var(--sf-border);
+    border-radius: var(--sf-control-radius);
+    background: #fff;
+    color: var(--sf-text);
+    font-family: var(--sf-font);
+    font-size: 14px;
+  }
+  body :is(.layui-input, .layui-select, .n-input, .n-select) { padding-left: 12px; padding-right: 12px; }
+  body :is(.layui-input, .search-input, .n-input, .n-select):focus { border-color: var(--sf-action) !important; outline: none; box-shadow: 0 0 0 3px #1e9fff15; }
+  body :is(.layui-input, .search-input, .n-input, .n-select):disabled { background: #f3f6f4; color: var(--sf-muted); cursor: not-allowed; }
+  body .layui-form-select .layui-input { padding-right: 30px; }
+  body .layui-form-select dl { border: 1px solid var(--sf-border); border-radius: var(--sf-control-radius); background: #fff; }
+  body .layui-textarea { border-radius: var(--sf-control-radius); font: 14px/1.7 var(--sf-font); }
+  body .layui-layer-btn a { background: #fff; color: var(--sf-text); border-color: var(--sf-border); height: var(--sf-control-height); line-height: 38px; padding: 0 18px; border-radius: var(--sf-control-radius); }
+  body .layui-layer-btn .layui-layer-btn0 { color: #fff; background: var(--sf-action) !important; border-color: var(--sf-action); }
+}

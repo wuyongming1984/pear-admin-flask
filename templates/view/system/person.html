@@ -145,6 +145,7 @@
       }
     }
   </style>
+{% include 'shared/presentation.html' %}
 </head>
 
 <body>
@@ -233,11 +234,11 @@
             }
           },
           error: function (xhr) {
-            console.log('Failed to load profile:', xhr.status, xhr.responseText);
+            layer.msg((xhr.responseJSON && xhr.responseJSON.msg) || '个人资料加载失败，请重试', {icon: 2});
           }
         });
       } else {
-        console.log('No access token found');
+        layer.msg('登录已失效，请重新登录', {icon: 2});
       }
 
       // Form validation helpers
@@ -259,9 +260,9 @@
       $('#password-form').on('submit', function (e) {
         e.preventDefault();
 
-        var oldPassword = $('#old-password').val().trim();
-        var newPassword = $('#new-password').val().trim();
-        var confirmPassword = $('#confirm-password').val().trim();
+        var oldPassword = $('#old-password').val();
+        var newPassword = $('#new-password').val();
+        var confirmPassword = $('#confirm-password').val();
 
         // Validate
         var isValid = true;

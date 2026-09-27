@@ -1,11 +1,12 @@
 from datetime import datetime
+from decimal import Decimal
 
 import json
 
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from flask_sqlalchemy.pagination import Pagination
-from sqlalchemy import cast, String
+from sqlalchemy import cast, String, or_
 
 from pear_admin.extensions import db
 from pear_admin.orms import AttachmentORM, ProjectORM
@@ -25,6 +26,7 @@ def project_list():
     project_scale = request.args.get("project_scale", type=str)
     project_status = request.args.get("project_status", type=str)
     project_amount = request.args.get("project_amount", type=str)
+    keyword = (request.args.get("q", type=str) or "").strip()[:100]
     has_payments = request.args.get("has_payments", type=str) == 'true'
     has_orders = request.args.get("has_orders", type=str) == 'true'
     
@@ -46,6 +48,9 @@ def project_list():
         q = q.where(exists_query.exists())
     
     # 模糊搜索条件
+    if keyword:
+        q = q.where(or_(ProjectORM.project_name.contains(keyword, autoescape=True),
+                        ProjectORM.project_full_name.contains(keyword, autoescape=True)))
 
     if project_name:
 
@@ -69,186 +74,149 @@ def project_list():
     }
 
 
+@project_api.get("/<int:pid>")
+@jwt_required()
+def get_project(pid):
+    project = db.session.get(ProjectORM, pid)
+    if project is None:
+        return {"code": -1, "msg": "项目不存在"}
+    return {"code": 0, "msg": "获取项目详情成功", "data": project.json()}
+
+
+_PROJECT_FIELDS = {
+    "project_name", "project_full_name", "project_scale", "start_date", "end_date",
+    "project_status", "project_amount", "project_audit_price_amount", "project_audit_amount", "create_at",
+}
+
+
+def _project_values(data):
+    values = {}
+    for key, value in data.items():
+        if key not in _PROJECT_FIELDS:
+            continue
+        if value == "":
+            value = None
+        if key == "project_name" and (not isinstance(value, str) or not value.strip()):
+            raise ValueError("项目名称不能为空")
+        if value is not None:
+            if key in ("start_date", "end_date"):
+                value = datetime.strptime(str(value).strip(), "%Y-%m-%d").date()
+            elif key == "create_at":
+                value = datetime.strptime(str(value).strip(), "%Y-%m-%d %H:%M:%S")
+            elif key in ("project_amount", "project_audit_price_amount", "project_audit_amount"):
+                value = Decimal(str(value))
+                if not value.is_finite():
+                    raise ValueError("金额必须为有效数字")
+        values[key] = value
+    return values
+
+
+def _attachment_changes(raw, project_id=None):
+    """Validate every item before mutating any project or attachment."""
+    items = json.loads(raw) if isinstance(raw, str) else raw
+    if not isinstance(items, list):
+        raise ValueError("附件必须为数组或 JSON 数组字符串")
+    changes, seen = [], set()
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError("附件条目格式错误")
+        attachment = None
+        aid = item.get("id")
+        if aid not in (None, ""):
+            if isinstance(aid, bool) or not str(aid).isdigit() or int(aid) < 1:
+                raise ValueError("附件 ID 格式错误")
+            aid = int(aid)
+            if aid in seen:
+                raise ValueError("附件 ID 重复")
+            seen.add(aid)
+            attachment = db.session.get(AttachmentORM, aid)
+            if attachment is None:
+                raise ValueError("附件不存在")
+            if attachment.project_id != project_id and not (project_id is None and attachment.project_id is None):
+                raise ValueError("附件不属于当前项目")
+        code = item.get("code", attachment.attachment_code if attachment else None)
+        if not isinstance(code, str) or not code.strip() or len(code) > 64:
+            raise ValueError("附件编号不能为空且不能超过64个字符")
+        if attachment:
+            changes.append((attachment, {"attachment_code": code}))
+            continue
+        filename = item.get("filename") or item.get("name")
+        path = item.get("file_path") or item.get("url")
+        if not filename and isinstance(path, str):
+            filename = path.split("?")[0].rstrip("/").rsplit("/", 1)[-1]
+        name = item.get("name") or filename
+        if not all(isinstance(v, str) and v.strip() for v in (filename, name, path)):
+            raise ValueError("新附件需要文件名和文件路径")
+        if len(filename) > 255 or len(name) > 255 or len(path) > 512:
+            raise ValueError("附件文件名或路径过长")
+        size = item.get("size", 0)
+        if isinstance(size, bool) or not str(size).isdigit():
+            raise ValueError("附件大小必须为非负整数")
+        changes.append((None, dict(attachment_code=code, filename=filename,
+                                  original_filename=name, file_path=path, file_size=int(size))))
+    return changes
+
+
+def _apply_attachments(project, changes):
+    existing = list(project.attachment_list)
+    retained = set()
+    for attachment, values in changes:
+        if attachment is None:
+            db.session.add(AttachmentORM(project_id=project.id, **values))
+        else:
+            attachment.project_id = project.id
+            attachment.attachment_code = values["attachment_code"]
+            retained.add(attachment.id)
+    for attachment in existing:
+        if attachment.id not in retained:
+            db.session.delete(attachment)
+
+
 @project_api.post("/")
 @jwt_required()
 def create_project():
     try:
         data = request.get_json()
-        if not data:
+        if not isinstance(data, dict) or not data:
             return {"code": -1, "msg": "请求数据为空"}
-
-        if "id" in data:
-            data.pop("id")
-    
-        # 保存附件数据（如果有）
-        attachments_data = None
-        if "attachments" in data:
-            attachments_data = data.pop("attachments")
-    
-        # 处理日期字段
-        if data.get("start_date"):
-            try:
-                data["start_date"] = datetime.strptime(str(data["start_date"]).strip(), "%Y-%m-%d").date()
-            except ValueError:
-                return {"code": -1, "msg": "开始日期格式错误"}
-        else:
-            if "start_date" in data:
-                del data["start_date"]
-
-        if data.get("end_date"):
-            try:
-                data["end_date"] = datetime.strptime(str(data["end_date"]).strip(), "%Y-%m-%d").date()
-            except ValueError:
-                return {"code": -1, "msg": "结束日期格式错误"}
-        else:
-            if "end_date" in data:
-                del data["end_date"]
-    
-        # 处理金额字段
-        if data.get("project_amount"):
-            try:
-                data["project_amount"] = float(data["project_amount"])
-            except ValueError:
-                data["project_amount"] = 0
-        
-        if data.get("project_audit_price_amount"):
-            try:
-                data["project_audit_price_amount"] = float(data["project_audit_price_amount"])
-            except ValueError:
-                data["project_audit_price_amount"] = 0
-                
-        if data.get("project_audit_amount"):
-            try:
-                data["project_audit_amount"] = float(data["project_audit_amount"])
-            except ValueError:
-                data["project_audit_amount"] = 0
-
-        # 过滤掉非法字段
-        allowed_fields = {
-            'project_name', 'project_full_name', 'project_scale', 
-            'start_date', 'end_date', 'project_status', 
-            'project_amount', 'project_audit_price_amount', 'project_audit_amount',
-            'attachments', 'create_at'
-        }
-        project_data = {k: v for k, v in data.items() if k in allowed_fields}
-    
-        # 创建项目
-        project = ProjectORM(**project_data)
-        project.save()
-    
-        # 处理附件数据
-        if attachments_data:
-            try:
-                attachments_list = json.loads(attachments_data) if isinstance(attachments_data, str) else attachments_data
-                if isinstance(attachments_list, list):
-                    for att_data in attachments_list:
-                        if att_data.get("code"):
-                            attachment_id = att_data.get("id")
-                            if attachment_id:
-                                # 更新现有附件记录，关联到项目
-                                attachment = AttachmentORM.query.get(attachment_id)
-                                if attachment:
-                                    attachment.project_id = project.id
-                                    attachment.attachment_code = att_data.get("code", attachment.attachment_code)
-                                    attachment.save()
-                            elif att_data.get("filename") or att_data.get("url"):
-                                # 创建新的附件记录
-                                attachment = AttachmentORM(
-                                    project_id=project.id,
-                                    attachment_code=att_data.get("code", ""),
-                                    filename=att_data.get("filename", att_data.get("name", "")),
-                                    original_filename=att_data.get("name", att_data.get("filename", "")),
-                                    file_path=att_data.get("url", ""),
-                                    file_size=att_data.get("size", 0)
-                                )
-                                attachment.save()
-            except Exception as e:
-                # 附件处理失败不影响项目创建
-                pass
-    
+        if not data.get("project_name"):
+            return {"code": -1, "msg": "项目名称不能为空"}
+        values = _project_values(data)
+        changes = _attachment_changes(data["attachments"]) if "attachments" in data else None
+        project = ProjectORM(**values)
+        db.session.add(project)
+        db.session.flush()
+        if changes is not None:
+            _apply_attachments(project, changes)
+        db.session.commit()
         return {"code": 0, "msg": "新增项目成功", "data": {"id": project.id}}
-    except Exception as e:
+    except Exception as exc:
         db.session.rollback()
-        return {"code": -1, "msg": f"新增项目失败: {str(e)}"}
+        return {"code": -1, "msg": f"新增项目失败: {str(exc)}"}
 
 
 @project_api.put("/<int:pid>")
 @project_api.put("/")
 @jwt_required()
 def change_project(pid=None):
-    data = request.get_json()
-    pid = data.get("id") or pid
-    
-    project_obj = ProjectORM.query.get(pid)
-    if not project_obj:
-        return {"code": -1, "msg": "项目不存在"}
-    
-    # 保存附件数据（如果有）
-    attachments_data = None
-    if "attachments" in data:
-        attachments_data = data.pop("attachments")
-    
-    for key, value in data.items():
-        if key == "id":
-            continue
-        if key == "create_at" and value:
-            value = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
-        elif key == "start_date" and value:
-            value = datetime.strptime(value, "%Y-%m-%d").date()
-        elif key == "end_date" and value:
-            value = datetime.strptime(value, "%Y-%m-%d").date()
-        elif key == "project_amount" and value:
-            value = float(value)
-        elif key == "project_audit_price_amount" and value:
-            value = float(value)
-        elif key == "project_audit_amount" and value:
-            value = float(value)
-        setattr(project_obj, key, value)
-    
-    project_obj.save()
-    
-    # 处理附件数据
-    if attachments_data is not None:
-        try:
-            attachments_list = json.loads(attachments_data) if isinstance(attachments_data, str) else attachments_data
-            if isinstance(attachments_list, list):
-                # 获取当前项目的所有附件ID
-                existing_attachment_ids = {att.id for att in project_obj.attachment_list}
-                new_attachment_ids = set()
-                
-                # 更新或创建附件记录
-                for att_data in attachments_list:
-                    attachment_id = att_data.get("id")
-                    if attachment_id:
-                        # 更新现有附件
-                        attachment = AttachmentORM.query.get(attachment_id)
-                        if attachment and attachment.project_id == pid:
-                            attachment.attachment_code = att_data.get("code", attachment.attachment_code)
-                            attachment.save()
-                            new_attachment_ids.add(attachment_id)
-                    elif att_data.get("code") and att_data.get("filename"):
-                        # 创建新附件记录
-                        attachment = AttachmentORM(
-                            project_id=pid,
-                            attachment_code=att_data.get("code", ""),
-                            filename=att_data.get("filename", att_data.get("name", "")),
-                            original_filename=att_data.get("name", att_data.get("filename", "")),
-                            file_path=att_data.get("url", ""),
-                            file_size=att_data.get("size", 0)
-                        )
-                        attachment.save()
-                        new_attachment_ids.add(attachment.id)
-                
-                # 删除不在新列表中的附件
-                to_delete_ids = existing_attachment_ids - new_attachment_ids
-                if to_delete_ids:
-                    AttachmentORM.query.filter(AttachmentORM.id.in_(to_delete_ids)).delete()
-                    db.session.commit()
-        except Exception as e:
-            # 附件处理失败不影响项目更新
-            pass
-    
-    return {"code": 0, "msg": "修改项目信息成功"}
+    try:
+        data = request.get_json()
+        if not isinstance(data, dict) or not data:
+            return {"code": -1, "msg": "请求数据为空"}
+        project = db.session.get(ProjectORM, data.get("id") or pid)
+        if project is None:
+            return {"code": -1, "msg": "项目不存在"}
+        values = _project_values(data)
+        changes = _attachment_changes(data["attachments"], project.id) if "attachments" in data else None
+        for key, value in values.items():
+            setattr(project, key, value)
+        if changes is not None:
+            _apply_attachments(project, changes)
+        db.session.commit()
+        return {"code": 0, "msg": "修改项目信息成功"}
+    except Exception as exc:
+        db.session.rollback()
+        return {"code": -1, "msg": f"修改项目失败: {str(exc)}"}
 
 
 @project_api.delete("/<int:pid>")

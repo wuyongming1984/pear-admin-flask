@@ -8,7 +8,7 @@ window.rootPath = (function (src) {
 layui
   .config({
     base: "/static/component/pear/module/",
-    version: "4.0.0",
+    version: "4.0.0-submenu-layout-20260925",
   })
   .extend({
     admin: "admin",

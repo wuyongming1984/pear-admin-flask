@@ -94,6 +94,7 @@
             background: #fee2e2;
         }
     </style>
+{% include 'shared/presentation.html' %}
 </head>
 
 <body>
@@ -329,6 +330,7 @@
                     type: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify({
+                        date: $('#edit-date').val(),
                         operator: $('#edit-operator').val(),
                         destination: $('#edit-destination').val(),
                         remark: $('#edit-remark').val(),

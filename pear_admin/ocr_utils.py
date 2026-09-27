@@ -4,18 +4,13 @@ OCR工具类 - 百度OCR增值税发票识别
 import base64
 import json
 import os
-import sys
 
 # 尝试导入requests，如果失败则在使用时报错
 try:
     import requests
     REQUESTS_AVAILABLE = True
-    print(f"✅ requests模块加载成功，版本: {requests.__version__}")
-except ImportError as e:
+except ImportError:
     REQUESTS_AVAILABLE = False
-    print(f"❌ 警告: requests模块未安装 - {str(e)}")
-    print(f"Python路径: {sys.executable}")
-    print(f"sys.path: {sys.path[:3]}")
 
 
 class BaiduOCR:
@@ -31,6 +26,9 @@ class BaiduOCR:
         if not REQUESTS_AVAILABLE:
             raise Exception("requests模块未安装，无法使用百度OCR")
         
+        if not self.api_key or not self.secret_key:
+            raise RuntimeError("未配置百度 OCR，请设置 BAIDU_OCR_API_KEY 和 BAIDU_OCR_SECRET_KEY")
+
         if self.access_token:
             return self.access_token
             
@@ -70,16 +68,6 @@ class BaiduOCR:
         
         raise Exception("获取access_token失败: 重试次数超限")
     
-    def recognize_invoice(self, file_path):
-        """
-        识别增值税发票
-        
-        Args:
-            file_path: 文件路径
-            
-        Returns:
-            dict: 识别结果
-        """
     def recognize_invoice(self, file_path=None, file_content=None):
         """
         识别增值税发票
@@ -97,11 +85,6 @@ class BaiduOCR:
         if not self.access_token:
             self.get_access_token()
             
-        with open("debug_ocr.log", "a", encoding="utf-8") as f:
-             f.write(f"\nRECOGNIZE CALL:\n")
-             f.write(f"file_path argument: '{file_path}'\n")
-             f.write(f"file_content type: {type(file_content)}\n")
-             f.write(f"file_content len: {len(file_content) if file_content else 0}\n")
 
         url = f"https://aip.baidubce.com/rest/2.0/ocr/v1/vat_invoice?access_token={self.access_token}"
         
@@ -360,59 +343,8 @@ class BaiduOCR:
         }
 
 
-class MockOCR:
-    """
-    模拟OCR - 用于测试
-    当没有配置百度OCR API密钥时使用
-    """
-    
-    def __init__(self, api_key=None, secret_key=None):
-        pass
-    
-    def get_access_token(self):
-        return "mock_token"
-    
-    def recognize_invoice(self, file_path):
-        """返回模拟数据"""
-        import random
-        from datetime import datetime, timedelta
-        
-        # 生成随机发票数据
-        invoice_num = f"{random.randint(10000000, 99999999)}"
-        invoice_date = (datetime.now() - timedelta(days=random.randint(1, 365))).strftime('%Y年%m月%d日')
-        amount = round(random.uniform(1000, 50000), 2)
-        
-        return {
-            'invoice_number': invoice_num,
-            'invoice_code': f"0{random.randint(100000000, 999999999)}",
-            'invoice_date': invoice_date,
-            'buyer_name': '测试购买方公司',
-            'buyer_tax_num': f"{random.randint(100000000000000, 999999999999999)}",
-            'seller_name': '测试销售方公司',
-            'seller_tax_num': f"{random.randint(100000000000000, 999999999999999)}",
-            'total_amount': str(amount),
-            'total_tax': str(round(amount * 0.13, 2)),
-            'amount_in_words': '壹万贰仟叁佰肆拾伍元陆角柒分',
-            'raw_result': {'mock': True}
-        }
-    
-    def parse_invoice_result(self, words_result):
-        return words_result
 
 
 def get_ocr_instance():
-    """
-    获取OCR实例
-    如果配置了百度OCR密钥则返回BaiduOCR，否则返回MockOCR
-    """
-    # 优先使用环境变量，如果没有则使用默认配置
-    api_key = os.getenv('BAIDU_OCR_API_KEY', 'AyYGEHa0hEwp9jUDqbS55bww')
-    secret_key = os.getenv('BAIDU_OCR_SECRET_KEY', 'BQGMSP4Z3p4CxCtk90R9D6UozPjLSbVz')
-    
-    # 如果密钥不是默认值或环境变量已设置，使用真实OCR
-    if api_key and secret_key:
-        print(f"使用百度OCR API，密钥: {api_key[:10]}...")
-        return BaiduOCR(api_key, secret_key)
-    else:
-        print("警告: 未配置百度OCR API密钥，使用模拟OCR")
-        return MockOCR()
+    """使用环境变量配置真实 OCR；缺少配置时在识别前明确报错。"""
+    return BaiduOCR()

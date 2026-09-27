@@ -220,7 +220,6 @@ layui.define(
             compatible();
           },
           done: function () {
-            sideMenu.isCollapse = param.menu.collapse;
             sideMenu.selectItem(param.menu.select);
             pearAdmin.collapse(param);
           },
@@ -466,11 +465,7 @@ layui.define(
       };
 
       this.collapse = function (param) {
-        if (param.menu.collapse) {
-          if ($(window).width() >= 768) {
-            collapse();
-          }
-        }
+        setCollapsed($(window).width() <= 768 || !!param.menu.collapse);
       };
 
       this.menuSkin = function (theme) {
@@ -525,22 +520,22 @@ layui.define(
      *
      * 菜单折叠
      */
-    function collapse() {
-      sideMenu.collapse();
-      var admin = $(".pear-admin");
-      var left = $(".layui-icon-spread-left");
-      var right = $(".layui-icon-shrink-right");
-      if (admin.is(".pear-mini")) {
-        left.addClass("layui-icon-shrink-right");
-        left.removeClass("layui-icon-spread-left");
-        admin.removeClass("pear-mini");
-        sideMenu.isCollapse = false;
-      } else {
-        right.addClass("layui-icon-spread-left");
-        right.removeClass("layui-icon-shrink-right");
-        admin.addClass("pear-mini");
-        sideMenu.isCollapse = true;
+    function setCollapsed(collapsed) {
+      if (!sideMenu) return;
+      // The shell and menu can start in different states on narrow screens.
+      // Set one desired state rather than independently toggling both.
+      if ($('#sideMenu').is('.pear-nav-mini') !== collapsed) {
+        sideMenu.collapse();
       }
+      $('.pear-admin').toggleClass('pear-mini', collapsed);
+      sideMenu.isCollapse = collapsed;
+      $('.collapse .layui-icon')
+        .toggleClass('layui-icon-spread-left', collapsed)
+        .toggleClass('layui-icon-shrink-right', !collapsed);
+    }
+
+    function collapse() {
+      setCollapsed(!$('.pear-admin').is('.pear-mini'));
     }
 
     /**

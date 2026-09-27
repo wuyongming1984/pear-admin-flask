@@ -155,7 +155,6 @@ class OrderORM(BaseORM):
             order_amount_raw = order_amount_raw.decode('utf-8')
         order_amount_value = float(order_amount_raw) if order_amount_raw else 0
         order_balance = order_amount_value - total_payment_amount
-        
         return {
             "id": self.id,
             "order_number": self.order_number,
@@ -164,20 +163,31 @@ class OrderORM(BaseORM):
             "project_name": self.project.project_name if self.project else None,
             "supplier_id": self.supplier_id,
             "supplier_name": self.supplier.name if self.supplier else None,
-            "supplier_contact_person": self.supplier_contact_person, # 使用新字段
+            "supplier_contact_person": self.supplier_contact_person,
             "contact_phone": self.contact_phone,
             "cutting_time": format_date(self.cutting_time),
             "estimated_arrival_time": format_date(self.estimated_arrival_time),
             "material_details": self.material_details,
             "order_amount": format_amount(self.order_amount),
-            "order_balance": str(round(order_balance, 2)),  # 订单余额，保留两位小数
+            "order_balance": str(round(order_balance, 2)),
             "material_manager": self.material_manager,
             "sub_project_manager": self.sub_project_manager,
             "attachments": self.attachments,
             "attachments_list": attachments_data,
-            "pays_list": pays_list,  # 关联的付款单列表
-            "pays_count": len(pays_list),  # 付款单数量
-            "is_order": True,  # 标记这是订单行
+            "pays_list": pays_list,
+            "pays_count": len(pays_list),
+            "is_order": True,
             "create_at": format_datetime(self.create_at),
-            "paid_amount": str(round(total_payment_amount, 2)),  # 已付金额
+            "paid_amount": str(round(total_payment_amount, 2)),
+        }
+
+    def slim_json(self):
+        """瘦身版 JSON，专门用于弹窗下拉列表"""
+        return {
+            "id": self.id,
+            "order_number": self.order_number,
+            "project_name": self.project.project_name if self.project else None,
+            "supplier_id": self.supplier_id,
+            "supplier_contact_person": self.supplier_contact_person,
+            "order_amount": str(self.order_amount) if self.order_amount else "0"
         }

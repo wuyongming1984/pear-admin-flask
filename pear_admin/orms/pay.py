@@ -171,7 +171,7 @@ class PayORM(BaseORM):
             "payment_status": self.payment_status,
             "handler": self.handler,
             "create_at": format_datetime(self.create_at),
+            "attachments": self.attachments,
             "attachments_list": attachments_data,
             "invoices_list": invoices_list,
         }
-

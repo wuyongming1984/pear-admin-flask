@@ -62,3 +62,14 @@ class SupplierORM(BaseORM):
             "remark": self.remark,
             "create_at": create_at_str,
         }
+
+    def slim_json(self):
+        """瘦身版 JSON，用于大规模下拉列表加载，仅包含核心字段"""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "contact_person": self.contact_person,
+            "phone": self.phone,
+            "bank_name": self.bank_name,
+            "account_number": self.account_number
+        }

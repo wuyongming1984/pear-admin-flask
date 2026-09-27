@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/static/component/layui/css/layui.css" />
     <link rel="stylesheet" href="/static/nursery/nursery.css" />
     <script src="/static/component/layui/layui.js"></script>
+{% include 'shared/presentation.html' %}
 </head>
 
 <body>
@@ -214,14 +215,15 @@
             var selectedItem = null;
             var mode = 'search';
 
-            var today = new Date().toISOString().split('T')[0];
+            var now = new Date();
+            var today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
             $('#out-date').val(today);
             laydate.render({ elem: '#out-date', type: 'date', value: today });
 
             // Load products
             function loadProducts() {
                 $.ajax({
-                    url: '/api/v1/nursery/inventory',
+                    url: '/api/v1/nursery/inventory?all=1',
                     success: function (res) {
                         if (res.code === 0) {
                             allProducts = res.data.filter(function (p) { return p.quantity > 0; });
@@ -523,7 +525,7 @@
                     url: '/api/v1/nursery/outbound',
                     type: 'POST',
                     contentType: 'application/json',
-                    data: JSON.stringify({ items: items, operator: operator, destination: destination, remark: remark }),
+                    data: JSON.stringify({ date: $('#out-date').val(), items: items, operator: operator, destination: destination, remark: remark }),
                     success: function (res) {
                         if (res.success) {
                             layer.msg('出库成功！单号: ' + res.order_no, { icon: 1, time: 2000 });

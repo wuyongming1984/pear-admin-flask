@@ -1,0 +1,9 @@
+import { createApp } from 'vue';
+import { createRouter,createWebHashHistory } from 'vue-router';
+import Vant from 'vant';import 'vant/lib/index.css';import './style.css';import './polish.css';
+import {installControls} from './business/controls';import businessRoutes from './business/routes';import Apps from './business/Apps.vue';import StatusPage from './business/StatusPage.vue';import AccountHelp from './business/AccountHelp.vue';import './business/mobile.css';import App from './App.vue';import Home from './views/Home.vue';import Profile from './views/Profile.vue';
+const scrollPositions=new Map<string,number>();
+const router=createRouter({history:createWebHashHistory(),routes:[{path:'/project',redirect:'/projects'},{path:'/order',redirect:'/orders'},{path:'/pay',redirect:'/payments'},{path:'/project/:rest(.*)*',redirect:to=>'/projects/'+(Array.isArray(to.params.rest)?to.params.rest.join('/'):(to.params.rest||''))},{path:'/order/:rest(.*)*',redirect:to=>'/orders/'+(Array.isArray(to.params.rest)?to.params.rest.join('/'):(to.params.rest||''))},{path:'/pay/:rest(.*)*',redirect:to=>'/payments/'+(Array.isArray(to.params.rest)?to.params.rest.join('/'):(to.params.rest||''))},...businessRoutes,{path:'/apps',component:Apps},{path:'/forbidden',component:StatusPage},{path:'/unsupported',component:StatusPage},{path:'/register',component:AccountHelp,meta:{public:true}},{path:'/',component:Home},{path:'/me',component:Profile},{path:'/:pathMatch(.*)*',component:StatusPage}],scrollBehavior(to,from,saved){if(saved)return saved;return {top:scrollPositions.get(to.path)||0}}});
+router.onError(()=>window.dispatchEvent(new Event('sf-page-load-failed')));
+router.beforeEach((to,from)=>{scrollPositions.set(from.path,window.scrollY);return true});
+const app=createApp(App);installControls(app);app.use(router).use(Vant);router.isReady().then(()=>app.mount('#app'));

@@ -1,0 +1,27 @@
+/* Shared visual tokens; bundled independently by both Vue applications. */
+@media screen {
+  :root {
+    --sf-action: #1e9fff;
+    --sf-action-hover: #1689df;
+    --sf-control-height: 40px;
+    --sf-control-small: 30px;
+    --sf-control-radius: 8px;
+    --sf-primary: #087f78;
+    --sf-primary-hover: #06665f;
+    --sf-primary-soft: #e8f4f0;
+    --sf-sidebar: #173c37;
+    --sf-text: #243f38;
+    --sf-secondary: #526d63;
+    --sf-muted: #6e8279;
+    --sf-border: #dfe9e3;
+    --sf-canvas: #f3f6f4;
+    --sf-surface: #fff;
+    --sf-surface-soft: #f7faf8;
+    --sf-success: #258063;
+    --sf-warning: #a96920;
+    --sf-danger: #bf4d4b;
+    --sf-radius: 12px;
+    --sf-shadow: 0 3px 18px rgb(25 63 47 / 4%);
+    --sf-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+}

@@ -1,7 +1,8 @@
+from ._system_validation import nested
 from collections import OrderedDict
 from copy import deepcopy
 
-from flask import Blueprint, jsonify, make_response, request
+from flask import Blueprint, current_app, jsonify, make_response, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -17,7 +18,9 @@ passport_api = Blueprint("passport", __name__)
 
 @passport_api.post("/login")
 def login_in():
-    data = request.get_json()
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or not isinstance(data.get("username"), str) or not isinstance(data.get("password"), str) or not data["username"].strip() or not data["password"]:
+        return {"message": "请填写用户名和密码", "msg": "请填写用户名和密码", "code": -1}, 400
 
     user: UserORM = db.session.execute(
         db.select(UserORM).where(UserORM.username == data["username"])
@@ -56,27 +59,8 @@ def menus_api():
                 if rights_orm.type != "auth":
                     rights_orm_list.add(rights_orm)
 
-        rights_list = [rights_orm.menu_json() for rights_orm in rights_orm_list]
-        rights_list.sort(key=lambda x: (int(x["pid"] or 0), int(x["id"])), reverse=True)
-
-        menu_dict_list = OrderedDict()
-        for menu_dict in rights_list:
-            if menu_dict["id"] in menu_dict_list.keys():  # 如果当前节点已经存在与字典中
-                # 当前节点添加子节点
-                menu_dict["children"] = deepcopy(menu_dict_list[menu_dict["id"]])
-                menu_dict["children"].sort(key=lambda item: item["sort"])
-                # 删除子节点
-                del menu_dict_list[menu_dict["id"]]
-
-            if menu_dict["pid"] not in menu_dict_list:
-                menu_dict_list[menu_dict["pid"]] = [menu_dict]
-            else:
-                menu_dict_list[menu_dict["pid"]].append(menu_dict)
-
-        return sorted(menu_dict_list.get(0, []), key=lambda item: item["sort"])
-    except Exception as e:
-        import traceback
-        with open("d:\\pear_admin\\pear-admin-flask\\debug_error.log", "a", encoding="utf-8") as f:
-            f.write("Error in menus_api:\n")
-            f.write(traceback.format_exc())
-        raise e
+        items = sorted(rights_orm_list, key=lambda item: (item.sort or 0, item.id))
+        return nested(items, lambda item: item.menu_json())
+    except Exception:
+        current_app.logger.exception("加载用户菜单失败")
+        raise

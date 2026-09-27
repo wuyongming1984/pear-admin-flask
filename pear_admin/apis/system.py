@@ -20,7 +20,9 @@ def get_backup_config():
         "mail_port": os.getenv("MAIL_PORT", "465"),
         "mail_user": os.getenv("MAIL_USERNAME", ""),
         "mail_pass": os.getenv("MAIL_PASSWORD", ""),
-        "mail_receiver": os.getenv("MAIL_RECEIVER", "")
+        "mail_receiver": os.getenv("MAIL_RECEIVER", ""),
+        "enable_auto_backup": False,
+        "backup_time": "01:00"
     }
     
     if config and config.value:
@@ -41,7 +43,10 @@ def get_backup_config():
 def save_backup_config():
     """保存备份配置"""
     try:
-        req_data = request.get_json()
+        req_data = request.get_json(silent=True)
+        if not isinstance(req_data, dict):
+            return {"code": -1, "msg": "请提交有效配置"}
+        req_data["enable_auto_backup"] = req_data.get("enable_auto_backup") in (True, "on", "true", 1)
         
         # 验证必填 (移除 mail_user)
         required = ["mail_server", "mail_port", "mail_receiver"]
@@ -52,6 +57,18 @@ def save_backup_config():
         # 获取现有配置
         config = db.session.scalar(db.select(SysConfigORM).where(SysConfigORM.key == 'backup_email_config'))
         
+        if req_data.get("mail_pass") == "******":
+            saved_data = json.loads(config.value) if config and config.value else {}
+            req_data["mail_pass"] = saved_data.get("mail_pass") or os.getenv("MAIL_PASSWORD", "")
+        try:
+            port = int(req_data["mail_port"])
+            if not 1 <= port <= 65535:
+                raise ValueError()
+        except (TypeError, ValueError):
+            return {"code": -1, "msg": "邮箱端口必须为1至65535的整数"}
+        import re
+        if not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", str(req_data.get("backup_time", "01:00"))):
+            return {"code": -1, "msg": "备份时间格式应为HH:mm"}
         json_str = json.dumps(req_data)
         
         if config:
@@ -66,6 +83,12 @@ def save_backup_config():
             db.session.add(config)
             
         db.session.commit()
+        
+        # 实时刷新调度任务
+        from pear_admin.extensions.init_scheduler import refresh_backup_scheduler_job
+        from flask import current_app
+        refresh_backup_scheduler_job(current_app)
+        
         return {"code": 0, "msg": "保存成功"}
     except Exception as e:
         db.session.rollback()
@@ -90,9 +113,9 @@ def test_backup():
         env['MAIL_PORT'] = str(conf_data.get('mail_port', os.getenv("MAIL_PORT")))
         env['MAIL_RECEIVER'] = conf_data.get('mail_receiver')
         
-        # 强制使用 .env 中的发送账号密码
-        env['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME", "")
-        env['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD", "")
+        # 优先使用已保存的发送账号密码，空值回退到环境配置
+        env['MAIL_USERNAME'] = conf_data.get('mail_user') or os.getenv("MAIL_USERNAME", "")
+        env['MAIL_PASSWORD'] = conf_data.get('mail_pass') or os.getenv("MAIL_PASSWORD", "")
         
         # 3. 调用备份脚本
         script_path = os.path.join(os.getcwd(), 'scripts', 'backup_db.py')

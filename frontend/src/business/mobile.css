@@ -1,0 +1,24 @@
+/* Phone presentation for the complete business workflows. No desktop UI runtime. */
+.m-control,.m-choice-trigger{box-sizing:border-box;min-height:44px;width:100%;border:1px solid #dce7e1;border-radius:8px;background:white;color:#243f38;padding:10px 12px;font:16px/1.5 var(--sf-font)}
+.m-choice-trigger{text-align:left;overflow-wrap:anywhere}.m-control:focus{outline:2px solid #087f7850}.m-control:disabled{background:#f1f4f2;color:#7a8981}
+.m-form-item{margin:16px 0;min-width:0}.m-form-item>label{display:block;margin:0 0 8px;color:#526d63;font-size:14px}.m-form{margin:12px 0}
+.m-records{display:grid;gap:14px}.m-record,.panel{background:#fff;border:1px solid #dfe9e3;border-radius:12px;padding:14px;margin:12px 0;min-width:0}
+.m-record-field{display:grid;grid-template-columns:100px minmax(0,1fr);gap:10px;border-bottom:1px solid #eff3f0;padding:9px 0;align-items:start;font-size:14px}.m-record-label{color:#6e8279}.m-record-value{min-width:0;overflow-wrap:anywhere}.m-record-field:last-child{border:0}.m-record-actions{display:block}.m-record-actions .m-record-value{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.m-select-all,.m-select-row,.m-check{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px}.m-check input,.m-select-row input,.m-select-all input,input[role=switch]{width:22px;height:22px;accent-color:#087f78}.m-check-group{display:grid;gap:8px}
+.m-choice-panel{padding:18px 16px calc(20px + env(safe-area-inset-bottom));overflow:auto}.m-choice-panel header,.m-dialog header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.m-option{display:block;width:100%;text-align:left;padding:14px 10px;border:0;border-bottom:1px solid #edf2ef;background:white;color:#243f38;font-size:15px}.m-option.selected{color:#087f78;background:#e8f4f0}
+.m-dialog{display:flex;flex-direction:column;height:100%;background:#f3f6f4}.m-dialog header{padding:14px 16px;background:white;margin:0;border-bottom:1px solid #dfe9e3}.m-dialog h2{font-size:18px;margin:0}.m-dialog-body{overflow:auto;flex:1;padding:0 16px;min-height:0}.m-dialog footer{padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:flex;gap:10px;flex-wrap:wrap;background:white;border-top:1px solid #dfe9e3}.m-dialog footer .van-button{flex:1}
+.toolbar,.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}.toolbar>.m-control,.toolbar>.m-choice{flex:1 1 100%;min-width:0}.toolbar .van-button{max-width:100%}.page .form-grid,.page .search-grid{display:block}.page .page-header{display:block}.page-header h1{font-size:25px}.page-header p{font-size:13px;color:#6e8279;line-height:1.6}.m-pagination{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:20px 0;font-size:12px}.m-alert{padding:12px;border-radius:8px;background:#edf5ff;color:#355a78;font-size:14px;overflow-wrap:anywhere}.m-alert.error{background:#fff0ed;color:#a54040}.m-alert.warning{background:#fff7e6;color:#8c631e}.m-stat{display:grid;gap:10px}.m-stat strong{font-size:28px}.m-more{width:100%;padding:10px 0}.attachment-row{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;align-items:center}.attachment-row a{overflow-wrap:anywhere}.page input[type=file]{max-width:100%;padding:10px 0}.page pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:250px;overflow:auto}.m-record-value .van-button{margin:4px}.page object{max-width:100%;height:55vh}.page .invoice-paper,.print-page{overflow:auto;max-width:100%}
+[aria-busy=true]{position:relative}[aria-busy=true]::before{content:'正在加载…';display:block;background:#e8f4f0;color:#087f78;padding:10px;border-radius:8px}
+@media print{.bottom-nav,.m-dialog header,.m-dialog footer,.m-pagination{display:none!important}.m-record-field{break-inside:avoid}}
+
+@media print {
+ body:has(.core-table-print-sheet) .van-popup,body.nursery-printing .van-popup,
+ body:has(.core-table-print-sheet) .m-dialog,body.nursery-printing .m-dialog,
+ body:has(.core-table-print-sheet) .m-dialog-body,body.nursery-printing .m-dialog-body {position:static!important;transform:none!important;height:auto!important;max-height:none!important;overflow:visible!important;width:100%!important;padding:0!important}
+ .van-overlay{display:none!important}
+ body.nursery-printing *{visibility:hidden}
+ body.nursery-printing .nursery-print,body.nursery-printing .nursery-print *{visibility:visible}
+ body.nursery-printing .nursery-print{position:absolute;top:0;left:0;width:100%}
+}
+
+.mobile-file-button{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid #dfe9e3;background:white;border-radius:8px;font-size:14px;cursor:pointer}

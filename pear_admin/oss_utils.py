@@ -84,10 +84,10 @@ class OSSUtils:
             # Extract object key from full URL if provided
             if object_key and object_key.startswith('http'):
                 # Parse URL: https://bucket.endpoint/path/to/file.pdf -> path/to/file.pdf
-                from urllib.parse import urlparse
+                from urllib.parse import urlparse, unquote
                 parsed = urlparse(object_key)
-                # Remove leading slash from path
-                object_key = parsed.path.lstrip('/')
+                # Remove leading slash from path and unquote to handle Chinese characters
+                object_key = unquote(parsed.path.lstrip('/'))
             
             # Generate signed URL
             signed_url = self.bucket.sign_url('GET', object_key, expires, params=params)

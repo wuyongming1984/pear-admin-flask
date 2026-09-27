@@ -3,8 +3,21 @@ from pear_admin.extensions import db
 from pear_admin.orms.nursery import NurseryPlantORM, NurseryTransactionORM
 import datetime
 import uuid
+from math import isfinite
 
 nursery_api = Blueprint("nursery_api", __name__, url_prefix="/nursery")
+
+def _number(value, positive=False):
+    number = float(value)
+    if not isfinite(number) or number < 0 or (positive and number == 0):
+        raise ValueError("数量必须大于0，价格必须为非负有限数字")
+    return number
+
+
+def _transaction_date(data):
+    value = data.get('date')
+    return datetime.datetime.strptime(value, '%Y-%m-%d') if value else datetime.datetime.now()
+
 
 @nursery_api.get("/inventory")
 def get_inventory():
@@ -19,6 +32,10 @@ def get_inventory():
     if search_name:
         query = query.filter(NurseryPlantORM.name.like(f"%{search_name}%"))
         
+    if request.args.get('all') == '1':
+        items = query.order_by(NurseryPlantORM.update_at.desc()).all()
+        return jsonify({"code": 0, "msg": "", "count": len(items), "data": [item.json() for item in items]})
+
     pagination = query.order_by(NurseryPlantORM.update_at.desc()).paginate(
         page=page, per_page=limit, error_out=False
     )
@@ -63,80 +80,86 @@ def inbound():
     3. 更新库存 or 新增库存记录
     4. 记录流水
     """
-    data = request.json
-    name = data.get('name')
-    category = data.get('category')
-    spec = data.get('spec', '')
-    unit = data.get('unit', '')
-    quantity = float(data.get('quantity', 0))
-    price = float(data.get('price', 0)) # 进价
-    location = data.get('location', '')
-    operator = data.get('operator', 'Admin')
-    remark = data.get('remark', '')
-    
-    if not name or quantity <= 0:
-        return jsonify({"success": False, "msg": "名称和数量必填且数量需大于0"})
+    try:
+        data = request.json
+        name = data.get('name')
+        category = data.get('category')
+        spec = data.get('spec', '')
+        unit = data.get('unit', '')
+        quantity = _number(data.get('quantity', 0), positive=True)
+        price = _number(data.get('price', 0)) # 进价
+        location = data.get('location', '')
+        operator = data.get('operator', 'Admin')
+        remark = data.get('remark', '')
+        
+        if not name or quantity <= 0:
+            return jsonify({"success": False, "msg": "名称和数量必填且数量需大于0"})
 
-    # 生成单号
-    order_no = "IN" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    
-    # 查找库存
-    existing = NurseryPlantORM.query.filter_by(
-        name=name, spec=spec, unit=unit
-    ).first()
-    
-    plant_id = None
-    
-    if existing:
-        old_qty = float(existing.quantity)
-        old_price = float(existing.price)
+        transaction_date = _transaction_date(data)
+
+        # 生成单号
+        order_no = "IN" + datetime.datetime.now().strftime("%Y%m%d%H%M%S") + uuid.uuid4().hex[:10]
         
-        new_total_qty = old_qty + quantity
-        new_total_value = (old_qty * old_price) + (quantity * price)
-        new_avg_price = new_total_value / new_total_qty if new_total_qty > 0 else 0
+        # 查找库存
+        existing = NurseryPlantORM.query.filter_by(
+            name=name, spec=spec, unit=unit
+        ).first()
         
-        existing.quantity = new_total_qty
-        existing.price = new_avg_price
-        existing.location = location or existing.location
-        existing.update_at = datetime.datetime.now()
-        plant_id = existing.id
-    else:
-        new_plant = NurseryPlantORM(
-            name=name,
-            category=category,
+        plant_id = None
+        
+        if existing:
+            old_qty = float(existing.quantity)
+            old_price = float(existing.price)
+            
+            new_total_qty = old_qty + quantity
+            new_total_value = (old_qty * old_price) + (quantity * price)
+            new_avg_price = new_total_value / new_total_qty if new_total_qty > 0 else 0
+            
+            existing.quantity = new_total_qty
+            existing.price = new_avg_price
+            existing.location = location or existing.location
+            existing.update_at = datetime.datetime.now()
+            plant_id = existing.id
+        else:
+            new_plant = NurseryPlantORM(
+                name=name,
+                category=category,
+                spec=spec,
+                unit=unit,
+                quantity=quantity,
+                price=price,
+                location=location,
+                remark=remark,
+                create_at=datetime.datetime.now(),
+                update_at=datetime.datetime.now()
+            )
+            db.session.add(new_plant)
+            db.session.flush() # 获取ID
+            plant_id = new_plant.id
+            
+        # 记录流水
+        tx = NurseryTransactionORM(
+            order_no=order_no,
+            type='in',
+            plant_id=plant_id,
+            plant_name=name,
             spec=spec,
             unit=unit,
             quantity=quantity,
             price=price,
+            total_price=quantity * price,
+            operator=operator,
             location=location,
             remark=remark,
-            create_at=datetime.datetime.now(),
-            update_at=datetime.datetime.now()
+            create_at=transaction_date
         )
-        db.session.add(new_plant)
-        db.session.flush() # 获取ID
-        plant_id = new_plant.id
+        db.session.add(tx)
+        db.session.commit()
         
-    # 记录流水
-    tx = NurseryTransactionORM(
-        order_no=order_no,
-        type='in',
-        plant_id=plant_id,
-        plant_name=name,
-        spec=spec,
-        unit=unit,
-        quantity=quantity,
-        price=price,
-        total_price=quantity * price,
-        operator=operator,
-        location=location,
-        remark=remark,
-        create_at=datetime.datetime.now()
-    )
-    db.session.add(tx)
-    db.session.commit()
-    
-    return jsonify({"success": True, "msg": "入库成功", "order_no": order_no})
+        return jsonify({"success": True, "msg": "入库成功", "order_no": order_no})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "msg": f"入库失败: {str(e)}"})
 
 @nursery_api.post("/outbound")
 def outbound():
@@ -158,13 +181,14 @@ def outbound():
         return jsonify({"success": False, "msg": "请添加出库项目"})
     
     # 生成单号
-    order_no = "OUT" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    order_no = "OUT" + datetime.datetime.now().strftime("%Y%m%d%H%M%S") + uuid.uuid4().hex[:10]
     
     try:
+        transaction_date = _transaction_date(data)
         for item in items:
             plant_id = item.get('plant_id')
-            quantity = float(item.get('quantity', 0))
-            price = float(item.get('price', 0))
+            quantity = _number(item.get('quantity', 0), positive=True)
+            price = _number(item.get('price', 0))
             is_non_inventory = item.get('is_non_inventory', False)
             item_name = item.get('name', '')
             
@@ -187,17 +211,17 @@ def outbound():
                     destination=destination,
                     location='非入库',
                     remark=remark + ' [非入库]',
-                    create_at=datetime.datetime.now()
+                    create_at=transaction_date
                 )
                 db.session.add(tx)
             else:
                 # 库存项目
                 plant = NurseryPlantORM.query.get(plant_id)
                 if not plant:
-                    return jsonify({"success": False, "msg": f"库存项目 {item_name} 不存在"})
+                    raise ValueError(f"库存项目 {item_name} 不存在")
                 
                 if float(plant.quantity) < quantity:
-                    return jsonify({"success": False, "msg": f"{plant.name} 库存不足! 当前: {plant.quantity}"})
+                    raise ValueError(f"{plant.name} 库存不足! 当前: {plant.quantity}")
                 
                 # 扣减库存
                 plant.quantity = float(plant.quantity) - quantity
@@ -218,7 +242,7 @@ def outbound():
                     destination=destination,
                     location=plant.location,
                     remark=remark,
-                    create_at=datetime.datetime.now()
+                    create_at=transaction_date
                 )
                 db.session.add(tx)
         
@@ -338,8 +362,11 @@ def update_order(order_no):
         if not transactions:
             return jsonify({"success": False, "msg": "订单不存在"})
         
+        transaction_date = _transaction_date(data) if data.get('date') else None
         # 更新基础信息
         for tx in transactions:
+            if transaction_date:
+                tx.create_at = transaction_date
             if operator:
                 tx.operator = operator
             if destination is not None:
@@ -361,16 +388,16 @@ def update_order(order_no):
                 continue
             
             # 处理数量变化 - 调整库存
-            if new_qty is not None and tx.plant_id:
+            if new_qty is not None:
                 old_qty = float(tx.quantity)
-                new_qty = float(new_qty)
+                new_qty = _number(new_qty, positive=True)
                 qty_diff = old_qty - new_qty  # 正数=减少出库=退回库存
                 
-                plant = NurseryPlantORM.query.get(tx.plant_id)
+                plant = db.session.get(NurseryPlantORM, tx.plant_id) if tx.plant_id else None
                 if plant:
                     new_plant_qty = float(plant.quantity) + qty_diff
                     if new_plant_qty < 0:
-                        return jsonify({"success": False, "msg": f"{plant.name} 库存不足以支持此修改"})
+                        raise ValueError(f"{plant.name} 库存不足以支持此修改")
                     plant.quantity = new_plant_qty
                     plant.update_at = datetime.datetime.now()
                 
@@ -379,7 +406,7 @@ def update_order(order_no):
             
             # 更新价格
             if new_price is not None:
-                tx.price = float(new_price)
+                tx.price = _number(new_price)
                 tx.total_price = float(tx.quantity) * float(new_price)
         
         db.session.commit()
@@ -427,3 +454,29 @@ def get_orders():
     
     return jsonify({"code": 0, "data": orders})
 
+
+
+@nursery_api.route("/transaction/<int:transaction_id>", methods=["PUT", "DELETE"])
+def edit_transaction(transaction_id):
+    """Maintain the ledger snapshot; the log page explicitly does not adjust stock."""
+    try:
+        tx = db.session.get(NurseryTransactionORM, transaction_id)
+        if tx is None:
+            return jsonify({"success": False, "msg": "记录不存在"})
+        if request.method == 'DELETE':
+            db.session.delete(tx)
+        else:
+            data = request.json or {}
+            if 'quantity' in data:
+                tx.quantity = _number(data['quantity'], positive=True)
+            if 'price' in data:
+                tx.price = _number(data['price'])
+            tx.total_price = float(tx.quantity) * float(tx.price or 0)
+            for key in ('plant_name', 'spec', 'unit', 'operator', 'destination', 'location', 'remark'):
+                if key in data:
+                    setattr(tx, key, data[key])
+        db.session.commit()
+        return jsonify({"success": True, "msg": "操作成功"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "msg": str(e)})

@@ -1,447 +1,4 @@
-<style>
-  /* ==================== 赛博工业 (Cyber Industrial) 全局变量 ==================== */
-  :root {
-    --bg-dark: #0f172a;
-    --bg-card: rgba(30, 41, 59, 0.7);
-    --bg-card-hover: rgba(51, 65, 85, 0.8);
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --accent-cyan: #00e5ff;
-    --accent-cyan-dim: rgba(0, 229, 255, 0.1);
-    --border-color: rgba(148, 163, 184, 0.2);
-    --neon-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
-  }
-
-  /* 整体背景 - Scoped to Page Root */
-  #project-page-root {
-    background-color: var(--bg-dark);
-    background-image:
-      radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.05) 0%, transparent 20%),
-      radial-gradient(circle at 90% 80%, rgba(255, 0, 150, 0.05) 0%, transparent 20%);
-    color: var(--text-primary);
-    font-family: "Inter", "Microsoft YaHei", sans-serif;
-    margin: 0;
-    padding: 16px;
-    min-height: calc(100vh - 20px);
-    /* Adjust for padding */
-    box-sizing: border-box;
-  }
-
-  /* 玻璃拟态卡片容器 */
-  #project-page-root .cyber-card {
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    height: calc(100vh - 40px);
-    /* Adjust height */
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* ==================== 深度定制 Layui 表格 ==================== */
-  /* Scope to this page to avoid bleeding */
-  #project-page-root .layui-table-view {
-    background-color: #000000 !important;
-    border: none !important;
-    margin: 0 !important;
-    flex: 1;
-  }
-
-  /* 表头样式 */
-  #project-page-root .layui-table-header {
-    background-color: rgba(15, 23, 42, 0.8) !important;
-    border-bottom: 2px solid var(--accent-cyan) !important;
-  }
-
-  #project-page-root .layui-table thead tr {
-    background-color: transparent !important;
-  }
-
-  #project-page-root .layui-table th {
-    background-color: transparent !important;
-    color: var(--accent-cyan) !important;
-    font-weight: 600 !important;
-    border: none !important;
-    padding: 12px 15px !important;
-  }
-
-  #project-page-root .layui-table th span {
-    font-weight: bold;
-    letter-spacing: 0.5px;
-  }
-
-  /* 表体样式 */
-  #project-page-root .layui-table-body {
-    background-color: transparent !important;
-  }
-
-  #project-page-root .layui-table td {
-    border: none !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-    color: var(--text-primary) !important;
-    padding: 10px 15px !important;
-  }
-
-  /* 悬停高亮 */
-  #project-page-root .layui-table-hover,
-  #project-page-root .layui-table-click,
-  #project-page-root .layui-table tbody tr:hover {
-    background-color: rgba(0, 229, 255, 0.05) !important;
-  }
-
-  /* 去除空隙 */
-  #project-page-root .layui-table-view .layui-table {
-    width: 100%;
-  }
-
-  #project-page-root .layui-table-init {
-    background-color: transparent !important;
-  }
-
-  /* 分页栏定制 */
-  #project-page-root .layui-table-page {
-    border-top: 1px solid var(--border-color) !important;
-    padding: 10px 0 0 0 !important;
-    height: 50px;
-  }
-
-  #project-page-root .layui-laypage .layui-laypage-curr .layui-laypage-em {
-    background-color: var(--accent-cyan) !important;
-  }
-
-  #project-page-root .layui-laypage a,
-  #project-page-root .layui-laypage span {
-    background-color: transparent !important;
-    color: var(--text-secondary) !important;
-    border: 1px solid var(--border-color) !important;
-  }
-
-  #project-page-root .layui-laypage a:hover {
-    color: var(--accent-cyan) !important;
-    border-color: var(--accent-cyan) !important;
-  }
-
-  /* 滚动条美化 */
-  #project-page-root ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  #project-page-root ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
-  }
-
-  #project-page-root ::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.3);
-    border-radius: 4px;
-  }
-
-  #project-page-root ::-webkit-scrollbar-thumb:hover {
-    background: rgba(148, 163, 184, 0.5);
-  }
-
-  /* ==================== 赛博工业 (Cyber Industrial) 列表卡片样式 ==================== */
-  #project-page-root .project-card-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 10px;
-    overflow-y: auto;
-    height: calc(100vh - 120px);
-  }
-
-  /* 列表项卡片 */
-  #project-page-root .project-card {
-    background: rgba(30, 41, 59, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 229, 255, 0.1);
-    border-radius: 8px;
-    padding: 12px 20px;
-    position: relative;
-    transition: all 0.2s ease;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    min-height: 80px;
-  }
-
-  #project-page-root .project-card:hover {
-    transform: translateX(5px);
-    box-shadow: 0 4px 12px rgba(0, 229, 255, 0.1);
-    border-color: rgba(0, 229, 255, 0.4);
-    background: rgba(30, 41, 59, 0.8);
-  }
-
-  /* 左侧：ID + 标题 + 状态 */
-  #project-page-root .card-left {
-    flex: 1;
-    min-width: 0;
-    /* 允许文本截断 */
-    margin-right: 20px;
-  }
-
-  #project-page-root .card-header-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 4px;
-  }
-
-  #project-page-root .card-id {
-    font-family: 'Consolas', monospace;
-    color: var(--accent-cyan);
-    font-size: 14px;
-    opacity: 0.8;
-  }
-
-  #project-page-root .card-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #f1f5f9;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 300px;
-  }
-
-  #project-page-root .card-subtitle {
-    font-size: 12px;
-    color: #64748b;
-    margin-left: 2px;
-  }
-
-  /* 状态标签 (嵌入行内) */
-  #project-page-root .card-status {
-    position: static;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: bold;
-    text-transform: uppercase;
-    background: rgba(255, 255, 255, 0.05);
-    color: #94a3b8;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    line-height: normal;
-  }
-
-  #project-page-root .status-active {
-    background: rgba(0, 229, 255, 0.1);
-    color: #00e5ff;
-    border-color: rgba(0, 229, 255, 0.3);
-  }
-
-  #project-page-root .status-completed {
-    background: rgba(34, 197, 94, 0.1);
-    color: #22c55e;
-    border-color: rgba(34, 197, 94, 0.3);
-  }
-
-  #project-page-root .status-paused {
-    background: rgba(234, 179, 8, 0.1);
-    color: #eab308;
-    border-color: rgba(234, 179, 8, 0.3);
-  }
-
-  #project-page-root .status-cancelled {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    border-color: rgba(239, 68, 68, 0.3);
-  }
-
-  /* 中间：数据项 */
-  #project-page-root .card-middle {
-    display: flex;
-    gap: 40px;
-    margin-right: 40px;
-    flex-shrink: 0;
-  }
-
-  #project-page-root .card-item {
-    display: flex;
-    flex-direction: column;
-    min-width: 100px;
-  }
-
-  #project-page-root .card-label {
-    font-size: 12px;
-    color: #64748b;
-    margin-bottom: 4px;
-  }
-
-  #project-page-root .card-value {
-    font-size: 14px;
-    font-weight: 500;
-    color: #e2e8f0;
-    white-space: nowrap;
-  }
-
-  #project-page-root .card-amount {
-    font-family: 'Consolas', monospace;
-    color: var(--accent-cyan);
-    font-weight: 700;
-  }
-
-  /* 右侧：操作区 */
-  #project-page-root .card-actions {
-    display: flex;
-    gap: 8px;
-    opacity: 0.8;
-    transition: opacity 0.2s;
-    margin: 0;
-    border: none;
-    padding: 0;
-  }
-
-  #project-page-root .project-card:hover .card-actions {
-    opacity: 1;
-  }
-
-  #project-page-root .card-actions button {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #94a3b8;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-  }
-
-  #project-page-root .card-actions button:hover {
-    color: #f1f5f9;
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.2);
-  }
-
-  #project-page-root .card-actions button.edit-btn:hover {
-    color: #2196f3;
-    border-color: #2196f3;
-    background: rgba(33, 150, 243, 0.1);
-  }
-
-  #project-page-root .card-actions button.del-btn:hover {
-    color: #f44336;
-    border-color: #f44336;
-    background: rgba(244, 67, 54, 0.1);
-  }
-
-  /* 分页栏定制 */
-  #project-page-bar {
-    text-align: right;
-    padding: 10px 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(15, 23, 42, 0.5);
-    border-radius: 0 0 12px 12px;
-  }
-
-  /* 搜索栏样式 */
-  #project-search-bar {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    padding: 0 10px;
-  }
-
-  #project-search-bar input {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #f1f5f9;
-    padding: 8px 12px;
-    border-radius: 6px;
-    outline: none;
-    transition: all 0.3s;
-  }
-
-  #project-search-bar input:focus {
-    border-color: var(--accent-cyan);
-    box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
-  }
-
-  .add-btn {
-    margin-left: auto;
-    background: linear-gradient(135deg, #00e5ff 0%, #2979ff 100%);
-    color: #fff;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 6px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
-    transition: all 0.3s;
-  }
-
-  .add-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 229, 255, 0.5);
-  }
-
-  /* 去除 Layui 表格相关无用样式 */
-  #project-page-root .layui-table-view,
-  #project-page-root .layui-table-header,
-  #project-page-root .layui-table-body,
-  #project-page-root .layui-table td,
-  #project-page-root .layui-table th {
-    display: none !important;
-  }
-
-  /* 弹窗样式调整 (保持) */
-  body .layui-layer {
-    background-color: #1e293b !important;
-    border: 1px solid rgba(0, 229, 255, 0.3);
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8) !important;
-  }
-
-  body .layui-layer-title {
-    background-color: #0f172a !important;
-    color: var(--accent-cyan) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-  }
-
-  body .layui-layer-content {
-    color: var(--text-primary) !important;
-  }
-
-  body .layui-layer-btn {
-    background-color: #0f172a !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-  }
-
-  /* 弹窗表单样式修正 */
-  body .layui-layer .layui-form-item .layui-input,
-  body .layui-layer .layui-form-item .layui-textarea,
-  body .layui-layer .layui-form-item .layui-select {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    color: #f1f5f9 !important;
-  }
-
-  body .layui-layer .layui-form-select .layui-input {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-  }
-
-  body .layui-layer .layui-form-select dl {
-    background-color: #1e293b !important;
-    border: 1px solid rgba(0, 229, 255, 0.2) !important;
-  }
-
-  body .layui-layer .layui-form-select dl dd {
-    color: #f1f5f9 !important;
-  }
-
-  body .layui-layer .layui-form-select dl dd:hover,
-  body .layui-layer .layui-form-select dl dd.layui-this {
-    background-color: rgba(0, 229, 255, 0.2) !important;
-  }
-</style>
-
+<header class="sf-page-heading"><div><h1>项目管理</h1><p>跟踪项目进展、合同金额与附件资料</p></div></header>
 <div id="project-page-root">
   <div class="cyber-card" style="padding: 0; background: transparent; border: none; box-shadow: none;">
 
@@ -468,7 +25,6 @@
 
   <!-- 分页栏 -->
   <div id="project-page-bar"></div>
-</div>
 </div>
 
 <!-- 隐藏的表单 (移出 #project-page-root 防止 z-index 上下文问题) -->
@@ -590,6 +146,10 @@
     var attachmentList = [];
     var attachmentSequence = 0;
     var currentProjectName = '';
+    var pendingUploads = 0;
+    var uploadSession = 0;
+    var uploadSessions = {};
+    var uploadFiles = {};
     var projectDataMap = {}; // Maps ID to project data object for editing
     var dictMap = {}; // Dictionary mapping: code -> [{label, value}]
 
@@ -799,7 +359,8 @@
 
       form.val("project-form", data);
       currentProjectName = data.project_name;
-      attachmentList = data.attachments_list || (data.attachments ? JSON.parse(data.attachments) : []);
+      uploadSession++;
+      attachmentList = (data.attachments_list || (data.attachments ? JSON.parse(data.attachments) : [])).slice();
       renderAttachmentList();
 
       layer.open({
@@ -854,6 +415,7 @@
         "id": "0", "project_name": "", "project_full_name": "", "project_scale": "",
         "start_date": "", "end_date": "", "project_status": "", "project_amount": "", "attachments": ""
       });
+      uploadSession++;
       attachmentList = []; attachmentSequence = 0; currentProjectName = '';
       renderAttachmentList();
 
@@ -992,33 +554,49 @@
       url: window.location.origin + '/api/v1/upload/',
       accept: 'file', multiple: true,
       headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
-      data: function () {
-        var projectId = $('#project-form input[name="id"]').val();
-        projectId = (projectId && projectId != '0') ? projectId : null;
-        var projectName = $('#project-form input[name="project_name"]').val() || currentProjectName;
-        return { project_id: projectId, attachment_code: generateAttachmentCode(projectName), path: 'project_attachments' };
-      },
-      before: function (obj) {
-        obj.preview(function (index, file, result) {
-          var projectName = $('#project-form input[name="project_name"]').val() || currentProjectName;
-          attachmentList.push({ code: generateAttachmentCode(projectName), name: file.name, size: file.size, blob: file, url: null, filename: null });
-          renderAttachmentList();
-          updateAttachmentsData();
+      data: { path: 'project_attachments' },
+      choose: function (obj) {
+        uploadFiles = obj.pushFile();
+        Object.keys(uploadFiles).forEach(function (index) {
+          if (uploadSessions[index] === undefined) {
+            uploadSessions[index] = uploadSession;
+            pendingUploads++;
+          }
         });
       },
       done: function (res, index, upload) {
-        if (res.code === 0 && attachmentList[index]) {
-          var item = attachmentList[index];
-          item.id = res.data.id; item.url = res.data.url; item.filename = res.data.filename;
+        var session = uploadSessions[index];
+        if (session !== undefined) pendingUploads = Math.max(0, pendingUploads - 1);
+        delete uploadSessions[index];
+        delete uploadFiles[index];
+        if (session !== uploadSession) return;
+        if (res.code === 0 && res.data && res.data.url) {
+          var projectName = $('#project-form input[name="project_name"]').val() || currentProjectName;
+          attachmentList.push({ id: res.data.id, code: generateAttachmentCode(projectName),
+            name: res.data.original_filename || res.data.filename, filename: res.data.filename,
+            url: res.data.url, size: res.data.size });
           renderAttachmentList();
           updateAttachmentsData();
           layer.msg('上传成功', { icon: 1 });
+        } else {
+          layer.msg(res.msg || '上传失败，请重试', { icon: 2 });
         }
+      },
+      error: function (index) {
+        if (uploadSessions[index] !== undefined) pendingUploads = Math.max(0, pendingUploads - 1);
+        delete uploadSessions[index];
+        delete uploadFiles[index];
+        layer.msg('附件上传失败，请重试', { icon: 2 });
       }
     });
 
     // 监听表单提交
+    var formSubmitting = false;
     form.on('submit(project-form-btn)', function (data) {
+      if (pendingUploads) { layer.msg('请等待附件上传完成', { icon: 0 }); return false; }
+      if (formSubmitting) return false;
+      formSubmitting = true;
+      $('[lay-filter="project-form-btn"]').prop('disabled', true).addClass('layui-btn-disabled');
       var method = data.field.id === "0" ? "POST" : "PUT";
       var url = method === "POST" ? "/api/v1/project/" : `/api/v1/project/${data.field.id}`;
 
@@ -1029,6 +607,11 @@
         dataType: 'json', contentType: 'application/json',
         data: JSON.stringify(data.field),
         headers: { Authorization: "Bearer " + localStorage.getItem("access_token") },
+        error: function () { layer.msg('保存失败，请检查网络后重试', { icon: 2 }); },
+        complete: function () {
+          formSubmitting = false;
+          $('[lay-filter="project-form-btn"]').prop('disabled', false).removeClass('layui-btn-disabled');
+        },
         success: function (res) {
           if (res.code === 0) {
             layer.msg('操作成功', { icon: 1 });
@@ -1050,3 +633,5 @@
 </body>
 
 </html>
+
+{% include 'shared/presentation.html' %}

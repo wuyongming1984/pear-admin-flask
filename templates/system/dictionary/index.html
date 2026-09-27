@@ -30,9 +30,12 @@
             display: none;
         }
     </style>
+{% include 'shared/presentation.html' %}
 </head>
 
 <body>
+<header class="sf-page-heading"><div><h1>数据字典</h1><p>统一维护业务分类、状态与代码值</p></div></header>
+
     <div class="dict-container">
         <div class="dict-row">
             <!-- Left: Dictionary Types -->
@@ -86,6 +89,17 @@
             var table = layui.table;
             var form = layui.form;
             var $ = layui.jquery;
+      function systemRequest(options) {
+        options.headers = Object.assign({Authorization: "Bearer " + localStorage.getItem("access_token")}, options.headers || {});
+        var success = options.success;
+        options.success = function (res) {
+          if (res.code && res.code !== 0) { if (options.onFailure) options.onFailure(); layer.msg(res.msg || "操作失败，请重试", {icon: 2}); return; }
+          if (success) success(res);
+        };
+        options.error = function (xhr) { if (options.onFailure) options.onFailure(); layer.msg((xhr.responseJSON && (xhr.responseJSON.msg || xhr.responseJSON.message)) || "请求失败，请检查网络后重试", {icon: 2}); };
+        return $.ajax(options);
+      }
+
             var layer = layui.layer;
 
             var MODULE_PATH = "/api/v1/dictionary/";
@@ -144,7 +158,7 @@
                             layer.msg('格式错误，应为：代码,名称');
                             return;
                         }
-                        $.ajax({
+                        systemRequest({
                             url: window.location.origin + MODULE_PATH,
                             type: 'POST',
                             contentType: 'application/json',
@@ -170,7 +184,7 @@
             table.on('tool(dict-type-table)', function (obj) {
                 if (obj.event === 'remove') {
                     layer.confirm('确定要删除吗？若存在明细将无法删除。', { icon: 3, title: '提示' }, function (index) {
-                        $.ajax({
+                        systemRequest({
                             url: window.location.origin + MODULE_PATH + obj.data.id,
                             type: 'DELETE',
                             headers: {
@@ -179,11 +193,13 @@
                             success: function (res) {
                                 if (res.success) {
                                     obj.del();
+                                    table.reload(obj.config.id);
                                     layer.close(index);
                                     layer.msg(res.msg, { icon: 1, time: 1000 });
                                     if (currentDictId === obj.data.id) {
                                         currentDictId = null;
                                         $('#dict-detail-toolbar').hide();
+                                        $('#current-dict-info').text('请在左侧选择字典');
                                         table.reload('dict-detail-table', { url: '', data: [] });
                                     }
                                 } else {
@@ -198,8 +214,8 @@
                         value: obj.data.name,
                         yes: function (index, layero) {
                             var name = layero.find(".layui-layer-input").val();
-                            if (!name) return;
-                            $.ajax({
+                            if (!name.trim()) { layer.msg('名称不能为空'); return; }
+                            systemRequest({
                                 url: window.location.origin + MODULE_PATH + obj.data.id,
                                 type: 'PUT',
                                 contentType: 'application/json',
@@ -259,7 +275,8 @@
                             layer.msg('格式错误，至少需要：代码,值');
                             return;
                         }
-                        $.ajax({
+                        if (arr[2] && !/^-?\d+$/.test(arr[2].trim())) { layer.msg('排序号必须为整数'); return; }
+                        systemRequest({
                             url: window.location.origin + MODULE_PATH + 'detail',
                             type: 'POST',
                             contentType: 'application/json',
@@ -290,7 +307,7 @@
             table.on('tool(dict-detail-table)', function (obj) {
                 if (obj.event === 'remove') {
                     layer.confirm('确定要删除吗？', { icon: 3, title: '提示' }, function (index) {
-                        $.ajax({
+                        systemRequest({
                             url: window.location.origin + MODULE_PATH + 'detail/' + obj.data.id,
                             type: 'DELETE',
                             headers: {
@@ -299,6 +316,7 @@
                             success: function (res) {
                                 if (res.success) {
                                     obj.del();
+                                    table.reload(obj.config.id);
                                     layer.close(index);
                                     layer.msg(res.msg, { icon: 1 });
                                 } else {
@@ -313,8 +331,8 @@
                         value: obj.data.value,
                         yes: function (index, layero) {
                             var value = layero.find(".layui-layer-input").val();
-                            if (!value) return;
-                            $.ajax({
+                            if (!value.trim()) { layer.msg('明细值不能为空'); return; }
+                            systemRequest({
                                 url: window.location.origin + MODULE_PATH + 'detail/' + obj.data.id,
                                 type: 'PUT',
                                 contentType: 'application/json',

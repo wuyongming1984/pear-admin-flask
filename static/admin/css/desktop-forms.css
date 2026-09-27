@@ -1,0 +1,40 @@
+/* Shared order/payment forms, isolated from the surrounding workspace. */
+.order-form-container { --text-primary:#294b3c; --text-secondary:#7d9285; --border-dim:#dfe9e2; --accent-primary:#087f78; --bg-deep:#f7faf8; max-width:1100px; margin:16px auto; padding:26px; background:#fff; border:1px solid #e1eae4; border-radius:12px; color:#294b3c; box-sizing:border-box; }
+.order-form-container * { box-sizing:border-box; }
+.order-form-container .form-title,.order-form-container .main-title { font-size:23px; font-weight:650; letter-spacing:-.3px; margin:0 0 26px; padding-left:13px; border-left:4px solid #087f78; }
+.order-form-container .section-wrap,.order-form-container .info-section { border:1px solid #e5ede7; padding:22px; margin-bottom:20px; border-radius:10px; background:#fcfefd; }
+.order-form-container .section-title { font-size:13px; font-weight:650; color:#418061; display:flex; align-items:center; gap:12px; margin-bottom:19px; }
+.order-form-container .section-title::after { content:''; height:1px; background:#e2ece5; flex:1; }
+.order-form-container .form-grid,.order-form-container .info-grid,.order-form-container .financial-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px 22px; }
+.order-form-container .financial-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.order-form-container .full-width { grid-column:1/-1; }
+.order-form-container .form-item { display:flex; flex-direction:column; gap:8px; min-width:0; position:relative; }
+.order-form-container .form-item label { font-size:12px; color:#748c7b; }
+.order-form-container input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]),.order-form-container textarea,.order-form-container select { width:100%; height:40px; padding:0 12px; background:#fff; color:#355844; border:1px solid #dce6df; border-radius:7px; outline:none; font-size:14px; }
+.order-form-container textarea { min-height:95px; padding:12px; resize:vertical; }
+.order-form-container input:focus,.order-form-container textarea:focus { border-color:#087f78; box-shadow:0 0 0 3px #087f780d; }
+.order-form-container input[readonly] { background:#f3f7f4!important; color:#6a8574; }
+.order-form-container .layui-form-select dl { background:white; border:1px solid #dce6df; border-radius:8px; }
+.order-form-container .layui-form-select dl dd { color:#45664e; }
+.order-form-container .layui-form-select dl dd.layui-this { background:#eaf5ed; color:#087f78; }
+.order-form-container .form-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; padding-top:20px; border-top:1px solid #e7eee9; }
+.order-form-container .form-actions button { padding:0 24px; height:40px; border-radius:7px; border:1px solid #dce6df; cursor:pointer; }
+.order-form-container .btn-confirm,.order-form-container #confirm-btn { background:#087f78; color:white; border-color:#087f78; }
+.order-form-container .btn-cancel { background:#fff; color:#6d8374; }
+.order-form-container .attachment-panel { margin-top:14px; }
+.order-form-container .attachment-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin-top:15px; }
+.order-form-container .attachment-item { display:flex; align-items:center; gap:12px; padding:13px; border:1px solid #e0eae3; border-radius:8px; background:#f7fbf8; }
+.order-form-container .file-main { flex:1; min-width:0; }
+.order-form-container .file-name { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#375d45; }
+.order-form-container .file-size,.order-form-container .file-code { font-size:11px; color:#8b9d8f; margin-top:4px; }
+.order-form-container .file-icon { font-size:24px; color:#6b9d7f; }
+.order-form-container .file-ops { display:flex; gap:12px; }
+.order-form-container .file-ops i { cursor:pointer; color:#6a8d74; }
+.order-form-container .attachment-empty { text-align:center; padding:25px; border:1px dashed #dce7df; border-radius:8px; color:#95a69a; font-size:12px; }
+.order-form-container .search-results-dropdown { display:none; position:absolute; left:0; right:0; top:100%; max-height:260px; overflow:auto; z-index:100; background:white; border:1px solid #dbe7df; border-radius:8px; box-shadow:0 8px 30px #22443218; }
+.order-form-container .search-result-item { padding:12px; cursor:pointer; border-bottom:1px solid #eef3ef; }
+.order-form-container .search-result-item:hover { background:#eef7f0; }
+.order-form-container .res-number { font-size:13px; color:#375d45; }
+.order-form-container .res-info { font-size:11px; color:#91a396; margin-top:5px; }
+@media(max-width:700px) { .order-form-container { padding:15px; margin:8px; } .order-form-container .form-grid,.order-form-container .info-grid,.order-form-container .financial-grid { grid-template-columns:1fr; } }
+@media print { .order-form-container { padding:0; margin:0; border:0; } .order-form-container .form-actions,.order-form-container .file-ops,.order-form-container .attachment-upload { display:none; } }

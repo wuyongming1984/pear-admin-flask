@@ -5,7 +5,7 @@ from decimal import Decimal
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from flask_sqlalchemy.pagination import Pagination
-from sqlalchemy import cast, String, Date, Numeric
+from sqlalchemy import cast, String, Date, Numeric, or_
 
 from pear_admin.extensions import db
 from pear_admin.orms import OrderORM, SupplierORM, PayORM, ProjectORM
@@ -25,6 +25,7 @@ def order_list():
     order_number = request.args.get("order_number", type=str)
     material_name = request.args.get("material_name", type=str)
     project_name = request.args.get("project_name", type=str)
+    project_id = request.args.get("project_id", type=int)
     supplier_id = request.args.get("supplier_id", type=int)
     supplier_name = request.args.get("supplier_name", type=str)  # 通过供应商名称筛选
     supplier_contact_person = request.args.get("supplier_contact_person", type=str)  # 通过供应商联系人筛选
@@ -35,11 +36,25 @@ def order_list():
     material_manager = request.args.get("material_manager", type=str)
     sub_project_manager = request.args.get("sub_project_manager", type=str)
     create_at = request.args.get("create_at", type=str)  # 创建时间筛选
+    keyword = (request.args.get("q", type=str) or "").strip()[:100]
     
     # 构建查询
     q = db.select(OrderORM).order_by(OrderORM.id.desc())
     
     # 模糊搜索条件
+    if keyword:
+        projects = db.select(ProjectORM.id).where(or_(ProjectORM.project_name.contains(keyword, autoescape=True),
+                                                      ProjectORM.project_full_name.contains(keyword, autoescape=True)))
+        suppliers = db.select(SupplierORM.id).where(or_(SupplierORM.name.contains(keyword, autoescape=True),
+                                                        SupplierORM.contact_person.contains(keyword, autoescape=True),
+                                                        SupplierORM.phone.contains(keyword, autoescape=True)))
+        q = q.where(or_(OrderORM.order_number.contains(keyword, autoescape=True),
+                        OrderORM.supplier_contact_person.contains(keyword, autoescape=True),
+                        OrderORM.contact_phone.contains(keyword, autoescape=True),
+                        OrderORM.material_name.contains(keyword, autoescape=True),
+                        OrderORM.project_id.in_(projects), OrderORM.supplier_id.in_(suppliers)))
+    if project_id is not None:
+        q = q.where(OrderORM.project_id == project_id)
     if order_id:
         q = q.where(OrderORM.id == order_id)
     if order_number:
@@ -48,7 +63,6 @@ def order_list():
         q = q.where(OrderORM.material_name.like(f"%{material_name}%"))
     if project_name:
         # 通过 project_name 查找 project_id，然后筛选
-        from pear_admin.orms import ProjectORM
         project_subquery = db.select(ProjectORM.id).where(
             ProjectORM.project_name.like(f"%{project_name}%")
         )
@@ -62,8 +76,7 @@ def order_list():
         )
         q = q.where(OrderORM.supplier_id.in_(supplier_subquery))
     if supplier_contact_person:
-        # 直接查询订单表的供应商联系人字段
-        q = q.where(OrderORM.supplier_contact_person.like(f"%{supplier_contact_person}%"))
+        q = q.where(OrderORM.supplier_contact_person.contains(supplier_contact_person, autoescape=True))
     if contact_phone:
         q = q.where(OrderORM.contact_phone.like(f"%{contact_phone}%"))
     if cutting_time:
@@ -103,10 +116,17 @@ def order_list():
     
     pages: Pagination = db.paginate(q, page=page, per_page=per_page, error_out=False)
     
+    # 支持瘦身模式
+    mode = request.args.get("mode", type=str)
+    if mode == "slim":
+        data_list = [item.slim_json() for item in pages.items]
+    else:
+        data_list = [item.json() for item in pages.items]
+
     return {
         "code": 0,
         "msg": "获取订单数据成功",
-        "data": [item.json() for item in pages.items],
+        "data": data_list,
         "count": pages.total,
     }
 

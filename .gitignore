@@ -67,8 +67,7 @@ temp/
 tmp/
 *.bak
 
-# Docker
-.dockerignore
+# Docker 构建忽略规则应纳入版本管理
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -82,3 +81,22 @@ backup_*.sql
 *_backup.*
 *_export.sql
 mysql_export.sql
+
+# 调试及编辑备份产物
+*.backup
+/debug_*
+/test_upload.*
+/static/uploads/
+
+# 手机端开发依赖
+/frontend/node_modules/
+/frontend/.vite/
+
+# Local dependencies and release preparation backups
+node_modules/
+.vite/
+/desktop-migration-backup-*.zip
+/db_backup_*.sql
+/db_backup_*.zip
+/sf_db_prod*.sql
+/旧数据库*.sql

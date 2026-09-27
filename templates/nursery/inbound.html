@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/static/nursery/nursery.css" />
     <script src="/static/component/layui/layui.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+{% include 'shared/presentation.html' %}
 </head>
 
 <body>
@@ -151,7 +152,8 @@
             var laydate = layui.laydate;
             var layer = layui.layer;
 
-            var today = new Date().toISOString().split('T')[0];
+            var now = new Date();
+            var today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
             $('#inbound_date').val(today);
             laydate.render({ elem: '#inbound_date', type: 'date', value: today });
 
@@ -182,6 +184,7 @@
                 e.preventDefault();
 
                 var formData = {
+                    date: $('#inbound_date').val(),
                     name: $('input[name="name"]').val(),
                     category: $('input[name="category"]').val(),
                     spec: $('input[name="spec"]').val(),

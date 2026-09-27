@@ -13,132 +13,13 @@
   <link rel="stylesheet" href="/static/admin/css/reset.css" />
   <!-- 依 赖 脚 本 -->
   <script src="/static/component/layui/layui.js"></script>
-  <script src="/static/component/pear/pear.js"></script>
+  <script src="/static/component/pear/pear.js?v=20260925-submenu-layout"></script>
   <script src="/static/js/pear_admin_flask.js"></script>
-  <style>
-    /* ==================== 赛博工业风格侧边栏升级 v3 ==================== */
-    /* 使用 body.pear-admin 确保优先级高于 admin.dark.css (0,3,0) */
-
-    /* 侧边栏整体背景 */
-    body.pear-admin .layui-layout-admin .layui-side {
-      background-color: #1e2630 !important;
-      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3) !important;
-      border-right: 1px solid rgba(0, 229, 255, 0.05) !important;
-    }
-
-    /* Logo 区域 */
-    body.pear-admin .layui-layout-admin .layui-logo {
-      background-color: #151b22 !important;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-      color: #00e5ff !important;
-      font-weight: 700;
-      letter-spacing: 1px;
-      box-shadow: 0 1px 10px rgba(0, 0, 0, 0.2) !important;
-      border-right: none !important;
-    }
-
-    /* 菜单滚动区域及导航树 - 覆盖默认主题背景 */
-    body.pear-admin .layui-side .layui-side-scroll,
-    body.pear-admin .layui-side .layui-side-scroll .layui-nav-tree {
-      background-color: transparent !important;
-    }
-
-    /* 顶级菜单项 */
-    body.pear-admin .layui-side-menu .layui-nav-item>a {
-      color: #94a3b8 !important;
-      border-left: 3px solid transparent;
-      transition: all 0.3s ease;
-      height: 50px;
-      line-height: 50px;
-      margin: 4px 10px;
-      border-radius: 8px;
-    }
-
-    /* 顶级菜单悬停 */
-    body.pear-admin .layui-side-menu .layui-nav-item>a:hover {
-      background-color: rgba(255, 255, 255, 0.05) !important;
-      color: #f8fafc !important;
-      border-left-color: rgba(0, 229, 255, 0.5) !important;
-    }
-
-    /* 顶级菜单选中/展开状态 */
-    body.pear-admin .layui-side-menu .layui-nav-item.layui-nav-itemed>a,
-    body.pear-admin .layui-side-menu .layui-nav-item.layui-this>a {
-      background: linear-gradient(90deg, rgba(0, 229, 255, 0.1), transparent) !important;
-      color: #00e5ff !important;
-      border-left-color: #00e5ff !important;
-      text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
-    }
-
-    /* 图标样式 */
-    body.pear-admin .layui-side-menu .layui-nav-item i {
-      color: #64748b;
-      margin-right: 10px;
-      font-size: 16px;
-      transition: all 0.3s;
-    }
-
-    body.pear-admin .layui-side-menu .layui-nav-item.layui-nav-itemed>a i,
-    body.pear-admin .layui-side-menu .layui-nav-item.layui-this>a i,
-    body.pear-admin .layui-side-menu .layui-nav-item>a:hover i {
-      color: #00e5ff !important;
-    }
-
-    /* 子菜单区域 */
-    body.pear-admin .layui-side-menu .layui-nav-child {
-      background-color: rgba(0, 0, 0, 0.2) !important;
-      padding: 5px 0 5px 0 !important;
-      box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.2) !important;
-    }
-
-    /* 子菜单项 */
-    body.pear-admin .layui-side-menu .layui-nav-child dd a {
-      color: #94a3b8 !important;
-      padding-left: 50px !important;
-      transition: all 0.2s;
-      margin: 2px 10px;
-      border-radius: 6px;
-      height: 40px;
-      line-height: 40px;
-    }
-
-    /* 子菜单悬停 */
-    body.pear-admin .layui-side-menu .layui-nav-child dd a:hover {
-      background-color: rgba(0, 229, 255, 0.08) !important;
-      color: #00e5ff !important;
-    }
-
-    /* 子菜单选中 */
-    body.pear-admin .layui-side-menu .layui-nav-child dd.layui-this a {
-      background-color: rgba(0, 229, 255, 0.15) !important;
-      color: #00e5ff !important;
-      font-weight: 600;
-      text-shadow: 0 0 5px rgba(0, 229, 255, 0.2);
-    }
-
-    /* 滚动条美化 */
-    body.pear-admin .layui-side-scroll {
-      top: 60px !important;
-    }
-
-    body.pear-admin .layui-side-scroll::-webkit-scrollbar {
-      width: 4px;
-      background-color: transparent;
-    }
-
-    body.pear-admin .layui-side-scroll::-webkit-scrollbar-thumb {
-      background-color: rgba(255, 255, 255, 0.1);
-      border-radius: 2px;
-    }
-
-    body.pear-admin .layui-side-scroll::-webkit-scrollbar-thumb:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-    }
-  </style>
+  {% include 'shared/presentation.html' %}
 </head>
 <!-- 结 构 代 码 -->
 
-<body class="layui-layout-body pear-admin">
+<body class="layui-layout-body pear-admin sf-desktop">
   <!-- 布 局 框 架 -->
   <div class="layui-layout layui-layout-admin">
     <!-- 顶 部 样 式 -->
@@ -153,28 +34,30 @@
       <!-- 顶 部 左 侧 功 能 -->
       <ul class="layui-nav layui-layout-left">
         <li class="collapse layui-nav-item">
-          <a href="#" class="layui-icon layui-icon-shrink-right"></a>
+          <a href="#" class="layui-icon layui-icon-shrink-right" aria-label="展开或收起菜单" title="展开或收起菜单"></a>
         </li>
         <li class="refresh layui-nav-item">
-          <a href="#" class="layui-icon layui-icon-refresh-1" loading="600"></a>
+          <a href="#" class="layui-icon layui-icon-refresh-1" aria-label="刷新当前页面" title="刷新当前页面" loading="600"></a>
         </li>
       </ul>
+      <span class="workspace-label">业务管理工作台</span>
       <!-- 多 系 统 菜 单 -->
       <div id="control" class="layui-layout-control"></div>
       <!-- 顶 部 右 侧 菜 单 -->
       <ul class="layui-nav layui-layout-right">
         <li class="layui-nav-item layui-hide-xs">
-          <a href="#" class="menuSearch layui-icon layui-icon-search"></a>
+          <a href="#" class="menuSearch layui-icon layui-icon-search" aria-label="搜索菜单" title="搜索菜单"></a>
         </li>
         <li class="layui-nav-item layui-hide-xs message"></li>
         <li class="layui-nav-item layui-hide-xs">
-          <a href="#" class="fullScreen layui-icon layui-icon-screen-full"></a>
+          <a href="#" class="fullScreen layui-icon layui-icon-screen-full" aria-label="全屏切换" title="全屏切换"></a>
         </li>
         <li class="layui-nav-item user">
           <!-- 头 像 -->
-          <a class="layui-icon layui-icon-username" href="javascript:;"></a>
+          <a class="layui-icon layui-icon-username" aria-label="账户菜单" title="账户菜单" href="javascript:;"></a>
           <!-- 功 能 菜 单 -->
           <dl class="layui-nav-child">
+            <dd><a href="/m/">手机工作台</a></dd>
             <dd>
               <a user-menu-url="view/system/person.html" user-menu-id="5555" user-menu-title="基本资料">基本资料</a>
             </dd>
@@ -183,7 +66,7 @@
         </li>
         <!-- 主 题 配 置 -->
         <li class="layui-nav-item setting">
-          <a href="#" class="layui-icon layui-icon-more-vertical"></a>
+          <a href="#" class="layui-icon layui-icon-more-vertical" aria-label="外观设置" title="外观设置"></a>
         </li>
       </ul>
     </div>
@@ -218,7 +101,7 @@
   </div>
   <!-- 移 动 端 便 捷 操 作 -->
   <div class="pear-collapsed-pe collapse">
-    <a href="#" class="layui-icon layui-icon-shrink-right"></a>
+    <a href="#" class="layui-icon layui-icon-shrink-right" aria-label="展开或收起菜单" title="展开或收起菜单"></a>
   </div>
 
   <!-- 框 架 初 始 化 -->

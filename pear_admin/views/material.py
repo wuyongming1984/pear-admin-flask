@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, abort
 from pear_admin.orms import MaterialPlanningORM, MaterialInboundORM, MaterialInventoryORM, MaterialOutboundORM, MaterialInvoiceORM, ProjectORM
 
 material_bp = Blueprint("material", __name__)
@@ -81,6 +81,8 @@ def invoice_add():
 def inbound_edit(id):
     from pear_admin.orms import MaterialInboundORM, ProjectORM, SupplierORM
     inbound = MaterialInboundORM.query.get(id)
+    if inbound is None:
+        abort(404)
     projects = ProjectORM.query.all()
     suppliers = SupplierORM.query.all()
     return render_template("material/inbound_edit.html", inbound=inbound, projects=projects, suppliers=suppliers)

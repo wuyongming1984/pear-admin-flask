@@ -1,3 +1,4 @@
+from ._system_validation import validated, payload, required, record, parent_id, selected, nested
 from copy import deepcopy
 
 from flask import Blueprint, request
@@ -17,12 +18,12 @@ def rights_list():
 
 @rights_api.post("/")
 @jwt_required()
+@validated
 def create_rights():
-    data = request.get_json()
-    if "id" in data:
-        del data["id"]
-    if not data.get("pid"):
-        data["pid"] = 0
+    data = payload()
+    data.pop("id", None)
+    required(data, "name")
+    data["pid"] = parent_id(RightsORM, data.get("pid"))
     if not data.get("sort"):
         data["sort"] = 0
     else:
@@ -35,12 +36,19 @@ def create_rights():
 @rights_api.put("/<int:rid>")
 @rights_api.put("/")
 @jwt_required()
+@validated
 def change_rights(rid=None):
-    data = request.get_json()
-    rid = data["id"]
-    del data["id"]
+    data = payload()
+    rid = rid or data.get("id")
+    data.pop("id", None)
 
-    rights_obj = RightsORM.query.get(rid)
+    rights_obj = record(RightsORM, rid)
+    if "name" in data:
+        required(data, "name")
+    if "pid" in data:
+        data["pid"] = parent_id(RightsORM, data["pid"], rid)
+    if "sort" in data:
+        data["sort"] = int(data["sort"] or 0)
     for key, value in data.items():
         setattr(rights_obj, key, value)
     rights_obj.save()
@@ -49,74 +57,26 @@ def change_rights(rid=None):
 
 @rights_api.delete("/<int:rid>")
 @jwt_required()
+@validated
 def delete_rights(rid):
-    rights_obj = RightsORM.query.get(rid)
+    rights_obj = record(RightsORM, rid)
+    if rights_obj.children:
+        raise ValueError("请先删除下级权限")
     rights_obj.delete()
     return {"code": 0, "msg": "删除权限数据成功"}
 
 
 @rights_api.get("/tree")
 def get_list_as_tree():
-    # 1. 获取所有的权限
-    rights_all = db.session.execute(db.select(RightsORM)).scalars()
-    rights_list = [
-        {"id": r.id, "pid": r.pid, "title": r.name, "sort": r.sort} for r in rights_all
-    ]
-    # 2. 获取已有权限 id 集合
-    # 3. 列表转属性组件
-    rights_list.sort(key=lambda item: (item["pid"], item["id"]), reverse=True)
-    tree_dict = {}
-    for rights_dict in rights_list:  # 遍历子节点
-        # 2. 如果当前阶段已经存在于树状表格字典，则是父节点
-        if rights_dict["id"] in tree_dict.keys():
-            # 将之前的节点添加到父节点之下
-            rights_dict["children"] = deepcopy(tree_dict[rights_dict["id"]])
-            rights_dict["children"].sort(key=lambda item: item["sort"])
-            del tree_dict[rights_dict["id"]]
-
-        # 1. 如果父节点未出现在树状字典里面，就新增子节点列表，否则就追加
-        if rights_dict["pid"] not in tree_dict.keys():
-            tree_dict[rights_dict["pid"]] = [rights_dict]
-        else:
-            tree_dict[rights_dict["pid"]].append(rights_dict)
-
-    return {"code": 0, "data": tree_dict.get(0)}
+    items = db.session.scalars(db.select(RightsORM).order_by(RightsORM.sort, RightsORM.id)).all()
+    data = nested(items, lambda item: {"id": item.id, "pid": item.pid, "title": item.name, "sort": item.sort})
+    return {"code": 0, "data": data}
 
 
 @rights_api.get("/treetable")
 def get_list_as_treetable():
-    page = request.args.get("page", type=int, default=1)
-    per_page = request.args.get("per_page", type=int, default=10)
-
-    # 查询所有顶级菜单（pid == 0 或 pid 为 None）
-    q = db.select(RightsORM).where(
-        (RightsORM.pid == 0) | (RightsORM.pid.is_(None))
-    ).order_by(RightsORM.sort, RightsORM.id)
-    pages = db.paginate(q, page=page, per_page=per_page, error_out=False)
-
-    ret = []
-
-    # 构建树状表格的数据
-    for rights_item in pages.items:
-        data = rights_item.json()
-        data["children"] = []
-        
-        # 加载子节点
-        for child in rights_item.children:
-            child_data = child.json()
-            child_data["children"] = []
-            
-            # 加载子节点的子节点
-            if child.children:
-                child_data["children"] = [
-                    sub_child.json() for sub_child in child.children
-                ]
-                child_data["isParent"] = True
-
-            data["children"].append(child_data)
-        
-        if data["children"]:
-            data["isParent"] = True
-        ret.append(data)
-    
-    return {"code": 0, "msg": "请求权限数据成功", "count": pages.total, "data": ret}
+    items = db.session.scalars(db.select(RightsORM).order_by(RightsORM.sort, RightsORM.id)).all()
+    data = nested(items, lambda item: item.json())
+    page = max(1, request.args.get("page", 1, type=int))
+    limit = max(1, request.args.get("limit", request.args.get("per_page", 10, type=int), type=int))
+    return {"code": 0, "msg": "请求权限数据成功", "data": data[(page-1)*limit:page*limit], "count": len(data)}

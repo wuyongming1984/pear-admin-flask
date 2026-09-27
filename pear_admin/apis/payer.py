@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from flask_sqlalchemy.pagination import Pagination
-from sqlalchemy import cast, String
+from sqlalchemy import cast, String, or_
 
 from pear_admin.extensions import db
 from pear_admin.orms import PayerORM
@@ -23,11 +23,16 @@ def payer_list():
     bank_name = request.args.get("bank_name", type=str)
     account_number = request.args.get("account_number", type=str)
     remark = request.args.get("remark", type=str)
+    keyword = (request.args.get("q", type=str) or "").strip()[:100]
     
     # 构建查询
     q = db.select(PayerORM)
     
     # 模糊搜索条件
+    if keyword:
+        q = q.where(or_(PayerORM.name.contains(keyword, autoescape=True),
+                        PayerORM.bank_name.contains(keyword, autoescape=True),
+                        PayerORM.account_number.contains(keyword, autoescape=True)))
     if type_id:
         q = q.where(PayerORM.type_id == type_id)
     if name:

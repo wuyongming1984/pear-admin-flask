@@ -7,9 +7,12 @@
   <meta name="renderer" content="webkit" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+{% include 'shared/presentation.html' %}
 </head>
 
 <body>
+<header class="sf-page-heading"><div><h1>用户管理</h1><p>维护账号资料、部门归属与角色分配</p></div></header>
+
   <div style="padding: 16px">
     <div class="layui-card">
       <div class="layui-card-body">
@@ -21,7 +24,7 @@
     <div class="layui-form-item">
       <label class="layui-form-label">ID</label>
       <div class="layui-input-block">
-        <input type="text" name="id" value="0" lay-verify="required" autocomplete="off" class="layui-input" disabled />
+        <input type="text" name="id" value="0" lay-verify="required" autocomplete="off" class="layui-input" readonly />
       </div>
     </div>
     <div class="layui-form-item">
@@ -61,7 +64,7 @@
       <label class="layui-form-label">创建时间</label>
       <div class="layui-input-block">
         <input type="text" name="create_at" class="layui-input" id="form_create_at" placeholder="yyyy-MM-dd HH:mm:ss"
-          autocomplete="off" lay-verify="required" />
+          autocomplete="off" />
       </div>
     </div>
     <div class="layui-form-item">
@@ -76,7 +79,7 @@
   <script type="text/html" id="user-toolbar">
       <div class="layui-btn-container">
         <button class="layui-btn layui-btn-sm" lay-event="user-toolbar-add">
-          新增角色
+          新增用户
         </button>
       </div>
     </script>
@@ -104,7 +107,7 @@
     </script>
 
   <!--用户授权标签-->
-  <form class="layui-form" action="" id="user-role-form" lay-filter="user-role-form">
+  <form class="layui-form" action="" id="user-role-form" style="display:none" lay-filter="user-role-form">
     <div class="row" style="margin: 10px 5px">
       <ul id="user_role" class="dtree" data-id="0"></ul>
     </div>
@@ -123,14 +126,28 @@
     </div>
   </form>
   <script>
-    layui.use(["table", "form", "jquery", "laydate", "tree"], function () {
+    layui.use(["table", "form", "jquery", "laydate", "tree", "layer"], function () {
       var table = layui.table;
       var $ = layui.jquery;
+      function systemRequest(options) {
+        options.headers = Object.assign({Authorization: "Bearer " + localStorage.getItem("access_token")}, options.headers || {});
+        var success = options.success;
+        options.success = function (res) {
+          if (res.code && res.code !== 0) { if (options.onFailure) options.onFailure(); layer.msg(res.msg || "操作失败，请重试", {icon: 2}); return; }
+          if (success) success(res);
+        };
+        options.error = function (xhr) { if (options.onFailure) options.onFailure(); layer.msg((xhr.responseJSON && (xhr.responseJSON.msg || xhr.responseJSON.message)) || "请求失败，请检查网络后重试", {icon: 2}); };
+        return $.ajax(options);
+      }
+
       var form = layui.form;
       var laydate = layui.laydate;
       var tree = layui.tree;
+      var layer = layui.layer;
 
       let user_id = -1;
+      let grantReady = false;
+      let grantVersion = 0;
 
       table.render({
         elem: "#user-table",
@@ -184,6 +201,7 @@
 
       table.on("tool(user-table)", function (obj) {
         if (obj.event === "user-tool-edit") {
+          $("#user-form")[0].reset();
           form.val("user-form", obj.data);
           layer.open({
             type: 1,
@@ -192,12 +210,12 @@
             area: ["50%", "80%"],
           });
         } else if (obj.event === "user-tool-del") {
-          $.ajax({
+          systemRequest({
             url: window.location.origin + `/api/v1/user/${obj.data.id}`,
             type: "DELETE",
             contentType: "application/json",
             headers: {
-              "X-CSRF-TOKEN": getCookie("csrf_access_token"),
+              Authorization: "Bearer " + localStorage.getItem("access_token"),
             },
             success: function (res) {
               if (!res.code) {
@@ -207,10 +225,16 @@
           });
         } else if (obj.event === "user-tool-detail") {
           user_id = obj.data["id"];
-          $.ajax({
+          grantReady = false;
+          const loadingVersion = ++grantVersion;
+          const loadingId = user_id;
+          tree.render({elem: "#user_role", id: "user_role", data: [], showCheckbox: true});
+          $("#user-role-form [lay-submit]").prop("disabled", true);
+          systemRequest({
             url: window.location.origin + "/api/v1/role/?type=tree",
             type: "get",
             success: function (ret) {
+              if (loadingVersion !== grantVersion) return;
               let data = [];
               $.each(ret.data, function (index, item) {
                 data.push({ id: item.id, title: item.name });
@@ -222,11 +246,14 @@
                 showCheckbox: true,
               });
               // 请求获取当前用户的权限
-              $.ajax({
-                url: window.location.origin + `/api/v1/user/user_role/${user_id}`,
+              systemRequest({
+                url: window.location.origin + `/api/v1/user/user_role/${loadingId}`,
                 type: "get",
                 success: function (ret) {
-                  tree.setChecked("user_role", ret.data);
+              if (loadingVersion !== grantVersion) return;
+                  tree.setChecked("user_role", ret.data || []);
+                  grantReady = true;
+                  $("#user-role-form [lay-submit]").prop("disabled", false);
                 },
               });
             },
@@ -238,6 +265,7 @@
             shade: false,
             area: ["500px", "500px"],
             content: $("#user-role-form"),
+            end: function () { grantVersion++; grantReady = false; },
           });
         }
       });
@@ -253,7 +281,7 @@
           method = "PUT";
           url = window.location.origin + `/api/v1/user/${field.id}`;
         }
-        $.ajax({
+        systemRequest({
           url: url,
           type: method,
           contentType: "application/json",
@@ -290,9 +318,10 @@
       }
 
       form.on("submit(user-role-save)", function (data) {
+        if (!grantReady) { layer.msg("授权数据尚未加载，请稍后重试", {icon: 2}); return false; }
         let param = tree.getChecked("user_role"); // 获取选中节点的数据
         let rights_ids = get_id(param).join();
-        $.ajax({
+        systemRequest({
           url: window.location.origin + `/api/v1/user/user_role/${user_id}`,
           data: JSON.stringify({ rights_ids: rights_ids }),
           dataType: "json",

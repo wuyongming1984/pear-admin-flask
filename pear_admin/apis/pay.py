@@ -6,7 +6,8 @@ from flask_jwt_extended import jwt_required
 from flask_sqlalchemy.pagination import Pagination
 
 from pear_admin.extensions import db
-from pear_admin.orms import PayORM, OrderORM, SupplierORM, PayerORM
+from pear_admin.orms import PayORM, OrderORM, SupplierORM, PayerORM, ProjectORM
+from sqlalchemy import or_
 
 pay_api = Blueprint("pay", __name__, url_prefix="/pay")
 
@@ -31,11 +32,26 @@ def pay_list():
     project_name = request.args.get("project_name", type=str)
     supplier_contact_person = request.args.get("supplier_contact_person", type=str)
     create_at = request.args.get("create_at", type=str)
+    keyword = (request.args.get("q", type=str) or "").strip()[:100]
     
     # 构建查询（按ID倒序，新的在前）
     q = db.select(PayORM).order_by(PayORM.id.desc())
     
     # 模糊搜索条件
+    if keyword:
+        matching_orders = db.select(OrderORM.id).where(or_(
+            OrderORM.order_number.contains(keyword, autoescape=True),
+            OrderORM.supplier_contact_person.contains(keyword, autoescape=True),
+            OrderORM.project_id.in_(db.select(ProjectORM.id).where(or_(
+                ProjectORM.project_name.contains(keyword, autoescape=True),
+                ProjectORM.project_full_name.contains(keyword, autoescape=True))))))
+        matching_payers = db.select(PayerORM.id).where(PayerORM.name.contains(keyword, autoescape=True))
+        matching_suppliers = db.select(SupplierORM.id).where(SupplierORM.name.contains(keyword, autoescape=True))
+        q = q.where(or_(PayORM.pay_number.contains(keyword, autoescape=True),
+                        PayORM.handler.contains(keyword, autoescape=True),
+                        PayORM.order_id.in_(matching_orders),
+                        PayORM.payer_supplier_id.in_(matching_payers),
+                        PayORM.payee_supplier_id.in_(matching_suppliers)))
     if pay_id:
         q = q.where(PayORM.id == pay_id)
     if pay_number:
@@ -64,7 +80,6 @@ def pay_list():
         q = q.where(PayORM.handler.like(f"%{handler}%"))
     if project_name:
         # 通过关联订单的项目名称筛选
-        from pear_admin.orms import ProjectORM
         subquery = db.select(OrderORM.id).join(ProjectORM).where(
             ProjectORM.project_name.like(f"%{project_name}%")
         ).scalar_subquery()
@@ -180,7 +195,7 @@ def create_pay():
         print(f"Create Pay Error: {e}") 
         return {"code": -1, "msg": f"新增付款单失败: {str(e)}"}
         
-    return {"code": 0, "msg": "新增付款单成功"}
+    return {"code": 0, "msg": "新增付款单成功", "data": {"id": pay.id}}
 
 
 @pay_api.put("/<int:pid>")

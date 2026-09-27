@@ -214,60 +214,20 @@ layui.define(["table", "jquery", "element"], function (exports) {
       .find(".layui-this")
       .removeClass("layui-this");
     if (!$("#" + this.option.elem).is(".pear-nav-mini")) {
-      var openEle = null;
-      var openEleHeight = 0;
+      var option = this.option;
       $(
-        $("#" + this.option.elem + " a[menu-id='" + pearId + "']")
-          .parents(".layui-nav-child")
-          .get()
-          .reverse(),
+        $("#" + option.elem + " a[menu-id='" + pearId + "']")
+          .parents(".layui-nav-child").get().reverse()
       ).each(function () {
-        if (!$(this).parent().is(".layui-nav-itemed")) {
-          if (openEleHeight == 0) {
-            openEle = $(this);
-          } else {
-            $(this).parent().addClass("layui-nav-itemed");
-            $(this).css({
-              height: "auto",
-            });
-          }
-          openEleHeight += $(this).children("dd").length * 48;
+        var group = $(this).parent();
+        resetGroupLayout(group);
+        if (option.accordion) {
+          var siblings = group.siblings(".layui-nav-itemed");
+          resetGroupLayout(siblings);
+          siblings.removeClass("layui-nav-itemed").find(".layui-nav-itemed").removeClass("layui-nav-itemed");
         }
+        group.addClass("layui-nav-itemed");
       });
-      if (this.option.accordion) {
-        if (openEleHeight > 0) {
-          var currentDom = openEle
-            .parent()
-            .siblings(".layui-nav-itemed")
-            .children(".layui-nav-child");
-          currentDom.animate(
-            {
-              height: "0px",
-            },
-            240,
-            function () {
-              currentDom.css({
-                height: "auto",
-              });
-              $(this).parent().removeClass("layui-nav-itemed");
-              $(this).find(".layui-nav-itemed").removeClass("layui-nav-itemed");
-            },
-          );
-        }
-      }
-      if (openEleHeight > 0) {
-        openEle.parent().addClass("layui-nav-itemed");
-        openEle.height(0);
-        openEle.animate(
-          {
-            height: openEleHeight + "px",
-          },
-          240,
-          function () {
-            $(this).css({ height: "auto" });
-          },
-        );
-      }
     }
     $("#" + this.option.elem + " a[menu-id='" + pearId + "']")
       .parent()
@@ -287,7 +247,7 @@ layui.define(["table", "jquery", "element"], function (exports) {
       $("#" + this.option.elem).removeClass("pear-nav-mini");
       $("#" + this.option.elem).animate(
         {
-          width: "220px",
+          width: "230px",
         },
         180,
       );
@@ -316,7 +276,8 @@ layui.define(["table", "jquery", "element"], function (exports) {
       $("#" + this.option.elem)
         .promise()
         .done(function () {
-          isHoverMenu(true, config);
+          // An earlier collapse animation may finish after the sidebar reopened.
+          isHoverMenu($("#" + elem).is(".pear-nav-mini"), config);
           if (that.option.control) {
             rationalizeHeaderControlWidth(that.option);
           }
@@ -358,7 +319,39 @@ layui.define(["table", "jquery", "element"], function (exports) {
       }
     }
     element.init();
+    bindGroupToggle(option);
     option.done();
+  }
+
+  function resetGroupLayout(group) {
+    group.find(".layui-nav-child").stop(true, true)
+      .removeClass("layui-nav-hover")
+      .css({ height: "", display: "", overflow: "", top: "", left: "",
+        paddingTop: "", paddingBottom: "", marginTop: "", marginBottom: "" });
+  }
+
+  function bindGroupToggle(option) {
+    var root = document.getElementById(option.elem);
+    if (!root) return;
+    if (root.pearGroupToggle) root.removeEventListener("click", root.pearGroupToggle, true);
+    // Own group expansion in one place, before Layui's slide animation handler.
+    root.pearGroupToggle = function (event) {
+      var anchor = event.target.closest("a");
+      if (!anchor || !root.contains(anchor)) return;
+      var group = $(anchor).parent();
+      if (!group.children(".layui-nav-child").length || $(root).is(".pear-nav-mini")) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      var expanded = !group.hasClass("layui-nav-itemed");
+      resetGroupLayout(group);
+      if (expanded && option.accordion) {
+        var siblings = group.siblings(".layui-nav-itemed");
+        resetGroupLayout(siblings);
+        siblings.removeClass("layui-nav-itemed").find(".layui-nav-itemed").removeClass("layui-nav-itemed");
+      }
+      group.toggleClass("layui-nav-itemed", expanded);
+    };
+    root.addEventListener("click", root.pearGroupToggle, true);
   }
 
   function createMenu(option) {
@@ -687,6 +680,13 @@ layui.define(["table", "jquery", "element"], function (exports) {
 
   /** 二 级 悬 浮 菜 单*/
   function isHoverMenu(b, option) {
+    // Rebinding must not accumulate handlers after repeated sidebar toggles.
+    $("#" + option.elem + " .layui-nav-item")
+      .off("mouseenter")
+      .unbind("mouseleave");
+    $("#" + option.elem + " dd")
+      .off("mouseenter")
+      .unbind("mouseleave");
     if (b) {
       var navItem = "#" + option.elem + ".pear-nav-mini .layui-nav-item";
       var navChildDl = navItem + " .layui-nav-child>dl";
@@ -731,12 +731,10 @@ layui.define(["table", "jquery", "element"], function (exports) {
           });
       });
     } else {
-      $("#" + option.elem + " .layui-nav-item")
-        .off("mouseenter")
-        .unbind("mouseleave");
-      $("#" + option.elem + " dd")
-        .off("mouseenter")
-        .unbind("mouseleave");
+      // Fixed flyout positioning must not leak into expanded, in-flow groups.
+      $("#" + option.elem + " .layui-nav-child")
+        .removeClass("layui-nav-hover")
+        .css({ left: "", top: "" });
     }
   }
 

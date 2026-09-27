@@ -62,7 +62,7 @@ Ruling: repository has no Git metadata; isolated new frontend directory and time
 
 在 `frontend-desktop/` 执行 `pnpm install --frozen-lockfile`、`pnpm build`；产物只进入 `static/desktop/`。手机端仍在 `frontend/` 独立构建。
 
-全部验收后设置 `DESKTOP_DEFAULT=true` 并重启Flask，`/`重定向新版；设回false并重启即回退。`/legacy/`和原有旧页面路由继续可访问。部署只更新应用代码/静态资源，绝不执行包含删表逻辑的初始化、数据库同步或迁移命令。
+默认 `DESKTOP_DEFAULT=true`，`/`重定向新版；显式设回false并重启即回退。Docker 修改环境后需重新创建 web 容器。`/legacy/`和原有旧页面路由继续可访问。部署只更新应用代码/静态资源，绝不执行包含删表逻辑的初始化、数据库同步或迁移命令。服务器更新步骤见 README 的“现有服务器更新新版”。
 
 最终新版前端：16个测试文件、108项测试通过；`pnpm build`（含TypeScript检查）通过。本地5050服务已重启，`/`、`/legacy/`、`/pc/`、`/m/`均HTTP200，默认入口保持旧版。
 

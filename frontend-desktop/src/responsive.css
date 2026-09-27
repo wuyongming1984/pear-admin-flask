@@ -1,0 +1,85 @@
+/* Loaded after the desktop theme. Keep printed documents at their paper size. */
+.sidebar-close,.mobile-page-title{display:none}
+@media screen and (max-width:899px){
+  html,body,#app{min-width:0;width:100%}
+  .app-shell{height:100vh;height:100dvh}
+  .workspace-content{overscroll-behavior:contain;padding-bottom:env(safe-area-inset-bottom)}
+  .sidebar{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+  .sidebar-close{display:grid;place-items:center;position:absolute;right:4px;top:4px;width:44px;height:44px;border:0;background:transparent;color:white;font-size:26px;cursor:pointer}
+  .sidebar .brand{padding-right:28px;font-size:14px}
+  .sidebar-mask{border:0;padding:0;cursor:pointer}
+  .topbar{height:auto;min-height:60px;padding-top:env(safe-area-inset-top);padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}
+  .menu-toggle{flex-shrink:0;min-width:44px;min-height:44px}
+  .topbar-right{flex-shrink:0;gap:0}
+  .topbar-right .el-button{min-height:44px;padding:8px}
+  .tabs-bar{max-width:100%;overscroll-behavior-x:contain}
+  .workspace-tab{flex-shrink:0}
+  .workspace-tab button{min-height:40px}
+  .page-heading>div,.toolbar>*{min-width:0}
+  .page-heading h1,.page-heading p{overflow-wrap:anywhere}
+  .page-heading .actions{width:100%;justify-content:flex-start}
+  .page .form-grid{grid-template-columns:minmax(0,1fr)}
+  .el-form-item__content{min-width:0}
+  .el-form-item .el-input,.el-form-item .el-select,.el-form-item .el-date-editor,.el-form-item .el-input-number{width:100%;max-width:100%;min-width:0}
+  .toolbar .el-date-editor{max-width:100%;min-width:0}
+  .el-table{max-width:100%}
+  /* Fixed columns can occupy most of a phone. Keep all columns in the swipe area. */
+  .el-table .el-table-fixed-column--left,.el-table .el-table-fixed-column--right{position:static!important;left:auto!important;right:auto!important}
+  .el-table .el-table-fixed-column--left::before,.el-table .el-table-fixed-column--right::before{display:none}
+  .el-table__body-wrapper .el-scrollbar__wrap{overscroll-behavior-x:contain}
+  .el-pagination{justify-content:flex-start;max-width:100%}
+  .el-pagination .el-pager{max-width:100%;flex-wrap:wrap}
+  .el-pagination button,.el-pagination .el-pager li{min-width:36px;min-height:40px}
+  .attachment-row{flex-wrap:wrap}
+  .attachment-row>a,.attachment-row>span{min-width:0;overflow-wrap:anywhere}
+  .attachment-row .el-image{flex-shrink:0}
+  .page input[type=file]{max-width:100%;min-width:0}
+  .stat-card{min-width:0}
+  .stat-card>strong{white-space:normal;overflow-wrap:anywhere}
+  .el-dialog{width:calc(100% - 24px)!important;max-width:680px;margin:12px auto!important;padding:16px!important;max-height:calc(100dvh - 24px);display:flex;flex-direction:column}
+  .el-dialog__header{flex-shrink:0;padding-right:30px}
+  .el-dialog__body{min-height:0;max-height:none;overflow:auto;overscroll-behavior:contain}
+  .el-dialog__footer{flex-shrink:0;flex-wrap:wrap;padding-bottom:env(safe-area-inset-bottom)}
+  .el-dialog__headerbtn{width:44px;height:44px}
+  .el-message-box{max-width:calc(100vw - 24px)}
+  .el-message{max-width:calc(100vw - 24px);overflow-wrap:anywhere}
+  .el-select-dropdown{max-width:calc(100vw - 24px)}
+  .el-select-dropdown__item{height:auto;min-height:40px;white-space:normal;overflow-wrap:anywhere;line-height:1.5;padding-top:8px;padding-bottom:8px}
+  .el-picker-panel{max-width:calc(100vw - 16px)}
+  .el-date-picker .el-picker-panel__content{width:auto}
+  .el-picker-panel__sidebar{display:none}
+  .el-picker-panel__sidebar+.el-picker-panel__body{margin-left:0}
+  .el-date-range-picker .el-picker-panel__body{min-width:0}
+  .el-date-range-picker__content{float:none;width:100%}
+  .el-date-range-picker__content.is-left{border-right:0;border-bottom:1px solid var(--el-border-color)}
+  .el-popper:has(.el-date-range-picker){max-height:75dvh;overflow:auto}
+  .el-descriptions__table{table-layout:fixed}
+  .el-descriptions__cell{overflow-wrap:anywhere}
+  .portal .order-heading,.portal .payment{flex-wrap:wrap;overflow-wrap:anywhere}
+  .animated-login,.animated-login-main{min-height:100dvh}
+}
+@media screen and (max-width:600px){
+  .topbar .el-breadcrumb{display:none}
+  .mobile-page-title{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:600}
+  .page{padding:12px}
+  .panel{padding:14px}
+  .page .search-grid{grid-template-columns:minmax(0,1fr)}
+  .toolbar{padding:10px;gap:8px}
+  .toolbar .el-input,.toolbar .el-select,.toolbar .el-date-editor{width:100%!important;max-width:none!important;flex:1 1 100%}
+  .actions{gap:8px}
+  .el-button:not(.is-link),.el-input__wrapper,.el-select__wrapper{min-height:44px!important}
+  .el-table .el-button.is-link{min-height:36px}
+  .el-input__inner,.el-textarea__inner,.el-select__input,.showcase-field>input,.showcase-password input{font-size:16px}
+  .el-form-item{display:block}
+  .el-form-item__label{display:flex;width:auto!important;height:auto;line-height:1.5;justify-content:flex-start;margin-bottom:8px;padding:0}
+  .el-form-item__content{margin-left:0!important}
+  .el-descriptions__table tbody,.el-descriptions__table tr{display:block}
+  .el-descriptions__table tr{display:grid;grid-template-columns:minmax(76px,30%) minmax(0,1fr)}
+  .el-descriptions__table .el-descriptions__cell{width:auto!important;min-width:0}
+  .el-dialog__footer>.el-button{flex:1;margin:0}
+  .el-checkbox{max-width:100%;height:auto;min-height:44px;white-space:normal;margin-right:12px}
+  .el-checkbox__label{white-space:normal;overflow-wrap:anywhere}
+  .el-tree{overflow:auto}
+  .animated-login-mobile-brand{margin-bottom:24px}
+  .animated-login-main{padding:24px max(20px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))}
+}

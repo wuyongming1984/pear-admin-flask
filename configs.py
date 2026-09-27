@@ -7,8 +7,8 @@ load_dotenv()
 
 
 class BaseConfig:
-    # Keep legacy default until the independent desktop has passed acceptance.
-    DESKTOP_DEFAULT = os.getenv('DESKTOP_DEFAULT', 'false').lower() in ('1', 'true', 'yes')
+    # New desktop is the default; an explicit false keeps the legacy rollback.
+    DESKTOP_DEFAULT = os.getenv('DESKTOP_DEFAULT', 'true').lower() in ('1', 'true', 'yes')
     SECRET_KEY = os.getenv("SECRET_KEY", "pear-admin-flask")
 
     SQLALCHEMY_DATABASE_URI = ""

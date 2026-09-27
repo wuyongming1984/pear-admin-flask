@@ -7,17 +7,18 @@ const props=defineProps<{fixedUser?:string;showcase?:boolean}>()
 const emit=defineEmits<{
   success:[]
   mood:[value:'idle'|'username'|'password'|'revealed'|'error']
-  motion:[value:{isTyping:boolean;passwordLength:number;showPassword:boolean}]
+  motion:[value:{isTyping:boolean;isPasswordFocused:boolean;passwordLength:number;showPassword:boolean}]
 }>()
 const username=ref(props.fixedUser||'')
 const password=ref('')
 const showPassword=ref(false)
 const isTyping=ref(false)
+const isPasswordFocused=ref(false)
 const busy=ref(false)
 const error=ref('')
 
-watch([isTyping,password,showPassword],()=>{
-  if(props.showcase)emit('motion',{isTyping:isTyping.value,passwordLength:password.value.length,showPassword:showPassword.value})
+watch([username,isTyping,isPasswordFocused,password,showPassword],()=>{
+  if(props.showcase)emit('motion',{isTyping:isTyping.value,isPasswordFocused:isPasswordFocused.value,passwordLength:password.value.length,showPassword:showPassword.value})
 },{immediate:true})
 
 function usernameFocus(){isTyping.value=true;emit('mood','username')}
@@ -44,7 +45,7 @@ async function submit(){
 </script>
 
 <template>
-  <form v-if="showcase" class="showcase-form" @submit.prevent="submit">
+  <form v-if="showcase" class="showcase-form" novalidate @submit.prevent="submit">
     <p v-if="error" class="showcase-error" role="alert">{{error}}</p>
     <div class="showcase-field">
       <label for="showcase-username">账号</label>
@@ -53,14 +54,14 @@ async function submit(){
     <div class="showcase-field">
       <label for="showcase-password">密码</label>
       <div class="showcase-password">
-        <input id="showcase-password" v-model="password" name="password" :type="showPassword?'text':'password'" autocomplete="current-password" placeholder="请输入密码" :disabled="busy" required @focus="emit('mood',showPassword?'revealed':'password')" @blur="emit('mood','idle')" />
+        <input id="showcase-password" v-model="password" name="password" :type="showPassword?'text':'password'" autocomplete="current-password" placeholder="请输入密码" :disabled="busy" required @focus="isPasswordFocused=true;emit('mood',showPassword?'revealed':'password')" @blur="isPasswordFocused=false;emit('mood','idle')" />
         <button type="button" class="showcase-visibility" :aria-label="showPassword?'隐藏密码':'显示密码'" :aria-pressed="showPassword" @click="togglePassword">
           <el-icon :size="18"><View v-if="!showPassword"/><Hide v-else/></el-icon>
         </button>
       </div>
     </div>
     <div class="showcase-help"><span>企业内部账号</span><a href="#/register">忘记密码？</a></div>
-    <button class="showcase-submit" type="submit" :disabled="busy">{{busy?'正在登录…':'登 录'}}<span aria-hidden="true">→</span></button>
+    <button class="showcase-submit" type="submit" :disabled="busy"><span class="showcase-submit-text">{{busy?'正在登录…':'登 录'}}</span><span class="showcase-submit-hover" aria-hidden="true">登 录 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-7-7 7 7-7 7"/></svg></span></button>
     <p class="showcase-register">还没有账号？ <a href="#/register">查看开通说明</a></p>
   </form>
   <form v-else class="login-form" @submit.prevent="submit">

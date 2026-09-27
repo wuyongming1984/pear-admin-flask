@@ -95,6 +95,8 @@ mysql_export.sql
 # Local dependencies and release preparation backups
 node_modules/
 .vite/
+.playwright-cli/
+/output/
 /desktop-migration-backup-*.zip
 /db_backup_*.sql
 /db_backup_*.zip

@@ -32,6 +32,7 @@ services:
       - FLASK_APP=pear_admin:create_app("prod")
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5050
+      - DESKTOP_DEFAULT=${DESKTOP_DEFAULT:-true}
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
     # ports:  # web 不再直接暴露端口，改由 nginx 代理
     #   - "5050:5050"
@@ -47,8 +48,6 @@ services:
       sh -c "
         echo 'Waiting for MySQL to start...'
         sleep 15
-        echo 'Initializing database...'
-        flask init || echo 'Database already initialized'
         echo 'Starting application...'
         gunicorn --bind 0.0.0.0:5050 --workers 4 --timeout 120 --reload 'pear_admin:create_app(\"prod\")'
       "

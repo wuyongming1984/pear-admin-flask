@@ -7,7 +7,7 @@ index_bp = Blueprint("index", __name__)
 
 @index_bp.route("/")
 def index():
-    if current_app.config.get('DESKTOP_DEFAULT', False):
+    if current_app.config.get('DESKTOP_DEFAULT', True):
         return redirect('/pc/')
     return render_template("view/index.html")
 

@@ -17,10 +17,12 @@ class DesktopEntryTest(unittest.TestCase):
                 self.assertEqual(response.status_code,200)
                 self.assertIn(b'Vue desktop',response.data)
                 self.assertIn('no-store',response.headers['Cache-Control'])
+            self.assertEqual(client.get('/').location,'/pc/')
+            self.assertIn(b'pear.css',client.get('/legacy/').data)
+            app.config['DESKTOP_DEFAULT']=False
             self.assertIn(b'pear.css',client.get('/').data)
             app.config['DESKTOP_DEFAULT']=True
             self.assertEqual(client.get('/').location,'/pc/')
-            self.assertIn(b'pear.css',client.get('/legacy/').data)
 
     def test_missing_build_reports_unavailable(self):
         with tempfile.TemporaryDirectory() as folder:

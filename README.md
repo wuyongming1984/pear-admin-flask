@@ -7,10 +7,10 @@
 在项目根目录运行 PowerShell：
 
 ```powershell
-.\.venv\Scripts\python.exe -m flask --app pear_admin run --host 127.0.0.1 --port 5050 --no-reload --no-debugger
+powershell -ExecutionPolicy Bypass -File .\start-local.ps1
 ```
 
-访问 http://127.0.0.1:5050 。当前本地数据库为 `instance/pear_admin.db`，保留此前创建的账号和 44 条临时业务数据。
+新版实时开发预览访问 http://127.0.0.1:5174/static/desktop/ ，已构建新版访问 http://127.0.0.1:5050/pc/ 。启动脚本强制使用 `instance/pear_admin.db`，保留本地原账号和数据；进程内禁用云端 OSS、OCR 和自动备份，不修改 `.env`。直接运行 Flask 可能读取 `.env` 中的远程数据库配置。详见 [本地改写与预览](docs/LOCAL_DEVELOPMENT.md)。
 
 新机器依赖：Python 3.10 以上，按 `pyproject.toml` 和 `poetry.lock` 使用 Poetry 安装。JWT 依赖版本应遵循锁文件，避免现有整数用户标识与新版本不兼容。
 
@@ -45,12 +45,25 @@
 旧 `deploy_to_aliyun.ps1` 导入流程缺少两项原始依赖，所需历史 SQL 已归档；使用前请阅读项目结构说明中的“历史部署边界”。
 
 
-## 新版电脑端（本地并行验收）
+## 新版电脑端（默认入口）
 
 - 新版入口：`http://127.0.0.1:5050/pc/`，Vue 3 + TypeScript + Element Plus。
-- 旧版默认入口 `/`，保留 `/legacy/`；手机端 `/m/` 保持独立。
+- 默认入口 `/` 自动跳转新版 `/pc/`；旧版保留 `/legacy/`，手机端 `/m/` 保持独立。
 - 桌面源码 `frontend-desktop/`，构建资源 `static/desktop/`。
 - 在 `frontend-desktop` 运行 `pnpm install --frozen-lockfile`、`pnpm build`；后端仍使用原有 Flask 启动方式。开发调试可运行 `pnpm dev`，API 转发到本机5050。
 - 本地验证：`pnpm test`；后端 `.venv/Scripts/python.exe -m unittest discover -s tests -p "test_*.py"`；手机端在 `frontend/` 运行 `pnpm test`。
-- 完整验收前不切换默认入口。验收通过后通过环境配置 `DESKTOP_DEFAULT=true` 并重启应用切换 `/`；设回 `false` 即回退，不修改菜单和数据库。
+- `DESKTOP_DEFAULT` 默认 `true`；显式设为 `false` 并重新创建应用容器可回退旧版，不修改菜单和数据库。
 - 页面/操作映射、验证范围与未验证外部服务见 [迁移验收记录](docs/DESKTOP_MIGRATION.md)。不要为部署新版运行初始化、删表、数据库同步或自动迁移脚本。
+
+## 现有服务器更新新版
+
+在服务器现有项目目录执行：
+
+```bash
+git pull --ff-only origin main
+bash server_update.sh
+```
+
+更新脚本支持 Docker Compose v2/v1，只构建并重新创建 `web` 服务；保留现有 `.env`、MySQL 容器、数据卷和附件，不执行初始化、数据库迁移或数据导入。前端构建产物随仓库提供，服务器无需安装 Node.js。脚本默认将 `DESKTOP_DEFAULT=true` 传入应用容器，因此即使旧 `.env` 留有 false，根地址也会进入新版。需要回退时运行 `DESKTOP_DEFAULT=false bash server_update.sh`。
+
+更新完成后访问 `http://www.sunfan88.com/`，应重定向 `/pc/` 并显示新版登录页。该脚本适用于现有 Docker 部署；若实际服务由其他进程管理器启动，拉取后按原方式重启 Flask，并确保进程环境中的 `DESKTOP_DEFAULT` 为 true。不要运行历史文档中的 `flask init` 命令。

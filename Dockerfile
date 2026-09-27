@@ -23,17 +23,17 @@ RUN apt-get update && apt-get install -y \
 # 配置 pip 使用国内镜像源
 RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 
-# 安装 poetry
-RUN pip install --no-cache-dir poetry==1.7.1
+# 与 poetry.lock 的生成版本保持一致
+RUN pip install --no-cache-dir poetry==2.2.1
 
 # 复制项目文件
-COPY pyproject.toml poetry.lock* ./
+COPY pyproject.toml poetry.lock ./
 
 # 配置 poetry 不创建虚拟环境（因为已经在容器中）
-RUN poetry config virtualenvs.create false
+RUN poetry config virtualenvs.create false && poetry config installer.re-resolve false
 
-# 更新 lock 文件并安装项目依赖
-RUN poetry lock --no-update && poetry install --only main --no-interaction --no-ansi
+# 部署只安装已锁定依赖；此层尚未复制应用源码，因此不安装项目本身
+RUN poetry install --only main --no-root --no-interaction --no-ansi
 
 # 复制应用代码
 COPY . .

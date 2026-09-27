@@ -1,4 +1,5 @@
 <link rel="stylesheet" href="/static/admin/css/order_pay_refined.css?v=2026.02.13.v1" />
+<link rel="stylesheet" href="/static/admin/css/order_sheet.css?v=20260928" />
 <style>
   /* 解决 Pear Admin Tab 覆盖问题 - Scoped */
   #order-page-root {
@@ -872,6 +873,16 @@
       return amount - paid;
     }
 
+    function escapeOrderText(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+      });
+    }
+
+    function formatOrderMoney(value) {
+      return Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
     function renderOrderCards(orders) {
       var $container = $('#order-card-container');
       if (!orders || orders.length === 0) {
@@ -894,11 +905,10 @@
       orders.forEach(function (o, index) {
         var totalPay = (o.pays_list || []).reduce((acc, cur) => acc + parseFloat(cur.current_payment_amount || 0), 0);
         var balance = parseFloat(o.order_amount || 0) - totalPay;
-        var color = balance >= 0 ? 'success' : 'warning';
         // 获取项目唯一颜色
         var projectColor = getProjectColor(o.project_name);
-        // 用户反馈颜色再浅一点点，调整为 #444444
-        var bgStyle = balance <= 0 ? 'background-color: #444444;' : '';
+        var paymentStatus = Math.abs(balance) <= 0.01 ? '已结清' : (balance < 0 ? '超额付款' : (totalPay > 0 ? '部分付款' : '待付款'));
+        var paymentProgress = parseFloat(o.order_amount) > 0 ? (totalPay / parseFloat(o.order_amount) * 100).toFixed(1) + '%' : '—';
         var matName = o.material_name;
         if (/^\d+$/.test(matName)) matName = materialNamesMap[matName] || matName;
 
@@ -919,69 +929,50 @@
         var zeroBalanceClass = (balance <= 0.01 && balance >= -0.01) ? 'balance-zero' : '';
 
         html += `
-          <div class="refined-card ${zeroBalanceClass}" data-id="${o.id}" style="${bgStyle} animation-delay: ${index * 0.05}s">
-            <!-- 呼吸灯状态条：使用项目分配的唯一颜色 -->
-            <div class="card-indicator" style="background-color: ${projectColor}; box-shadow: 0 0 10px ${projectColor};"></div>
-            
-            <div class="card-title" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <i class="layui-icon layui-icon-list"></i>
-                <span>${o.order_number}</span>
-              </div>
-              <div style="padding-left: 24px; font-size: 13px; color: var(--accent-primary); font-family: 'JetBrains Mono', monospace; display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                 <span style="font-size: 15px; font-weight: bold;">订单: ¥${parseFloat(o.order_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                 <span style="color: #ff9800; font-size: 15px; font-weight: bold;">已付: ¥${totalPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-              </div>
-              ${(o.pays_list && o.pays_list.length > 0) ? `
-              <div style="padding-left: 24px; display: flex; flex-wrap: wrap; gap: 4px;">
-                 ${o.pays_list.map(p => `
-                   <div style="display: flex; align-items: stretch; background: rgba(255,152,0,0.1); border-radius: 4px; border: 1px solid rgba(255,152,0,0.2);">
-                     <span class="pay-no-tag clickable-pay-no" data-id="${p.id}" title="点击编辑付款单" style="cursor: pointer; font-size: 12px; color: #ff9800; padding: 4px 6px; display: inline-flex; flex-direction: column; align-items: flex-start;">
-                       <span>
-                         ${p.pay_number} 
-                         <span style="opacity: 1; font-size: 13px; font-weight: bold; margin-left: 4px;">¥${parseFloat(p.current_payment_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                       </span>
-                       <span style="font-size: 10px; opacity: 0.7; margin-top: 2px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="付款单位 -> 收款单位">
-                         ${p.payer_supplier_name || '-'} <i class="layui-icon layui-icon-next" style="font-size: 10px; margin: 0 2px;"></i> ${p.payee_supplier_name || '-'}
-                       </span>
-                     </span>
-                     <div class="pay-print-btn" data-id="${p.id}" title="打印付款单" style="display: flex; align-items: center; justify-content: center; padding: 0 8px; cursor: pointer; color: var(--accent-cyan); border-left: 1px dashed rgba(255,152,0,0.3); transition: background 0.2s;">
-                       <i class="layui-icon layui-icon-print" style="font-size: 16px;"></i>
-                     </div>
-                   </div>
-                 `).join('')}
-              </div>` : ''}
+          <div class="refined-card order-sheet ${zeroBalanceClass}" data-id="${o.id}">
+            <div class="card-indicator" style="background-color: ${projectColor};"></div>
+            <header class="order-sheet-header">
+              <div><h2>采购订单</h2><div class="order-sheet-subtitle">PURCHASE ORDER</div></div>
+              <div class="order-sheet-meta"><strong>${escapeOrderText(o.order_number)}</strong><span class="item-date">下料日期：${escapeOrderText(o.cutting_time || '-')}</span></div>
+            </header>
+            <div class="order-sheet-grid">
+              <section class="order-sheet-panel">
+                <h3>订单资料 <span>ORDER DETAILS</span></h3>
+                <table class="order-sheet-table"><tbody>
+                  <tr class="item-project-name"><th scope="row">项目名称</th><td class="order-sheet-strong">${escapeOrderText(o.project_name || '-')}</td></tr>
+                  <tr class="item-material"><th scope="row">材料 / 服务</th><td>${escapeOrderText(matName || '-')}</td></tr>
+                  <tr class="item-contact"><th scope="row">供应商负责人</th><td>${escapeOrderText(o.supplier_contact_person || '-')}</td></tr>
+                  <tr class="item-manager"><th scope="row">负责人</th><td>${escapeOrderText(o.material_manager || '-')}</td></tr>
+                  <tr class="item-date"><th scope="row">预计到场</th><td class="order-sheet-number">${escapeOrderText(o.estimated_arrival_time || '-')}</td></tr>
+                  <tr class="item-details"><th scope="row">材料明细</th><td class="order-sheet-details">${escapeOrderText(o.material_details || '-')}</td></tr>
+                </tbody></table>
+              </section>
+              <section class="order-sheet-panel">
+                <h3>付款概况 <span>PAYMENT SUMMARY</span></h3>
+                <table class="order-sheet-table"><tbody>
+                  <tr class="item-amount"><th scope="row">订单总额</th><td class="order-sheet-number order-sheet-total">¥${formatOrderMoney(o.order_amount)}</td></tr>
+                  <tr><th scope="row">累计已付</th><td class="order-sheet-number order-sheet-strong">¥${formatOrderMoney(totalPay)}</td></tr>
+                  <tr class="item-balance"><th scope="row">当前余额</th><td class="order-sheet-number ${balance < -0.01 ? 'order-sheet-overpaid' : ''}">¥${formatOrderMoney(balance)}</td></tr>
+                  <tr><th scope="row">付款状态</th><td>${paymentStatus}</td></tr>
+                  <tr><th scope="row">付款进度</th><td><strong class="order-sheet-progress order-sheet-number">${paymentProgress}</strong><span class="order-sheet-note">已关联 ${ (o.pays_list || []).length } 张付款单</span></td></tr>
+                </tbody></table>
+              </section>
             </div>
-
-            <div class="card-body">
-              <div class="info-item item-project-name">
-                <span class="info-label">项目名称</span>
-                <span class="info-value text-ellipsis" title="${o.project_name || '-'}">${o.project_name || '-'}</span>
+            <section class="order-sheet-payments item-pay-no" aria-label="关联付款单">
+              <h3>关联付款单 <span>${(o.pays_list || []).length} 张</span></h3>
+              <div class="order-sheet-payment-list">
+                ${(o.pays_list || []).length ? o.pays_list.map(p => `
+                  <div class="order-sheet-payment">
+                    <button type="button" class="clickable-pay-no" data-id="${p.id}" title="点击编辑付款单">
+                      <span class="order-sheet-payment-top"><strong>${escapeOrderText(p.pay_number)}</strong><b>¥${formatOrderMoney(p.current_payment_amount)}</b></span>
+                      <span class="order-sheet-payment-parties">${escapeOrderText(p.payer_supplier_name || '-')} → ${escapeOrderText(p.payee_supplier_name || '-')}</span>
+                    </button>
+                    <button type="button" class="pay-print-btn" data-id="${p.id}" title="打印付款单" aria-label="打印付款单 ${escapeOrderText(p.pay_number)}"><i class="layui-icon layui-icon-print"></i></button>
+                  </div>
+                `).join('') : '<p class="order-sheet-empty">暂无关联付款单</p>'}
               </div>
-              <div class="info-item item-contact">
-                <span class="info-label">供应商负责人</span>
-                <span class="info-value text-ellipsis" title="${o.supplier_contact_person || '-'}">${o.supplier_contact_person || '-'}</span>
-              </div>
-              <div class="info-item item-material">
-                <span class="info-label">材料名称</span>
-                <span class="info-value">${matName}</span>
-              </div>
-              <div class="info-item item-manager">
-                <span class="info-label">负责人</span>
-                <span class="info-value">${o.material_manager || '-'}</span>
-              </div>
-              <div class="info-item item-balance">
-                <span class="info-label">当前余额</span>
-                <span class="info-value numeric" style="color: ${balance >= 0 ? '#00e676' : '#ffab40'};">¥${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-              </div>
-              <div class="info-item item-date">
-                <span class="info-label">下料 / 到场</span>
-                <span class="info-value">${o.cutting_time || '-'} / ${o.estimated_arrival_time || '-'}</span>
-              </div>
-              <div class="info-item item-details">
-                <span class="info-label">材料明细</span>
-                <span class="info-value" title="${o.material_details || '-'}">${o.material_details || '-'}</span>
-              </div>
+            </section>
+            <div class="order-sheet-attachments">
               ${attachmentCount > 0 ? `
               <div class="info-item item-attachments" style="grid-column: 1/-1;">
                 <span class="info-label">附件列表</span>
@@ -1003,7 +994,7 @@
             <div class="action-icon-btn edit card-edit-btn" title="编辑订单" data-id="${o.id}">
               <i class="layui-icon layui-icon-edit"></i>
             </div>
-            <div class="action-icon-btn pay card-pay-btn" title="记账付款" data-id="${o.id}" data-no="${o.order_number}" data-details="${o.material_details || ''}">
+            <div class="action-icon-btn pay card-pay-btn" title="记账付款" data-id="${o.id}" data-no="${escapeOrderText(o.order_number)}" data-details="${escapeOrderText(o.material_details || '')}">
               <i class="layui-icon layui-icon-rmb"></i>
             </div>
             <div class="action-icon-btn print card-print-btn" title="打印单据" data-id="${o.id}">

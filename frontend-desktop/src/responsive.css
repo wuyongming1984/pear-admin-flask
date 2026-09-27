@@ -71,7 +71,7 @@
   .el-table .el-button.is-link{min-height:36px}
   .el-input__inner,.el-textarea__inner,.el-select__input,.showcase-field>input,.showcase-password input{font-size:16px}
   .el-form-item{display:block}
-  .el-form-item__label{display:flex;width:auto!important;height:auto;line-height:1.5;justify-content:flex-start;margin-bottom:8px;padding:0}
+  .el-form .el-form-item__label{display:flex;width:auto!important;height:auto;line-height:1.5;justify-content:flex-start;text-align:left;margin-bottom:8px;padding:0}
   .el-form-item__content{margin-left:0!important}
   .el-descriptions__table tbody,.el-descriptions__table tr{display:block}
   .el-descriptions__table tr{display:grid;grid-template-columns:minmax(76px,30%) minmax(0,1fr)}
@@ -80,6 +80,9 @@
   .el-checkbox{max-width:100%;height:auto;min-height:44px;white-space:normal;margin-right:12px}
   .el-checkbox__label{white-space:normal;overflow-wrap:anywhere}
   .el-tree{overflow:auto}
+  /* Popper's anchored placement can extend below a short phone viewport. */
+  .el-popper:has(.el-picker-panel){position:fixed!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;max-width:calc(100vw - 16px);max-height:calc(100dvh - 24px);overflow:auto}
+  .el-popper:has(.el-picker-panel) .el-popper__arrow{display:none}
   .animated-login-mobile-brand{margin-bottom:24px}
   .animated-login-main{padding:24px max(20px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))}
 }

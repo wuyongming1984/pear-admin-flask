@@ -1,0 +1,55 @@
+/* Print-inspired order cards, scoped to the legacy order workspace. */
+#order-page-root .order-sheet {
+  padding: 24px 26px 16px;
+  background: #fff;
+  color: #171717;
+  border: 1px solid #d5d9d7;
+  border-radius: 3px;
+  box-shadow: 0 2px 8px #00000008;
+  container-type: inline-size;
+}
+#order-page-root .order-sheet-header { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; padding-bottom:10px; margin-bottom:12px; border-bottom:2px solid #222; }
+#order-page-root .order-sheet h2 { margin:0; font-family:'Noto Serif SC',SimSun,serif; font-size:24px; font-weight:700; color:#111; }
+#order-page-root .order-sheet-subtitle { margin-top:3px; font-size:10px; letter-spacing:1.7px; color:#555; }
+#order-page-root .order-sheet-meta { display:flex; flex-direction:column; gap:5px; text-align:right; font-size:12px; color:#555; overflow-wrap:anywhere; }
+#order-page-root .order-sheet-meta strong { font-family:Consolas,'Courier New',monospace; font-size:15px; color:#111; }
+#order-page-root .order-sheet-grid { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:12px; }
+#order-page-root .order-sheet-panel { min-width:0; border:1px solid #333; }
+#order-page-root .order-sheet-panel h3 { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; margin:0; padding:7px 10px; border-bottom:1px solid #333; background:#f2f2f2; color:#111; font-size:13px; font-weight:700; }
+#order-page-root .order-sheet-panel h3 span { font-family:Arial,sans-serif; font-size:10px; font-weight:400; color:#444; align-self:center; }
+#order-page-root .order-sheet-table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:13px; line-height:1.6; color:#171717; }
+#order-page-root .order-sheet-table th, #order-page-root .order-sheet-table td { border-bottom:1px solid #d9d9d9; padding:7px 10px; text-align:left; vertical-align:middle; overflow-wrap:anywhere; }
+#order-page-root .order-sheet-table th { width:104px; border-right:1px solid #d9d9d9; color:#444; font-size:12px; font-weight:400; }
+#order-page-root .order-sheet-table tr:last-child th, #order-page-root .order-sheet-table tr:last-child td { border-bottom:0; }
+#order-page-root .order-sheet-strong { font-weight:700; }
+#order-page-root .order-sheet-number { font-family:Consolas,'Courier New',monospace; font-variant-numeric:tabular-nums; }
+#order-page-root .order-sheet-total { font-size:20px; font-weight:700; }
+#order-page-root .order-sheet-details { white-space:pre-wrap; min-height:70px; }
+#order-page-root .order-sheet-progress { display:block; font-size:21px; line-height:1.6; padding-top:5px; }
+#order-page-root .order-sheet-note { display:block; font-size:11px; color:#666; padding-bottom:5px; }
+#order-page-root .order-sheet-overpaid { color:#a14d16; font-weight:700; }
+#order-page-root .order-sheet-payments { margin-top:16px; padding-top:12px; border-top:1px solid #b7bdb9; }
+#order-page-root .order-sheet-payments h3 { margin:0 0 9px; color:#222; font-size:13px; font-weight:700; }
+#order-page-root .order-sheet-payments h3 span { margin-left:8px; font-size:11px; color:#777; font-weight:400; }
+#order-page-root .order-sheet-payment-list { display:flex; flex-wrap:wrap; gap:8px; }
+#order-page-root .order-sheet-payment { display:flex; max-width:100%; border:1px solid #d4dfda; border-radius:4px; background:#f7faf8; overflow:hidden; }
+#order-page-root .order-sheet-payment button { font:inherit; color:#285849; background:transparent; border:0; cursor:pointer; }
+#order-page-root .order-sheet-payment .clickable-pay-no { display:flex; flex-direction:column; gap:5px; padding:9px 12px; min-width:0; text-align:left; }
+#order-page-root .order-sheet-payment-top { display:flex; flex-wrap:wrap; gap:4px 12px; font-family:Consolas,'Courier New',monospace; font-size:12px; overflow-wrap:anywhere; }
+#order-page-root .order-sheet-payment-parties { font-size:11px; line-height:1.5; color:#607569; overflow-wrap:anywhere; }
+#order-page-root .order-sheet-payment .pay-print-btn { border-left:1px solid #d4dfda; flex-shrink:0; padding:0 12px; }
+#order-page-root .order-sheet-payment button:hover { background:#eaf2ee; }
+#order-page-root .order-sheet-payment button:focus-visible { outline:2px solid #087f78; outline-offset:-2px; }
+#order-page-root .order-sheet-empty { margin:0; color:#777; font-size:12px; }
+#order-page-root .order-sheet-attachments:empty { display:none; }
+#order-page-root .order-sheet-attachments .item-attachments { margin-top:14px; }
+#order-page-root .order-sheet .card-actions-panel { border-top-color:#d9deda; margin-top:14px; padding-top:12px; }
+#order-page-root .card-grid.hide-material .item-material { display:none; }
+@container (max-width:580px) {
+  #order-page-root .order-sheet-grid { grid-template-columns:minmax(0,1fr); }
+  #order-page-root .order-sheet-header { align-items:flex-start; flex-wrap:wrap; }
+  #order-page-root .order-sheet-meta { text-align:left; }
+}
+@media (max-width:760px) {
+  #order-page-root .order-sheet { padding:18px 16px 12px; }
+}

@@ -3,6 +3,7 @@ import {describe,it,expect,vi,beforeEach,afterEach} from 'vitest'
 import {mount,flushPromises} from '@vue/test-utils'
 import {createRouter,createMemoryHistory} from 'vue-router'
 import CorePage from './CorePage.vue'
+import PaymentEntrySheet from './PaymentEntrySheet.vue'
 import OrderEntrySheet from './OrderEntrySheet.vue'
 import SupplierContactSelect from './SupplierContactSelect.vue'
 const mocks=vi.hoisted(()=>({request:vi.fn(),allRows:vi.fn(),confirm:vi.fn()}))
@@ -74,6 +75,52 @@ describe('invoice live search',()=>{
 async function setup(){const router=createRouter({history:createMemoryHistory(),routes:[{path:'/projects/new',component:CorePage,meta:{coreKind:'projects',coreMode:'new'}},{path:'/projects',component:{template:'<div>项目列表</div>'}},{path:'/system',component:{template:'<div>系统页面</div>'}}]});await router.push('/projects/new');await router.isReady();const wrapper=mount({template:'<router-view v-slot="{Component,route}"><keep-alive><component :is="Component" :key="route.path"/></keep-alive></router-view>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises();return{wrapper,router}}
 describe('core form operation behavior',()=>{
  beforeEach(()=>{vi.clearAllMocks();mocks.request.mockResolvedValue({code:0,data:{}});mocks.allRows.mockResolvedValue([]);mocks.confirm.mockResolvedValue('confirm')})
+ it('edits an existing order on the paper form while retaining payments, date and attachments',async()=>{
+  const order={id:2,order_number:'D002',project_id:7,supplier_id:3,supplier_contact_person:'张工',contact_phone:'13800000000',material_name:'stone',material_details:'原材料明细',order_amount:'100.00',paid_amount:'60.00',order_balance:'40.00',create_at:'2026-09-26 10:00:00',pays_list:[{id:9,pay_number:'P009',current_payment_amount:'60.00'}],attachments:JSON.stringify([{name:'原附件.jpg',url:'/uploads/original.jpg'}])}
+  mocks.allRows.mockImplementation(async(path:string)=>path==='/project/'?[{id:7,project_name:'项目甲'}]:path==='/supplier/'?[{id:3,name:'供应商甲',contact_person:'张工',phone:'13800000000'}]:path==='/dictionary/detail/list'?[{code:'stone',value:'石材'}]:[])
+  mocks.request.mockResolvedValue({code:0,data:order})
+  const router=createRouter({history:createMemoryHistory(),routes:[{path:'/orders/:id/edit',component:CorePage,meta:{coreKind:'orders',coreMode:'edit'}},{path:'/orders',component:{template:'<p>订单列表</p>'}},{path:'/payments/:id/edit',component:{template:'<p>付款单</p>'}}]})
+  await router.push('/orders/2/edit');await router.isReady()
+  const wrapper=mount({template:'<router-view />'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises()
+  expect(wrapper.find('.order-entry-sheet').exists()).toBe(true)
+  expect(wrapper.get('[aria-label="订单编号"]').element).toHaveProperty('value','D002')
+  expect(wrapper.get('.order-entry-meta').text()).toContain('2026-09-26')
+  expect(wrapper.get('.order-entry-balance').text()).toContain('40.00')
+  expect(wrapper.text()).toContain('P009')
+  expect(wrapper.text()).not.toContain('新增订单尚无付款记录')
+  await wrapper.get('[aria-label="订单金额"]').setValue('120.50')
+  expect(wrapper.get('.order-entry-balance').text()).toContain('60.50')
+  await wrapper.get('form').trigger('submit');await flushPromises()
+  const put=mocks.request.mock.calls.find(([,options])=>options?.method==='PUT')!
+  expect(put[0]).toBe('/order/2')
+  expect(JSON.parse(put[1].body)).toMatchObject({order_number:'D002',order_amount:'120.50',attachments:order.attachments})
+  expect(router.currentRoute.value.path).toBe('/orders');wrapper.unmount()
+ })
+ it('edits a payment on paper without counting its saved amount twice, including when switching orders',async()=>{
+  const payment={id:9,pay_number:'P009',order_id:2,payer_supplier_id:4,payee_supplier_id:3,current_payment_amount:'30.00',payment_purpose:'保留原用途',invoice_amount:'10.00',payment_status:'paid',handler:'王工',create_at:'2026-09-26 10:00:00',invoices_list:[{id:8}],attachments:JSON.stringify([{name:'付款附件.jpg',url:'/uploads/pay.jpg'}])}
+  mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:2,order_number:'D002',project_name:'项目甲',supplier_id:3,order_amount:'100.00',paid_amount:'60.00'},{id:5,order_number:'D005',supplier_id:3,order_amount:'200.00',paid_amount:'20.00'}]:path==='/supplier/'?[{id:3,name:'供应商甲',bank_name:'测试银行',account_number:'123456'}]:path==='/payer/'?[{id:4,name:'付款单位'}]:path==='/material/invoice'?[{id:8,invoice_number:'INV008'}]:[])
+  mocks.request.mockResolvedValue({code:0,data:payment})
+  const router=createRouter({history:createMemoryHistory(),routes:[{path:'/payments/:id/edit',component:CorePage,meta:{coreKind:'payments',coreMode:'edit'}},{path:'/payments',component:{template:'<p>付款列表</p>'}}]})
+  await router.push('/payments/9/edit');await router.isReady()
+  const wrapper=mount({template:'<router-view />'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises()
+  expect(wrapper.find('.payment-entry-sheet').exists()).toBe(true)
+  expect(wrapper.get('[aria-label="付款用途"]').element).toHaveProperty('value','保留原用途')
+  expect(wrapper.get('.entry-meta').text()).toContain('2026-09-26')
+  expect(wrapper.get('[data-testid="payment-total-preview"]').text()).toContain('60.00')
+  expect(wrapper.get('[data-testid="payment-balance-preview"]').text()).toContain('40.00')
+  await wrapper.get('[aria-label="本次实付金额"]').setValue('40.10')
+  expect(wrapper.get('[data-testid="payment-total-preview"]').text()).toContain('70.10')
+  wrapper.getComponent(PaymentEntrySheet).vm.$emit('field','order_id',5);await flushPromises()
+  expect(wrapper.get('[data-testid="payment-total-preview"]').text()).toContain('60.10')
+  wrapper.getComponent(PaymentEntrySheet).vm.$emit('field','order_id',2);await flushPromises()
+  expect(wrapper.get('[data-testid="payment-total-preview"]').text()).toContain('70.10')
+  await wrapper.get('[aria-label="付款用途"]').setValue('修改后用途')
+  await wrapper.get('form').trigger('submit');await flushPromises()
+  const put=mocks.request.mock.calls.find(([,options])=>options?.method==='PUT')!
+  expect(put[0]).toBe('/pay/9')
+  expect(JSON.parse(put[1].body)).toMatchObject({pay_number:'P009',order_id:2,current_payment_amount:'40.10',invoice_ids:[8],attachments:payment.attachments,payment_purpose:'修改后用途'})
+  expect(router.currentRoute.value.path).toBe('/payments');wrapper.unmount()
+ })
  it.each(['projects','suppliers','payers'])('restores the %s layout and keeps search and edit navigation working',async(kind)=>{
   const row={id:7,project_name:'景观工程',name:'往来单位',contact_person:'联系人',project_amount:'1234.50'}
   mocks.request.mockImplementation(async(path:string)=>({code:0,data:path.includes('/dictionary/')?{}:[row],count:1}))
@@ -134,12 +181,23 @@ describe('core form operation behavior',()=>{
   expect(router.currentRoute.value.path).toBe('/orders');wrapper.unmount()
  })
  it('opens the new payment as a paper form, prefills the linked order and preserves decimal submission',async()=>{
-  mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:2,order_number:'D002',project_name:'项目甲',supplier_id:3,material_name:'材料',material_details:'合同材料款',order_amount:'100.00',paid_amount:'20.00'},{id:5,order_number:'D005',project_name:'项目乙',supplier_id:3,material_details:'第二个订单',order_amount:'200.00',paid_amount:'0.00'}]:path==='/supplier/'?[{id:3,name:'收款单位',bank_name:'测试银行',account_number:'123456'}]:path==='/payer/'?[{id:4,name:'付款单位'}]:[])
+  mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:2,order_number:'D002',project_name:'项目甲',supplier_id:3,material_name:'材料',material_details:'合同材料款',order_amount:'100.00',paid_amount:'20.00'},{id:5,order_number:'D005',project_name:'项目乙',supplier_id:6,material_details:'第二个订单',order_amount:'200.00',paid_amount:'0.00'}]:path==='/supplier/'?[{id:3,name:'收款单位',bank_name:'测试银行',account_number:'123456'},{id:6,name:'第二家收款单位',bank_name:'第二家银行',account_number:'654321'}]:path==='/payer/'?[{id:4,name:'付款单位'}]:[])
   const router=createRouter({history:createMemoryHistory(),routes:[{path:'/payments/new',component:CorePage,meta:{coreKind:'payments',coreMode:'new'}},{path:'/payments',component:{template:'<div>付款列表</div>'}}]})
   await router.push('/payments/new?order_id=2');await router.isReady()
   const wrapper=mount({template:'<router-view v-slot="{Component,route}"><keep-alive><component :is="Component" :key="route.fullPath"/></keep-alive></router-view>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises()
   expect(wrapper.find('.payment-entry-sheet').exists()).toBe(true)
   expect(wrapper.text()).toContain('付款审批单');expect(wrapper.text()).toContain('测试银行')
+  expect(wrapper.get('[aria-label="收款单位"]').attributes('readonly')).toBeDefined()
+  expect(wrapper.get('[aria-label="收款单位"]').element).toHaveProperty('value','收款单位')
+  wrapper.getComponent(PaymentEntrySheet).vm.$emit('field','order_id',5);await flushPromises()
+  expect(wrapper.get('[aria-label="收款单位"]').element).toHaveProperty('value','第二家收款单位')
+  expect(wrapper.text()).toContain('第二家银行')
+  wrapper.getComponent(PaymentEntrySheet).vm.$emit('field','order_id',undefined);await flushPromises()
+  expect(wrapper.get('[aria-label="收款单位"]').element).toHaveProperty('value','')
+  expect(wrapper.text()).not.toContain('第二家银行')
+  await wrapper.get('form').trigger('submit');await flushPromises()
+  expect(mocks.request.mock.calls.some(([,options])=>options?.method==='POST')).toBe(false)
+  wrapper.getComponent(PaymentEntrySheet).vm.$emit('field','order_id',2);await flushPromises()
   expect(wrapper.get('[aria-label="付款用途"]').element).toHaveProperty('value','合同材料款')
   await wrapper.get('[aria-label="本次实付金额"]').setValue('30.10')
   expect(wrapper.get('[data-testid="payment-total-preview"]').text()).toContain('50.10')

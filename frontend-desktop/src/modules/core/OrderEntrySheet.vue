@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import SupplierContactSelect from './SupplierContactSelect.vue'
-import {formatMoney, uppercaseMoney} from './money'
+import {computed} from 'vue'
+import {formatMoney, sumMoney, uppercaseMoney} from './money'
 import {schemas, type Row} from './model'
 
-defineProps<{record: Row; options: Record<string, Row[]>; disabled: boolean}>()
+const props = defineProps<{record: Row; options: Record<string, Row[]>; disabled: boolean}>()
+const existing = computed(() => props.record.id != null)
+const paid = computed(() => props.record.paid_amount ?? sumMoney((props.record.pays_list || []).map((p: Row) => p.current_payment_amount)))
+const balance = computed(() => sumMoney([props.record.order_amount, String(paid.value).startsWith('-') ? String(paid.value).slice(1) : '-' + paid.value]))
 const emit = defineEmits<{field: [key: string, value: unknown]}>()
 const field = (key: string) => schemas.orders!.fields.find(f => f.key === key)!
 const rows = [
@@ -15,11 +19,11 @@ const rows = [
   ['supplier_contact_person', 'contact_phone'],
   ['material_manager', 'sub_project_manager'],
 ]
-const date = new Date().toLocaleDateString('sv-SE')
+const date = computed(() => props.record.create_at?.split(/[T ]/)[0] || (existing.value ? '—' : new Date().toLocaleDateString('sv-SE')))
 </script>
 
 <template>
-  <article class="order-entry-sheet" aria-label="新增采购订单审批单">
+  <article class="order-entry-sheet" :aria-label="existing ? '编辑采购订单审批单' : '新增采购订单审批单'">
     <header class="order-entry-header"><h2>采购订单审批单</h2><p>项目管理系统标准单据</p></header>
     <div class="order-entry-meta">
       <label for="entry-order-number">单据编号：<el-input id="entry-order-number" aria-label="订单编号" placeholder="留空自动生成" :model-value="record.order_number" :disabled="disabled" @update:model-value="emit('field', 'order_number', $event)"/></label>
@@ -30,7 +34,7 @@ const date = new Date().toLocaleDateString('sv-SE')
       <tbody>
         <tr v-for="(keys, index) in rows" :key="index">
           <template v-for="key in keys" :key="key">
-            <template v-if="key === 'balance'"><th scope="row">当前余额</th><td class="order-entry-balance"><strong>{{record.order_amount ? '¥ ' + formatMoney(record.order_amount) : '—'}}</strong><small>新增订单尚无付款记录</small></td></template>
+            <template v-if="key === 'balance'"><th scope="row">当前余额</th><td class="order-entry-balance"><strong>{{record.order_amount != null && record.order_amount !== '' ? '¥ ' + balance : '—'}}</strong><small>{{existing ? '累计已付：¥ ' + formatMoney(paid) : '新增订单尚无付款记录'}}</small></td></template>
             <template v-else>
               <th scope="row"><label :for="'entry-order-' + key">{{field(key).label}}<span v-if="field(key).required" class="required"> *</span></label></th>
               <td :colspan="keys.length === 1 ? 3 : 1">
@@ -43,7 +47,7 @@ const date = new Date().toLocaleDateString('sv-SE')
             </template>
           </template>
         </tr>
-        <tr><th scope="row">付款记录</th><td colspan="3" class="order-entry-note">保存订单后，可在订单卡片下方新增付款单。</td></tr>
+        <tr><th scope="row">付款记录</th><td colspan="3" class="order-entry-note"><template v-if="existing"><p v-for="payment in record.pays_list || []" :key="payment.id"><RouterLink :to="`/payments/${payment.id}/edit`">{{payment.pay_number}}</RouterLink> · ¥ {{formatMoney(payment.current_payment_amount)}}</p><span v-if="!record.pays_list?.length">暂无付款记录</span></template><template v-else>保存订单后，可在订单卡片下方新增付款单。</template></td></tr>
         <tr><th scope="row">附件文件</th><td colspan="3"><slot name="attachments"/></td></tr>
       </tbody>
     </table>

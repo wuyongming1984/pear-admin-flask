@@ -67,7 +67,7 @@ it('keeps related order/invoice links below the paper and handles an unlinked pa
   const {wrapper} = await setup()
   const card = wrapper.findAll('article').find(c => c.text().includes('F007'))!
   expect(card.get('a[aria-label="打印付款单 F007"]').attributes('href')).toBe('/payments/7/print')
-  expect(card.get('a[aria-label="查看关联订单 D001"]').attributes('href')).toBe('/orders/1')
+  expect(card.get('a[aria-label="查看关联订单 D001"]').attributes('href')).toBe('/orders/1/edit')
   expect(card.get('a[aria-label="查看发票 INV009"]').attributes('href')).toBe('/invoices/9')
   expect(card.get('.order-sheet-grid').element.compareDocumentPosition(card.get('[aria-label="关联发票"]').element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   const unlinked = wrapper.findAll('article').find(c => c.text().includes('F009'))!

@@ -12,6 +12,31 @@ from sqlalchemy import or_
 pay_api = Blueprint("pay", __name__, url_prefix="/pay")
 
 
+def resolve_payment_payee(data, payment=None):
+    """Bind the payee to the order's supplier ID, never a contact-name match."""
+    try:
+        order_id = int(data.get("order_id", payment.order_id if payment else None))
+    except (ValueError, TypeError):
+        return "请选择有效的关联订单"
+    order = db.session.get(OrderORM, order_id)
+    if not order:
+        return "关联订单不存在"
+    supplier = db.session.get(SupplierORM, order.supplier_id) if order.supplier_id else None
+    if not supplier:
+        return "该订单未关联有效供应商，请先完善订单供应商信息"
+    payee_id = data.get("payee_supplier_id", payment.payee_supplier_id
+                       if payment and "order_id" not in data else None)
+    if payee_id is not None:
+        try:
+            matches = int(payee_id) == supplier.id
+        except (ValueError, TypeError):
+            matches = False
+        if not matches:
+            return "收款单位必须是关联订单中供应商负责人所属的单位"
+    data.update(order_id=order.id, payee_supplier_id=supplier.id)
+    return None
+
+
 @pay_api.get("/")
 @jwt_required()
 def pay_list():
@@ -128,6 +153,11 @@ def create_pay():
     from pear_admin.orms.material import MaterialInvoiceORM
     
     data = request.get_json()
+    if not isinstance(data, dict):
+        return {"code": -1, "msg": "请求数据格式错误"}
+    payee_error = resolve_payment_payee(data)
+    if payee_error:
+        return {"code": -1, "msg": payee_error}
     if data.get("id"):
         del data["id"]
     
@@ -210,6 +240,9 @@ def change_pay(pid=None):
     pay_obj = db.session.get(PayORM, pid)
     if not pay_obj:
         return {"code": -1, "msg": "付款单不存在"}
+    payee_error = resolve_payment_payee(data, pay_obj)
+    if payee_error:
+        return {"code": -1, "msg": payee_error}
     
     # 验证必填字段 (如果提供更新)
     if "payer_supplier_id" in data and not data.get("payer_supplier_id"):

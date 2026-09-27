@@ -3,20 +3,21 @@ import {computed} from 'vue'
 import {formatMoney, sumMoney, uppercaseMoney} from './money'
 import type {Row} from './model'
 
-const props = defineProps<{record: Row; order?: Row; supplier?: Row; options: Record<string, Row[]>; disabled: boolean}>()
+const props = defineProps<{record: Row; original?: Row; order?: Row; supplier?: Row; options: Record<string, Row[]>; disabled: boolean}>()
 const emit = defineEmits<{field: [key: string, value: unknown]}>()
 const update = (key: string, value: unknown) => emit('field', key, value)
 const materialName = computed(() => props.options.materials?.find(m => String(m.code) === String(props.order?.material_name))?.label || props.order?.material_name || '—')
 const validAmount = computed(() => /^-?\d+(\.\d{0,2})?$/.test(String(props.record.current_payment_amount ?? '')))
-const paymentTotal = computed(() => props.order && validAmount.value ? sumMoney([props.order.paid_amount ?? 0, props.record.current_payment_amount]) : null)
+const originalAmount = computed(() => props.original && String(props.original.order_id) === String(props.order?.id) ? String(props.original.current_payment_amount ?? 0) : '0')
+const paymentTotal = computed(() => props.order && validAmount.value ? sumMoney([props.order.paid_amount ?? 0, originalAmount.value.startsWith('-') ? originalAmount.value.slice(1) : '-' + originalAmount.value, props.record.current_payment_amount]) : null)
 const balance = computed(() => paymentTotal.value === null ? null : sumMoney([props.order?.order_amount, paymentTotal.value.startsWith('-') ? paymentTotal.value.slice(1) : '-' + paymentTotal.value]))
 const progress = computed(() => paymentTotal.value !== null && Number(props.order?.order_amount) > 0 ? (Number(paymentTotal.value) / Number(props.order?.order_amount) * 100).toFixed(1) + '%' : '—')
-const date = new Date().toLocaleDateString('sv-SE')
+const date = computed(() => props.record.create_at?.split(/[T ]/)[0] || (props.record.id != null ? '—' : new Date().toLocaleDateString('sv-SE')))
 </script>
 
 <template>
   <div class="payment-entry">
-    <article class="payment-entry-sheet" aria-label="新增付款审批单">
+    <article class="payment-entry-sheet" :aria-label="record.id != null ? '编辑付款审批单' : '新增付款审批单'">
       <header class="entry-header">
         <div><h2>付款审批单</h2><small>PAYMENT APPROVAL SHEET</small></div>
         <div class="entry-meta"><label for="entry-pay-number">付款单编号 <span class="required">*</span></label><el-input id="entry-pay-number" aria-label="付款单编号" :model-value="record.pay_number" :disabled="disabled" @update:model-value="update('pay_number', $event)"/><span>日期：{{date}}</span></div>
@@ -25,7 +26,7 @@ const date = new Date().toLocaleDateString('sv-SE')
         <section class="entry-panel" aria-label="资金往来信息">
           <h3>资金往来信息 <small>PAYMENT DETAILS</small></h3>
           <div class="entry-row"><label for="entry-amount">付款总额 <span class="required">*</span></label><div class="entry-value"><el-input id="entry-amount" class="entry-amount" aria-label="本次实付金额" inputmode="decimal" placeholder="0.00" :model-value="record.current_payment_amount" :disabled="disabled" @update:model-value="update('current_payment_amount', $event)"><template #prefix>¥</template></el-input><span class="entry-capital">{{record.current_payment_amount ? uppercaseMoney(record.current_payment_amount) : '填写金额后显示大写'}}</span></div></div>
-          <div class="entry-row"><label for="entry-payee">收款单位 <span class="required">*</span></label><div class="entry-value"><el-select id="entry-payee" aria-label="收款单位" filterable clearable placeholder="选择收款单位" :model-value="record.payee_supplier_id" :disabled="disabled" @update:model-value="update('payee_supplier_id', $event)"><el-option v-for="s in options.suppliers" :key="s.id" :value="s.id" :label="s.label"/></el-select></div></div>
+          <div class="entry-row"><label for="entry-payee">收款单位 <span class="required">*</span></label><div class="entry-value"><el-input id="entry-payee" aria-label="收款单位" :model-value="supplier?.name || ''" readonly placeholder="选择订单后自动带出"/><small>{{order && !supplier ? '该订单未关联有效供应商，请先完善订单供应商信息' : '由订单关联的供应商单位自动确定'}}</small></div></div>
           <div class="entry-row"><span class="entry-label">银行账号</span><div class="entry-value entry-account"><strong>{{supplier?.account_number || '—'}}</strong><small>{{supplier?.bank_name || '选择收款单位后显示开户行'}}</small></div></div>
           <div class="entry-row"><label for="entry-payer">付款单位 <span class="required">*</span></label><div class="entry-value"><el-select id="entry-payer" aria-label="付款单位" filterable clearable placeholder="选择付款单位" :model-value="record.payer_supplier_id" :disabled="disabled" @update:model-value="update('payer_supplier_id', $event)"><el-option v-for="p in options.payers" :key="p.id" :value="p.id" :label="p.label"/></el-select></div></div>
           <div class="entry-row entry-purpose"><label for="entry-purpose">款项用途</label><div class="entry-value"><el-input id="entry-purpose" aria-label="付款用途" type="textarea" :rows="5" placeholder="填写本次付款用途" :model-value="record.payment_purpose" :disabled="disabled" @update:model-value="update('payment_purpose', $event)"/></div></div>

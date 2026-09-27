@@ -33,3 +33,5 @@
 @container document-list (max-width:899px){.order-sheets[data-columns="2"],.order-sheets[data-columns="3"]{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:1200px){.orders-workspace{grid-template-columns:170px 160px minmax(0,1fr)}.page.orders-page{padding:16px}.order-sheet{padding:18px}.order-sheets{padding:12px}}
 @media(max-width:760px){.orders-workspace{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.orders-content{grid-column:1/-1}.filter-list{max-height:190px;position:static}.orders-toolbar{padding:14px}.totals{margin-left:0}.order-controls input[type=search]{flex:1 1 100%}.page.orders-page{padding:12px}}
+
+.sheet-actions a.new-payment-button{background:#168bea;border-color:#168bea;color:#fff}.sheet-actions a.new-payment-button:hover{background:#0876cf;border-color:#0876cf}

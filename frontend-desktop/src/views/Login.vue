@@ -227,8 +227,15 @@ function done(){
 <template>
   <div class="animated-login">
     <aside class="animated-login-art" aria-label="四个陪伴你登录的彩色角色">
-      <div class="animated-login-brand"><span class="animated-login-brand-mark">SF</span><span>业务管理系统</span></div>
+      <div class="animated-login-brand"><span class="animated-login-brand-mark">SF</span><span>业务管理系统<small>BUSINESS WORKSPACE</small></span></div>
       <div class="animated-login-center">
+        <div class="animated-login-intro">
+          <p class="animated-login-kicker"><span/>让协作，自然发生</p>
+          <h1>让每一天，<br>更有条理。</h1>
+          <p class="animated-login-lead">把日常交给秩序，把时间留给更重要的事。</p>
+        </div>
+        <div class="animated-login-stage">
+        <span class="animated-login-orbit" aria-hidden="true"/>
         <div ref="scene" class="characters-scene" :class="{'is-shaking':shaking}" :data-mood="loginError?'error':mood" aria-hidden="true">
           <div class="login-character character-purple" :style="characterStyle('purple')">
             <div class="character-eyes" :class="{'is-blinking':purpleBlink,'shake-head':shaking}" :style="faceStyle('purple')"><i v-for="index in [0,1]" :key="index" :style="pupilStyle(index)"/></div>
@@ -243,18 +250,20 @@ function done(){
             <div class="character-eyes" :style="faceStyle('yellow')"><i v-for="index in [6,7]" :key="index" :style="pupilStyle(index)"/></div><span class="character-mouth" :style="mouthStyle()"/>
           </div>
         </div>
+        </div>
       </div>
-      <div class="animated-login-footer"><span>清晰记录 · 有序协作</span><span>仅供内部员工使用</span></div>
+      <div class="animated-login-footer"><span>清晰记录 · 有序协作</span><span class="animated-login-edition">SF WORKSPACE <i>✦</i></span></div>
     </aside>
     <main class="animated-login-main">
       <div class="animated-login-panel">
-        <div class="animated-login-mobile-brand">SF <span>业务管理系统</span></div>
-        <div class="animated-login-star" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L13.5 9H10.5L12 2ZM12 22L10.5 15H13.5L12 22ZM2 12L9 10.5V13.5L2 12ZM22 12L15 13.5V10.5L22 12Z"/></svg></div>
+        <div class="animated-login-mobile-brand"><span class="animated-login-brand-mark">SF</span>业务管理系统</div>
+        <p class="animated-login-overline"><span/>你的专属工作空间</p>
         <h2>欢迎回来！</h2>
         <p class="animated-login-description">使用员工账号登录，继续今天的工作。</p>
         <LoginForm showcase @success="done" @mood="handleMood" @motion="handleMotion"/>
         <div class="animated-login-bottom"><a href="/m/">切换到手机端 <span aria-hidden="true">↗</span></a></div>
       </div>
+      <p class="animated-login-security"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></svg>仅供内部员工使用 · 账号由管理员统一开通</p>
     </main>
   </div>
 </template>

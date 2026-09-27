@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from flask import Blueprint, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import current_user, jwt_required
 from flask_sqlalchemy.pagination import Pagination
 from sqlalchemy import cast, String, Date, Numeric, or_
 
@@ -12,6 +12,29 @@ from pear_admin.orms import OrderORM, SupplierORM, PayORM, ProjectORM
 from sqlalchemy.orm import selectinload
 
 order_api = Blueprint("order", __name__, url_prefix="/order")
+
+
+def resolve_order_contact(data, order=None):
+    """Resolve contact by supplier identity; never persist a free-form contact."""
+    supplier_id = data.get("supplier_id", order.supplier_id if order else None)
+    contact = str(data.get("supplier_contact_person") or "").strip()
+    if supplier_id:
+        try:
+            supplier = db.session.get(SupplierORM, int(supplier_id))
+        except (ValueError, TypeError):
+            supplier = None
+    else:
+        matches = db.session.scalars(db.select(SupplierORM).where(
+            SupplierORM.contact_person == contact
+        ).limit(2)).all() if contact else []
+        supplier = matches[0] if len(matches) == 1 else None
+    if not supplier or not (supplier.contact_person or "").strip():
+        return "请选择供应商管理中已登记的联系人"
+    if "supplier_contact_person" in data and contact != supplier.contact_person.strip():
+        return "供应商联系人必须与供应商管理中的联系人一致"
+    data.update(supplier_id=supplier.id, supplier_contact_person=supplier.contact_person,
+                contact_phone=supplier.phone or "")
+    return None
 
 
 @order_api.get("/")
@@ -175,6 +198,11 @@ def create_order():
             return {"code": -1, "msg": "项目名称不能为空"}
         if not data.get("supplier_contact_person") and not data.get("supplier_id"):
             return {"code": -1, "msg": "供应商联系人不能为空"}
+        contact_error = resolve_order_contact(data)
+        if contact_error:
+            return {"code": -1, "msg": contact_error}
+        if not str(data.get("material_manager") or "").strip():
+            data["material_manager"] = current_user.nickname or ""
         
         # 检查订单编号是否已存在，如果冲突则自动生成一个新的
         existing_order = db.session.scalar(
@@ -297,6 +325,10 @@ def change_order(oid=None):
             return {"code": -1, "msg": "项目名称不能为空"}
         if ("supplier_contact_person" in data or "supplier_id" in data) and not (data.get("supplier_contact_person") or data.get("supplier_id")):
             return {"code": -1, "msg": "供应商联系人不能为空"}
+        if any(key in data for key in ("supplier_id", "supplier_contact_person", "contact_phone")):
+            contact_error = resolve_order_contact(data, order_obj)
+            if contact_error:
+                return {"code": -1, "msg": contact_error}
         
         # 向后兼容：如果提供了 project_name，转换为 project_id
         if 'project_name' in data and data['project_name']:

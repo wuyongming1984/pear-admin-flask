@@ -133,7 +133,7 @@ async function exportCsv() {
               </div><span v-if="!o.pays_list?.length" class="muted">暂无关联付款单</span></div>
             </section>
             <div v-if="attachments(o).length" class="sheet-attachments"><span>附件：</span><a v-for="(a,i) in attachments(o)" :key="i" :href="safeUrl(a.url || a.file_path)" target="_blank" rel="noopener">{{a.name || a.filename || '附件'}}</a></div>
-            <footer class="sheet-actions"><RouterLink :to="`/orders/${o.id}`">详情</RouterLink><RouterLink :to="`/orders/${o.id}/edit`">编辑订单</RouterLink><RouterLink :to="`/payments/new?order_id=${o.id}`">记账付款</RouterLink><RouterLink :to="`/orders/${o.id}/print`">打印订单</RouterLink><button class="delete-button" :disabled="deleting" @click="remove(o)">删除</button></footer>
+            <footer class="sheet-actions"><RouterLink :to="`/orders/${o.id}`">详情</RouterLink><RouterLink :to="`/orders/${o.id}/edit`">编辑订单</RouterLink><RouterLink class="new-payment-button" :to="`/payments/new?order_id=${o.id}`">新增付款单</RouterLink><RouterLink :to="`/orders/${o.id}/print`">打印订单</RouterLink><button class="delete-button" :disabled="deleting" @click="remove(o)">删除</button></footer>
           </article>
           <nav v-if="count" class="order-pagination" aria-label="订单分页"><span>共 {{count}} 条 · 第 {{page}} / {{pageCount}} 页</span><button :disabled="busy || page <= 1" @click="page--">上一页</button><button :disabled="busy || page >= pageCount" @click="page++">下一页</button></nav>
         </div>

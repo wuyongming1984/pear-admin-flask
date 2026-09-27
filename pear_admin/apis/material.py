@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request, current_app
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload, selectinload
 from pear_admin.extensions import db
 from pear_admin.orms import MaterialPlanningORM, MaterialInboundORM, MaterialInventoryORM, MaterialOutboundORM, MaterialInvoiceORM, MaterialInvoiceDetailORM, ProjectORM, SupplierORM
 from datetime import datetime
@@ -1198,7 +1199,13 @@ def get_invoice():
         page = request.args.get("page", 1, type=int)
         limit = request.args.get("limit", 10, type=int)
         
-        query = MaterialInvoiceORM.query
+        # Load the current page's relationships in batches instead of querying
+        # project, supplier and detail rows separately for every invoice.
+        query = MaterialInvoiceORM.query.options(
+            joinedload(MaterialInvoiceORM.project),
+            joinedload(MaterialInvoiceORM.supplier),
+            selectinload(MaterialInvoiceORM.details),
+        )
 
         # ID筛选
         invoice_id = request.args.get("id")
@@ -1211,26 +1218,30 @@ def get_invoice():
             query = query.filter_by(project_id=int(project_id))
             
         # 模糊搜索：多维度关键字搜索 (发票号码、购买方、销售方)
-        search = request.args.get("search")
+        category = request.args.get("invoice_category", "").strip()
+        if category:
+            query = query.filter_by(invoice_category=category)
+
+        search = request.args.get("search", "").strip()
         if search:
             query = query.filter(or_(
-                MaterialInvoiceORM.invoice_number.like(f"%{search}%"),
-                MaterialInvoiceORM.buyer_name.like(f"%{search}%"),
-                MaterialInvoiceORM.seller_name.like(f"%{search}%")
+                MaterialInvoiceORM.invoice_number.icontains(search, autoescape=True),
+                MaterialInvoiceORM.buyer_name.icontains(search, autoescape=True),
+                MaterialInvoiceORM.seller_name.icontains(search, autoescape=True)
             ))
             
         # 兼容旧的单字段搜索参数
-        invoice_number = request.args.get("invoice_number")
+        invoice_number = request.args.get("invoice_number", "").strip()
         if invoice_number:
-            query = query.filter(MaterialInvoiceORM.invoice_number.like(f"%{invoice_number}%"))
+            query = query.filter(MaterialInvoiceORM.invoice_number.icontains(invoice_number, autoescape=True))
             
-        buyer_name = request.args.get("buyer_name")
+        buyer_name = request.args.get("buyer_name", "").strip()
         if buyer_name:
-            query = query.filter(MaterialInvoiceORM.buyer_name.like(f"%{buyer_name}%"))
+            query = query.filter(MaterialInvoiceORM.buyer_name.icontains(buyer_name, autoescape=True))
             
-        seller_name = request.args.get("seller_name")
+        seller_name = request.args.get("seller_name", "").strip()
         if seller_name:
-            query = query.filter(MaterialInvoiceORM.seller_name.like(f"%{seller_name}%"))
+            query = query.filter(MaterialInvoiceORM.seller_name.icontains(seller_name, autoescape=True))
         
         # 限制返回数量 (用于下拉建议等场景)
         limit_val = request.args.get("limit_only", type=int)
@@ -1243,7 +1254,7 @@ def get_invoice():
             })
 
         # 按发票日期降序排序
-        query = query.order_by(MaterialInvoiceORM.invoice_date.desc())
+        query = query.order_by(MaterialInvoiceORM.invoice_date.desc(), MaterialInvoiceORM.id.desc())
         
         pagination = query.paginate(page=page, per_page=limit, error_out=False)
         
@@ -1251,11 +1262,7 @@ def get_invoice():
         for invoice in pagination.items:
             item = invoice.json()
             # 添加项目名称
-            if invoice.project_id:
-                project = ProjectORM.query.get(invoice.project_id)
-                item['project_name'] = project.project_name if project else '-'
-            else:
-                item['project_name'] = '-'
+            item['project_name'] = invoice.project.project_name if invoice.project else '-'
             data.append(item)
         
         return jsonify({

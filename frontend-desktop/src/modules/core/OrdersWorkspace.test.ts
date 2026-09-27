@@ -66,6 +66,7 @@ it('places related payment actions below the order sheet and preserves project d
   expect(wrapper.findAll('article')).toHaveLength(2)
   const article = wrapper.findAll('article').find(x => x.text().includes('D001'))!
   const sheet = article.get('.order-sheet-grid').element
+  expect(article.get('a[href="/payments/new?order_id=1"]').text()).toBe('新增付款单')
   const payments = article.get('[aria-label="关联付款单"]').element
   expect(sheet.compareDocumentPosition(payments) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(article.get('a[aria-label="打印付款单 F007"]').attributes('href')).toBe('/payments/7/print')

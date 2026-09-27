@@ -1307,6 +1307,29 @@ def get_invoice_list():
     except Exception as e:
         return jsonify({"code": 1, "msg": str(e)})
 
+@material_api.route("/invoice/<int:invoice_id>/preview-page", methods=["GET"])
+@authorize()
+def preview_invoice_page(invoice_id):
+    """Render one original PDF page without invoking a browser download."""
+    from werkzeug.exceptions import HTTPException
+    from pear_admin.invoice_preview import render_pdf_page
+    try:
+        page = request.args.get('page', '1')
+        if not page.isdigit() or not 1 <= int(page) <= 10000:
+            return jsonify(code=1, msg='无效的预览页码'), 400
+        invoice = db.session.get(MaterialInvoiceORM, invoice_id)
+        if not invoice or not invoice.file_path:
+            return jsonify(code=1, msg='发票不存在或无原文件'), 404
+        response = jsonify(code=0, data=render_pdf_page(invoice.file_path, int(page)))
+        response.headers['Cache-Control'] = 'private, no-store'
+        return response
+    except HTTPException as exc:
+        return jsonify(code=1, msg=exc.description), exc.code
+    except Exception:
+        current_app.logger.exception('Invoice PDF preview failed for invoice %s', invoice_id)
+        return jsonify(code=1, msg='原文件读取失败，请稍后刷新预览'), 502
+
+
 @material_api.route("/invoice/preview/<int:invoice_id>", methods=["GET"])
 def preview_invoice_file(invoice_id):
     """代理获取发票原件并以内联方式返回，用于弹窗预览"""

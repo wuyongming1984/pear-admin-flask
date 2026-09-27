@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import {expect, test} from 'vitest'
 import {mount} from '@vue/test-utils'
+import PaymentEntrySheet from './PaymentEntrySheet.vue'
 import OrderEntrySheet from './OrderEntrySheet.vue'
 import SupplierContactSelect from './SupplierContactSelect.vue'
 import {changeOrderContact, changeOrderSupplier} from './orderContacts'
@@ -11,7 +12,7 @@ const suppliers = [
   {id:2,value:2,name:'乙公司',label:'乙公司',contact_person:'张工',phone:'222'},
   {id:3,value:3,name:'丙公司',label:'丙公司',contact_person:'李工',phone:'333'},
 ]
-const stubs = {RouterLink:true,'el-select':{props:['modelValue','disabled'],template:'<div><slot/></div>'},'el-option':{props:['label','value'],template:'<option :value="value">{{label}}</option>'},'el-input':true,'el-date-picker':true}
+const stubs = {RouterLink:true,'el-form-item':true,'el-select':{props:['modelValue','disabled'],template:'<div><slot/></div>'},'el-option':{props:['label','value'],template:'<option :value="value">{{label}}</option>'},'el-input':true,'el-date-picker':true}
 
 test('contact dropdown shows distinct names only and supplier dropdown is limited to that contact',async()=>{
   const wrapper=mount(OrderEntrySheet,{props:{record:{},options:{suppliers},disabled:false},global:{stubs}})
@@ -50,4 +51,15 @@ test('changing or clearing contacts removes incompatible supplier and phone sele
   expect(record.supplier_id).toBeUndefined()
   record.supplier_contact_person='';changeOrderContact(record,suppliers)
   expect(record).toMatchObject({supplier_contact_person:'',contact_phone:''})
+})
+
+
+test('payment payee choices include all companies for the order contact and exclude other contacts',async()=>{
+  const wrapper=mount(PaymentEntrySheet,{props:{record:{},order:{id:1,supplier_id:1,supplier_contact_person:'张工'},options:{suppliers},disabled:false},global:{stubs}})
+  expect(wrapper.get('[aria-label="收款单位"]').findAll('option').map(o=>o.text())).toEqual(['甲公司','乙公司'])
+  await wrapper.setProps({order:{id:2,supplier_id:3,supplier_contact_person:'李工'}})
+  expect(wrapper.get('[aria-label="收款单位"]').findAll('option').map(o=>o.text())).toEqual(['丙公司'])
+  await wrapper.setProps({order:undefined})
+  expect(wrapper.get('[aria-label="收款单位"]').findAll('option')).toHaveLength(0)
+  wrapper.unmount()
 })

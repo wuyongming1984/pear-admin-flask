@@ -2,6 +2,7 @@
 import {computed, onBeforeUnmount, ref, shallowRef, watch} from 'vue'
 import {request, safeUrl} from '../../api'
 import type {Row} from './model'
+import InvoicePdfPreview from './InvoicePdfPreview.vue'
 
 const props=defineProps<{invoice:Row}>()
 const root=ref<HTMLElement>(),source=shallowRef<Row>({})
@@ -50,9 +51,7 @@ defineExpose({scrollToPreview})
   <p v-if="error" class="source-error" role="alert">{{error}}</p>
   <el-empty v-if="!url" description="此发票尚未上传原文件" :image-size="70" />
   <p v-else-if="loadFailed" class="source-error" role="alert">原文件暂时无法加载，请点击“刷新预览”重试，或在新窗口打开。</p>
-  <object v-else-if="fileKind==='pdf'" :key="`${source.id}-${version}`" :data="url" type="application/pdf" class="source-pdf" aria-label="PDF原文件预览" @error="loadFailed=true">
-   <p>浏览器无法嵌入此 PDF，请<a :href="url" target="_blank" rel="noopener noreferrer">在新窗口打开原文件</a>，或点击“刷新预览”重试。</p>
-  </object>
+  <InvoicePdfPreview v-else-if="fileKind==='pdf' && source.id" :key="`${source.id}-${version}`" :invoice-id="source.id" />
   <img v-else-if="fileKind==='image'" :key="`${source.id}-${version}`" :src="url" :alt="source.file_name || '发票原文件图片'" class="source-image" @error="loadFailed=true" />
   <p v-else>此文件格式暂不支持直接预览，请使用上方链接打开原文件。</p>
  </section>

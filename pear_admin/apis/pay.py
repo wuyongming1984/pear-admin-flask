@@ -13,7 +13,7 @@ pay_api = Blueprint("pay", __name__, url_prefix="/pay")
 
 
 def resolve_payment_payee(data, payment=None):
-    """Bind the payee to the order's supplier ID, never a contact-name match."""
+    """Allow supplier companies belonging to the order's contact."""
     try:
         order_id = int(data.get("order_id", payment.order_id if payment else None))
     except (ValueError, TypeError):
@@ -21,18 +21,17 @@ def resolve_payment_payee(data, payment=None):
     order = db.session.get(OrderORM, order_id)
     if not order:
         return "关联订单不存在"
-    supplier = db.session.get(SupplierORM, order.supplier_id) if order.supplier_id else None
-    if not supplier:
-        return "该订单未关联有效供应商，请先完善订单供应商信息"
+    contact = (order.supplier_contact_person or "").strip()
+    if not contact:
+        return "该订单缺少供应商联系人，请先完善订单联系人信息"
     payee_id = data.get("payee_supplier_id", payment.payee_supplier_id
-                       if payment and "order_id" not in data else None)
-    if payee_id is not None:
-        try:
-            matches = int(payee_id) == supplier.id
-        except (ValueError, TypeError):
-            matches = False
-        if not matches:
-            return "收款单位必须是关联订单中供应商负责人所属的单位"
+                       if payment and payment.order_id == order.id else order.supplier_id)
+    try:
+        supplier = db.session.get(SupplierORM, int(payee_id))
+    except (ValueError, TypeError):
+        supplier = None
+    if not supplier or (supplier.contact_person or "").strip() != contact:
+        return "请选择与订单供应商联系人相同的收款单位"
     data.update(order_id=order.id, payee_supplier_id=supplier.id)
     return None
 

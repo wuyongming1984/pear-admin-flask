@@ -9,9 +9,9 @@ class PaymentPayeeTest(unittest.TestCase):
     tearDown = MobileAPITest.tearDown
 
     def seed(self):
-        suppliers = [SupplierORM(type_id=1, name=name, contact_person='同名负责人',
+        suppliers = [SupplierORM(type_id=1, name=name, contact_person='同名负责人' if i < 2 else '其他负责人',
                                  phone='', bank_name='', account_number=str(i))
-                     for i, name in enumerate(['甲公司', '乙公司'])]
+                     for i, name in enumerate(['甲公司', '乙公司', '丙公司'])]
         payer = PayerORM(type_id=1, name='付款单位')
         db.session.add_all([*suppliers, payer]); db.session.flush()
         orders = [OrderORM(order_number=f'D{i}', material_name='材料', order_amount=100,
@@ -25,23 +25,23 @@ class PaymentPayeeTest(unittest.TestCase):
     def post(self, data):
         return self.client.post('/api/v1/pay/', json=data, headers=self.headers).json
 
-    def test_create_derives_payee_from_order_even_for_duplicate_contact_names(self):
+    def test_create_defaults_to_order_supplier(self):
         data = self.seed()
         result = self.post(data)
         self.assertEqual(result['code'], 0, result)
         pay = db.session.get(PayORM, result['data']['id'])
         self.assertEqual(pay.payee_supplier_id, self.suppliers[0].id)
 
-    def test_create_rejects_another_payee_without_writing(self):
+    def test_create_rejects_unrelated_contact_without_writing(self):
         data = self.seed()
-        for value in [self.suppliers[1].id, 999, 'invalid']:
+        for value in [self.suppliers[2].id, 999, 'invalid']:
             result = self.post({**data, 'payee_supplier_id': value})
             self.assertNotEqual(result['code'], 0, result)
         self.assertEqual(db.session.scalar(db.select(db.func.count(PayORM.id))), 0)
 
     def test_invalid_or_unlinked_order_cannot_receive_payment(self):
         data = self.seed()
-        self.orders[0].supplier_id = None; db.session.commit()
+        self.orders[0].supplier_contact_person = ''; db.session.commit()
         for value in [self.orders[0].id, 999, None]:
             self.assertNotEqual(self.post({**data, 'order_id': value})['code'], 0)
 
@@ -49,12 +49,12 @@ class PaymentPayeeTest(unittest.TestCase):
         data = self.seed(); result = self.post(data); pid = result['data']['id']
         def update(changes):
             return self.client.put(f'/api/v1/pay/{pid}', json=changes, headers=self.headers).json
-        self.assertNotEqual(update({'payee_supplier_id': self.suppliers[1].id,
+        self.assertNotEqual(update({'payee_supplier_id': self.suppliers[2].id,
                                     'current_payment_amount': '99.00'})['code'], 0)
         pay = db.session.get(PayORM, pid)
         self.assertEqual(str(pay.current_payment_amount), '20.10')
         self.assertEqual(pay.payee_supplier_id, self.suppliers[0].id)
-        self.assertNotEqual(update({'order_id': self.orders[1].id,
+        self.assertNotEqual(update({'order_id': self.orders[2].id,
                                     'payee_supplier_id': self.suppliers[0].id})['code'], 0)
         self.assertEqual(update({'order_id': self.orders[1].id})['code'], 0)
         self.assertEqual(pay.payee_supplier_id, self.suppliers[1].id)
@@ -63,6 +63,26 @@ class PaymentPayeeTest(unittest.TestCase):
     def test_existing_mismatch_cannot_be_saved_unchanged(self):
         data = self.seed(); result = self.post(data); pid = result['data']['id']
         pay = db.session.get(PayORM, pid)
-        pay.payee_supplier_id = self.suppliers[1].id; db.session.commit()
+        pay.payee_supplier_id = self.suppliers[2].id; db.session.commit()
         result = self.client.put(f'/api/v1/pay/{pid}', json={'handler': '经办人'}, headers=self.headers).json
         self.assertNotEqual(result['code'], 0)
+
+    def test_create_and_edit_allow_other_company_for_same_order_contact(self):
+        data = self.seed()
+        result = self.post({**data, 'payee_supplier_id': self.suppliers[1].id})
+        self.assertEqual(result['code'], 0, result)
+        pid = result['data']['id']; pay = db.session.get(PayORM, pid)
+        self.assertEqual(pay.payee_supplier_id, self.suppliers[1].id)
+        self.assertEqual(pay.order_id, self.orders[0].id)
+        result = self.client.put(f'/api/v1/pay/{pid}', json={'order_id': self.orders[0].id, 'handler': '经办人'}, headers=self.headers).json
+        self.assertEqual(result['code'], 0, result)
+        self.assertEqual(pay.payee_supplier_id, self.suppliers[1].id)
+        result = self.client.put(f'/api/v1/pay/{pid}', json={'payee_supplier_id': self.suppliers[0].id}, headers=self.headers).json
+        self.assertEqual(result['code'], 0, result)
+        self.assertEqual(pay.payee_supplier_id, self.suppliers[0].id)
+
+    def test_explicit_choice_uses_order_contact_even_if_original_supplier_is_unlinked(self):
+        data = self.seed()
+        self.orders[0].supplier_id = None; db.session.commit()
+        result = self.post({**data, 'payee_supplier_id': self.suppliers[1].id})
+        self.assertEqual(result['code'], 0, result)

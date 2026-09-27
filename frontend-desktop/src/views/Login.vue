@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {computed,onBeforeUnmount,onMounted,reactive,ref,watch} from 'vue'
 import {useRouter,useRoute} from 'vue-router'
-import {Star} from '@element-plus/icons-vue'
 import LoginForm from '../components/LoginForm.vue'
 import './login.css'
 
@@ -28,6 +27,7 @@ const lookingAtEachOther=ref(false)
 const purplePeeking=ref(false)
 const loginError=ref(false)
 const shaking=ref(false)
+const orangeMouth=reactive({left:'90px',top:'120px'})
 const hidingPassword=computed(()=>formMotion.isPasswordFocused&&!formMotion.showPassword&&!loginError.value)
 const revealedPassword=computed(()=>formMotion.passwordLength>0&&formMotion.showPassword)
 const characters:Character[]=['purple','black','orange','yellow']
@@ -152,6 +152,10 @@ function handleMood(value:Mood){
   cancel(shakeTimer)
   loginError.value=true
   shaking.value=false
+  formMotion.isPasswordFocused=false
+  updatePositions()
+  orangeMouth.left=`${80+positions.orange.faceX}px`
+  orangeMouth.top='130px'
   shakeTimer=later(()=>{shaking.value=true},350)
   errorTimer=later(()=>{
     loginError.value=false
@@ -176,6 +180,7 @@ function scheduleBlink(character:'purple'|'black'){
 }
 function schedulePeek(){
   peekTimer=later(()=>{
+    if(!revealedPassword.value)return
     updatePositions()
     purplePeeking.value=true
     peekEndTimer=later(()=>{
@@ -193,11 +198,11 @@ watch(()=>formMotion.isTyping,typing=>{
     lookingTimer=later(()=>{lookingAtEachOther.value=false;updatePositions()},800)
   }else lookingAtEachOther.value=false
 })
-watch(revealedPassword,revealed=>{
+watch(()=>formMotion.showPassword,shown=>{
   cancel(peekTimer)
   cancel(peekEndTimer)
   purplePeeking.value=false
-  if(revealed&&!(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches))schedulePeek()
+  if(shown&&revealedPassword.value&&!(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches))schedulePeek()
 })
 
 onMounted(()=>{
@@ -233,7 +238,7 @@ function done(){
             <div class="character-eyes" :class="{'is-blinking':blackBlink,'shake-head':shaking}" :style="faceStyle('black')"><i v-for="index in [2,3]" :key="index" :style="pupilStyle(index)"/></div>
           </div>
           <div class="login-character character-orange" :style="characterStyle('orange')">
-            <div class="character-eyes" :style="faceStyle('orange')"><i v-for="index in [4,5]" :key="index" :style="pupilStyle(index)"/></div><span class="character-mouth" :class="{'is-visible':loginError}" :style="loginError?{left:`${80+positions.orange.faceX}px`,top:'130px'}:undefined"/>
+            <div class="character-eyes" :style="faceStyle('orange')"><i v-for="index in [4,5]" :key="index" :style="pupilStyle(index)"/></div><span class="character-mouth" :class="{'is-visible':loginError}" :style="orangeMouth"/>
           </div>
           <div class="login-character character-yellow" :style="characterStyle('yellow')">
             <div class="character-eyes" :style="faceStyle('yellow')"><i v-for="index in [6,7]" :key="index" :style="pupilStyle(index)"/></div><span class="character-mouth" :style="mouthStyle()"/>
@@ -245,8 +250,7 @@ function done(){
     <main class="animated-login-main">
       <div class="animated-login-panel">
         <div class="animated-login-mobile-brand">SF <span>业务管理系统</span></div>
-        <el-icon class="animated-login-star" :size="26"><Star/></el-icon>
-        <p class="animated-login-overline">YOUR WORKSPACE AWAITS</p>
+        <div class="animated-login-star" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L13.5 9H10.5L12 2ZM12 22L10.5 15H13.5L12 22ZM2 12L9 10.5V13.5L2 12ZM22 12L15 13.5V10.5L22 12Z"/></svg></div>
         <h2>欢迎回来！</h2>
         <p class="animated-login-description">使用员工账号登录，继续今天的工作。</p>
         <LoginForm showcase @success="done" @mood="handleMood" @motion="handleMotion"/>

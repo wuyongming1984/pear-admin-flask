@@ -1,0 +1,1 @@
+import{f as e,z as s}from"./index-D-xsbsLV.js";function u(c){const o=`sf-${c}-card-columns`,a=s("auto");try{const t=localStorage.getItem(o);t&&["auto","1","2","3"].includes(t)&&(a.value=t)}catch{}return e(a,t=>{try{localStorage.setItem(o,t)}catch{}}),a}export{u};

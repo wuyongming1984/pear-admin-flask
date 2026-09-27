@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import {suppliersForContact} from './orderContacts'
 import SupplierContactSelect from './SupplierContactSelect.vue'
 import {computed} from 'vue'
 import {formatMoney, sumMoney, uppercaseMoney} from './money'
 import {schemas, type Row} from './model'
 
 const props = defineProps<{record: Row; options: Record<string, Row[]>; disabled: boolean}>()
+const contactSuppliers = computed(() => suppliersForContact(props.options.suppliers || [], props.record.supplier_contact_person))
 const existing = computed(() => props.record.id != null)
 const paid = computed(() => props.record.paid_amount ?? sumMoney((props.record.pays_list || []).map((p: Row) => p.current_payment_amount)))
 const balance = computed(() => sumMoney([props.record.order_amount, String(paid.value).startsWith('-') ? String(paid.value).slice(1) : '-' + paid.value]))
@@ -38,10 +40,10 @@ const date = computed(() => props.record.create_at?.split(/[T ]/)[0] || (existin
             <template v-else>
               <th scope="row"><label :for="'entry-order-' + key">{{field(key).label}}<span v-if="field(key).required" class="required"> *</span></label></th>
               <td :colspan="keys.length === 1 ? 3 : 1">
-                <SupplierContactSelect v-if="key === 'supplier_contact_person'" :id="'entry-order-' + key" :record="record" :suppliers="options.suppliers || []" :disabled="disabled" @select="emit('field', 'supplier_id', $event)"/>
-                <el-select v-else-if="field(key).kind === 'select'" :id="'entry-order-' + key" :aria-label="field(key).label" :model-value="record[key]" filterable clearable :placeholder="'选择' + field(key).label" :disabled="disabled" @update:model-value="emit('field', key, $event)"><el-option v-for="option in options[field(key).source!]" :key="option.value" :value="option.value" :label="option.label"/></el-select>
+                <SupplierContactSelect v-if="key === 'supplier_contact_person'" :id="'entry-order-' + key" :record="record" :suppliers="options.suppliers || []" :disabled="disabled" @select="emit('field', 'supplier_contact_person', $event)"/>
+                <el-select v-else-if="field(key).kind === 'select'" :id="'entry-order-' + key" :aria-label="field(key).label" :model-value="record[key]" filterable clearable :placeholder="key === 'supplier_id' && !record.supplier_contact_person ? '请先选择供应商联系人' : '选择' + field(key).label" :disabled="disabled || (key === 'supplier_id' && !record.supplier_contact_person)" @update:model-value="emit('field', key, $event)"><el-option v-for="option in key === 'supplier_id' ? contactSuppliers : options[field(key).source!]" :key="option.value" :value="option.value" :label="option.label"/></el-select>
                 <el-date-picker v-else-if="field(key).kind === 'date'" :id="'entry-order-' + key" :aria-label="field(key).label" :model-value="record[key]" value-format="YYYY-MM-DD" :placeholder="'选择' + field(key).label" :disabled="disabled" @update:model-value="emit('field', key, $event)"/>
-                <el-input v-else :id="'entry-order-' + key" :aria-label="field(key).label" :class="{'order-entry-amount': key === 'order_amount'}" :model-value="record[key]" :type="field(key).kind === 'textarea' ? 'textarea' : 'text'" :rows="3" :readonly="key === 'contact_phone'" :inputmode="field(key).kind === 'money' ? 'decimal' : undefined" :placeholder="key === 'contact_phone' ? '选择联系人后自动带出' : field(key).kind === 'money' ? '0.00' : '填写' + field(key).label" :disabled="disabled" @update:model-value="emit('field', key, $event)"/>
+                <el-input v-else :id="'entry-order-' + key" :aria-label="field(key).label" :class="{'order-entry-amount': key === 'order_amount'}" :model-value="record[key]" :type="field(key).kind === 'textarea' ? 'textarea' : 'text'" :rows="3" :readonly="key === 'contact_phone'" :inputmode="field(key).kind === 'money' ? 'decimal' : undefined" :placeholder="key === 'contact_phone' ? '选择供应商后自动带出' : field(key).kind === 'money' ? '0.00' : '填写' + field(key).label" :disabled="disabled" @update:model-value="emit('field', key, $event)"/>
                 <small v-if="key === 'order_amount'" class="order-entry-capital">{{record.order_amount ? uppercaseMoney(record.order_amount) : '填写金额后显示大写'}}</small>
               </td>
             </template>

@@ -3,6 +3,7 @@ import {computed, ref, watch} from 'vue'
 import {useRouter} from 'vue-router'
 import {safeUrl} from '../../api'
 import InvoicePaper from './InvoicePaper.vue'
+import InvoiceSourcePreview from './InvoiceSourcePreview.vue'
 import {formatMoney, sumMoney} from './money'
 import {ocrStatusLabel, type Row} from './model'
 
@@ -12,6 +13,7 @@ const router = useRouter()
 const activeId = ref<any>()
 const active = computed(() => props.rows.find(row => row.id === activeId.value) || props.rows[0])
 const uploadVisible = ref(false), moreVisible = ref(false)
+const sourcePreview = ref<InstanceType<typeof InvoiceSourcePreview>>()
 watch(() => props.rows, rows => {
   if (!rows.some(row => row.id === activeId.value)) activeId.value = rows[0]?.id
   emit('selection', [])
@@ -53,7 +55,7 @@ const amount = (row: Row) => formatMoney(sumMoney([row.total_amount, row.tax_amo
       <header class="invoice-content-header">
         <strong>发票详情库</strong>
         <div class="invoice-actions">
-          <el-button v-if="active && safeUrl(active.file_path)" tag="a" :href="safeUrl(active.file_path)" target="_blank" rel="noopener noreferrer">查看原文件</el-button>
+          <el-button v-if="active && safeUrl(active.file_url || active.file_path)" @click="sourcePreview?.scrollToPreview()">查看原文件</el-button>
           <el-button v-if="active" :disabled="busy" @click="router.push(`/invoices/${active.id}/edit`)">编辑大类 / 抵扣</el-button>
           <el-button @click="moreVisible = !moreVisible">更多操作</el-button>
         </div>
@@ -71,6 +73,7 @@ const amount = (row: Row) => formatMoney(sumMoney([row.total_amount, row.tax_amo
             </div>
           </div>
           <InvoicePaper :invoice="active" />
+          <InvoiceSourcePreview ref="sourcePreview" :invoice="active" />
         </template>
         <el-empty v-else description="请选择或上传发票，查看票面详情" />
       </div>

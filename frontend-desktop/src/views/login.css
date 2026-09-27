@@ -72,4 +72,3 @@
 .animated-login-bottom span{font-size:16px;margin-left:3px}
 @media(max-width:900px){.animated-login{display:block}.animated-login-art{display:none}.animated-login-main{min-height:100vh;padding:32px 22px}.animated-login-panel{width:min(100%,420px)}.animated-login-mobile-brand{display:block;font-size:20px;font-weight:800;color:#6240ef;margin-bottom:44px}.animated-login-mobile-brand span{font-size:12px;color:#5b5967;font-weight:600;margin-left:8px}.animated-login-panel h2{font-size:31px}}
 @media(max-height:600px) and (min-width:901px){.animated-login{min-height:600px}.animated-login-art{min-height:600px}.animated-login-main{padding-top:24px;padding-bottom:24px}}
-@media(prefers-reduced-motion:reduce){.animated-login *{animation:none!important;transition:none!important}}

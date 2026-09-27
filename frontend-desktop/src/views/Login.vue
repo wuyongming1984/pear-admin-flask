@@ -202,16 +202,15 @@ watch(()=>formMotion.showPassword,shown=>{
   cancel(peekTimer)
   cancel(peekEndTimer)
   purplePeeking.value=false
-  if(shown&&revealedPassword.value&&!(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches))schedulePeek()
+  if(shown&&revealedPassword.value)schedulePeek()
 })
 
 onMounted(()=>{
   updatePositions()
   window.addEventListener('mousemove',updateMouse)
-  if(!(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)){
-    scheduleBlink('purple')
-    scheduleBlink('black')
-  }
+  // This page explicitly reproduces the reference demo's full-motion behavior.
+  scheduleBlink('purple')
+  scheduleBlink('black')
 })
 onBeforeUnmount(()=>{
   window.removeEventListener('mousemove',updateMouse)

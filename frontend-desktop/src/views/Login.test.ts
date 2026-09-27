@@ -147,3 +147,26 @@ test('a peek starts from the visibility toggle and is cancelled when password is
   expect(wrapper.get('.characters-scene').attributes('data-mood')).not.toBe('revealed')
   wrapper.unmount()
 })
+
+test('the reference login animation still blinks and peeks when the OS requests reduced motion',async()=>{
+  vi.useFakeTimers()
+  vi.spyOn(Math,'random').mockReturnValue(0)
+  vi.stubGlobal('matchMedia',vi.fn(()=>({matches:true})))
+  const wrapper=await loginPage()
+  try{
+    vi.advanceTimersByTime(3000)
+    await nextTick()
+    expect(wrapper.get('.character-purple .character-eyes').classes()).toContain('is-blinking')
+    vi.advanceTimersByTime(150)
+    await nextTick()
+    expect(wrapper.get('.character-purple .character-eyes').classes()).not.toContain('is-blinking')
+    await wrapper.get('input[name="password"]').setValue('preview-only')
+    await wrapper.get('[aria-label="显示密码"]').trigger('click')
+    vi.advanceTimersByTime(2000)
+    await nextTick()
+    expect(wrapper.get('.character-purple i').attributes('style')).toContain('--pupil-x: 4px')
+  }finally{
+    wrapper.unmount()
+    vi.unstubAllGlobals()
+  }
+})

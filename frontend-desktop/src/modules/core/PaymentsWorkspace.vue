@@ -1,75 +1,53 @@
 <script setup lang="ts">
-import {computed, ref, watch, onActivated, onDeactivated} from 'vue'
+import {computed, ref, watch, onDeactivated} from 'vue'
 import {useRoute} from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {allRows, request, safeUrl} from '../../api'
 import PageHeader from '../../components/PageHeader.vue'
 import TablePrint from './TablePrint.vue'
 import {useCardColumns} from './useCardColumns'
-import {formatMoney, sumMoney, uppercaseMoney} from './money'
+import {useDocumentWorkspace} from './useDocumentWorkspace'
+import {formatMoney, uppercaseMoney} from './money'
 import {parseAttachments, type Row, type Field} from './model'
 
 const route = useRoute()
 const cardColumns = useCardColumns('payments')
-const payments = ref<Row[]>([]), orders = ref<Row[]>([]), projects = ref<Row[]>([]), suppliers = ref<Row[]>([]), materials = ref<Row[]>([]), statuses = ref<Row[]>([])
-const busy = ref(false), error = ref(''), deleting = ref(false), tablePrint = ref(false)
+const materials = ref<Row[]>([]), statuses = ref<Row[]>([])
+const deleting = ref(false), tablePrint = ref(false), exporting = ref(false)
 const project = ref(''), contact = ref(''), number = ref(''), paymentStatus = ref(''), projectSearch = ref(''), contactSearch = ref(''), orderNumber = ref('')
-const page = ref(1), pageSize = 20
+const projectNameQuery = ref('')
+const filters = computed(() => ({project_id: project.value, project_name: project.value ? '' : projectNameQuery.value, supplier_contact_person: contact.value, pay_number: number.value, order_number: orderNumber.value, payment_status: paymentStatus.value}))
+const {rows: pagePayments, projects, contacts, totals, count, page, pageCount, busy, error, load} = useDocumentWorkspace('payments', filters)
 const fieldLabels: Record<string, string> = {project: '项目名称', order_amount: '订单金额', pay_amount: '付款金额', invoice_amount: '开票金额', status: '付款状态', payer: '付款单位', payee: '收款单位 / 账户', handler: '经办人', purpose: '付款用途', attachments: '附件列表', invoices: '关联发票'}
 const visibleFields = ref(Object.keys(fieldLabels)), show = (key: string) => visibleFields.value.includes(key)
 const money = (value: unknown) => value == null ? '—' : formatMoney(value).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-const orderMap = computed(() => new Map(orders.value.map(o => [String(o.id), o])))
-const supplierMap = computed(() => new Map(suppliers.value.map(s => [String(s.id), s])))
-const order = (p: Row): Row => orderMap.value.get(String(p.order_id)) || {}
-const supplier = (p: Row): Row => supplierMap.value.get(String(p.payee_supplier_id)) || {}
+const order = (p: Row): Row => p.order_summary || {}
+const supplier = (p: Row): Row => p.payee_account || {}
 const projectName = (p: Row) => order(p).project_name || p.project_name || ''
 const contactName = (p: Row) => order(p).supplier_contact_person || p.supplier_contact_person || ''
-const projectKey = (p: Row) => String(order(p).project_id ?? projects.value.find(v => v.project_name === projectName(p))?.id ?? projectName(p))
 const statusText = (p: Row) => statuses.value.find(s => String(s.code) === String(p.payment_status))?.value || p.payment_status || '—'
 const material = (p: Row) => materials.value.find(m => String(m.code) === String(order(p).material_name))?.value || order(p).material_name || '—'
 const progress = (p: Row) => Number(order(p).order_amount) > 0 && order(p).paid_amount != null ? (Number(order(p).paid_amount) / Number(order(p).order_amount) * 100).toFixed(1) + '%' : '—'
-const projectOptions = computed(() => {
-  const result = new Map(projects.value.map(p => [String(p.id), {id: String(p.id), name: p.project_name}]))
-  payments.value.forEach(p => {if (projectKey(p) && !result.has(projectKey(p))) result.set(projectKey(p), {id: projectKey(p), name: projectName(p)})})
-  return [...result.values()]
-})
+const projectOptions = computed(() => projects.value.map(p => ({id: String(p.id), name: p.project_name})))
 const visibleProjects = computed(() => projectOptions.value.filter(p => String(p.name).toLowerCase().includes(projectSearch.value.trim().toLowerCase())))
-const projectPayments = computed(() => payments.value.filter(p => !project.value || projectKey(p) === project.value))
-const contacts = computed(() => [...new Set(projectPayments.value.map(contactName).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'zh-CN')))
-const visibleContacts = computed(() => contacts.value.filter(c => c.toLowerCase().includes(contactSearch.value.trim().toLowerCase())))
-const filtered = computed(() => projectPayments.value.filter(p => (!contact.value || contactName(p) === contact.value) && String(p.pay_number || '').toLowerCase().includes(number.value.trim().toLowerCase()) && (!paymentStatus.value || String(p.payment_status) === paymentStatus.value) && String(p.order_number || order(p).order_number || '').toLowerCase().includes(orderNumber.value.trim().toLowerCase())))
-const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
-const pagePayments = computed(() => filtered.value.slice((page.value - 1) * pageSize, page.value * pageSize))
-const title = computed(() => `${projectOptions.value.find(p => p.id === project.value)?.name || '全部项目'} · ${contact.value || '全部联系人'}`)
-const totals = computed(() => ({paid: sumMoney(filtered.value.map(p => p.current_payment_amount)), invoiced: sumMoney(filtered.value.map(p => p.invoice_amount))}))
+const visibleContacts = computed(() => contacts.value.filter(c => c.toLowerCase().includes(contactSearch.value.trim().toLowerCase())).sort((a,b) => a.localeCompare(b, 'zh-CN')))
+const title = computed(() => `${projectOptions.value.find(p => p.id === project.value)?.name || projectNameQuery.value || '全部项目'} · ${contact.value || '全部联系人'}`)
 const printColumns: Field[] = [{key:'pay_number',label:'付款单号'}, {key:'order_number',label:'关联订单'}, {key:'project_name',label:'项目'}, {key:'payer_supplier_name',label:'付款单位'}, {key:'payee_supplier_name',label:'收款单位'}, {key:'current_payment_amount',label:'本次付款',kind:'money'}, {key:'invoice_amount',label:'开票金额',kind:'money'}, {key:'payment_status',label:'付款状态'}, {key:'handler',label:'经办人'}]
 function display(p: Row, f: Field) {return f.key === 'project_name' ? projectName(p) : f.key === 'payment_status' ? statusText(p) : f.kind === 'money' ? money(p[f.key] ?? 0) : p[f.key] ?? '—'}
 function attachments(p: Row) {try {return parseAttachments(p)} catch {return []}}
-function chooseProject(id: string) {project.value = id; contact.value = ''; contactSearch.value = ''}
+function chooseProject(id: string) {projectNameQuery.value = ''; project.value = id; contact.value = ''; contactSearch.value = ''}
 function applyQuery() {
   project.value = String(route.query.project_id || '')
-  if (!project.value && route.query.project_name) project.value = projectOptions.value.find(p => p.name === route.query.project_name)?.id || String(route.query.project_name)
+  projectNameQuery.value = String(route.query.project_name || '')
   contact.value = String(route.query.supplier_contact_person || '')
   number.value = String(route.query.pay_number || '')
   orderNumber.value = String(route.query.order_number || '')
   paymentStatus.value = String(route.query.payment_status || '')
 }
-watch([project, contact, number, paymentStatus, orderNumber], () => {page.value = 1})
-watch(pageCount, total => {page.value = Math.min(page.value, total)})
 let lastQuery = JSON.stringify(route.query)
 watch(() => route.fullPath, () => {if (route.path === '/payments' && JSON.stringify(route.query) !== lastQuery) {lastQuery = JSON.stringify(route.query); applyQuery()}})
-async function load() {
-  if (busy.value) return
-  busy.value = true; error.value = ''
-  try {
-    const [data, orderData, projectData, supplierData, materialData, statusData] = await Promise.all([allRows('/pay/'), allRows('/order/'), allRows('/project/'), allRows('/supplier/'), allRows('/dictionary/detail/list', {dic_id:35}), allRows('/dictionary/detail/list', {dic_id:28})])
-    payments.value = data; orders.value = orderData; projects.value = projectData; suppliers.value = supplierData; materials.value = materialData; statuses.value = statusData
-  } catch(e) {error.value = (e as Error).message || '付款单加载失败'} finally {busy.value = false}
-}
 applyQuery()
-void load().then(() => {if (route.path === '/payments') applyQuery()})
-let activated = false
-onActivated(() => {if (activated) void load(); activated = true})
+void Promise.all([allRows('/dictionary/detail/list', {dic_id:35}), allRows('/dictionary/detail/list', {dic_id:28})]).then(([m,s]) => {materials.value = m; statuses.value = s}).catch(e => ElMessage.error((e as Error).message))
 onDeactivated(() => {tablePrint.value = false})
 async function remove(p: Row) {
   if (deleting.value) return
@@ -77,11 +55,16 @@ async function remove(p: Row) {
   deleting.value = true
   try {await request('/pay/' + p.id, {method:'DELETE'}); ElMessage.success('删除成功'); await load()} catch(e) {ElMessage.error((e as Error).message)} finally {deleting.value = false}
 }
-function exportCsv() {
+async function exportCsv() {
+  if (exporting.value) return
+  exporting.value = true
+  try {
+  const rows = await allRows('/workspace/payments', filters.value)
   const quote = (v: unknown) => '"' + String(v ?? '').replace(/^[=+\-@]/, "'$&").replace(/"/g, '""') + '"'
-  const content = [printColumns.map(f => quote(f.label)).join(','), ...filtered.value.map(p => printColumns.map(f => quote(display(p, f))).join(','))].join('\r\n')
+  const content = [printColumns.map(f => quote(f.label)).join(','), ...rows.map(p => printColumns.map(f => quote(display(p, f))).join(','))].join('\r\n')
   const url = URL.createObjectURL(new Blob(['\uFEFF' + content], {type:'text/csv;charset=utf-8'}))
   const a = document.createElement('a'); a.href = url; a.download = '付款单查询结果.csv'; a.click(); URL.revokeObjectURL(url)
+  } catch (e) {ElMessage.error((e as Error).message)} finally {exporting.value = false}
 }
 </script>
 
@@ -106,7 +89,7 @@ function exportCsv() {
             <label class="card-columns-control">卡片列数<select v-model="cardColumns" aria-label="卡片列数" title="宽度不足时自动减少列数"><option value="auto">自动</option><option value="1">1列</option><option value="2">2列</option><option value="3">3列</option></select></label>
             <select v-model="paymentStatus" aria-label="付款状态筛选"><option value="">全部付款状态</option><option v-for="s in statuses" :key="s.code" :value="String(s.code)">{{s.value}}</option></select>
             <details class="field-picker"><summary>显示字段</summary><div><label v-for="(label,key) in fieldLabels" :key="key"><input v-model="visibleFields" type="checkbox" :value="key" />{{label}}</label></div></details>
-            <RouterLink class="primary-button" to="/payments/new">＋ 新增付款单</RouterLink><button :disabled="!filtered.length" @click="exportCsv">导出</button><button :disabled="!pagePayments.length" @click="tablePrint = true">打印本页表格</button>
+            <RouterLink class="primary-button" to="/payments/new">＋ 新增付款单</RouterLink><button :disabled="busy || exporting || !count" @click="exportCsv">{{exporting ? '导出中…' : '导出'}}</button><button :disabled="!pagePayments.length" @click="tablePrint = true">打印本页表格</button>
           </div>
         </header>
         <div class="order-sheets" :data-columns="cardColumns" aria-live="polite">
@@ -142,11 +125,11 @@ function exportCsv() {
             <div v-if="show('attachments') && attachments(p).length" class="sheet-attachments"><span>附件：</span><a v-for="(a,i) in attachments(p)" :key="i" :href="safeUrl(a.url || a.file_path)" target="_blank" rel="noopener">{{a.name || a.filename || '附件'}}</a></div>
             <footer class="sheet-actions"><RouterLink :to="`/payments/${p.id}`">详情</RouterLink><RouterLink :to="`/payments/${p.id}/edit`" :aria-label="`编辑付款单 ${p.pay_number}`">编辑付款单</RouterLink><RouterLink :to="`/payments/${p.id}/print`" :aria-label="`打印付款单 ${p.pay_number}`">打印付款单</RouterLink><button class="delete-button" :disabled="deleting" @click="remove(p)">删除</button></footer>
           </article>
-          <nav v-if="filtered.length" class="order-pagination" aria-label="付款单分页"><span>共 {{filtered.length}} 条 · 第 {{page}} / {{pageCount}} 页</span><button :disabled="page <= 1" @click="page--">上一页</button><button :disabled="page >= pageCount" @click="page++">下一页</button></nav>
+          <nav v-if="count" class="order-pagination" aria-label="付款单分页"><span>共 {{count}} 条 · 第 {{page}} / {{pageCount}} 页</span><button :disabled="busy || page <= 1" @click="page--">上一页</button><button :disabled="busy || page >= pageCount" @click="page++">下一页</button></nav>
         </div>
       </main>
     </div>
-    <TablePrint v-model="tablePrint" title="付款单" :columns="printColumns" :rows="pagePayments" :page="page" :total="filtered.length" :display="display" />
+    <TablePrint v-model="tablePrint" title="付款单" :columns="printColumns" :rows="pagePayments" :page="page" :total="count" :display="display" />
   </section>
 </template>
 <style scoped src="./document-workspace.css"></style>

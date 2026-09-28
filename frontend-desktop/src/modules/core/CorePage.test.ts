@@ -137,7 +137,7 @@ describe('invoice live search',()=>{
 async function setup(){const router=createRouter({history:createMemoryHistory(),routes:[{path:'/projects/new',component:CorePage,meta:{coreKind:'projects',coreMode:'new'}},{path:'/projects',component:{template:'<div>项目列表</div>'}},{path:'/system',component:{template:'<div>系统页面</div>'}}]});await router.push('/projects/new');await router.isReady();const wrapper=mount({template:'<router-view v-slot="{Component,route}"><keep-alive><component :is="Component" :key="route.path"/></keep-alive></router-view>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises();return{wrapper,router}}
 describe('core form operation behavior',()=>{
  beforeEach(()=>{vi.clearAllMocks();mocks.request.mockResolvedValue({code:0,data:{}});mocks.allRows.mockResolvedValue([]);mocks.confirm.mockResolvedValue('confirm')})
- it('selects only invoices matching the payment payee and saves them with the approval sheet',async()=>{
+ it('automatically filters by payee and saves only the manually selected matching invoice',async()=>{
   mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:2,supplier_id:3,supplier_contact_person:'张工',order_amount:'100'}]:path==='/supplier/'?[{id:3,name:'销售公司',contact_person:'张工'}]:path==='/payer/'?[{id:4,name:'付款单位'}]:path==='/material/invoice'?[
    {id:8,invoice_number:'MATCH-008',seller_name:'销售公司',total_amount:'10',tax_amount:'1.3'},
    {id:9,invoice_number:'OTHER-009',seller_name:'另一家公司'},

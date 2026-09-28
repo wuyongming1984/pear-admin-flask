@@ -9,7 +9,7 @@ const global={stubs:{'el-dialog':{props:['modelValue','title'],template:'<sectio
 
 describe('seller matched invoice/payment selections',()=>{
  beforeEach(()=>vi.resetAllMocks())
- it('offers full-name seller matches, retains selected legacy invoices and never silently clears them when the payee changes',async()=>{
+ it('filters normalized exact seller matches without automatically selecting or deleting existing links',async()=>{
   const wrapper=mount(PaymentInvoicePicker,{props:{modelValue:[3],supplierName:'上海（甲）公司',invoices:[
    {id:1,seller_name:' 上海(甲) 公司 ',invoice_number:'MATCH',total_amount:'100',tax_amount:'13'},
    {id:2,seller_name:'上海（甲）公司分公司',invoice_number:'OTHER'},
@@ -17,7 +17,9 @@ describe('seller matched invoice/payment selections',()=>{
   ]},global})
   expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
   await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
-  expect(wrapper.text()).toContain('MATCH');expect(wrapper.text()).toContain('EXISTING');expect(wrapper.text()).not.toContain('OTHER')
+  expect(wrapper.get('[role="dialog"]').text()).toContain('MATCH');expect(wrapper.text()).toContain('EXISTING');expect(wrapper.text()).not.toContain('OTHER')
+  expect(wrapper.get('[role="dialog"]').findAll('input[type="checkbox"]').length).toBe(1)
+  expect((wrapper.get('[aria-label="关联发票 MATCH"]').element as HTMLInputElement).checked).toBe(false)
   expect(wrapper.text()).toContain('113.00')
   await wrapper.get('[aria-label="关联发票 MATCH"]').setValue(true)
   expect(wrapper.emitted('update:modelValue')).toBeUndefined()
@@ -25,16 +27,17 @@ describe('seller matched invoice/payment selections',()=>{
   expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([[3,1]])
   await wrapper.setProps({supplierName:'无关单位'})
   await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
-  expect(wrapper.text()).not.toContain('MATCH');expect(wrapper.text()).toContain('EXISTING')
+  expect(wrapper.get('[role="dialog"]').text()).not.toContain('MATCH');expect(wrapper.text()).toContain('EXISTING')
   expect(wrapper.emitted('update:modelValue')).toHaveLength(1)
   wrapper.unmount()
  })
- it('has no candidates for a blank payee and allows explicitly removing an old association',async()=>{
+ it('requires a payee and preserves existing links until the user explicitly removes them',async()=>{
   const wrapper=mount(PaymentInvoicePicker,{props:{modelValue:[1],supplierName:'',invoices:[{id:1,invoice_number:'OLD',seller_name:''},{id:2,invoice_number:'UNSELECTED',seller_name:''}]},global})
   await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
   expect(wrapper.text()).not.toContain('UNSELECTED')
-  await wrapper.get('[aria-label="关联发票 OLD"]').setValue(false)
-  await wrapper.get('[data-testid="confirm-invoice-selection"]').trigger('click')
+  expect(wrapper.get('[role="dialog"]').text()).toContain('请先选择')
+  await wrapper.get('[data-testid="cancel-invoice-selection"]').trigger('click')
+  await wrapper.get('[aria-label="移除发票 OLD"]').trigger('click')
   expect(wrapper.emitted('update:modelValue')).toEqual([[[]]])
   wrapper.unmount()
  })
@@ -55,6 +58,20 @@ describe('seller matched invoice/payment selections',()=>{
   await wrapper.get('[aria-label="关联发票 SECOND"]').setValue(true)
   await wrapper.get('[data-testid="confirm-invoice-selection"]').trigger('click')
   expect(wrapper.emitted('update:modelValue')).toEqual([[[1,2]]])
+  wrapper.unmount()
+ })
+ it('explains that existing invoices do not match instead of claiming the invoice library is empty',async()=>{
+  const wrapper=mount(PaymentInvoicePicker,{props:{modelValue:[],supplierName:'收款公司',invoices:[{id:1,invoice_number:'OTHER-001',seller_name:'销售公司',total_amount:100,tax_amount:13}]},global})
+  await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
+  const dialog=wrapper.get('[role="dialog"]')
+  expect(dialog.text()).toContain('暂无匹配发票')
+  expect(dialog.text()).toContain('发票库现有 1 张发票')
+  expect(dialog.text()).toContain('收款公司')
+  expect(dialog.findAll('input[type="checkbox"]')).toHaveLength(0)
+  expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+  await wrapper.setProps({supplierName:'销售公司'})
+  expect(dialog.findAll('input[type="checkbox"]')).toHaveLength(1)
+  expect((dialog.get('input[type="checkbox"]').element as HTMLInputElement).checked).toBe(false)
   wrapper.unmount()
  })
  it('loads matching payments, posts selected IDs once, and displays the saved reverse links',async()=>{

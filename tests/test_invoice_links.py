@@ -60,26 +60,30 @@ class InvoiceLinksTest(unittest.TestCase):
         self.assertIn(self.client.get(self.url).status_code, (401, 403))
         self.assertIn(self.client.post(self.url, json={'payment_ids': [1]}).status_code, (401, 403))
 
-    def test_payment_create_and_edit_validate_seller_before_any_mutation(self):
+    def test_payment_saves_manual_mismatched_selection_and_shows_reverse_link(self):
         self.seed()
         data = dict(pay_number='NEW', order_id=self.order.id, payee_supplier_id=self.supplier.id,
                     payer_supplier_id=self.payments[0].payer_supplier_id, current_payment_amount='5.00')
-        result = self.client.post('/api/v1/pay/', json={**data, 'invoice_ids': [self.invoices[2].id]}, headers=self.headers).json
+        result = self.client.post('/api/v1/pay/', json={**data, 'invoice_ids': [999]}, headers=self.headers).json
         self.assertNotEqual(result['code'], 0)
         self.assertEqual(db.session.query(PayORM).count(), 3)
-        result = self.client.post('/api/v1/pay/', json={**data, 'invoice_ids': [self.invoices[0].id]*2}, headers=self.headers).json
+        result = self.client.post('/api/v1/pay/', json={**data, 'invoice_ids': [self.invoices[2].id]*2}, headers=self.headers).json
         self.assertEqual(result['code'], 0)
         pid = result['data']['id']
+        endpoint = f'/api/v1/pay/{pid}'
+        result = self.client.put(endpoint, json={'invoice_ids': [self.invoices[0].id, self.invoices[2].id]}, headers=self.headers).json
+        self.assertEqual(result['code'], 0)
+        db.session.expire_all()
         payment = db.session.get(PayORM, pid)
-        self.assertEqual(len(payment.invoices), 1)
-        result = self.client.put(f'/api/v1/pay/{pid}', json={'handler': 'should not change', 'invoice_ids': [self.invoices[2].id]}, headers=self.headers).json
+        self.assertEqual({i.id for i in payment.invoices}, {self.invoices[0].id, self.invoices[2].id})
+        result = self.client.put(endpoint, json={'handler': 'should not change', 'invoice_ids': [999]}, headers=self.headers).json
         self.assertNotEqual(result['code'], 0)
         self.assertIsNone(payment.handler)
-        self.assertEqual([i.id for i in payment.invoices], [self.invoices[0].id])
-        linked = self.client.get(self.url, headers=self.headers).json['data']['linked']
-        self.assertIn(pid, [p['id'] for p in linked])
+        for invoice in (self.invoices[0], self.invoices[2]):
+            linked = self.client.get(f'/api/v1/invoice-links/invoices/{invoice.id}/payments', headers=self.headers).json['data']['linked']
+            self.assertIn(pid, [p['id'] for p in linked])
 
-    def test_payment_keeps_legacy_links_but_cannot_change_payee_with_mismatched_links(self):
+    def test_payment_preserves_user_choices_when_payee_changes_until_explicitly_removed(self):
         self.seed()
         pay = self.payments[0]
         pay.invoices.append(self.invoices[2]); db.session.commit()
@@ -87,8 +91,8 @@ class InvoiceLinksTest(unittest.TestCase):
         result = self.client.put(endpoint, json={'invoice_ids': [self.invoices[2].id], 'handler': '保留原关联'}, headers=self.headers).json
         self.assertEqual(result['code'], 0)
         result = self.client.put(endpoint, json={'payee_supplier_id': self.payments[2].payee_supplier_id}, headers=self.headers).json
-        self.assertNotEqual(result['code'], 0)
-        self.assertEqual(pay.payee_supplier_id, self.supplier.id)
+        self.assertEqual(result['code'], 0)
+        self.assertEqual([i.id for i in pay.invoices], [self.invoices[2].id])
         result = self.client.put(endpoint, json={'invoice_ids': []}, headers=self.headers).json
         self.assertEqual(result['code'], 0)
         self.assertEqual(pay.invoices, [])

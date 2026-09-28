@@ -164,7 +164,7 @@ def create_pay():
     # 提取发票ID列表
     invoice_ids = data.pop("invoice_ids", [])
     try:
-        invoices = payment_invoices(invoice_ids, data['payee_supplier_id'])
+        invoices = payment_invoices(invoice_ids)
     except ValueError as error:
         return {"code": -1, "msg": str(error)}
     
@@ -258,8 +258,7 @@ def change_pay(pid=None):
     invoice_ids = data.pop("invoice_ids", None)
     try:
         invoices = payment_invoices(
-            invoice_ids if invoice_ids is not None else [i.id for i in pay_obj.invoices],
-            data['payee_supplier_id'], pay_obj)
+            invoice_ids if invoice_ids is not None else [i.id for i in pay_obj.invoices])
     except ValueError as error:
         return {"code": -1, "msg": str(error)}
     

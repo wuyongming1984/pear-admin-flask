@@ -7,8 +7,9 @@ const emit = defineEmits<{'update:modelValue': [ids: any[]]}>()
 const key = (name: unknown) => String(name || '').normalize('NFKC').replace(/\s/g, '').toLowerCase()
 const matches = (invoice: Row) => !!key(props.supplierName) && key(invoice.seller_name) === key(props.supplierName)
 const selected = (id: any) => props.modelValue.some(value => String(value) === String(id))
-const candidates = computed(() => props.invoices.filter(invoice => matches(invoice) || selected(invoice.id)))
+const candidates = computed(() => props.invoices.filter(matches))
 const selectedRows = computed(() => props.invoices.filter(invoice => selected(invoice.id)))
+const unmatchedSelected = computed(() => selectedRows.value.filter(invoice => !matches(invoice)).length)
 const visible = ref(false), search = ref(''), draft = ref<any[]>([])
 const filtered = computed(() => candidates.value.filter(invoice => !key(search.value) || key([invoice.invoice_number, invoice.seller_name, invoice.buyer_name].join(' ')).includes(key(search.value))))
 const draftSelected = (id: any) => draft.value.some(value => String(value) === String(id))
@@ -38,23 +39,25 @@ function toggle(invoice: Row, event: Event) {
     </div>
     <p v-else class="muted">尚未选择关联发票</p>
     <el-dialog v-model="visible" title="选择关联发票" width="760px" class="payment-invoice-dialog" append-to-body :close-on-click-modal="false">
-    <p>{{supplierName ? `按销售方匹配：${supplierName}` : '请先选择收款单位，再选择该单位开具的发票。'}}</p>
+    <p v-if="supplierName">收款单位：{{supplierName}}。已自动筛选出 {{candidates.length}} 张销售方相同的发票，请勾选需要关联的单据。</p>
+    <p v-else>请先选择付款单的收款单位，再选择对应发票。</p>
+    <p v-if="unmatchedSelected" class="muted">原有 {{unmatchedSelected}} 张不同销售方的关联已保留，如需取消，可在付款单的已选发票中移除。</p>
     <input v-model="search" class="invoice-search" type="search" aria-label="搜索可关联发票" placeholder="搜索发票号码、销售方或购买方" />
     <div v-if="filtered.length" class="invoice-choices">
       <label v-for="invoice in filtered" :key="invoice.id" class="invoice-choice" :class="{selected: draftSelected(invoice.id)}">
         <input type="checkbox" :aria-label="`关联发票 ${invoice.invoice_number || invoice.id}`" :checked="draftSelected(invoice.id)" :disabled="disabled" @change="toggle(invoice, $event)" />
-        <span><strong>{{invoice.invoice_number || '无发票号码'}}</strong><small>{{invoice.seller_name || '销售方待识别'}} · {{invoice.invoice_date || '日期待识别'}}</small><small v-if="!matches(invoice)" class="legacy-warning">原有关联，与当前收款单位不匹配；更换收款单位时请取消此项。</small></span>
+        <span><strong>{{invoice.invoice_number || '无发票号码'}}</strong><small>{{invoice.seller_name || '销售方待识别'}} · {{invoice.invoice_date || '日期待识别'}}</small><small v-if="matches(invoice)" class="match-label">销售方匹配</small></span>
         <b>¥{{formatMoney(sumMoney([invoice.total_amount, invoice.tax_amount]))}}</b>
       </label>
     </div>
-    <p v-else class="muted">{{search ? '没有找到符合搜索条件的发票' : supplierName ? '暂无销售方匹配的发票，可先到发票管理上传识别。' : '选择收款单位后显示匹配发票'}}</p>
+    <p v-else class="muted">{{!supplierName ? '选择收款单位后自动筛选发票。' : !candidates.length ? `暂无匹配发票：发票销售方须与「${supplierName}」一致。发票库现有 ${invoices.length} 张发票，请核对单位名称或上传对应发票。` : '匹配发票中没有找到符合搜索条件的单据。'}}</p>
     <template #footer><span class="selection-count">已选 {{draft.length}} 张</span><el-button data-testid="cancel-invoice-selection" @click="visible=false">取消</el-button><el-button type="primary" data-testid="confirm-invoice-selection" :disabled="disabled" @click="confirm">确认选择</el-button></template>
     </el-dialog>
   </section>
 </template>
 
 <style scoped>
-.payment-invoice-picker{margin:10px 0 20px;padding:16px;border:1px solid var(--el-border-color);border-radius:8px}.payment-invoice-picker header{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.payment-invoice-picker header span,.payment-invoice-picker p,.save-hint{font-size:12px;color:var(--el-text-color-secondary);line-height:1.6}.invoice-choices{max-height:300px;overflow:auto;margin:12px 0}.invoice-choice{display:flex;gap:10px;padding:12px;border:1px solid var(--el-border-color-lighter);border-radius:6px;margin-bottom:8px;align-items:flex-start;cursor:pointer}.invoice-choice.selected{border-color:var(--el-color-primary);background:var(--el-color-primary-light-9)}.invoice-choice input{margin-top:3px;accent-color:var(--el-color-primary)}.invoice-choice>span{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;overflow-wrap:anywhere}.invoice-choice small{color:var(--el-text-color-secondary)}.invoice-choice b{white-space:nowrap;font-family:monospace}.invoice-choice .legacy-warning{color:var(--el-color-warning-dark-2)}.muted{padding:8px 0}
+.payment-invoice-picker{margin:10px 0 20px;padding:16px;border:1px solid var(--el-border-color);border-radius:8px}.payment-invoice-picker header{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.payment-invoice-picker header span,.payment-invoice-picker p,.save-hint{font-size:12px;color:var(--el-text-color-secondary);line-height:1.6}.invoice-choices{max-height:300px;overflow:auto;margin:12px 0}.invoice-choice{display:flex;gap:10px;padding:12px;border:1px solid var(--el-border-color-lighter);border-radius:6px;margin-bottom:8px;align-items:flex-start;cursor:pointer}.invoice-choice.selected{border-color:var(--el-color-primary);background:var(--el-color-primary-light-9)}.invoice-choice input{margin-top:3px;accent-color:var(--el-color-primary)}.invoice-choice>span{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;overflow-wrap:anywhere}.invoice-choice small{color:var(--el-text-color-secondary)}.invoice-choice b{white-space:nowrap;font-family:monospace}.invoice-choice .match-label{color:var(--el-color-success-dark-2)}.muted{padding:8px 0}
 </style>
 <style>
 .payment-invoice-dialog{max-width:calc(100vw - 32px)}.payment-invoice-dialog .invoice-choices{max-height:45vh}.payment-invoice-dialog .invoice-search{width:100%;box-sizing:border-box;border:1px solid var(--el-border-color);border-radius:6px;padding:10px 12px;font:inherit;color:var(--el-text-color-primary);background:var(--el-bg-color)}.payment-invoice-dialog .selection-count{margin-right:16px;font-size:13px}

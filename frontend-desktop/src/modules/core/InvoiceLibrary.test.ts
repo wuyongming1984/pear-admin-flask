@@ -6,6 +6,7 @@ import InvoiceLibrary from './InvoiceLibrary.vue'
 const mocks=vi.hoisted(()=>({request:vi.fn()}))
 vi.mock('../../api',async importOriginal=>({...await importOriginal<any>(),request:mocks.request}))
 const stubs={
+ InvoicePaymentLinks:true,
  'el-button':{props:['disabled','loading'],template:'<button :disabled="disabled || loading"><slot/></button>'},
  'el-checkbox':true,'el-empty':{props:['description'],template:'<p>{{description}}</p>'},
 }

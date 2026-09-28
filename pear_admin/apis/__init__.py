@@ -18,6 +18,7 @@ from .nursery import nursery_api
 from .material import material_api
 from .system import system_api
 from .document_workspace import document_workspace_api
+from .invoice_links import invoice_links_api
 
 def register_apis(app: Flask):
     apis = Blueprint("api", __name__, url_prefix="/api/v1")
@@ -40,5 +41,6 @@ def register_apis(app: Flask):
     apis.register_blueprint(material_api)
     apis.register_blueprint(system_api)
     apis.register_blueprint(document_workspace_api)
+    apis.register_blueprint(invoice_links_api)
 
     app.register_blueprint(apis)

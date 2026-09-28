@@ -8,6 +8,7 @@ from flask_sqlalchemy.pagination import Pagination
 from pear_admin.extensions import db
 from pear_admin.orms import PayORM, OrderORM, SupplierORM, PayerORM, ProjectORM
 from sqlalchemy import or_
+from pear_admin.invoice_links import payment_invoices
 
 pay_api = Blueprint("pay", __name__, url_prefix="/pay")
 
@@ -162,6 +163,10 @@ def create_pay():
     
     # 提取发票ID列表
     invoice_ids = data.pop("invoice_ids", [])
+    try:
+        invoices = payment_invoices(invoice_ids, data['payee_supplier_id'])
+    except ValueError as error:
+        return {"code": -1, "msg": str(error)}
     
     # 定义允许的字段 (白名单)
     valid_fields = [
@@ -211,11 +216,7 @@ def create_pay():
         db.session.flush()  # 获取pay的ID
         
         # 关联发票
-        if invoice_ids and isinstance(invoice_ids, list):
-            for invoice_id in invoice_ids:
-                invoice = db.session.get(MaterialInvoiceORM, int(invoice_id))
-                if invoice:
-                    pay.invoices.append(invoice)
+        pay.invoices = invoices
         
         db.session.commit()
     except Exception as e:
@@ -234,6 +235,8 @@ def change_pay(pid=None):
     from pear_admin.orms.material import MaterialInvoiceORM
     
     data = request.get_json()
+    if not isinstance(data, dict):
+        return {"code": -1, "msg": "请求数据格式错误"}
     pid = data.get("id") or pid
     
     pay_obj = db.session.get(PayORM, pid)
@@ -253,6 +256,12 @@ def change_pay(pid=None):
     
     # 提取发票ID列表
     invoice_ids = data.pop("invoice_ids", None)
+    try:
+        invoices = payment_invoices(
+            invoice_ids if invoice_ids is not None else [i.id for i in pay_obj.invoices],
+            data['payee_supplier_id'], pay_obj)
+    except ValueError as error:
+        return {"code": -1, "msg": str(error)}
     
     # 更新字段
     for key, value in data.items():
@@ -274,14 +283,7 @@ def change_pay(pid=None):
     
     # 更新发票关联
     if invoice_ids is not None:
-        # 清除现有关联
-        pay_obj.invoices.clear()
-        # 添加新关联
-        if isinstance(invoice_ids, list):
-            for invoice_id in invoice_ids:
-                invoice = db.session.get(MaterialInvoiceORM, int(invoice_id))
-                if invoice:
-                    pay_obj.invoices.append(invoice)
+        pay_obj.invoices = invoices
     
     pay_obj.save()
     return {"code": 0, "msg": "修改付款单信息成功"}

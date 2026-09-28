@@ -1,4 +1,4 @@
-"""Run the existing SQLite database locally without cloud service credentials."""
+"""Run the existing SQLite database locally, using optional OCR credentials."""
 import os
 import sys
 from pathlib import Path
@@ -16,9 +16,16 @@ os.environ["FLASK_DEBUG"] = "0"
 for key in (
     "ALIYUN_ACCESS_KEY_ID", "ALIYUN_ACCESS_KEY_SECRET",
     "ALIYUN_OSS_BUCKET_NAME", "ALIYUN_OSS_ENDPOINT",
-    "BAIDU_OCR_API_KEY", "BAIDU_OCR_SECRET_KEY",
 ):
     os.environ[key] = ""
+
+# Read OCR credentials explicitly: the reloader inherits the old process's
+# environment, which may contain empty values from an earlier local run.
+from dotenv import dotenv_values
+local_config = dotenv_values(ROOT / ".env")
+for key in ("BAIDU_OCR_API_KEY", "BAIDU_OCR_SECRET_KEY"):
+    if local_config.get(key):
+        os.environ[key] = local_config[key]
 
 from pear_admin import create_app
 from pear_admin.extensions import db, scheduler

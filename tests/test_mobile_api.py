@@ -135,7 +135,7 @@ class MobileAPITest(unittest.TestCase):
         p1, p2 = self.project('Same'), self.project('Same suffix')
         supplier = SupplierORM(type_id=1, name='Supplier', contact_person='Contact', phone='1', bank_name='B', account_number='1')
         payer = PayerORM(type_id=1, name='Payer')
-        invoice = MaterialInvoiceORM(invoice_number='INV')
+        invoice = MaterialInvoiceORM(invoice_number='INV', seller_name='Supplier')
         db.session.add_all([supplier, payer, invoice])
         db.session.commit()
         orders = []
@@ -245,7 +245,7 @@ class MobileAPITest(unittest.TestCase):
         supplier = SupplierORM(type_id=1, name='测试供应商', contact_person='张工', phone='13800000000',
                                bank_name='测试银行', account_number='TEST-001')
         payer = PayerORM(type_id=1, name='测试付款单位')
-        invoice = MaterialInvoiceORM(invoice_number='TEST-INVOICE', total_amount=30)
+        invoice = MaterialInvoiceORM(invoice_number='TEST-INVOICE', total_amount=30, seller_name='测试供应商')
         db.session.add_all([supplier, payer, invoice])
         db.session.commit()
         pid = self.project('中文集成项目', project_status='1', project_amount='1000.50',

@@ -4,17 +4,20 @@ import {useRouter} from 'vue-router'
 import {safeUrl} from '../../api'
 import InvoicePaper from './InvoicePaper.vue'
 import InvoiceSourcePreview from './InvoiceSourcePreview.vue'
+import InvoicePaymentLinks from './InvoicePaymentLinks.vue'
 import {formatMoney, sumMoney} from './money'
 import {ocrStatusLabel, type Row} from './model'
 
 const props = defineProps<{rows: Row[]; count: number; busy: boolean; searching?: boolean; selection: Row[]}>()
-const emit = defineEmits<{selection: [rows: Row[]]; remove: [rows: Row[]]; ocr: [rows: Row[]]}>()
+const emit = defineEmits<{selection: [rows: Row[]]; remove: [rows: Row[]]; ocr: [rows: Row[]]; upload: []; linkBusy: [value: boolean]}>()
 const router = useRouter()
 const activeId = ref<any>()
+const linkRevision = ref(0)
 const active = computed(() => props.rows.find(row => row.id === activeId.value) || props.rows[0])
-const uploadVisible = ref(false), moreVisible = ref(false)
+const moreVisible = ref(false)
 const sourcePreview = ref<InstanceType<typeof InvoiceSourcePreview>>()
 watch(() => props.rows, rows => {
+  linkRevision.value++
   if (!rows.some(row => row.id === activeId.value)) activeId.value = rows[0]?.id
   emit('selection', [])
 })
@@ -29,7 +32,7 @@ const amount = (row: Row) => formatMoney(sumMoney([row.total_amount, row.tax_amo
     <aside class="invoice-sidebar" aria-label="发票清单">
       <header><strong>发票清单</strong><span class="invoice-count">{{count}}</span></header>
       <div class="invoice-search">
-        <el-button type="primary" class="invoice-add" @click="uploadVisible = !uploadVisible">新增发票 / 上传识别</el-button>
+        <el-button type="primary" class="invoice-add" @click="emit('upload')">新增发票 / 上传识别</el-button>
         <slot name="search" />
       </div>
       <div class="invoice-batch">
@@ -60,7 +63,6 @@ const amount = (row: Row) => formatMoney(sumMoney([row.total_amount, row.tax_amo
           <el-button @click="moreVisible = !moreVisible">更多操作</el-button>
         </div>
       </header>
-      <div v-if="uploadVisible" class="invoice-extra"><slot name="upload" /></div>
       <div v-if="moreVisible" class="invoice-extra"><slot name="tools" /></div>
       <div class="invoice-preview">
         <template v-if="active">
@@ -73,6 +75,7 @@ const amount = (row: Row) => formatMoney(sumMoney([row.total_amount, row.tax_amo
             </div>
           </div>
           <InvoicePaper :invoice="active" />
+          <InvoicePaymentLinks :key="`${active.id}:${linkRevision}`" :invoice-id="active.id" :disabled="busy" @busy="emit('linkBusy', $event)" />
           <InvoiceSourcePreview ref="sourcePreview" :invoice="active" />
         </template>
         <el-empty v-else description="请选择或上传发票，查看票面详情" />

@@ -12,7 +12,7 @@ const suppliers = [
   {id:2,value:2,name:'乙公司',label:'乙公司',contact_person:'张工',phone:'222'},
   {id:3,value:3,name:'丙公司',label:'丙公司',contact_person:'李工',phone:'333'},
 ]
-const stubs = {RouterLink:true,'el-form-item':true,'el-select':{props:['modelValue','disabled'],template:'<div><slot/></div>'},'el-option':{props:['label','value'],template:'<option :value="value">{{label}}</option>'},'el-input':true,'el-date-picker':true}
+const stubs = {RouterLink:true,'el-form-item':true,'el-select-v2':{props:['modelValue','disabled','options','props'],template:'<div><option v-for="o in options" :value="o[props?.value || \'value\']">{{o[props?.label || \'label\']}}</option></div>'},'el-select':{props:['modelValue','disabled'],template:'<div><slot/></div>'},'el-option':{props:['label','value'],template:'<option :value="value">{{label}}</option>'},'el-input':true,'el-date-picker':true}
 
 test('contact dropdown shows distinct names only and supplier dropdown is limited to that contact',async()=>{
   const wrapper=mount(OrderEntrySheet,{props:{record:{},options:{suppliers},disabled:false},global:{stubs}})

@@ -7,6 +7,7 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from flask_sqlalchemy.pagination import Pagination
 from sqlalchemy import cast, String, or_
+from sqlalchemy.orm import load_only
 
 from pear_admin.extensions import db
 from pear_admin.orms import AttachmentORM, ProjectORM
@@ -64,12 +65,16 @@ def project_list():
     if project_amount:
         q = q.where(cast(ProjectORM.project_amount, String).like(f"%{project_amount}%"))
     
+    slim = request.args.get("mode") == "slim"
+    if slim:
+        q = q.options(load_only(ProjectORM.id, ProjectORM.project_name))
     pages: Pagination = db.paginate(q, page=page, per_page=per_page, error_out=False)
     
     return {
         "code": 0,
         "msg": "获取项目数据成功",
-        "data": [item.json() for item in pages.items],
+        "data": [{"id": item.id, "project_name": item.project_name} for item in pages.items]
+                if slim else [item.json() for item in pages.items],
         "count": pages.total,
     }
 

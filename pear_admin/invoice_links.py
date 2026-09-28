@@ -1,17 +1,24 @@
 """Shared identity matching and validation for invoice/payment relationships."""
 import unicodedata
+import re
 
 from pear_admin.extensions import db
 from pear_admin.orms import MaterialInvoiceORM
 
 
 def company_key(name):
-    return ''.join(unicodedata.normalize('NFKC', name or '').split()).casefold()
+    name = ''.join(unicodedata.normalize('NFKC', name or '').lower().split())
+    name = re.sub(r'(公司|中心|商行|经营部|工作室)(?:\([^()]*\))+[。.,，]*$', r'\1', name)
+    return ''.join(char for char in name if unicodedata.category(char)[0] in 'LN')
 
 
 def same_company(seller, payee):
-    key = company_key(seller)
-    return bool(key) and key == company_key(payee)
+    """Candidate name match, not proof of company identity; users confirm links."""
+    left, right = company_key(seller), company_key(payee)
+    generic = r'(?:有限责任公司|有限公司|公司|集团|中心|商行|分公司|经营部|工作室)+'
+    if not left or not right or re.fullmatch(generic, left) or re.fullmatch(generic, right):
+        return False
+    return left == right or (min(len(left), len(right)) >= 4 and (left in right or right in left))
 
 
 def selected_ids(values):

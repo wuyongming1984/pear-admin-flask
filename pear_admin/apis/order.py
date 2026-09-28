@@ -9,7 +9,7 @@ from sqlalchemy import cast, String, Date, Numeric, or_
 
 from pear_admin.extensions import db
 from pear_admin.orms import OrderORM, SupplierORM, PayORM, ProjectORM
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, load_only
 
 order_api = Blueprint("order", __name__, url_prefix="/order")
 
@@ -130,6 +130,36 @@ def order_list():
         except ValueError:
             pass
     
+    # 编辑器下拉只需要概要与金额，不加载全库的附件、付款单及其供应商。
+    if request.args.get("mode") == "options":
+        q = q.options(
+            load_only(OrderORM.id, OrderORM.order_number, OrderORM.project_id,
+                      OrderORM.supplier_id, OrderORM.supplier_contact_person,
+                      OrderORM.material_name, OrderORM.material_details, OrderORM.order_amount),
+            selectinload(OrderORM.project).load_only(ProjectORM.project_name),
+        )
+        pages = db.paginate(q, page=page, per_page=per_page, error_out=False)
+        ids = [item.id for item in pages.items]
+        paid = dict(db.session.execute(
+            db.select(PayORM.order_id, db.func.sum(PayORM.current_payment_amount))
+            .where(PayORM.order_id.in_(ids)).group_by(PayORM.order_id)
+        ).all()) if ids else {}
+        data = []
+        for item in pages.items:
+            amount = item.order_amount or Decimal("0")
+            total = paid.get(item.id) or Decimal("0")
+            data.append({
+                "id": item.id, "order_number": item.order_number,
+                "project_id": item.project_id,
+                "project_name": item.project.project_name if item.project else None,
+                "supplier_id": item.supplier_id,
+                "supplier_contact_person": item.supplier_contact_person,
+                "material_name": item.material_name, "material_details": item.material_details,
+                "order_amount": str(amount), "paid_amount": str(total),
+                "order_balance": str(amount - total),
+            })
+        return {"code": 0, "data": data, "count": pages.total}
+
     # 使用 selectinload 预加载关联的付款单数据及其供应商关系，避免 N+1 查询
     q = q.options(
         selectinload(OrderORM.project),  # 预加载项目关系

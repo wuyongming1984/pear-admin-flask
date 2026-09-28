@@ -9,10 +9,20 @@ const global={stubs:{'el-dialog':{props:['modelValue','title'],template:'<sectio
 
 describe('seller matched invoice/payment selections',()=>{
  beforeEach(()=>vi.resetAllMocks())
+ it('offers the seller without the payee contact annotation and waits for the user to choose it',async()=>{
+  const wrapper=mount(PaymentInvoicePicker,{props:{modelValue:[],supplierName:'杭州雅鸿装饰工程有限公司（钱顺怡）',invoices:[{id:1,invoice_number:'FUZZY-001',seller_name:'杭州雅鸿装饰工程有限公司'}]},global})
+  await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
+  expect(wrapper.get('[role="dialog"]').text()).toContain('FUZZY-001')
+  expect((wrapper.get('[aria-label="关联发票 FUZZY-001"]').element as HTMLInputElement).checked).toBe(false)
+  await wrapper.get('[aria-label="关联发票 FUZZY-001"]').setValue(true)
+  await wrapper.get('[data-testid="confirm-invoice-selection"]').trigger('click')
+  expect(wrapper.emitted('update:modelValue')).toEqual([[[1]]])
+  wrapper.unmount()
+ })
  it('filters normalized exact seller matches without automatically selecting or deleting existing links',async()=>{
   const wrapper=mount(PaymentInvoicePicker,{props:{modelValue:[3],supplierName:'上海（甲）公司',invoices:[
    {id:1,seller_name:' 上海(甲) 公司 ',invoice_number:'MATCH',total_amount:'100',tax_amount:'13'},
-   {id:2,seller_name:'上海（甲）公司分公司',invoice_number:'OTHER'},
+   {id:2,seller_name:'上海（乙）公司',invoice_number:'OTHER'},
    {id:3,seller_name:'旧单位',invoice_number:'EXISTING'},
   ]},global})
   expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
@@ -64,7 +74,7 @@ describe('seller matched invoice/payment selections',()=>{
   const wrapper=mount(PaymentInvoicePicker,{props:{modelValue:[],supplierName:'收款公司',invoices:[{id:1,invoice_number:'OTHER-001',seller_name:'销售公司',total_amount:100,tax_amount:13}]},global})
   await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
   const dialog=wrapper.get('[role="dialog"]')
-  expect(dialog.text()).toContain('暂无匹配发票')
+  expect(dialog.text()).toContain('暂无名称相近的发票')
   expect(dialog.text()).toContain('发票库现有 1 张发票')
   expect(dialog.text()).toContain('收款公司')
   expect(dialog.findAll('input[type="checkbox"]')).toHaveLength(0)

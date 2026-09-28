@@ -13,7 +13,7 @@ vi.mock('../../api',()=>({request:mocks.request,allRows:mocks.allRows,query:(p:a
 vi.mock('element-plus',()=>({ElMessage:{error:vi.fn(),success:vi.fn(),warning:vi.fn()},ElMessageBox:{confirm:mocks.confirm}}))
 vi.mock('../../components/AttachmentEditor.vue',()=>({default:{props:['modelValue','drag'],template:'<div />'}}))
 const input={props:['modelValue'],emits:['update:modelValue'],template:'<input :value="modelValue" @input="$emit(\'update:modelValue\',$event.target.value)" />'}
-const stubs:any={'el-form':{template:'<form><slot/></form>'},'el-form-item':{props:['label'],template:'<label>{{label}}<slot/></label>'},'el-input':input,'el-select':input,'el-option':true,'el-date-picker':input,'el-button':{props:['nativeType','disabled','loading'],template:'<button :type="nativeType||\'button\'" :disabled="disabled||loading"><slot/></button>'},'el-alert':{props:['title'],template:'<div role="alert">{{title}}</div>'},'el-dialog':{props:['modelValue','title'],template:'<section v-if="modelValue" role="dialog" :aria-label="title"><slot/><slot name="footer"/></section>'},'el-table':true,'el-table-column':true,'el-pagination':true,'el-descriptions':true,'el-descriptions-item':true,'el-popover':true,'el-checkbox-group':true,'el-checkbox':true,'el-empty':{props:['description'],template:'<p>{{description}}</p>'}}
+const stubs:any={'el-form':{template:'<form><slot/></form>'},'el-form-item':{props:['label'],template:'<label>{{label}}<slot/></label>'},'el-input':input,'el-select':input,'el-select-v2':input,'el-option':true,'el-date-picker':input,'el-button':{props:['nativeType','disabled','loading'],template:'<button :type="nativeType||\'button\'" :disabled="disabled||loading"><slot/></button>'},'el-alert':{props:['title'],template:'<div role="alert">{{title}}</div>'},'el-dialog':{props:['modelValue','title'],template:'<section v-if="modelValue" role="dialog" :aria-label="title"><slot/><slot name="footer"/></section>'},'el-table':true,'el-table-column':true,'el-pagination':true,'el-descriptions':true,'el-descriptions-item':true,'el-popover':true,'el-checkbox-group':true,'el-checkbox':true,'el-empty':{props:['description'],template:'<p>{{description}}</p>'}}
 describe('invoice live search',()=>{
  let wrapper:any
  const invoiceCalls=()=>mocks.request.mock.calls.filter(([url])=>url.startsWith('/material/invoice?'))
@@ -137,6 +137,41 @@ describe('invoice live search',()=>{
 async function setup(){const router=createRouter({history:createMemoryHistory(),routes:[{path:'/projects/new',component:CorePage,meta:{coreKind:'projects',coreMode:'new'}},{path:'/projects',component:{template:'<div>项目列表</div>'}},{path:'/system',component:{template:'<div>系统页面</div>'}}]});await router.push('/projects/new');await router.isReady();const wrapper=mount({template:'<router-view v-slot="{Component,route}"><keep-alive><component :is="Component" :key="route.path"/></keep-alive></router-view>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises();return{wrapper,router}}
 describe('core form operation behavior',()=>{
  beforeEach(()=>{vi.clearAllMocks();mocks.request.mockResolvedValue({code:0,data:{}});mocks.allRows.mockResolvedValue([]);mocks.confirm.mockResolvedValue('confirm')})
+ it.each(['orders','payments'])('starts %s detail without waiting for slow options',async(kind)=>{
+  let resolveOptions!: (rows:any[])=>void
+  mocks.allRows.mockReturnValue(new Promise(resolve=>resolveOptions=resolve))
+  const path=`/${kind}/2/edit`,api=kind==='orders'?'/order/2':'/pay/2'
+  mocks.request.mockResolvedValue({code:0,data:{id:2,invoices_list:[]}})
+  const router=createRouter({history:createMemoryHistory(),routes:[{path:`/${kind}/:id/edit`,component:CorePage,meta:{coreKind:kind,coreMode:'edit'}}]})
+  await router.push(path);await router.isReady()
+  const wrapper=mount({template:'<router-view />'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}})
+  await flushPromises()
+  try { expect(mocks.request).toHaveBeenCalledWith(api) }
+  finally {resolveOptions([]);await flushPromises();wrapper.unmount()}
+ })
+ it('opens payment editing without loading the invoice library, preserves existing links and retries invoice errors',async()=>{
+  const invoice={id:8,invoice_number:'LINKED-008',seller_name:'销售公司',total_amount:'10',tax_amount:'1.3'}
+  mocks.request.mockResolvedValue({code:0,data:{id:2,pay_number:'FK2',order_id:3,payer_supplier_id:4,payee_supplier_id:5,current_payment_amount:'10',invoices_list:[invoice]}})
+  mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:3,supplier_id:5,supplier_contact_person:'张工'}]:path==='/supplier/'?[{id:5,name:'销售公司',contact_person:'张工'}]:[])
+  const router=createRouter({history:createMemoryHistory(),routes:[{path:'/payments/:id/edit',component:CorePage,meta:{coreKind:'payments',coreMode:'edit'}},{path:'/payments',component:{template:'<p>列表</p>'}}]})
+  await router.push('/payments/2/edit');await router.isReady()
+  const wrapper=mount({template:'<router-view />'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises()
+  expect(mocks.allRows.mock.calls.some(([url])=>url==='/material/invoice')).toBe(false)
+  expect(wrapper.get('.payment-invoice-picker').text()).toContain('LINKED-008')
+  expect(wrapper.get('.payment-invoice-picker').text()).toContain('11.30')
+  mocks.allRows.mockRejectedValueOnce(new Error('发票加载失败'))
+  await wrapper.get('[data-testid="choose-invoices"]').trigger('click');await flushPromises()
+  expect(wrapper.get('[role="dialog"]').text()).toContain('发票加载失败')
+  expect(wrapper.get('[data-testid="confirm-invoice-selection"]').attributes('disabled')).toBeDefined()
+  mocks.allRows.mockResolvedValueOnce([invoice])
+  await wrapper.get('[data-testid="retry-invoice-options"]').trigger('click');await flushPromises()
+  expect(wrapper.get('[data-testid="confirm-invoice-selection"]').attributes('disabled')).toBeUndefined()
+  await wrapper.get('[data-testid="cancel-invoice-selection"]').trigger('click')
+  await wrapper.get('form').trigger('submit');await flushPromises()
+  const put=mocks.request.mock.calls.find(([,o])=>o?.method==='PUT')!
+  expect(JSON.parse(put[1].body).invoice_ids).toEqual([8])
+  wrapper.unmount()
+ })
  it('automatically filters by payee and saves only the manually selected matching invoice',async()=>{
   mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:2,supplier_id:3,supplier_contact_person:'张工',order_amount:'100'}]:path==='/supplier/'?[{id:3,name:'销售公司',contact_person:'张工'}]:path==='/payer/'?[{id:4,name:'付款单位'}]:path==='/material/invoice'?[
    {id:8,invoice_number:'MATCH-008',seller_name:'销售公司',total_amount:'10',tax_amount:'1.3'},

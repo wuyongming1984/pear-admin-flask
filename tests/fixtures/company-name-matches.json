@@ -1,0 +1,14 @@
+[
+  {"left":"杭州雅鸿装饰工程有限公司", "right":"杭州雅鸿装饰工程有限公司（钱顺怡）。", "match":true},
+  {"left":"杭州雅鸿装饰工程有限公司（财务）", "right":"杭州雅鸿装饰工程有限公司（钱顺怡）", "match":true},
+  {"left":" 杭州 雅鸿装饰工程有限公司 ", "right":"杭州雅鸿装饰工程有限公司", "match":true},
+  {"left":"雅鸿装饰工程", "right":"杭州雅鸿装饰工程有限公司", "match":true},
+  {"left":"上海（甲）公司", "right":" 上海(甲) 公司 ", "match":true},
+  {"left":"ABC Trading Co., Ltd.", "right":"ＡＢＣ Trading Co Ltd", "match":true},
+  {"left":"上海（甲）公司", "right":"上海（乙）公司", "match":false},
+  {"left":"杭州雅鸿装饰工程有限公司", "right":"杭州雅宏装饰工程有限公司", "match":false},
+  {"left":"有限公司", "right":"杭州雅鸿装饰工程有限公司", "match":false},
+  {"left":"雅鸿", "right":"杭州雅鸿装饰工程有限公司", "match":false},
+  {"left":"", "right":"杭州雅鸿装饰工程有限公司", "match":false},
+  {"left":"（ ）", "right":"杭州雅鸿装饰工程有限公司", "match":false}
+]

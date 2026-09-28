@@ -42,8 +42,8 @@ function opts(f:Field){if(kind.value==='payments'&&editing.value&&f.key==='payee
 function display(row:Row,f:Field){if(invoiceList.value&&f.key==='supplier_id')return row.supplier_name||'—';const v=row[f.key];if(f.kind==='money'||['paid_amount','order_balance','current_payment_amount'].includes(f.key))return formatMoney(v);return opts(f).find(x=>String(x.value)===String(v))?.label??v??'—'}
 function fail(e:any){error.value=e.message||String(e);ElMessage.error(error.value)}
 async function loadOptions(){
- const needed=new Set((invoiceList.value?schema.value.search:[...schema.value.fields,...schema.value.search]).map(f=>f.source).filter(Boolean));if(kind.value==='payments'){needed.add('invoices');needed.add('materials')}
- const tasks:Record<string,()=>Promise<any>>={projects:()=>allRows('/project/'),orders:()=>allRows('/order/'),suppliers:()=>allRows('/supplier/'),payers:()=>allRows('/payer/'),invoices:()=>allRows('/material/invoice'),materials:()=>allRows('/dictionary/detail/list',{dic_id:35}),statuses:()=>allRows('/dictionary/detail/list',{dic_id:28}),supplierTypes:()=>allRows('/dictionary/detail/list',{dic_id:25})}
+ const needed=new Set((invoiceList.value?schema.value.search:[...schema.value.fields,...schema.value.search]).map(f=>f.source).filter(Boolean));if(kind.value==='payments')needed.add('materials')
+ const tasks:Record<string,()=>Promise<any>>={projects:()=>allRows('/project/',{mode:'slim'}),orders:()=>allRows('/order/',{mode:'options'}),suppliers:()=>allRows('/supplier/',{mode:'slim'}),payers:()=>allRows('/payer/'),invoices:()=>allRows('/material/invoice'),materials:()=>allRows('/dictionary/detail/list',{dic_id:35}),statuses:()=>allRows('/dictionary/detail/list',{dic_id:28}),supplierTypes:()=>allRows('/dictionary/detail/list',{dic_id:25})}
  await Promise.all([...needed].map(async key=>{if(!key)return;if(key==='payerTypes'){options.value[key]=[{value:1,label:'单位'},{value:2,label:'个人'}];return}if(tasks[key]){const data=await tasks[key]!();options.value[key]=data.map((x:Row)=>({...x,value:['materials','statuses','supplierTypes'].includes(key)?(key==='supplierTypes'?Number(x.code):String(x.code)):x.id,label:key==='orders'?[x.order_number,x.project_name,x.material_name].filter(Boolean).join(' · '):key==='invoices'?[x.invoice_number,x.seller_name,x.total_amount].filter(Boolean).join(' · '):(x.value||x.project_name||x.name)}));}}))
  if(options.value.orders)options.value.orders=options.value.orders.map(x=>({...x,label:orderOptionLabel(x,options.value.materials)}));
  if([...needed].some(x=>['xmgm','xmzt','categories','deductibles'].includes(x||''))){const r=await request('/dictionary/options?codes=xmgm,xmzt,fpdl,kfdk');for(const [key,code]of Object.entries({xmgm:'xmgm',xmzt:'xmzt',categories:'fpdl',deductibles:'kfdk'}))options.value[key]=r.data?.[code]||[]}
@@ -76,13 +76,29 @@ watch(()=>JSON.stringify(filters.value),()=>{
 },{flush:'sync'})
 onBeforeUnmount(stopInvoiceSearch);onDeactivated(stopInvoiceSearch)
 async function load(){if(invoiceList.value)return loadInvoiceList();busy.value=true;ready.value=false;error.value='';portalLink.value='';try{
- await loadOptions()
- if(mode.value==='list'){const res=await request(`${schema.value.api}?${query({...filters.value,page:page.value,limit:limit.value})}`);rows.value=res.data;count.value=res.count||0}
- else if(mode.value==='new'){record.value=freshRecord();attachments.value=[];invoiceIds.value=[];if(kind.value==='payments'&&record.value.order_id)changed({key:'order_id',label:'关联订单'})}
- else{let data:Row|undefined;if(kind.value==='payers')data=(await allRows('/payer/')).find(x=>String(x.id)===String(route.params.id));else if(kind.value==='invoices')data=(await request(`/material/invoice?${query({id:route.params.id})}`)).data?.[0];else data=(await request(schema.value.api+route.params.id)).data;if(!data)throw new Error('记录不存在');record.value={...data};attachments.value=schema.value.attachments?parseAttachments(data):[];invoiceIds.value=(data.invoices_list||[]).map((x:Row)=>x.id)}
+ await Promise.all([loadOptions(),loadRecord()])
  if(kind.value==='payments'&&mode.value==='edit')originalPayment.value={order_id:record.value.order_id,current_payment_amount:record.value.current_payment_amount}
+ if(kind.value==='payments'&&mode.value==='new'&&record.value.order_id)changed({key:'order_id',label:'关联订单'})
  baseline.value=snapshot();ready.value=true
  }catch(e){fail(e)}finally{busy.value=false}}
+async function loadRecord(){
+ if(mode.value==='list'){const res=await request(`${schema.value.api}?${query({...filters.value,page:page.value,limit:limit.value})}`);rows.value=res.data;count.value=res.count||0}
+ else if(mode.value==='new'){record.value=freshRecord();attachments.value=[];invoiceIds.value=[]}
+ else{let data:Row|undefined;if(kind.value==='payers')data=(await allRows('/payer/')).find(x=>String(x.id)===String(route.params.id));else if(kind.value==='invoices')data=(await request(`/material/invoice?${query({id:route.params.id})}`)).data?.[0];else data=(await request(schema.value.api+route.params.id)).data;if(!data)throw new Error('记录不存在');record.value={...data};attachments.value=schema.value.attachments?parseAttachments(data):[];invoiceIds.value=(data.invoices_list||[]).map((x:Row)=>x.id);if(kind.value==='payments')options.value.invoices=data.invoices_list||[]}
+}
+const invoiceLoading=ref(false),invoiceLoadError=ref('')
+async function loadPaymentInvoices(){
+ if(invoiceLoading.value)return
+ invoiceLoading.value=true;invoiceLoadError.value=''
+ try{
+  const invoices=await allRows('/material/invoice')
+  // Keep existing links even when a catalog response no longer includes them.
+  const merged=new Map((options.value.invoices||[]).map(x=>[String(x.id),x]))
+  for(const invoice of invoices)merged.set(String(invoice.id),invoice)
+  options.value.invoices=[...merged.values()]
+ }catch(e){invoiceLoadError.value=(e as Error).message||'发票加载失败，请重试'}
+ finally{invoiceLoading.value=false}
+}
 const unload=(event:BeforeUnloadEvent)=>{if(dirty.value||saving.value||uploading.value){event.preventDefault();event.returnValue=''}};window.addEventListener('beforeunload',unload);onBeforeUnmount(()=>window.removeEventListener('beforeunload',unload))
 let lastQuery=JSON.stringify(route.query);watch(()=>currentRoute.fullPath,()=>{if(mode.value==='list'&&currentRoute.path===route.path&&JSON.stringify(currentRoute.query)!==lastQuery){lastQuery=JSON.stringify(currentRoute.query);filters.value=Object.fromEntries(Object.entries(currentRoute.query).map(([k,v])=>[k,k.endsWith(`_id`)&&v?Number(v):v]));page.value=1;void load()}});void load();let activatedOnce=false;onActivated(()=>{if(activatedOnce&&!busy.value&&!saving.value&&!uploading.value&&(mode.value==='list'||kind.value==='payments'&&(mode.value==='detail'||editing.value&&!dirty.value)))void load();activatedOnce=true})
 const guard=async()=>{if(saving.value||uploading.value)return false;if(dirty.value){try{await ElMessageBox.confirm('尚有未保存的修改，确定离开当前页面？','未保存修改',{type:'warning'});return true}catch{return false}}};onBeforeRouteLeave(guard);onBeforeRouteUpdate(guard)
@@ -121,7 +137,7 @@ async function exportCsv(){if(saving.value)return;saving.value=true;try{let data
 <el-pagination v-model:current-page="page" v-model:page-size="limit" :page-sizes="[20,50,100]" :total="count" layout="total,sizes,prev,pager,next" @change="load"/></template>
 <template v-else-if="ready"><el-form v-if="editing" :class="paperPayment || paperOrder ? 'document-paper-form' : 'panel'" label-position="top" @submit.prevent="save">
 <PaymentEntrySheet v-if="paperPayment" :record="record" :original="originalPayment" :order="selectedOrder" :supplier="selectedSupplier" :options="options" :disabled="saving" @field="setEntryField">
-<template #invoices><PaymentInvoicePicker v-model="invoiceIds" :invoices="options.invoices || []" :supplier-name="selectedSupplier?.name" :disabled="saving"/></template>
+<template #invoices><PaymentInvoicePicker v-model="invoiceIds" :invoices="options.invoices || []" :supplier-name="selectedSupplier?.name" :disabled="saving" :loading="invoiceLoading" :error="invoiceLoadError" @load="loadPaymentInvoices"/></template>
 <template #attachments><AttachmentEditor v-model="attachments" kind="payments" drag :readonly="saving" @busy="uploading=$event"/></template>
 <template #actions><el-button type="primary" :loading="saving" :disabled="uploading" native-type="submit">保存付款单</el-button><el-button :disabled="saving||uploading" @click="router.push('/payments')">取消</el-button></template>
 </PaymentEntrySheet>

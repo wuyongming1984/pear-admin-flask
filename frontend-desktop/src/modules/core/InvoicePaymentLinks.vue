@@ -45,14 +45,14 @@ async function save() {
     </div>
     <p v-else-if="!loading && !error" class="muted">暂未关联付款单</p>
     <div v-if="candidates.length" class="payment-choices">
-      <p>已找到销售方匹配的付款单，勾选后保存关联：</p>
+      <p>已按销售方名称模糊匹配付款单，请核对后勾选保存：</p>
       <label v-for="pay in candidates" :key="pay.id" class="payment-choice">
         <input v-model="selected" type="checkbox" :value="pay.id" :aria-label="`关联付款单 ${pay.pay_number}`" :disabled="saving || disabled" />
         <span><strong>{{pay.pay_number}}</strong><small>{{pay.project_name || '未关联项目'}} · {{pay.create_at || '日期未填写'}}</small><small>{{pay.payment_purpose || pay.payee_supplier_name}}</small></span>
         <b>¥{{formatMoney(pay.current_payment_amount)}}</b>
       </label>
     </div>
-    <p v-else-if="!loading && !error" class="muted">{{!seller ? '销售方尚未识别，请完善发票销售方后再关联。' : linked.length ? '匹配的付款单已全部关联' : '未找到收款单位与此销售方一致的付款单。'}}</p>
+    <p v-else-if="!loading && !error" class="muted">{{!seller ? '销售方尚未识别，请完善发票销售方后再关联。' : linked.length ? '匹配的付款单已全部关联' : '未找到收款单位名称与此销售方相近的付款单。'}}</p>
     <footer v-if="candidates.length || saved"><span v-if="saved" role="status" class="link-success">关联已保存，付款单中也可查看此发票。</span><el-button v-if="candidates.length" type="primary" data-testid="save-payment-links" :loading="saving" :disabled="disabled || loading || !selected.length" @click="save">保存关联{{selected.length ? `（${selected.length} 张）` : ''}}</el-button></footer>
   </section>
 </template>

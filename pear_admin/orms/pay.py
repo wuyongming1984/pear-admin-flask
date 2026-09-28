@@ -149,6 +149,7 @@ class PayORM(BaseORM):
                     "invoice_code": invoice.invoice_code,
                     "invoice_date": invoice.invoice_date.strftime("%Y-%m-%d") if invoice.invoice_date else None,
                     "total_amount": format_numeric(invoice.total_amount),
+                    "tax_amount": format_numeric(invoice.tax_amount),
                     "seller_name": invoice.seller_name,
                     "file_path": invoice.file_path,
                 })

@@ -1,5 +1,8 @@
 """Both entry points share real stored links; no production DB/network involved."""
 import unittest
+import json
+from pathlib import Path
+from pear_admin.invoice_links import same_company
 from tests import test_mobile_api
 from pear_admin.extensions import db
 from pear_admin.orms import SupplierORM, OrderORM, PayORM, PayerORM, MaterialInvoiceORM
@@ -9,9 +12,27 @@ class InvoiceLinksTest(unittest.TestCase):
     setUp = test_mobile_api.MobileAPITest.setUp
     tearDown = test_mobile_api.MobileAPITest.tearDown
 
+    def test_company_matching_cases_shared_with_frontend(self):
+        cases = json.loads((Path(__file__).parent / 'fixtures/company-name-matches.json').read_text(encoding='utf-8'))
+        for case in cases:
+            with self.subTest(case=case):
+                self.assertEqual(same_company(case['left'], case['right']), case['match'])
+                self.assertEqual(same_company(case['right'], case['left']), case['match'])
+
+    def test_contact_annotation_matches_and_can_be_linked_from_invoice(self):
+        self.seed()
+        self.supplier.name = '杭州雅鸿装饰工程有限公司（钱顺怡）'
+        self.invoices[0].seller_name = '杭州雅鸿装饰工程有限公司'
+        db.session.commit()
+        data = self.client.get(self.url, headers=self.headers).json['data']
+        self.assertEqual({p['id'] for p in data['matched']}, {p.id for p in self.payments[:2]})
+        response = self.link([self.payments[0].id])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([p['id'] for p in response.json['data']['linked']], [self.payments[0].id])
+
     def seed(self):
         self.supplier = SupplierORM(type_id=1, name='上海（甲）公司', contact_person='甲', phone='', bank_name='', account_number='')
-        other = SupplierORM(type_id=1, name='上海（甲）公司分公司', contact_person='甲', phone='', bank_name='', account_number='')
+        other = SupplierORM(type_id=1, name='上海（乙）公司', contact_person='甲', phone='', bank_name='', account_number='')
         payer = PayerORM(type_id=1, name='付款单位')
         db.session.add_all([self.supplier, other, payer]); db.session.flush()
         self.order = OrderORM(order_number='D001', supplier_id=self.supplier.id, supplier_contact_person='甲', material_name='材料', order_amount=1000)
@@ -24,7 +45,7 @@ class InvoiceLinksTest(unittest.TestCase):
     def link(self, ids):
         return self.client.post(self.url, json={'payment_ids': ids}, headers=self.headers)
 
-    def test_candidates_match_normalized_full_name_not_substring(self):
+    def test_candidates_match_normalized_name_but_not_unrelated_company(self):
         self.seed()
         response = self.client.get(self.url, headers=self.headers)
         self.assertEqual(response.status_code, 200)

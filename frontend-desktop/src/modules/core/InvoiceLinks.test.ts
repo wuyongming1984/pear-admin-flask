@@ -5,7 +5,7 @@ import PaymentInvoicePicker from './PaymentInvoicePicker.vue'
 import InvoicePaymentLinks from './InvoicePaymentLinks.vue'
 const mocks=vi.hoisted(()=>({request:vi.fn()}))
 vi.mock('../../api',()=>({request:mocks.request}))
-const global={stubs:{'el-button':{props:['disabled','loading'],template:'<button :disabled="disabled||loading"><slot/></button>'},RouterLink:{props:['to'],template:'<a :href="to"><slot/></a>'}}}
+const global={stubs:{'el-dialog':{props:['modelValue','title'],template:'<section v-if="modelValue" role="dialog" :aria-label="title"><slot/><slot name="footer"/></section>'},'el-button':{props:['disabled','loading'],template:'<button :disabled="disabled||loading"><slot/></button>'},RouterLink:{props:['to'],template:'<a :href="to"><slot/></a>'}}}
 
 describe('seller matched invoice/payment selections',()=>{
  beforeEach(()=>vi.resetAllMocks())
@@ -15,20 +15,46 @@ describe('seller matched invoice/payment selections',()=>{
    {id:2,seller_name:'上海（甲）公司分公司',invoice_number:'OTHER'},
    {id:3,seller_name:'旧单位',invoice_number:'EXISTING'},
   ]},global})
+  expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+  await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
   expect(wrapper.text()).toContain('MATCH');expect(wrapper.text()).toContain('EXISTING');expect(wrapper.text()).not.toContain('OTHER')
   expect(wrapper.text()).toContain('113.00')
   await wrapper.get('[aria-label="关联发票 MATCH"]').setValue(true)
+  expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+  await wrapper.get('[data-testid="confirm-invoice-selection"]').trigger('click')
   expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([[3,1]])
   await wrapper.setProps({supplierName:'无关单位'})
+  await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
   expect(wrapper.text()).not.toContain('MATCH');expect(wrapper.text()).toContain('EXISTING')
   expect(wrapper.emitted('update:modelValue')).toHaveLength(1)
   wrapper.unmount()
  })
  it('has no candidates for a blank payee and allows explicitly removing an old association',async()=>{
   const wrapper=mount(PaymentInvoicePicker,{props:{modelValue:[1],supplierName:'',invoices:[{id:1,invoice_number:'OLD',seller_name:''},{id:2,invoice_number:'UNSELECTED',seller_name:''}]},global})
+  await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
   expect(wrapper.text()).not.toContain('UNSELECTED')
   await wrapper.get('[aria-label="关联发票 OLD"]').setValue(false)
+  await wrapper.get('[data-testid="confirm-invoice-selection"]').trigger('click')
   expect(wrapper.emitted('update:modelValue')).toEqual([[[]]])
+  wrapper.unmount()
+ })
+ it('keeps choices through searches and discards unconfirmed changes when cancelled',async()=>{
+  const wrapper=mount(PaymentInvoicePicker,{props:{modelValue:[],supplierName:'甲公司',invoices:[{id:1,invoice_number:'FIRST',seller_name:'甲公司'},{id:2,invoice_number:'SECOND',seller_name:'甲公司'}]},global})
+  await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
+  expect(wrapper.findAll('input[type="checkbox"]').every(input=>!(input.element as HTMLInputElement).checked)).toBe(true)
+  await wrapper.get('[aria-label="关联发票 FIRST"]').setValue(true)
+  await wrapper.get('[aria-label="搜索可关联发票"]').setValue('SECOND')
+  expect(wrapper.find('[aria-label="关联发票 FIRST"]').exists()).toBe(false)
+  await wrapper.get('[aria-label="关联发票 SECOND"]').setValue(true)
+  await wrapper.get('[data-testid="cancel-invoice-selection"]').trigger('click')
+  expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+  await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
+  expect(wrapper.findAll('input[type="checkbox"]').every(input=>!(input.element as HTMLInputElement).checked)).toBe(true)
+  await wrapper.get('[aria-label="关联发票 FIRST"]').setValue(true)
+  await wrapper.get('[aria-label="搜索可关联发票"]').setValue('SECOND')
+  await wrapper.get('[aria-label="关联发票 SECOND"]').setValue(true)
+  await wrapper.get('[data-testid="confirm-invoice-selection"]').trigger('click')
+  expect(wrapper.emitted('update:modelValue')).toEqual([[[1,2]]])
   wrapper.unmount()
  })
  it('loads matching payments, posts selected IDs once, and displays the saved reverse links',async()=>{

@@ -13,7 +13,7 @@ vi.mock('../../api',()=>({request:mocks.request,allRows:mocks.allRows,query:(p:a
 vi.mock('element-plus',()=>({ElMessage:{error:vi.fn(),success:vi.fn(),warning:vi.fn()},ElMessageBox:{confirm:mocks.confirm}}))
 vi.mock('../../components/AttachmentEditor.vue',()=>({default:{props:['modelValue','drag'],template:'<div />'}}))
 const input={props:['modelValue'],emits:['update:modelValue'],template:'<input :value="modelValue" @input="$emit(\'update:modelValue\',$event.target.value)" />'}
-const stubs:any={'el-form':{template:'<form><slot/></form>'},'el-form-item':{props:['label'],template:'<label>{{label}}<slot/></label>'},'el-input':input,'el-select':input,'el-option':true,'el-date-picker':input,'el-button':{props:['nativeType','disabled','loading'],template:'<button :type="nativeType||\'button\'" :disabled="disabled||loading"><slot/></button>'},'el-alert':{props:['title'],template:'<div role="alert">{{title}}</div>'},'el-dialog':true,'el-table':true,'el-table-column':true,'el-pagination':true,'el-descriptions':true,'el-descriptions-item':true,'el-popover':true,'el-checkbox-group':true,'el-checkbox':true,'el-empty':{props:['description'],template:'<p>{{description}}</p>'}}
+const stubs:any={'el-form':{template:'<form><slot/></form>'},'el-form-item':{props:['label'],template:'<label>{{label}}<slot/></label>'},'el-input':input,'el-select':input,'el-option':true,'el-date-picker':input,'el-button':{props:['nativeType','disabled','loading'],template:'<button :type="nativeType||\'button\'" :disabled="disabled||loading"><slot/></button>'},'el-alert':{props:['title'],template:'<div role="alert">{{title}}</div>'},'el-dialog':{props:['modelValue','title'],template:'<section v-if="modelValue" role="dialog" :aria-label="title"><slot/><slot name="footer"/></section>'},'el-table':true,'el-table-column':true,'el-pagination':true,'el-descriptions':true,'el-descriptions-item':true,'el-popover':true,'el-checkbox-group':true,'el-checkbox':true,'el-empty':{props:['description'],template:'<p>{{description}}</p>'}}
 describe('invoice live search',()=>{
  let wrapper:any
  const invoiceCalls=()=>mocks.request.mock.calls.filter(([url])=>url.startsWith('/material/invoice?'))
@@ -145,9 +145,11 @@ describe('core form operation behavior',()=>{
   const router=createRouter({history:createMemoryHistory(),routes:[{path:'/payments/new',component:CorePage,meta:{coreKind:'payments',coreMode:'new'}},{path:'/payments',component:{template:'<p>付款单列表</p>'}}]})
   await router.push('/payments/new?order_id=2');await router.isReady()
   const wrapper=mount({template:'<router-view/>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises()
+  await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
   expect(wrapper.get('.payment-invoice-picker').text()).toContain('MATCH-008')
   expect(wrapper.get('.payment-invoice-picker').text()).not.toContain('OTHER-009')
   await wrapper.get('[aria-label="关联发票 MATCH-008"]').setValue(true)
+  await wrapper.get('[data-testid="confirm-invoice-selection"]').trigger('click')
   await wrapper.get('[aria-label="付款单位"]').setValue('4')
   await wrapper.get('[aria-label="本次实付金额"]').setValue('10.00')
   await wrapper.get('form').trigger('submit');await flushPromises()

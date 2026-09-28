@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PageHeader from "../../components/PageHeader.vue";
-import {computed,ref,watch,onBeforeUnmount,onActivated,onDeactivated} from 'vue'
+import {computed,ref,watch,nextTick,onBeforeUnmount,onActivated,onDeactivated} from 'vue'
 import {useRoute,useRouter,onBeforeRouteLeave,onBeforeRouteUpdate} from 'vue-router'
 import {ElMessage,ElMessageBox} from 'element-plus'
 import {request,query,allRows,safeUrl} from '../../api'
@@ -27,6 +27,12 @@ onDeactivated(()=>{invoiceUploadVisible.value=false})
 const invoiceList=computed(()=>kind.value==='invoices'&&mode.value==='list')
 const paperOrder=computed(()=>kind.value==='orders'&&editing.value)
 const paperPayment=computed(()=>kind.value==='payments'&&editing.value)
+const paymentInvoicePicker=ref<InstanceType<typeof PaymentInvoicePicker>>()
+async function openRequestedInvoicePicker(){
+ if(paperPayment.value&&ready.value&&currentRoute.path===route.path&&currentRoute.query.action==='link-invoices'){
+  await nextTick();paymentInvoicePicker.value?.open()
+ }
+}
 const originalPayment=ref<Row>()
 const rows=ref<Row[]>([]),record=ref<Row>({}),attachments=ref<Row[]>([]),invoiceIds=ref<any[]>([]),selection=ref<Row[]>([]),options=ref<Record<string,Row[]>>({}),filters=ref<Row>(Object.fromEntries(Object.entries(route.query).map(([k,v])=>[k,k.endsWith(`_id`)&&v?Number(v):v]))),page=ref(1),limit=ref(20),count=ref(0),busy=ref(false),saving=ref(false),uploading=ref(false),error=ref(''),ready=ref(false),baseline=ref(''),syncOrders=ref<Row[]>([]),syncVisible=ref(false),pendingPayload=ref<Row>({}),uploadReport=ref<Row|null>(null),portalLink=ref('')
 const snapshot=()=>JSON.stringify([record.value,attachments.value,invoiceIds.value]); const dirty=computed(()=>editing.value&&ready.value&&snapshot()!==baseline.value)
@@ -79,7 +85,7 @@ async function load(){if(invoiceList.value)return loadInvoiceList();busy.value=t
  await Promise.all([loadOptions(),loadRecord()])
  if(kind.value==='payments'&&mode.value==='edit')originalPayment.value={order_id:record.value.order_id,current_payment_amount:record.value.current_payment_amount}
  if(kind.value==='payments'&&mode.value==='new'&&record.value.order_id)changed({key:'order_id',label:'关联订单'})
- baseline.value=snapshot();ready.value=true
+ baseline.value=snapshot();ready.value=true;await openRequestedInvoicePicker()
  }catch(e){fail(e)}finally{busy.value=false}}
 async function loadRecord(){
  if(mode.value==='list'){const res=await request(`${schema.value.api}?${query({...filters.value,page:page.value,limit:limit.value})}`);rows.value=res.data;count.value=res.count||0}
@@ -137,7 +143,7 @@ async function exportCsv(){if(saving.value)return;saving.value=true;try{let data
 <el-pagination v-model:current-page="page" v-model:page-size="limit" :page-sizes="[20,50,100]" :total="count" layout="total,sizes,prev,pager,next" @change="load"/></template>
 <template v-else-if="ready"><el-form v-if="editing" :class="paperPayment || paperOrder ? 'document-paper-form' : 'panel'" label-position="top" @submit.prevent="save">
 <PaymentEntrySheet v-if="paperPayment" :record="record" :original="originalPayment" :order="selectedOrder" :supplier="selectedSupplier" :options="options" :disabled="saving" @field="setEntryField">
-<template #invoices><PaymentInvoicePicker v-model="invoiceIds" :invoices="options.invoices || []" :supplier-name="selectedSupplier?.name" :disabled="saving" :loading="invoiceLoading" :error="invoiceLoadError" @load="loadPaymentInvoices"/></template>
+<template #invoices><PaymentInvoicePicker ref="paymentInvoicePicker" v-model="invoiceIds" :invoices="options.invoices || []" :supplier-name="selectedSupplier?.name" :disabled="saving" :loading="invoiceLoading" :error="invoiceLoadError" @load="loadPaymentInvoices"/></template>
 <template #attachments><AttachmentEditor v-model="attachments" kind="payments" drag :readonly="saving" @busy="uploading=$event"/></template>
 <template #actions><el-button type="primary" :loading="saving" :disabled="uploading" native-type="submit">保存付款单</el-button><el-button :disabled="saving||uploading" @click="router.push('/payments')">取消</el-button></template>
 </PaymentEntrySheet>

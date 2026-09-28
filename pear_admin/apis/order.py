@@ -9,7 +9,7 @@ from sqlalchemy import cast, String, Date, Numeric, or_
 
 from pear_admin.extensions import db
 from pear_admin.orms import OrderORM, SupplierORM, PayORM, ProjectORM
-from sqlalchemy.orm import selectinload, load_only
+from sqlalchemy.orm import selectinload, joinedload, load_only
 
 order_api = Blueprint("order", __name__, url_prefix="/order")
 
@@ -187,12 +187,15 @@ def order_list():
 @order_api.get("/<int:oid>")
 @jwt_required()
 def get_order(oid):
-    # 使用 selectinload 预加载关联的付款单数据
+    # Join scalar relations and batch the collection. Serializing each payment
+    # must not issue separate payer/payee queries as the order history grows.
     order_obj = db.session.scalar(
         db.select(OrderORM)
         .options(
-            selectinload(OrderORM.project),  # 预加载项目关系
-            selectinload(OrderORM.pays)
+            joinedload(OrderORM.project),
+            joinedload(OrderORM.supplier),
+            selectinload(OrderORM.pays).joinedload(PayORM.payer),
+            selectinload(OrderORM.pays).joinedload(PayORM.payee_supplier),
         )
         .where(OrderORM.id == oid)
     )

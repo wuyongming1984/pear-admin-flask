@@ -8,6 +8,7 @@ from flask_sqlalchemy.pagination import Pagination
 from pear_admin.extensions import db
 from pear_admin.orms import PayORM, OrderORM, SupplierORM, PayerORM, ProjectORM
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload, selectinload
 from pear_admin.invoice_links import payment_invoices
 
 pay_api = Blueprint("pay", __name__, url_prefix="/pay")
@@ -136,7 +137,14 @@ def pay_list():
 @pay_api.get("/<int:pid>")
 @jwt_required()
 def get_pay(pid):
-    pay_obj = db.session.get(PayORM, pid)
+    pay_obj = db.session.scalar(
+        db.select(PayORM).where(PayORM.id == pid).options(
+            joinedload(PayORM.order).joinedload(OrderORM.project),
+            joinedload(PayORM.payer),
+            joinedload(PayORM.payee_supplier),
+            selectinload(PayORM.invoices),
+        )
+    )
     if not pay_obj:
         return {"code": -1, "msg": "付款单不存在"}
     

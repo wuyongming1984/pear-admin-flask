@@ -123,7 +123,7 @@ async function exportCsv() {
               <span v-if="!p.invoices_list?.length" class="muted">暂无关联发票</span>
             </div></section>
             <div v-if="show('attachments') && attachments(p).length" class="sheet-attachments"><span>附件：</span><a v-for="(a,i) in attachments(p)" :key="i" :href="safeUrl(a.url || a.file_path)" target="_blank" rel="noopener">{{a.name || a.filename || '附件'}}</a></div>
-            <footer class="sheet-actions"><RouterLink :to="`/payments/${p.id}`">详情</RouterLink><RouterLink :to="`/payments/${p.id}/edit`" :aria-label="`编辑付款单 ${p.pay_number}`">编辑付款单</RouterLink><RouterLink :to="`/payments/${p.id}/print`" :aria-label="`打印付款单 ${p.pay_number}`">打印付款单</RouterLink><button class="delete-button" :disabled="deleting" @click="remove(p)">删除</button></footer>
+            <footer class="sheet-actions"><RouterLink :to="`/payments/${p.id}`">详情</RouterLink><RouterLink :to="{path: `/payments/${p.id}/edit`, query: {action: 'link-invoices'}}" :aria-label="`关联发票 ${p.pay_number}`">关联发票</RouterLink><RouterLink :to="`/payments/${p.id}/edit`" :aria-label="`编辑付款单 ${p.pay_number}`">编辑付款单</RouterLink><RouterLink :to="`/payments/${p.id}/print`" :aria-label="`打印付款单 ${p.pay_number}`">打印付款单</RouterLink><button class="delete-button" :disabled="deleting" @click="remove(p)">删除</button></footer>
           </article>
           <nav v-if="count" class="order-pagination" aria-label="付款单分页"><span>共 {{count}} 条 · 第 {{page}} / {{pageCount}} 页</span><button :disabled="busy || page <= 1" @click="page--">上一页</button><button :disabled="busy || page >= pageCount" @click="page++">下一页</button></nav>
         </div>

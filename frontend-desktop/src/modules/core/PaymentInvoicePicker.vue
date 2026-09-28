@@ -15,6 +15,7 @@ const visible = ref(false), search = ref(''), draft = ref<any[]>([])
 const filtered = computed(() => candidates.value.filter(invoice => !key(search.value) || key([invoice.invoice_number, invoice.seller_name, invoice.buyer_name].join(' ')).includes(key(search.value))))
 const draftSelected = (id: any) => draft.value.some(value => String(value) === String(id))
 function open() { if (!props.disabled) { draft.value = [...props.modelValue]; search.value = ''; visible.value = true; emit('load') } }
+defineExpose({open})
 function confirm() { if (!props.disabled && !props.loading && !props.error) { emit('update:modelValue', [...draft.value]); visible.value = false } }
 function remove(id: any) { if (!props.disabled) emit('update:modelValue', props.modelValue.filter(value => String(value) !== String(id))) }
 onDeactivated(() => { visible.value = false })

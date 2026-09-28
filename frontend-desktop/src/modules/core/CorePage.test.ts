@@ -149,6 +149,30 @@ describe('core form operation behavior',()=>{
   try { expect(mocks.request).toHaveBeenCalledWith(api) }
   finally {resolveOptions([]);await flushPromises();wrapper.unmount()}
  })
+ it('opens the invoice shortcut on a cached payment and saves the selection without changing payment fields',async()=>{
+  const existing={id:8,invoice_number:'OLD-008',seller_name:'销售公司'}
+  const added={id:9,invoice_number:'NEW-009',seller_name:'销售公司'}
+  const payment={id:2,pay_number:'FK2',order_id:3,payer_supplier_id:4,payee_supplier_id:5,current_payment_amount:'10.00',payment_purpose:'原用途',invoices_list:[existing]}
+  mocks.request.mockResolvedValue({code:0,data:payment})
+  mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:3,supplier_id:5,supplier_contact_person:'张工'}]:path==='/supplier/'?[{id:5,name:'销售公司',contact_person:'张工'}]:path==='/material/invoice'?[existing,added]:[])
+  const router=createRouter({history:createMemoryHistory(),routes:[{path:'/payments/:id/edit',component:CorePage,meta:{coreKind:'payments',coreMode:'edit'}},{path:'/payments',component:{template:'<p>列表</p>'}}]})
+  await router.push('/payments/2/edit');await router.isReady()
+  const wrapper=mount({template:'<router-view v-slot="{Component,route}"><keep-alive><component :is="Component" :key="route.path"/></keep-alive></router-view>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}})
+  await flushPromises()
+  expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+  await router.push('/payments');await flushPromises()
+  await router.push('/payments/2/edit?action=link-invoices');await flushPromises()
+  expect(wrapper.get('[role="dialog"]').text()).toContain('NEW-009')
+  expect(wrapper.get('[aria-label="关联发票 OLD-008"]').element).toHaveProperty('checked',true)
+  expect(mocks.request.mock.calls.some(([,o])=>o?.method==='PUT')).toBe(false)
+  await wrapper.get('[aria-label="关联发票 NEW-009"]').setValue(true)
+  await wrapper.get('[data-testid="confirm-invoice-selection"]').trigger('click')
+  await wrapper.get('form').trigger('submit');await flushPromises()
+  const put=mocks.request.mock.calls.find(([,o])=>o?.method==='PUT')!
+  expect(JSON.parse(put[1].body)).toMatchObject({invoice_ids:[8,9],current_payment_amount:'10.00',payment_purpose:'原用途',payee_supplier_id:5})
+  expect(router.currentRoute.value.path).toBe('/payments')
+  wrapper.unmount()
+ })
  it('opens payment editing without loading the invoice library, preserves existing links and retries invoice errors',async()=>{
   const invoice={id:8,invoice_number:'LINKED-008',seller_name:'销售公司',total_amount:'10',tax_amount:'1.3'}
   mocks.request.mockResolvedValue({code:0,data:{id:2,pay_number:'FK2',order_id:3,payer_supplier_id:4,payee_supplier_id:5,current_payment_amount:'10',invoices_list:[invoice]}})

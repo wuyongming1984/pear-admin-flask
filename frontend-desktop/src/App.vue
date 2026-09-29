@@ -4,7 +4,26 @@ const pageLoadFailed=ref(false);const pageFailure=()=>{pageLoadFailed.value=true
 const route=useRoute(),router=useRouter(),collapsed=ref(false),mobileMenu=ref(false),content=ref<HTMLElement>();const resolve=computed(()=>routeForMenu(session.menus,routes));
 const tabs=ref<{path:string;title:string}[]>([]),scrolls=new Map<string,number>();let active='';const isPublic=computed(()=>!!route.meta.public);
 watch(()=>[route.fullPath,route.meta.title],async ([rawPath])=>{const path=String(rawPath);if(content.value&&active)scrolls.set(active,content.value.scrollTop);active=path;if(!isPublic.value&&route.matched.length){const suffix=route.meta.coreMode==='new'?' · 新增':route.meta.coreMode==='edit'?' · 编辑':route.meta.coreMode==='detail'?' · 详情':'';const title=String(route.meta.title||'业务页面')+suffix;const existing=tabs.value.find(x=>x.path===path);if(existing)existing.title=title;else tabs.value.push({path,title})}mobileMenu.value=false;await nextTick();if(content.value)content.value.scrollTop=scrolls.get(path)||0},{immediate:true});
-async function closeTab(path:string){if(path===route.fullPath){const next=tabs.value.find(x=>x.path!==path)?.path||'/';await router.push(next);if(route.fullPath===path)return}tabs.value=tabs.value.filter(x=>x.path!==path)}
+// Track visits separately from the visual tab order, including query parameters.
+let tabHistory:string[]=[];
+watch(()=>route.fullPath,path=>{
+ if(!isPublic.value&&route.matched.length){
+  tabHistory=tabHistory.filter(item=>item!==path);
+  tabHistory.push(path);
+ }
+},{immediate:true});
+watch(tabs,remaining=>{
+ tabHistory=tabHistory.filter(path=>remaining.some(tab=>tab.path===path));
+},{flush:'sync'});
+async function closeTab(path:string){
+ if(path===route.fullPath){
+  const next=[...tabHistory].reverse().find(item=>item!==path&&tabs.value.some(tab=>tab.path===item))
+   ||tabs.value.filter(tab=>tab.path!==path).slice(-1)[0]?.path||'/';
+  await router.push(next);
+  if(route.fullPath===path)return;
+ }
+ tabs.value=tabs.value.filter(tab=>tab.path!==path);
+}
 async function signOut(){try{await ElMessageBox.confirm('退出当前账号？未保存的录入请先保存。','退出登录');await router.push('/login');if(route.path!=='/login')return;logout();tabs.value=[]}catch{}}
 const canView=computed(()=>session.authenticated&&session.loaded&&allowedMenu(route.meta.menuPath as string|undefined,session.menus))
 async function recovered(){if(!canView.value){await nextTick();await router.replace('/forbidden')}}

@@ -4,7 +4,6 @@ import {UploadFilled} from '@element-plus/icons-vue'
 import {request} from '../../api'
 import {formatMoney, sumMoney} from './money'
 import type {Row} from './model'
-import {companyMatches} from './companyMatch'
 const props = defineProps<{modelValue: any[]; invoices: Row[]; supplierName?: string; projectId?: number | string; disabled?: boolean; loading?: boolean; error?: string}>()
 const emit = defineEmits<{'update:modelValue': [ids: any[]]; load: []; busy: [value: boolean]; uploaded: [invoices: Row[]]}>()
 const picker = ref<HTMLInputElement>()
@@ -25,16 +24,21 @@ async function uploadFiles(incoming: File[]) {
     const data = new FormData()
     files.forEach(file => data.append('files', file))
     data.append('path', 'invoices')
+    data.append('reuse_existing', '1')
     if (props.projectId) data.append('project_id', String(props.projectId))
     const response = await request('/material/invoice/upload', {method: 'POST', body: data})
-    const invoices: Row[] = (response.data?.invoices || []).filter((invoice: Row) => invoice.id != null)
+    const returned: Row[] = (response.data?.invoices || []).filter((invoice: Row) => invoice.id != null)
+    const invoices = [...new Map(returned.map(invoice => [String(invoice.id), invoice])).values()]
     if (invoices.length) {
       emit('uploaded', invoices)
       const ids = [...props.modelValue]
       for (const invoice of invoices) if (!ids.some(id => String(id) === String(invoice.id))) ids.push(invoice.id)
       emit('update:modelValue', ids)
-      const pending = invoices.filter(invoice => invoice.ocr_status !== 'success').length
-      uploadNotice.value = `已上传 ${invoices.length} 张并加入已选发票，保存付款单后完成关联。${pending ? `其中 ${pending} 张尚未识别完成，可在发票库重新识别。` : ''}`
+      const existing = invoices.filter(invoice => invoice.existing).length
+      const created = invoices.length - existing
+      const pending = invoices.filter(invoice => !['success', 'completed'].includes(invoice.ocr_status)).length
+      const notices = [created ? `新上传 ${created} 张，已选中` : '', existing ? `已存在 ${existing} 张，已选中` : ''].filter(Boolean)
+      uploadNotice.value = `${notices.join('；')}，保存付款单后完成关联。${pending ? `其中 ${pending} 张尚未识别完成，可在发票库重新识别。` : ''}`
     }
     const errors = (response.data?.errors || []).map((item: Row) => `${item.name}：${item.reason}`)
     if (!invoices.length && !errors.length) errors.push('没有上传成功的发票，请核对后重试。')
@@ -49,7 +53,7 @@ function chooseFiles(event: Event) {
 }
 function drop(event: DragEvent) { dragDepth.value = 0; void uploadFiles(Array.from(event.dataTransfer?.files || [])) }
 const key = (name: unknown) => String(name || '').normalize('NFKC').replace(/\s/g, '').toLowerCase()
-const matches = (invoice: Row) => companyMatches(invoice.seller_name, props.supplierName)
+const matches = (invoice: Row) => !!props.supplierName && invoice.seller_name === props.supplierName
 const selected = (id: any) => props.modelValue.some(value => String(value) === String(id))
 const candidates = computed(() => props.invoices.filter(matches))
 const selectedRows = computed(() => props.invoices.filter(invoice => selected(invoice.id)))
@@ -74,7 +78,7 @@ function toggle(invoice: Row, event: Event) {
   <section class="payment-invoice-picker" :class="{dragging: dragDepth > 0 && !locked}" aria-label="关联发票" :aria-busy="uploading"
     @dragenter.prevent="!locked && dragDepth++" @dragleave.prevent="dragDepth = Math.max(0, dragDepth - 1)" @dragover.prevent @drop.prevent.stop="drop">
     <header><strong>关联发票</strong><span>已选 {{modelValue.length}} 张 · 价税合计 ¥{{sumMoney(selectedRows.map(i => sumMoney([i.total_amount, i.tax_amount])))}}</span></header>
-    <p>选择已有发票，或拖拽上传新发票；上传成功后自动加入已选列表，随付款单一起保存关联。</p>
+    <p>选择已有发票，或拖拽上传；已存在的发票会自动选中，随付款单一起保存关联。</p>
     <el-button data-testid="choose-invoices" :disabled="locked" @click="open">选择关联发票</el-button>
     <input ref="picker" class="invoice-file-picker" type="file" multiple accept=".pdf,.png,.jpg,.jpeg" aria-label="上传并关联发票" :disabled="locked" @change="chooseFiles" />
     <button type="button" class="payment-invoice-dropzone" data-testid="payment-invoice-dropzone" :disabled="locked" @click="picker?.click()">
@@ -95,18 +99,18 @@ function toggle(invoice: Row, event: Event) {
     <el-dialog v-model="visible" title="选择关联发票" width="760px" class="payment-invoice-dialog" append-to-body :close-on-click-modal="false">
     <p v-if="loading" role="status">正在加载可关联发票…</p>
     <p v-else-if="error" role="alert">{{error}} <el-button data-testid="retry-invoice-options" @click="emit('load')">重新加载</el-button></p>
-    <p v-else-if="supplierName">收款单位：{{supplierName}}。已按名称模糊匹配出 {{candidates.length}} 张销售方名称相近的发票，请核对并勾选需要关联的单据。</p>
+    <p v-else-if="supplierName">供应商名称：{{supplierName}}。已匹配 {{candidates.length}} 张销售方名称一致的发票，请勾选需要关联的单据。</p>
     <p v-else>请先选择付款单的收款单位，再选择对应发票。</p>
     <p v-if="unmatchedSelected" class="muted">原有 {{unmatchedSelected}} 张不同销售方的关联已保留，如需取消，可在付款单的已选发票中移除。</p>
     <input v-model="search" class="invoice-search" type="search" aria-label="搜索可关联发票" placeholder="搜索发票号码、销售方或购买方" />
     <div v-if="!loading && !error && filtered.length" class="invoice-choices">
       <label v-for="invoice in filtered" :key="invoice.id" class="invoice-choice" :class="{selected: draftSelected(invoice.id)}">
         <input type="checkbox" :aria-label="`关联发票 ${invoice.invoice_number || invoice.id}`" :checked="draftSelected(invoice.id)" :disabled="disabled" @change="toggle(invoice, $event)" />
-        <span><strong>{{invoice.invoice_number || '无发票号码'}}</strong><small>{{invoice.seller_name || '销售方待识别'}} · {{invoice.invoice_date || '日期待识别'}}</small><small v-if="matches(invoice)" class="match-label">名称模糊匹配，请核对</small></span>
+        <span><strong>{{invoice.invoice_number || '无发票号码'}}</strong><small>{{invoice.seller_name || '销售方待识别'}} · {{invoice.invoice_date || '日期待识别'}}</small><small class="match-label">供应商名称与销售方名称一致</small></span>
         <b>¥{{formatMoney(sumMoney([invoice.total_amount, invoice.tax_amount]))}}</b>
       </label>
     </div>
-    <p v-else-if="!loading && !error" class="muted">{{!supplierName ? '选择收款单位后自动筛选发票。' : !candidates.length ? `暂无名称相近的发票：已按「${supplierName}」模糊匹配（忽略空格、标点和公司名后的括号备注）。发票库现有 ${invoices.length} 张发票，请核对单位名称或上传对应发票。` : '匹配发票中没有找到符合搜索条件的单据。'}}</p>
+    <p v-else-if="!loading && !error" class="muted">{{!supplierName ? '选择收款单位后自动筛选发票。' : !candidates.length ? `暂无销售方名称为「${supplierName}」的发票。请核对供应商名称或上传对应发票。` : '匹配发票中没有找到符合搜索条件的单据。'}}</p>
     <template #footer><span class="selection-count">已选 {{draft.length}} 张</span><el-button data-testid="cancel-invoice-selection" @click="visible=false">取消</el-button><el-button type="primary" data-testid="confirm-invoice-selection" :disabled="disabled || loading || !!error" @click="confirm">确认选择</el-button></template>
     </el-dialog>
   </section>

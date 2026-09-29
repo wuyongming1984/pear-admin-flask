@@ -1220,6 +1220,28 @@ def get_invoice():
     try:
         page = request.args.get("page", 1, type=int)
         limit = request.args.get("limit", 10, type=int)
+
+        if request.args.get("mode") == "payment_options":
+            # Match the stored supplier name, never the name/contact display label.
+            supplier_id = request.args.get("payee_supplier_id", type=int)
+            if not supplier_id:
+                return jsonify(code=0, count=0, data=[])
+            supplier_name = db.select(SupplierORM.name).where(
+                SupplierORM.id == supplier_id, SupplierORM.name != ""
+            ).scalar_subquery()
+            # Select only picker fields: no detail rows, OCR payloads or signed URLs.
+            model = MaterialInvoiceORM
+            rows = db.session.query(model.id, model.invoice_number, model.seller_name,
+                model.buyer_name, model.invoice_date, model.total_amount, model.tax_amount)
+            rows = rows.filter(model.seller_name == supplier_name).order_by(
+                model.invoice_date.desc(), model.id.desc())
+            pagination = rows.paginate(page=page, per_page=limit, error_out=False)
+            data = [dict(id=row.id, invoice_number=row.invoice_number,
+                seller_name=row.seller_name, buyer_name=row.buyer_name,
+                invoice_date=row.invoice_date.isoformat() if row.invoice_date else None,
+                total_amount=str(row.total_amount or 0), tax_amount=str(row.tax_amount or 0))
+                for row in pagination.items]
+            return jsonify(code=0, count=pagination.total, data=data)
         
         # Load the current page's relationships in batches instead of querying
         # project, supplier and detail rows separately for every invoice.
@@ -1424,6 +1446,7 @@ def upload_invoice():
         
         files = request.files.getlist('files')
         project_id = request.form.get('project_id')
+        reuse_existing = request.form.get('reuse_existing') == '1'
         custom_path = request.form.get('path', 'invoices').strip()
         
         if not files or files[0].filename == '':
@@ -1451,6 +1474,7 @@ def upload_invoice():
                 return 0
         
         uploaded = []
+        existing_invoices = []
         failed = []
         
         for file in files:
@@ -1505,7 +1529,23 @@ def upload_invoice():
                     inv_num = ocr_result.get('invoice_number')
                     exists = MaterialInvoiceORM.query.filter_by(invoice_number=inv_num).first()
                     if exists:
-                        failed.append({"name": file.filename, "reason": f"发票号 {inv_num} 已存在 (ID: {exists.id})"})
+                        if reuse_existing:
+                            # Return the stored invoice for the payment's draft selection.
+                            # Do not replace its file, project, OCR fields or saved links.
+                            existing_invoices.append({
+                                "id": exists.id,
+                                "existing": True,
+                                "file_name": exists.file_name or file.filename,
+                                "invoice_number": exists.invoice_number,
+                                "seller_name": exists.seller_name,
+                                "buyer_name": exists.buyer_name,
+                                "invoice_date": str(exists.invoice_date) if exists.invoice_date else None,
+                                "total_amount": format(exists.total_amount or 0, '.2f'),
+                                "tax_amount": format(exists.tax_amount or 0, '.2f'),
+                                "ocr_status": exists.ocr_status,
+                            })
+                        else:
+                            failed.append({"name": file.filename, "reason": f"发票号 {inv_num} 已存在 (ID: {exists.id})"})
                         continue # 跳过此文件，不上传
 
                 # 4. 执行上传 (OSS 或 本地)
@@ -1625,11 +1665,12 @@ def upload_invoice():
         
         return jsonify({
             "code": 0,
-            "msg": f"上传完成，成功{len(uploaded)}个，失败{len(failed)}个",
+            "msg": f"上传完成，成功{len(uploaded)}个，失败{len(failed)}个" + (f"，已存在{len(existing_invoices)}个" if existing_invoices else ""),
             "data": {
                 "uploaded": len(uploaded),
+                "existing": len(existing_invoices),
                 "failed": len(failed),
-                "invoices": uploaded,
+                "invoices": uploaded + existing_invoices,
                 "errors": failed
             }
         })

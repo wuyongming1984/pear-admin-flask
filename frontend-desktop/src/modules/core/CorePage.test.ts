@@ -137,7 +137,7 @@ describe('invoice live search',()=>{
 async function setup(){const router=createRouter({history:createMemoryHistory(),routes:[{path:'/projects/new',component:CorePage,meta:{coreKind:'projects',coreMode:'new'}},{path:'/projects',component:{template:'<div>项目列表</div>'}},{path:'/system',component:{template:'<div>系统页面</div>'}}]});await router.push('/projects/new');await router.isReady();const wrapper=mount({template:'<router-view v-slot="{Component,route}"><keep-alive><component :is="Component" :key="route.path"/></keep-alive></router-view>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises();return{wrapper,router}}
 describe('core form operation behavior',()=>{
  beforeEach(()=>{vi.clearAllMocks();mocks.request.mockResolvedValue({code:0,data:{}});mocks.allRows.mockResolvedValue([]);mocks.confirm.mockResolvedValue('confirm')})
- it.each(['new','edit'])('uploads dropped invoices and saves their links with the %s payment',async(mode)=>{
+ it.each([['new',false],['edit',false],['new',true],['edit',true]])('uploads dropped invoices and saves their links with the %s payment (existing=%s)',async(mode,existing)=>{
   const old={id:8,invoice_number:'OLD-008',seller_name:'销售公司',total_amount:'10',tax_amount:'1.3'}
   const added={id:9,invoice_number:'NEW-009',seller_name:'销售公司',total_amount:'20',tax_amount:'2.6'}
   const payment={id:2,pay_number:'FK2',order_id:3,payer_supplier_id:4,payee_supplier_id:5,current_payment_amount:'10.00',payment_purpose:'原用途',invoices_list:[old]}
@@ -164,9 +164,11 @@ describe('core form operation behavior',()=>{
    await wrapper.get('form').trigger('submit');await flushPromises()
    expect(mocks.request.mock.calls.some(([url,o])=>url.startsWith('/pay/')&&o?.method)).toBe(false)
    await router.push('/payments');expect(router.currentRoute.value.path).toBe(path)
-   finishUpload({code:0,data:{uploaded:1,failed:0,invoices:[{id:9,file_name:file.name,invoice_number:'NEW-009',ocr_status:'success'}],errors:[]}})
+   if(existing)expect(upload![1].body.get('reuse_existing')).toBe('1')
+   finishUpload({code:0,data:{uploaded:existing?0:1,existing:existing?1:0,failed:0,invoices:[{id:9,file_name:file.name,invoice_number:'NEW-009',ocr_status:'success',existing}],errors:[]}})
    await flushPromises()
    expect(wrapper.get('[aria-label="已选择的发票"]').text()).toContain('NEW-009')
+   if(existing)expect(wrapper.get('.upload-notice').text()).toContain('已存在 1 张，已选中')
    expect(wrapper.get('.payment-invoice-picker').text()).toContain(mode==='edit'?'33.90':'22.60')
    expect(mocks.request.mock.calls.some(([url,o])=>url.startsWith('/pay/')&&o?.method)).toBe(false)
    await wrapper.get('form').trigger('submit');await flushPromises()
@@ -242,7 +244,8 @@ describe('core form operation behavior',()=>{
   const router=createRouter({history:createMemoryHistory(),routes:[{path:'/payments/new',component:CorePage,meta:{coreKind:'payments',coreMode:'new'}},{path:'/payments',component:{template:'<p>付款单列表</p>'}}]})
   await router.push('/payments/new?order_id=2');await router.isReady()
   const wrapper=mount({template:'<router-view/>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises()
-  await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
+  await wrapper.get('[data-testid="choose-invoices"]').trigger('click');await flushPromises()
+  expect(mocks.allRows.mock.calls.find(([url])=>url==='/material/invoice')?.[1]).toEqual({mode:'payment_options',payee_supplier_id:3})
   expect(wrapper.get('.payment-invoice-picker').text()).toContain('MATCH-008')
   expect(wrapper.get('.payment-invoice-picker').text()).not.toContain('OTHER-009')
   await wrapper.get('[aria-label="关联发票 MATCH-008"]').setValue(true)
@@ -252,6 +255,29 @@ describe('core form operation behavior',()=>{
   await wrapper.get('form').trigger('submit');await flushPromises()
   const post=mocks.request.mock.calls.find(([url,o])=>url==='/pay/'&&o?.method==='POST')!
   expect(JSON.parse(post[1].body)).toMatchObject({invoice_ids:[8],payee_supplier_id:3,current_payment_amount:'10.00'})
+  wrapper.unmount()
+ })
+ it('reloads invoices when the supplier changes and ignores the previous supplier response',async()=>{
+  let finishOld!:(rows:any[])=>void
+  const old={id:8,invoice_number:'EXISTING',seller_name:'原供应商'}
+  mocks.request.mockResolvedValue({code:0,data:{id:2,order_id:3,payee_supplier_id:5,invoices_list:[old]}})
+  mocks.allRows.mockImplementation(async(path:string,params:any)=>{
+   if(path==='/order/')return [{id:3,supplier_id:5,supplier_contact_person:'张工'}]
+   if(path==='/supplier/')return [{id:5,name:'原供应商',contact_person:'张工',label:'原供应商（张工）'},{id:6,name:'新供应商',contact_person:'张工'}]
+   if(path==='/material/invoice')return params?.payee_supplier_id===5?new Promise(resolve=>finishOld=resolve):[{id:9,invoice_number:'NEW-SUPPLIER',seller_name:'新供应商'}]
+   return []
+  })
+  const router=createRouter({history:createMemoryHistory(),routes:[{path:'/payments/:id/edit',component:CorePage,meta:{coreKind:'payments',coreMode:'edit'}}]})
+  await router.push('/payments/2/edit');await router.isReady()
+  const wrapper=mount({template:'<router-view/>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises()
+  await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
+  wrapper.getComponent(PaymentEntrySheet).vm.$emit('field','payee_supplier_id',6);await flushPromises()
+  expect(wrapper.get('[role="dialog"]').text()).toContain('NEW-SUPPLIER')
+  expect(wrapper.get('[role="dialog"]').text()).not.toContain('原供应商（张工）')
+  finishOld([{id:10,invoice_number:'STALE',seller_name:'原供应商'}]);await flushPromises()
+  expect(wrapper.get('[role="dialog"]').text()).toContain('NEW-SUPPLIER')
+  expect(wrapper.get('[role="dialog"]').text()).not.toContain('STALE')
+  expect(wrapper.get('[aria-label="已选择的发票"]').text()).toContain('EXISTING')
   wrapper.unmount()
  })
  it.each([['orders','new'],['orders','edit'],['payments','new'],['payments','edit']])('enables attachment drops on %s %s forms',async(kind,mode)=>{

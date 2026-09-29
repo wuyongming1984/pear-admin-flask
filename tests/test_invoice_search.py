@@ -46,6 +46,47 @@ class InvoiceSearchTest(unittest.TestCase):
         self.assertEqual(self.get(search='_')['count'], 24)
         self.assertEqual(self.get(invoice_number='TEST_0')['count'], 24)
 
+    def test_payment_options_match_raw_supplier_name_only_and_skip_invoice_details(self):
+        supplier = SupplierORM(name='杭州雅鸿装饰工程有限公司', type_id=1,
+            contact_person='钱顺怡', phone='', bank_name='', account_number='')
+        db.session.add(supplier)
+        db.session.flush()
+        sid = supplier.id
+        for number, seller, buyer in [
+            ('MATCH-1', supplier.name, '购买公司'),
+            ('MATCH-2', supplier.name, '购买公司'),
+            ('CONTACT', supplier.contact_person, '购买公司'),
+            ('COMBINED', supplier.name + '（钱顺怡）', '购买公司'),
+            ('PARTIAL', '杭州雅鸿装饰工程有限公司分公司', '购买公司'),
+            ('BUYER', '无关公司', supplier.name),
+        ]:
+            db.session.add(MaterialInvoiceORM(invoice_number=number, seller_name=seller,
+                buyer_name=buyer, total_amount=100, tax_amount=13, ocr_result='large OCR payload'))
+        db.session.commit()
+        db.session.remove()
+        queries = []
+        def track(conn, cursor, statement, parameters, context, executemany):
+            if statement.lstrip().upper().startswith('SELECT'):
+                queries.append(statement)
+        event.listen(db.engine, 'before_cursor_execute', track)
+        try:
+            result = self.get(mode='payment_options', payee_supplier_id=sid, limit=1)
+        finally:
+            event.remove(db.engine, 'before_cursor_execute', track)
+        self.assertEqual(result['count'], 2)
+        self.assertEqual([r['invoice_number'] for r in result['data']], ['MATCH-2'])
+        self.assertEqual(float(result['data'][0]['total_amount']), 100)
+        self.assertEqual(float(result['data'][0]['tax_amount']), 13)
+        self.assertNotIn('details', result['data'][0])
+        self.assertNotIn('ocr_result', result['data'][0])
+        self.assertNotIn('file_url', result['data'][0])
+        self.assertFalse(any('material_invoice_detail' in sql or 'ocr_result' in sql for sql in queries))
+        self.assertLessEqual(len(queries), 4)
+        second = self.get(mode='payment_options', payee_supplier_id=sid, limit=1, page=2)
+        self.assertEqual([r['invoice_number'] for r in second['data']], ['MATCH-1'])
+        for invalid in (None, '', 'invalid', 999999):
+            self.assertEqual(self.get(mode='payment_options', payee_supplier_id=invalid)['count'], 0)
+
     def test_query_count_does_not_grow_per_invoice(self):
         self.seed()
         def measured(limit):

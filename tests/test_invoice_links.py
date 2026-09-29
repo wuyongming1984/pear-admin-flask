@@ -1,6 +1,8 @@
 """Both entry points share real stored links; no production DB/network involved."""
 import unittest
 import json
+from io import BytesIO
+from unittest.mock import patch
 from pathlib import Path
 from pear_admin.invoice_links import same_company
 from tests import test_mobile_api
@@ -44,6 +46,53 @@ class InvoiceLinksTest(unittest.TestCase):
 
     def link(self, ids):
         return self.client.post(self.url, json={'payment_ids': ids}, headers=self.headers)
+
+    def test_payment_upload_reuses_existing_invoice_without_changing_it(self):
+        self.seed()
+        invoice = self.invoices[0]
+        invoice.file_path = '/uploads/original.pdf'
+        invoice.remarks = '保留原记录'
+        self.payments[1].invoices.append(invoice)
+        db.session.commit()
+        with patch('pear_admin.ocr_utils.get_ocr_instance') as ocr:
+            ocr.return_value.recognize_invoice.return_value = {'invoice_number': invoice.invoice_number, 'seller_name': '不应覆盖'}
+            response = self.client.post('/api/v1/material/invoice/upload', headers=self.headers, data={
+                'files': (BytesIO(b'fake invoice'), 'existing.pdf'), 'reuse_existing': '1', 'project_id': '999',
+            })
+        result = response.json['data']
+        self.assertEqual(result['failed'], 0)
+        self.assertEqual(result['uploaded'], 0)
+        self.assertEqual(result['existing'], 1)
+        self.assertEqual(result['errors'], [])
+        reused = result['invoices'][0]
+        self.assertEqual(reused['id'], invoice.id)
+        self.assertTrue(reused['existing'])
+        self.assertEqual(reused['seller_name'], ' 上海(甲) 公司 ')
+        self.assertEqual(reused['total_amount'], '100.00')
+        self.assertEqual(reused['tax_amount'], '13.00')
+        self.assertEqual(db.session.query(MaterialInvoiceORM).count(), 4)
+        db.session.expire_all()
+        self.assertEqual(invoice.file_path, '/uploads/original.pdf')
+        self.assertEqual(invoice.remarks, '保留原记录')
+        self.assertIsNone(invoice.project_id)
+        self.assertEqual(self.payments[0].invoices, [])
+        endpoint = f'/api/v1/pay/{self.payments[0].id}'
+        saved = self.client.put(endpoint, headers=self.headers, json={'invoice_ids': [reused['id']]}).json
+        self.assertEqual(saved['code'], 0)
+        linked = self.client.get(self.url, headers=self.headers).json['data']['linked']
+        self.assertEqual({p['id'] for p in linked}, {self.payments[0].id, self.payments[1].id})
+
+    def test_library_upload_keeps_duplicate_warning_without_reuse_option(self):
+        self.seed()
+        with patch('pear_admin.ocr_utils.get_ocr_instance') as ocr:
+            ocr.return_value.recognize_invoice.return_value = {'invoice_number': self.invoices[0].invoice_number}
+            result = self.client.post('/api/v1/material/invoice/upload', headers=self.headers, data={
+                'files': (BytesIO(b'fake invoice'), 'existing.pdf'),
+            }).json['data']
+        self.assertEqual(result['failed'], 1)
+        self.assertEqual(result['uploaded'], 0)
+        self.assertEqual(result['invoices'], [])
+        self.assertIn('已存在', result['errors'][0]['reason'])
 
     def test_candidates_match_normalized_name_but_not_unrelated_company(self):
         self.seed()

@@ -93,6 +93,12 @@ async function loadRecord(){
  else{let data:Row|undefined;if(kind.value==='payers')data=(await allRows('/payer/')).find(x=>String(x.id)===String(route.params.id));else if(kind.value==='invoices')data=(await request(`/material/invoice?${query({id:route.params.id})}`)).data?.[0];else data=(await request(schema.value.api+route.params.id)).data;if(!data)throw new Error('记录不存在');record.value={...data};attachments.value=schema.value.attachments?parseAttachments(data):[];invoiceIds.value=(data.invoices_list||[]).map((x:Row)=>x.id);if(kind.value==='payments')options.value.invoices=data.invoices_list||[]}
 }
 const invoiceLoading=ref(false),invoiceLoadError=ref('')
+let paymentInvoiceRevision=0,paymentInvoicesRequested=false
+watch(()=>selectedSupplier.value?.id,()=>{
+ paymentInvoiceRevision++;invoiceLoading.value=false;invoiceLoadError.value=''
+ options.value.invoices=(options.value.invoices||[]).filter(x=>invoiceIds.value.some(id=>String(id)===String(x.id)))
+ if(paymentInvoicesRequested)void loadPaymentInvoices()
+})
 function addUploadedPaymentInvoices(invoices:Row[]){
  const merged=new Map((options.value.invoices||[]).map(x=>[String(x.id),x]))
  for(const invoice of invoices)merged.set(String(invoice.id),{...merged.get(String(invoice.id)),...invoice})
@@ -101,15 +107,20 @@ function addUploadedPaymentInvoices(invoices:Row[]){
 }
 async function loadPaymentInvoices(){
  if(invoiceLoading.value)return
+ paymentInvoicesRequested=true
+ const supplierId=selectedSupplier.value?.id
+ if(!supplierId)return
+ const revision=++paymentInvoiceRevision
  invoiceLoading.value=true;invoiceLoadError.value=''
  try{
-  const invoices=await allRows('/material/invoice')
+  const invoices=await allRows('/material/invoice',{mode:'payment_options',payee_supplier_id:supplierId})
+  if(revision!==paymentInvoiceRevision)return
   // Keep existing links even when a catalog response no longer includes them.
   const merged=new Map((options.value.invoices||[]).map(x=>[String(x.id),x]))
   for(const invoice of invoices)merged.set(String(invoice.id),invoice)
   options.value.invoices=[...merged.values()]
- }catch(e){invoiceLoadError.value=(e as Error).message||'发票加载失败，请重试'}
- finally{invoiceLoading.value=false}
+ }catch(e){if(revision===paymentInvoiceRevision)invoiceLoadError.value=(e as Error).message||'发票加载失败，请重试'}
+ finally{if(revision===paymentInvoiceRevision)invoiceLoading.value=false}
 }
 const unload=(event:BeforeUnloadEvent)=>{if(dirty.value||saving.value||uploading.value){event.preventDefault();event.returnValue=''}};window.addEventListener('beforeunload',unload);onBeforeUnmount(()=>window.removeEventListener('beforeunload',unload))
 let lastQuery=JSON.stringify(route.query);watch(()=>currentRoute.fullPath,()=>{if(mode.value==='list'&&currentRoute.path===route.path&&JSON.stringify(currentRoute.query)!==lastQuery){lastQuery=JSON.stringify(currentRoute.query);filters.value=Object.fromEntries(Object.entries(currentRoute.query).map(([k,v])=>[k,k.endsWith(`_id`)&&v?Number(v):v]));page.value=1;void load()}});void load();let activatedOnce=false;onActivated(()=>{if(activatedOnce&&!busy.value&&!saving.value&&!uploading.value&&(mode.value==='list'||kind.value==='payments'&&(mode.value==='detail'||editing.value&&!dirty.value)))void load();activatedOnce=true})

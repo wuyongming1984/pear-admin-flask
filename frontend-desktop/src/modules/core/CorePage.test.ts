@@ -280,6 +280,24 @@ describe('core form operation behavior',()=>{
   expect(wrapper.get('[aria-label="已选择的发票"]').text()).toContain('EXISTING')
   wrapper.unmount()
  })
+ it('uses the company name without the stored contact suffix in the invoice dialog',async()=>{
+  mocks.request.mockResolvedValue({code:0,data:{id:2,order_id:3,payee_supplier_id:5,invoices_list:[]}})
+  mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:3,supplier_id:5,supplier_contact_person:'钱顺怡'}]:path==='/supplier/'?[{id:5,name:'杭州雅鸿装饰工程有限公司（钱顺怡）',contact_person:'钱顺怡'}]:path==='/material/invoice'?[
+   {id:8,invoice_number:'MATCH-008',seller_name:'杭州雅鸿装饰工程有限公司'},
+   {id:9,invoice_number:'WRONG-009',seller_name:'杭州雅鸿装饰工程有限公司分公司'},
+  ]:[])
+  const router=createRouter({history:createMemoryHistory(),routes:[{path:'/payments/:id/edit',component:CorePage,meta:{coreKind:'payments',coreMode:'edit'}}]})
+  await router.push('/payments/2/edit?action=link-invoices');await router.isReady()
+  const wrapper=mount({template:'<router-view/>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises()
+  const dialog=wrapper.get('[role="dialog"]')
+  expect(dialog.text()).toContain('供应商名称：杭州雅鸿装饰工程有限公司。')
+  expect(dialog.text()).not.toContain('钱顺怡')
+  expect(dialog.findAll('input[type="checkbox"]')).toHaveLength(1)
+  await wrapper.get('[aria-label="关联发票 MATCH-008"]').setValue(true)
+  await wrapper.get('[data-testid="confirm-invoice-selection"]').trigger('click')
+  expect(wrapper.get('[aria-label="已选择的发票"]').text()).toContain('MATCH-008')
+  wrapper.unmount()
+ })
  it.each([['orders','new'],['orders','edit'],['payments','new'],['payments','edit']])('enables attachment drops on %s %s forms',async(kind,mode)=>{
   const path=mode==='new'?`/${kind}/new`:`/${kind}/2/edit`
   const router=createRouter({history:createMemoryHistory(),routes:[{path,component:CorePage,meta:{coreKind:kind,coreMode:mode}},{path:`/${kind}`,component:{template:'<div />'}}]})

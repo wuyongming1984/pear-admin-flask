@@ -3,8 +3,10 @@ import {computed, onDeactivated, ref} from 'vue'
 import {UploadFilled} from '@element-plus/icons-vue'
 import {request} from '../../api'
 import {formatMoney, sumMoney} from './money'
+import {supplierCompanyName} from './companyMatch'
 import type {Row} from './model'
-const props = defineProps<{modelValue: any[]; invoices: Row[]; supplierName?: string; projectId?: number | string; disabled?: boolean; loading?: boolean; error?: string}>()
+const props = defineProps<{modelValue: any[]; invoices: Row[]; supplierName?: string; supplierContact?: string; projectId?: number | string; disabled?: boolean; loading?: boolean; error?: string}>()
+const supplierName = computed(() => supplierCompanyName(props.supplierName, props.supplierContact))
 const emit = defineEmits<{'update:modelValue': [ids: any[]]; load: []; busy: [value: boolean]; uploaded: [invoices: Row[]]}>()
 const picker = ref<HTMLInputElement>()
 const uploading = ref(false), dragDepth = ref(0), uploadError = ref(''), uploadNotice = ref('')
@@ -53,7 +55,7 @@ function chooseFiles(event: Event) {
 }
 function drop(event: DragEvent) { dragDepth.value = 0; void uploadFiles(Array.from(event.dataTransfer?.files || [])) }
 const key = (name: unknown) => String(name || '').normalize('NFKC').replace(/\s/g, '').toLowerCase()
-const matches = (invoice: Row) => !!props.supplierName && invoice.seller_name === props.supplierName
+const matches = (invoice: Row) => !!supplierName.value && invoice.seller_name === supplierName.value
 const selected = (id: any) => props.modelValue.some(value => String(value) === String(id))
 const candidates = computed(() => props.invoices.filter(matches))
 const selectedRows = computed(() => props.invoices.filter(invoice => selected(invoice.id)))

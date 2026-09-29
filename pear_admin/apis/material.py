@@ -1222,13 +1222,16 @@ def get_invoice():
         limit = request.args.get("limit", 10, type=int)
 
         if request.args.get("mode") == "payment_options":
-            # Match the stored supplier name, never the name/contact display label.
+            # Older supplier names may already contain a trailing contact label.
             supplier_id = request.args.get("payee_supplier_id", type=int)
             if not supplier_id:
                 return jsonify(code=0, count=0, data=[])
-            supplier_name = db.select(SupplierORM.name).where(
-                SupplierORM.id == supplier_id, SupplierORM.name != ""
-            ).scalar_subquery()
+            from pear_admin.invoice_links import supplier_company_name
+            supplier = db.session.execute(db.select(SupplierORM.name, SupplierORM.contact_person)
+                .where(SupplierORM.id == supplier_id)).first()
+            supplier_name = supplier_company_name(supplier.name, supplier.contact_person) if supplier else ''
+            if not supplier_name:
+                return jsonify(code=0, count=0, data=[])
             # Select only picker fields: no detail rows, OCR payloads or signed URLs.
             model = MaterialInvoiceORM
             rows = db.session.query(model.id, model.invoice_number, model.seller_name,

@@ -6,6 +6,16 @@ from pear_admin.extensions import db
 from pear_admin.orms import MaterialInvoiceORM
 
 
+def supplier_company_name(name, contact):
+    """Remove only a trailing annotation identifying this supplier's contact."""
+    name = (name or '').strip()
+    contact = (contact or '').strip()
+    suffix = re.search(r'\s*[（(]([^（）()]*)[）)]$', name)
+    if contact and suffix and suffix.group(1).strip() == contact:
+        return name[:suffix.start()].rstrip()
+    return name
+
+
 def company_key(name):
     name = ''.join(unicodedata.normalize('NFKC', name or '').lower().split())
     name = re.sub(r'(公司|中心|商行|经营部|工作室)(?:\([^()]*\))+[。.,，]*$', r'\1', name)

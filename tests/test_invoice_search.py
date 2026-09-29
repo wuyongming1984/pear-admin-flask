@@ -87,6 +87,35 @@ class InvoiceSearchTest(unittest.TestCase):
         for invalid in (None, '', 'invalid', 999999):
             self.assertEqual(self.get(mode='payment_options', payee_supplier_id=invalid)['count'], 0)
 
+    def test_payment_options_remove_trailing_contact_from_stored_supplier_name(self):
+        supplier = SupplierORM(name='杭州雅鸿装饰工程有限公司（钱顺怡）', type_id=1,
+            contact_person='钱顺怡', phone='', bank_name='', account_number='')
+        db.session.add(supplier)
+        db.session.add_all([
+            MaterialInvoiceORM(invoice_number='MATCH', seller_name='杭州雅鸿装饰工程有限公司'),
+            MaterialInvoiceORM(invoice_number='COMBINED', seller_name=supplier.name),
+            MaterialInvoiceORM(invoice_number='PARTIAL', seller_name='杭州雅鸿装饰工程有限公司分公司'),
+        ])
+        db.session.commit()
+        for stored_name in ('杭州雅鸿装饰工程有限公司（钱顺怡）', '杭州雅鸿装饰工程有限公司 ( 钱顺怡 ) '):
+            supplier.name = stored_name
+            db.session.commit()
+            result = self.get(mode='payment_options', payee_supplier_id=supplier.id)
+            self.assertEqual([r['invoice_number'] for r in result['data']], ['MATCH'])
+            self.assertEqual(supplier.name, stored_name)
+
+    def test_payment_options_preserve_parentheses_belonging_to_company_name(self):
+        supplier = SupplierORM(name='雅鸿（杭州）装饰工程有限公司（钱顺怡）', type_id=1,
+            contact_person='钱顺怡', phone='', bank_name='', account_number='')
+        db.session.add(supplier)
+        db.session.add_all([
+            MaterialInvoiceORM(invoice_number='MATCH', seller_name='雅鸿（杭州）装饰工程有限公司'),
+            MaterialInvoiceORM(invoice_number='WRONG', seller_name='雅鸿装饰工程有限公司'),
+        ])
+        db.session.commit()
+        result = self.get(mode='payment_options', payee_supplier_id=supplier.id)
+        self.assertEqual([r['invoice_number'] for r in result['data']], ['MATCH'])
+
     def test_query_count_does_not_grow_per_invoice(self):
         self.seed()
         def measured(limit):

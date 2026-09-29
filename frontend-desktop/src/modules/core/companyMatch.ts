@@ -1,3 +1,10 @@
+// Keep this aligned with pear_admin.invoice_links.supplier_company_name.
+export function supplierCompanyName(name: unknown, contact: unknown): string {
+  const value = String(name || '').trim(), person = String(contact || '').trim()
+  const suffix = /\s*[（(]([^（）()]*)[）)]$/u.exec(value)
+  return person && suffix && suffix[1]?.trim() === person ? value.slice(0, suffix.index).trimEnd() : value
+}
+
 // Keep this normalization aligned with pear_admin.invoice_links.company_key.
 export function companyKey(value: unknown): string {
   return String(value || '').normalize('NFKC').toLowerCase().replace(/\s/g, '')

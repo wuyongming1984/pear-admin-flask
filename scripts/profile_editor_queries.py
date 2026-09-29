@@ -3,6 +3,7 @@
 Run inside the web container:
   python scripts/profile_editor_queries.py --config prod
 Optional: --order-id 123 --payment-id 456 --repeat 2
+System list audit: --scope system (first 20 rows of each paginated list)
 
 No app factory, scheduler, migrations, write endpoints, record contents or
 credentials. Timings exclude browser/network, nginx and Gunicorn queuing.
@@ -76,6 +77,7 @@ def profile_request(app, path, headers):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', choices=['dev', 'prod'], default='prod')
+    parser.add_argument('--scope', choices=['editor', 'system'], default='editor')
     parser.add_argument('--order-id', type=int)
     parser.add_argument('--payment-id', type=int)
     parser.add_argument('--repeat', type=int, choices=range(1, 4), default=1)
@@ -103,6 +105,19 @@ def main():
             paths.append(f'/order/{order_id}')
         if pay_id:
             paths.append(f'/pay/{pay_id}')
+        if args.scope == 'system':
+            paths = ['/project/?page=1&limit=20', '/order/?page=1&limit=20',
+                     '/pay/?page=1&limit=20',
+                     '/workspace/orders?page=1&limit=20', '/workspace/payments?page=1&limit=20',
+                     '/dashboard/overview', '/material/options',
+                     '/material/planning?page=1&limit=20',
+                     '/material/inbound?page=1&limit=20&status=pending',
+                     '/material/inventory?page=1&limit=20',
+                     '/material/outbound?page=1&limit=20',
+                     '/material/invoice?page=1&limit=20',
+                     '/material/dashboard/stats', '/nursery/dashboard/stats']
+            # /nursery/orders returns full history; deliberately exclude it from
+            # the production default to avoid an unbounded diagnostic response.
         for run in range(args.repeat):
             for path in paths:
                 result = profile_request(app, path, headers)

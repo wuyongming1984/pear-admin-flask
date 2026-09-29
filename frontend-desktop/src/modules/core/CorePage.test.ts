@@ -137,6 +137,44 @@ describe('invoice live search',()=>{
 async function setup(){const router=createRouter({history:createMemoryHistory(),routes:[{path:'/projects/new',component:CorePage,meta:{coreKind:'projects',coreMode:'new'}},{path:'/projects',component:{template:'<div>项目列表</div>'}},{path:'/system',component:{template:'<div>系统页面</div>'}}]});await router.push('/projects/new');await router.isReady();const wrapper=mount({template:'<router-view v-slot="{Component,route}"><keep-alive><component :is="Component" :key="route.path"/></keep-alive></router-view>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises();return{wrapper,router}}
 describe('core form operation behavior',()=>{
  beforeEach(()=>{vi.clearAllMocks();mocks.request.mockResolvedValue({code:0,data:{}});mocks.allRows.mockResolvedValue([]);mocks.confirm.mockResolvedValue('confirm')})
+ it.each(['new','edit'])('uploads dropped invoices and saves their links with the %s payment',async(mode)=>{
+  const old={id:8,invoice_number:'OLD-008',seller_name:'销售公司',total_amount:'10',tax_amount:'1.3'}
+  const added={id:9,invoice_number:'NEW-009',seller_name:'销售公司',total_amount:'20',tax_amount:'2.6'}
+  const payment={id:2,pay_number:'FK2',order_id:3,payer_supplier_id:4,payee_supplier_id:5,current_payment_amount:'10.00',payment_purpose:'原用途',invoices_list:[old]}
+  let finishUpload!:(value:any)=>void
+  mocks.request.mockImplementation(async(url:string,options:any)=>url==='/material/invoice/upload'?new Promise(resolve=>finishUpload=resolve):{code:0,data:options?.method?{}:payment})
+  mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:3,project_id:7,supplier_id:5,supplier_contact_person:'张工',material_details:'原用途'}]:path==='/supplier/'?[{id:5,name:'销售公司',contact_person:'张工'}]:path==='/material/invoice'?[old,added]:[])
+  const path=mode==='new'?'/payments/new':'/payments/2/edit'
+  const router=createRouter({history:createMemoryHistory(),routes:[{path,component:CorePage,meta:{coreKind:'payments',coreMode:mode}},{path:'/payments',component:{template:'<p>付款单列表</p>'}}]})
+  await router.push(path+'?order_id=3');await router.isReady()
+  const wrapper=mount({template:'<router-view />'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises()
+  try {
+   if(mode==='new'){
+    await wrapper.get('[aria-label="付款单位"]').setValue('4')
+    await wrapper.get('[aria-label="本次实付金额"]').setValue('10.00')
+   }
+   const file=new File(['invoice'],'新发票.pdf',{type:'application/pdf'})
+   await wrapper.get('.payment-invoice-picker').trigger('drop',{dataTransfer:{files:[file]}})
+   await flushPromises()
+   const upload=mocks.request.mock.calls.find(([url])=>url==='/material/invoice/upload')
+   expect(upload).toBeDefined()
+   expect(upload![1].body.getAll('files')).toEqual([file])
+   expect(upload![1].body.get('project_id')).toBe('7')
+   expect(wrapper.getComponent(PaymentEntrySheet).props('disabled')).toBe(true)
+   await wrapper.get('form').trigger('submit');await flushPromises()
+   expect(mocks.request.mock.calls.some(([url,o])=>url.startsWith('/pay/')&&o?.method)).toBe(false)
+   await router.push('/payments');expect(router.currentRoute.value.path).toBe(path)
+   finishUpload({code:0,data:{uploaded:1,failed:0,invoices:[{id:9,file_name:file.name,invoice_number:'NEW-009',ocr_status:'success'}],errors:[]}})
+   await flushPromises()
+   expect(wrapper.get('[aria-label="已选择的发票"]').text()).toContain('NEW-009')
+   expect(wrapper.get('.payment-invoice-picker').text()).toContain(mode==='edit'?'33.90':'22.60')
+   expect(mocks.request.mock.calls.some(([url,o])=>url.startsWith('/pay/')&&o?.method)).toBe(false)
+   await wrapper.get('form').trigger('submit');await flushPromises()
+   const save=mocks.request.mock.calls.find(([url,o])=>url.startsWith('/pay/')&&o?.method)!
+   expect(save[1].method).toBe(mode==='edit'?'PUT':'POST')
+   expect(JSON.parse(save[1].body)).toMatchObject({invoice_ids:mode==='edit'?[8,9]:[9],current_payment_amount:'10.00',payment_purpose:'原用途'})
+  } finally {wrapper.unmount()}
+ })
  it.each(['orders','payments'])('starts %s detail without waiting for slow options',async(kind)=>{
   let resolveOptions!: (rows:any[])=>void
   mocks.allRows.mockReturnValue(new Promise(resolve=>resolveOptions=resolve))

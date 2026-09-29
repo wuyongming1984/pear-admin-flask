@@ -93,6 +93,12 @@ async function loadRecord(){
  else{let data:Row|undefined;if(kind.value==='payers')data=(await allRows('/payer/')).find(x=>String(x.id)===String(route.params.id));else if(kind.value==='invoices')data=(await request(`/material/invoice?${query({id:route.params.id})}`)).data?.[0];else data=(await request(schema.value.api+route.params.id)).data;if(!data)throw new Error('记录不存在');record.value={...data};attachments.value=schema.value.attachments?parseAttachments(data):[];invoiceIds.value=(data.invoices_list||[]).map((x:Row)=>x.id);if(kind.value==='payments')options.value.invoices=data.invoices_list||[]}
 }
 const invoiceLoading=ref(false),invoiceLoadError=ref('')
+function addUploadedPaymentInvoices(invoices:Row[]){
+ const merged=new Map((options.value.invoices||[]).map(x=>[String(x.id),x]))
+ for(const invoice of invoices)merged.set(String(invoice.id),{...merged.get(String(invoice.id)),...invoice})
+ options.value.invoices=[...merged.values()]
+ void loadPaymentInvoices()
+}
 async function loadPaymentInvoices(){
  if(invoiceLoading.value)return
  invoiceLoading.value=true;invoiceLoadError.value=''
@@ -142,9 +148,9 @@ async function exportCsv(){if(saving.value)return;saving.value=true;try{let data
 <p v-if="kind===`orders`">本页订单合计：{{totals.orders}} · 付款合计：{{totals.paid}} · 余额合计：{{totals.balance}}</p><el-table :data="rows" border stripe @selection-change="selection=$event"><el-table-column v-if="kind==='invoices'" type="selection"/><el-table-column v-for="f in visibleColumns" :key="f.key" :label="f.label" min-width="145" show-overflow-tooltip><template #default="{row}">{{display(row,f)}}</template></el-table-column><el-table-column fixed="right" label="操作" width="220"><template #default="{row}"><el-button link type="primary" @click="go(row.id)">详情</el-button><el-button link type="primary" @click="go(row.id,'edit')">编辑</el-button><el-button link type="danger" :disabled="saving" @click="remove([row])">删除</el-button><el-button v-if="['orders','payments'].includes(kind)" link @click="go(row.id,'print')">打印</el-button></template></el-table-column></el-table>
 <el-pagination v-model:current-page="page" v-model:page-size="limit" :page-sizes="[20,50,100]" :total="count" layout="total,sizes,prev,pager,next" @change="load"/></template>
 <template v-else-if="ready"><el-form v-if="editing" :class="paperPayment || paperOrder ? 'document-paper-form' : 'panel'" label-position="top" @submit.prevent="save">
-<PaymentEntrySheet v-if="paperPayment" :record="record" :original="originalPayment" :order="selectedOrder" :supplier="selectedSupplier" :options="options" :disabled="saving" @field="setEntryField">
-<template #invoices><PaymentInvoicePicker ref="paymentInvoicePicker" v-model="invoiceIds" :invoices="options.invoices || []" :supplier-name="selectedSupplier?.name" :disabled="saving" :loading="invoiceLoading" :error="invoiceLoadError" @load="loadPaymentInvoices"/></template>
-<template #attachments><AttachmentEditor v-model="attachments" kind="payments" drag :readonly="saving" @busy="uploading=$event"/></template>
+<PaymentEntrySheet v-if="paperPayment" :record="record" :original="originalPayment" :order="selectedOrder" :supplier="selectedSupplier" :options="options" :disabled="saving||uploading" @field="setEntryField">
+<template #invoices><PaymentInvoicePicker ref="paymentInvoicePicker" v-model="invoiceIds" :invoices="options.invoices || []" :supplier-name="selectedSupplier?.name" :project-id="selectedOrder?.project_id" :disabled="saving||uploading" :loading="invoiceLoading" :error="invoiceLoadError" @load="loadPaymentInvoices" @busy="uploading=$event" @uploaded="addUploadedPaymentInvoices"/></template>
+<template #attachments><AttachmentEditor v-model="attachments" kind="payments" drag :readonly="saving||uploading" @busy="uploading=$event"/></template>
 <template #actions><el-button type="primary" :loading="saving" :disabled="uploading" native-type="submit">保存付款单</el-button><el-button :disabled="saving||uploading" @click="router.push('/payments')">取消</el-button></template>
 </PaymentEntrySheet>
 <OrderEntrySheet v-else-if="paperOrder" :record="record" :options="options" :disabled="saving" @field="setEntryField">

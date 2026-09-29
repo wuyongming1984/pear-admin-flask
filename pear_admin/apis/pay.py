@@ -124,6 +124,12 @@ def pay_list():
         except ValueError:
             pass
     
+    q = q.options(
+        joinedload(PayORM.order).joinedload(OrderORM.project),
+        joinedload(PayORM.payer),
+        joinedload(PayORM.payee_supplier),
+        selectinload(PayORM.invoices),
+    )
     pages: Pagination = db.paginate(q, page=page, per_page=per_page, error_out=False)
     
     return {

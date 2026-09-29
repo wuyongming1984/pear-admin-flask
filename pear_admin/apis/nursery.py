@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from sqlalchemy import and_
 from pear_admin.extensions import db
 from pear_admin.orms.nursery import NurseryPlantORM, NurseryTransactionORM
 import datetime
@@ -421,7 +422,7 @@ def get_orders():
     from sqlalchemy import func
     
     # 获取所有出库单号
-    order_nos = db.session.query(
+    order_query = db.session.query(
         NurseryTransactionORM.order_no,
         func.sum(NurseryTransactionORM.total_price).label('total'),
         func.max(NurseryTransactionORM.create_at).label('create_at'),
@@ -433,14 +434,23 @@ def get_orders():
         NurseryTransactionORM.order_no.isnot(None)
     ).group_by(NurseryTransactionORM.order_no).order_by(
         func.max(NurseryTransactionORM.create_at).desc()
-    ).all()
+    )
+    order_nos = order_query.all()
+
+    # Use the database's order-number equality (including its collation) when
+    # mapping details to grouped headers, instead of issuing one query per order.
+    items_by_order = {}
+    if order_nos:
+        headers = order_query.order_by(None).subquery()
+        details = db.session.query(headers.c.order_no, NurseryTransactionORM).join(
+            NurseryTransactionORM, and_(NurseryTransactionORM.order_no == headers.c.order_no,
+                                       NurseryTransactionORM.type == 'out')).all()
+        for order_no, item in details:
+            items_by_order.setdefault(order_no, []).append(item)
     
     orders = []
     for row in order_nos:
-        # 获取该订单的所有项目
-        items = NurseryTransactionORM.query.filter_by(
-            order_no=row.order_no, type='out'
-        ).all()
+        items = items_by_order.get(row.order_no, [])
         
         orders.append({
             "order_no": row.order_no,

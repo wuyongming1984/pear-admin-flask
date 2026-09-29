@@ -163,6 +163,7 @@ def order_list():
     # 使用 selectinload 预加载关联的付款单数据及其供应商关系，避免 N+1 查询
     q = q.options(
         selectinload(OrderORM.project),  # 预加载项目关系
+        joinedload(OrderORM.supplier),
         selectinload(OrderORM.pays).selectinload(PayORM.payer),
         selectinload(OrderORM.pays).selectinload(PayORM.payee_supplier)
     )

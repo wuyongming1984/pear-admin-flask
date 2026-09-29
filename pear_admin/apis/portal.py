@@ -58,6 +58,7 @@ def reconcile(token, as_data=False):
             PayORM.payee_supplier_id.in_(related_ids),
             PayORM.order_id == None
         )
+        .options(db.joinedload(PayORM.payer), db.joinedload(PayORM.payee_supplier))
         .order_by(PayORM.create_at.desc())
     ).all()
     

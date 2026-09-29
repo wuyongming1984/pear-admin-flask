@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request, current_app
-from sqlalchemy import or_
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy import and_, or_
+from sqlalchemy.orm import contains_eager, joinedload, selectinload
 from pear_admin.extensions import db
 from pear_admin.orms import MaterialPlanningORM, MaterialInboundORM, MaterialInventoryORM, MaterialOutboundORM, MaterialInvoiceORM, MaterialInvoiceDetailORM, ProjectORM, SupplierORM
 from datetime import datetime
@@ -17,23 +17,30 @@ def get_options():
         projects = ProjectORM.query.all()
         suppliers = SupplierORM.query.all()
         project_list = []
+        # One grouped query per module, independent of the number of projects.
+        def counts(model, *conditions):
+            return dict(db.session.query(model.project_id, db.func.count(model.id))
+                        .filter(*conditions).group_by(model.project_id).all())
+
+        planning_counts = counts(MaterialPlanningORM)
+        inbound_counts = counts(MaterialInboundORM, MaterialInboundORM.status == 'pending')
+        inventory_counts = counts(MaterialInventoryORM)
+        invoice_counts = counts(MaterialInvoiceORM)
+        outbound_counts = dict(db.session.query(MaterialInventoryORM.project_id,
+                                               db.func.count(MaterialOutboundORM.id))
+            .select_from(MaterialOutboundORM).join(MaterialOutboundORM.inventory)
+            .filter(MaterialOutboundORM.status == 'pending')
+            .group_by(MaterialInventoryORM.project_id).all())
         
         for project in projects:
-            # 统计各模块数量
-            planning_count = MaterialPlanningORM.query.filter_by(project_id=project.id).count()
-            inbound_count = MaterialInboundORM.query.filter_by(project_id=project.id, status='pending').count()
-            inventory_count = MaterialInventoryORM.query.filter_by(project_id=project.id).count()
-            outbound_count = MaterialOutboundORM.query.join(MaterialOutboundORM.inventory).filter(MaterialInventoryORM.project_id==project.id, MaterialOutboundORM.status=='pending').count()
-            invoice_count = MaterialInvoiceORM.query.filter_by(project_id=project.id).count()
-            
             project_list.append({
                 'id': project.id,
                 'name': project.project_name,
-                'planning_count': planning_count,
-                'inbound_count': inbound_count,
-                'inventory_count': inventory_count,
-                'outbound_count': outbound_count,
-                'invoice_count': invoice_count
+                'planning_count': planning_counts.get(project.id, 0),
+                'inbound_count': inbound_counts.get(project.id, 0),
+                'inventory_count': inventory_counts.get(project.id, 0),
+                'outbound_count': outbound_counts.get(project.id, 0),
+                'invoice_count': invoice_counts.get(project.id, 0)
             })
         
         return jsonify({
@@ -54,7 +61,8 @@ def get_planning():
         page = request.args.get("page", 1, type=int)
         limit = request.args.get("limit", 10, type=int)
         
-        query = MaterialPlanningORM.query
+        query = MaterialPlanningORM.query.options(
+            joinedload(MaterialPlanningORM.project), joinedload(MaterialPlanningORM.supplier))
         
         # Filtering
         project_id = request.args.get("project_id")
@@ -70,7 +78,20 @@ def get_planning():
             query = query.filter(MaterialPlanningORM.planned_remaining_quantity < 0)
             
         pagination = query.paginate(page=page, per_page=limit, error_out=False)
-        
+        # Match in SQL to preserve database collation and NULL versus empty specs.
+        # Group by planning ID so duplicate planning keys retain their own totals.
+        pending_quantities = {}
+        if pagination.items:
+            pending_quantities = dict(db.session.query(
+                MaterialPlanningORM.id, db.func.sum(MaterialInboundORM.inbound_quantity))
+                .join(MaterialInboundORM, and_(
+                    MaterialInboundORM.project_id.is_not_distinct_from(MaterialPlanningORM.project_id),
+                    MaterialInboundORM.material_name == MaterialPlanningORM.material_name,
+                    MaterialInboundORM.material_spec.is_not_distinct_from(MaterialPlanningORM.material_spec),
+                    MaterialInboundORM.status == 'pending'))
+                .filter(MaterialPlanningORM.id.in_([item.id for item in pagination.items]))
+                .group_by(MaterialPlanningORM.id).all())
+
         res_data = []
         for item in pagination.items:
             try:
@@ -80,15 +101,7 @@ def get_planning():
                 qty = float(item.planned_total_quantity or 0)
                 d['planned_total_amount'] = f"{price * qty:.2f}"
                 
-                # Calculate pending inbound quantity (calculated field)
-                # Loose coupling based on project, name, spec
-                pending_qty = db.session.query(db.func.sum(MaterialInboundORM.inbound_quantity))\
-                    .filter(
-                        MaterialInboundORM.project_id == item.project_id,
-                        MaterialInboundORM.material_name == item.material_name,
-                        MaterialInboundORM.material_spec == item.material_spec,
-                        MaterialInboundORM.status == 'pending'
-                    ).scalar() or 0
+                pending_qty = pending_quantities.get(item.id) or 0
                 d['pending_inbound_quantity'] = f"{float(pending_qty):.2f}"
                 
                 res_data.append(d)
@@ -395,7 +408,9 @@ def get_inbound():
         page = request.args.get("page", 1, type=int)
         limit = request.args.get("limit", 10, type=int)
         
-        query = MaterialInboundORM.query
+        query = MaterialInboundORM.query.options(
+            joinedload(MaterialInboundORM.project), joinedload(MaterialInboundORM.supplier),
+            joinedload(MaterialInboundORM.invoice))
          # Filtering
         project_id = request.args.get("project_id")
         if project_id:
@@ -779,7 +794,9 @@ def get_inventory():
         limit = request.args.get("limit", 10, type=int)
         project_id = request.args.get("project_id")
         
-        query = MaterialInventoryORM.query
+        query = MaterialInventoryORM.query.options(
+            joinedload(MaterialInventoryORM.project), joinedload(MaterialInventoryORM.supplier),
+            joinedload(MaterialInventoryORM.seller), joinedload(MaterialInventoryORM.latest_invoice))
         if project_id:
             query = query.filter_by(project_id=project_id)
             
@@ -806,6 +823,11 @@ def get_outbound():
         # Always join inventory to filter out orphaned records and fetch related data efficiently if needed
         # And sort by ID descending (newest first)
         query = MaterialOutboundORM.query.join(MaterialOutboundORM.inventory).filter(MaterialOutboundORM.status==status)
+        query = query.options(
+            contains_eager(MaterialOutboundORM.inventory).joinedload(MaterialInventoryORM.project),
+            contains_eager(MaterialOutboundORM.inventory).joinedload(MaterialInventoryORM.seller),
+            contains_eager(MaterialOutboundORM.inventory).joinedload(MaterialInventoryORM.latest_invoice),
+            joinedload(MaterialOutboundORM.seller), joinedload(MaterialOutboundORM.invoice))
         
         if project_id:
             query = query.filter(MaterialInventoryORM.project_id == project_id)

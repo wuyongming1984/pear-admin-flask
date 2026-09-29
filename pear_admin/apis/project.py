@@ -7,7 +7,7 @@ from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from flask_sqlalchemy.pagination import Pagination
 from sqlalchemy import cast, String, or_
-from sqlalchemy.orm import load_only
+from sqlalchemy.orm import load_only, selectinload
 
 from pear_admin.extensions import db
 from pear_admin.orms import AttachmentORM, ProjectORM
@@ -68,6 +68,8 @@ def project_list():
     slim = request.args.get("mode") == "slim"
     if slim:
         q = q.options(load_only(ProjectORM.id, ProjectORM.project_name))
+    else:
+        q = q.options(selectinload(ProjectORM.attachment_list))
     pages: Pagination = db.paginate(q, page=page, per_page=per_page, error_out=False)
     
     return {

@@ -71,6 +71,10 @@ it('places related payment actions below the order sheet and preserves project d
   expect(newPayment.searchParams.get('order_id')).toBe('1')
   expect(newPayment.searchParams.get('returnTo')).toBe('/orders?project_id=10')
   const payments = article.get('[aria-label="关联付款单"]').element
+  const attachments = article.get('[aria-label="订单附件"]').element
+  expect(sheet.compareDocumentPosition(attachments) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(attachments.compareDocumentPosition(payments) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(article.get('input[type="file"]').attributes('multiple')).toBeDefined()
   expect(sheet.compareDocumentPosition(payments) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(article.get('a[aria-label="打印付款单 F007"]').attributes('href')).toBe('/payments/7/print')
   await article.get('a[aria-label="编辑付款单 F007"]').trigger('click')

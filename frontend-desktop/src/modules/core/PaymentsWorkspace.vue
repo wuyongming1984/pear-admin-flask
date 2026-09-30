@@ -35,7 +35,7 @@ const title = computed(() => `${projectOptions.value.find(p => p.id === project.
 const printColumns: Field[] = [{key:'pay_number',label:'付款单号'}, {key:'order_number',label:'关联订单'}, {key:'project_name',label:'项目'}, {key:'payer_supplier_name',label:'付款单位'}, {key:'payee_supplier_name',label:'收款单位'}, {key:'current_payment_amount',label:'本次付款',kind:'money'}, {key:'invoice_amount',label:'开票金额',kind:'money'}, {key:'payment_status',label:'付款状态'}, {key:'handler',label:'经办人'}]
 function display(p: Row, f: Field) {return f.key === 'project_name' ? projectName(p) : f.key === 'payment_status' ? statusText(p) : f.kind === 'money' ? money(p[f.key] ?? 0) : p[f.key] ?? '—'}
 function attachments(p: Row) {try {return parseAttachments(p)} catch {return []}}
-function chooseProject(id: string) {projectNameQuery.value = ''; project.value = id; contact.value = ''; contactSearch.value = ''}
+function chooseProject(id: string) {projectNameQuery.value = ''; project.value = id}
 function applyQuery() {
   project.value = String(route.query.project_id || '')
   projectNameQuery.value = String(route.query.project_name || '')
@@ -69,7 +69,7 @@ async function exportCsv() {
 </script>
 
 <template>
-  <section class="page orders-page payment-page" v-loading="busy">
+  <section class="page orders-page payment-page">
     <PageHeader title="付款管理" description="按项目与供应商查找付款单，核对付款、发票与支付状态" />
     <div v-if="error" role="alert" class="load-error">{{error}} <button @click="load">重新加载</button></div>
     <div class="orders-workspace">
@@ -83,7 +83,7 @@ async function exportCsv() {
         <button v-for="c in visibleContacts" :key="c" :data-contact="c" :class="{active:contact === c}" :aria-pressed="contact === c" @click="contact = c">{{c}}</button>
         <p v-if="!visibleContacts.length" class="muted">没有匹配的联系人</p>
       </div></aside>
-      <main class="orders-content" aria-label="付款明细">
+      <main class="orders-content" aria-label="付款明细" v-loading="busy">
         <header class="orders-toolbar"><strong>{{title}} — 付款明细</strong><div class="totals"><span>付款合计<b>¥{{money(totals.paid)}}</b></span><span>开票合计<b>¥{{money(totals.invoiced)}}</b></span></div>
           <div class="order-controls"><input v-model="number" type="search" aria-label="付款单号搜索" placeholder="输入付款单号搜索…" /><input v-model="orderNumber" type="search" aria-label="关联订单号搜索" placeholder="关联订单号…" />
             <label class="card-columns-control">卡片列数<select v-model="cardColumns" aria-label="卡片列数" title="宽度不足时自动减少列数"><option value="auto">自动</option><option value="1">1列</option><option value="2">2列</option><option value="3">3列</option></select></label>

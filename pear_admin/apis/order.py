@@ -15,9 +15,9 @@ order_api = Blueprint("order", __name__, url_prefix="/order")
 
 
 def resolve_order_contact(data, order=None):
-    """Resolve contact by supplier identity; never persist a free-form contact."""
+    """Validate a registered contact, with an optional supplier identity."""
     supplier_id = data.get("supplier_id", order.supplier_id if order else None)
-    contact = str(data.get("supplier_contact_person") or "").strip()
+    contact = str(data.get("supplier_contact_person", order.supplier_contact_person if order else None) or "").strip()
     if supplier_id:
         try:
             supplier = db.session.get(SupplierORM, int(supplier_id))
@@ -27,7 +27,10 @@ def resolve_order_contact(data, order=None):
         matches = db.session.scalars(db.select(SupplierORM).where(
             SupplierORM.contact_person == contact
         ).limit(2)).all() if contact else []
-        supplier = matches[0] if len(matches) == 1 else None
+        if not matches:
+            return "请选择供应商管理中已登记的联系人"
+        data.update(supplier_id=None, supplier_contact_person=contact, contact_phone="")
+        return None
     if not supplier or not (supplier.contact_person or "").strip():
         return "请选择供应商管理中已登记的联系人"
     if "supplier_contact_person" in data and contact != supplier.contact_person.strip():

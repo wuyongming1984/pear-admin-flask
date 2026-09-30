@@ -134,6 +134,12 @@ def upload_file():
             attachment.save()
             attachment_id = attachment.id
         
+        # Return an immediately readable URL for private OSS objects. Keep the
+        # durable path separately so saved attachments can be signed again.
+        access_url = file_url
+        if oss.bucket:
+            access_url = oss.generate_signed_url(object_key) or file_url
+
         # 返回文件信息
         return {
             "code": 0,
@@ -142,7 +148,8 @@ def upload_file():
                 "id": attachment_id,
                 "filename": filename,
                 "original_filename": file.filename,
-                "url": file_url,
+                "url": access_url,
+                "file_path": file_url,
                 "size": file_size,
                 "code": attachment_code # 回传附件编号方便前端使用
             }

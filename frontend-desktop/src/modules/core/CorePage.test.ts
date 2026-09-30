@@ -15,6 +15,33 @@ vi.mock('element-plus',()=>({ElMessage:{error:vi.fn(),success:vi.fn(),warning:vi
 vi.mock('../../components/AttachmentEditor.vue',()=>({default:{props:['modelValue','drag'],template:'<div />'}}))
 const input={props:['modelValue'],emits:['update:modelValue'],template:'<input :value="modelValue" @input="$emit(\'update:modelValue\',$event.target.value)" />'}
 const stubs:any={'el-form':{template:'<form><slot/></form>'},'el-form-item':{props:['label'],template:'<label>{{label}}<slot/></label>'},'el-input':input,'el-select':input,'el-select-v2':input,'el-option':true,'el-date-picker':input,'el-button':{props:['nativeType','disabled','loading'],template:'<button :type="nativeType||\'button\'" :disabled="disabled||loading"><slot/></button>'},'el-alert':{props:['title'],template:'<div role="alert">{{title}}</div>'},'el-dialog':{props:['modelValue','title'],template:'<section v-if="modelValue" role="dialog" :aria-label="title"><slot/><slot name="footer"/></section>'},'el-table':true,'el-table-column':true,'el-pagination':true,'el-descriptions':true,'el-descriptions-item':true,'el-popover':true,'el-checkbox-group':true,'el-checkbox':true,'el-empty':{props:['description'],template:'<p>{{description}}</p>'}}
+it.each(['new','edit'])('saves an order with a registered contact and a cleared optional supplier (%s)',async(mode)=>{
+ vi.clearAllMocks()
+ const order={id:2,project_id:7,material_name:'stone',order_amount:'123.45',supplier_id:3,supplier_contact_person:'张工'}
+ mocks.allRows.mockImplementation(async(path:string)=>path==='/supplier/'?[
+  {id:3,name:'甲公司',contact_person:'张工',phone:'111'},
+  {id:4,name:'乙公司',contact_person:'张工',phone:'222'},
+ ]:[])
+ mocks.request.mockImplementation(async(path:string)=>({code:0,data:path==='/order/2'?order:{}}))
+ const path=mode==='new'?'/orders/new':'/orders/2/edit'
+ const router=createRouter({history:createMemoryHistory(),routes:[{path,component:CorePage,meta:{coreKind:'orders',coreMode:mode}},{path:'/orders',component:{template:'<p>订单列表</p>'}}]})
+ await router.push(path);await router.isReady()
+ const wrapper=mount({template:'<router-view/>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}})
+ try{
+  await flushPromises()
+  const sheet=wrapper.getComponent(OrderEntrySheet)
+  expect(sheet.get('label[for="entry-order-supplier_id"]').text()).toBe('供应商')
+  expect(sheet.get('label[for="entry-order-supplier_contact_person"]').text()).toContain('*')
+  for(const [key,value] of Object.entries(order))sheet.vm.$emit('field',key,value)
+  sheet.vm.$emit('field','supplier_id',undefined)
+  await flushPromises()
+  await wrapper.get('form').trigger('submit');await flushPromises()
+  const call=mocks.request.mock.calls.find(([,options])=>options?.method===(mode==='new'?'POST':'PUT'))
+  expect(call).toBeDefined()
+  expect(JSON.parse(call![1].body)).toMatchObject({supplier_id:null,supplier_contact_person:'张工',contact_phone:''})
+ }finally{wrapper.unmount()}
+})
+
 describe('invoice live search',()=>{
  let wrapper:any
  const invoiceCalls=()=>mocks.request.mock.calls.filter(([url])=>url.startsWith('/material/invoice?'))

@@ -2,13 +2,14 @@
 import {computed, ref, watch, nextTick, onActivated, onDeactivated} from 'vue'
 import {useRoute, onBeforeRouteLeave} from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
-import {allRows, request, safeUrl} from '../../api'
+import {allRows, request} from '../../api'
+import OrderAttachments from './OrderAttachments.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import TablePrint from './TablePrint.vue'
 import {useCardColumns} from './useCardColumns'
 import {useDocumentWorkspace} from './useDocumentWorkspace'
 import {formatMoney, sumMoney} from './money'
-import {parseAttachments, schemas, type Row, type Field} from './model'
+import {schemas, type Row, type Field} from './model'
 
 const route = useRoute()
 const projectList = ref<HTMLElement>(), contactList = ref<HTMLElement>()
@@ -42,8 +43,8 @@ const visibleContacts = computed(() => contacts.value.filter(c => c.toLowerCase(
 const title = computed(() => `${projectOptions.value.find(p => p.id === project.value)?.name || projectNameQuery.value || '全部项目'} · ${contact.value || '全部联系人'}`)
 const printColumns = schemas.orders!.fields.filter(f => ['order_number', 'project_id', 'material_name', 'supplier_contact_person', 'order_amount'].includes(f.key))
 function display(o: Row, f: Field) {return f.key === 'project_id' ? o.project_name : f.key === 'material_name' ? material(o) : f.kind === 'money' ? money(o[f.key]) : o[f.key] ?? '—'}
-function attachments(o: Row) {try {return parseAttachments(o)} catch {return []}}
-function chooseProject(id: string) {projectNameQuery.value = ''; project.value = id; contact.value = ''; contactSearch.value = ''}
+function attachmentsSaved(o: Row, files: Row[]) {o.attachments_list = files; o.attachments = JSON.stringify(files)}
+function chooseProject(id: string) {projectNameQuery.value = ''; project.value = id}
 function paymentEditor(path: string, orderId?: number) {
   return {path, query: {...(orderId == null ? {} : {order_id: orderId}), returnTo: route.fullPath}}
 }
@@ -82,7 +83,7 @@ async function exportCsv() {
 </script>
 
 <template>
-  <section class="page orders-page" v-loading="busy">
+  <section class="page orders-page">
     <PageHeader title="订单管理" description="按项目与供应商查找订单，跟进采购往来" />
     <div v-if="error" role="alert" class="load-error">{{error}} <button @click="load">重新加载</button></div>
     <div class="orders-workspace">
@@ -102,7 +103,7 @@ async function exportCsv() {
           <p v-if="!visibleContacts.length" class="muted">没有匹配的联系人</p>
         </div>
       </aside>
-      <main class="orders-content" aria-label="订单明细">
+      <main class="orders-content" aria-label="订单明细" v-loading="busy">
         <header class="orders-toolbar">
           <strong>{{title}} — 订单明细</strong>
           <div class="totals"><span>订单合计<b>¥{{money(totals.orders)}}</b></span><span>付款合计<b>¥{{money(totals.paid)}}</b></span><span>余额合计<b>¥{{money(totals.balance)}}</b></span></div>
@@ -136,6 +137,7 @@ async function exportCsv() {
                 <tr><th>付款进度</th><td><strong class="payment-progress money">{{progress(o)}}</strong><small class="subline">已关联 {{(o.pays_list || []).length}} 张付款单</small></td></tr>
               </tbody></table></section>
             </div>
+            <OrderAttachments :order="o" @saved="attachmentsSaved(o, $event)" />
             <section v-if="show('payments')" class="related-payments" aria-label="关联付款单">
               <h3>关联付款单 <small>{{(o.pays_list || []).length}} 张</small></h3>
               <div class="payment-list"><div v-for="p in o.pays_list || []" :key="p.id" class="payment-item">
@@ -143,7 +145,6 @@ async function exportCsv() {
                 <RouterLink :to="`/payments/${p.id}/print`" :aria-label="`打印付款单 ${p.pay_number}`" class="payment-print">打印</RouterLink>
               </div><span v-if="!o.pays_list?.length" class="muted">暂无关联付款单</span></div>
             </section>
-            <div v-if="attachments(o).length" class="sheet-attachments"><span>附件：</span><a v-for="(a,i) in attachments(o)" :key="i" :href="safeUrl(a.url || a.file_path)" target="_blank" rel="noopener">{{a.name || a.filename || '附件'}}</a></div>
             <footer class="sheet-actions"><RouterLink :to="`/orders/${o.id}`">详情</RouterLink><RouterLink :to="`/orders/${o.id}/edit`">编辑订单</RouterLink><RouterLink class="new-payment-button" :to="paymentEditor('/payments/new', o.id)">新增付款单</RouterLink><RouterLink :to="`/orders/${o.id}/print`">打印订单</RouterLink><button class="delete-button" :disabled="deleting" @click="remove(o)">删除</button></footer>
           </article>
           <nav v-if="count" class="order-pagination" aria-label="订单分页"><span>共 {{count}} 条 · 第 {{page}} / {{pageCount}} 页</span><button :disabled="busy || page <= 1" @click="page--">上一页</button><button :disabled="busy || page >= pageCount" @click="page++">下一页</button></nav>

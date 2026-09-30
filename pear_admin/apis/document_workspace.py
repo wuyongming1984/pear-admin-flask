@@ -39,7 +39,8 @@ def _money(value):
 def _metadata(payment=False):
     projects = [dict(id=p.id, project_name=p.project_name) for p in db.session.execute(
         db.select(ProjectORM.id, ProjectORM.project_name).order_by(ProjectORM.id))]
-    contacts = db.select(OrderORM.supplier_contact_person).where(*_project_filters())
+    # Keep sidebar choices independent; only document results use project filters.
+    contacts = db.select(OrderORM.supplier_contact_person)
     if payment:
         contacts = contacts.join(PayORM, PayORM.order_id == OrderORM.id)
     contacts = contacts.where(OrderORM.supplier_contact_person.isnot(None),

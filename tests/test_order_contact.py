@@ -38,15 +38,34 @@ class OrderContactTest(unittest.TestCase):
         result = self.post({**data, 'material_manager': '指定负责人'})
         self.assertEqual(db.session.get(OrderORM, result['data']['id']).material_manager, '指定负责人')
 
-    def test_duplicate_names_require_supplier_identity(self):
+    def test_duplicate_names_allow_no_supplier_and_selected_supplier_sets_phone(self):
         data = self.seed()
         other = SupplierORM(type_id=1, name='乙公司', contact_person='张工',
                             phone='13800000002', bank_name='', account_number='')
         db.session.add(other); db.session.commit()
-        self.assertNotEqual(self.post({**data, 'supplier_id': None})['code'], 0)
+        result = self.post({**data, 'supplier_id': None})
+        self.assertEqual(result['code'], 0, result)
+        order = db.session.get(OrderORM, result['data']['id'])
+        self.assertIsNone(order.supplier_id)
+        self.assertEqual(order.supplier_contact_person, '张工')
+        self.assertEqual(order.contact_phone, '')
         result = self.post({**data, 'supplier_id': other.id})
         self.assertEqual(result['code'], 0, result)
         self.assertEqual(db.session.get(OrderORM, result['data']['id']).contact_phone, other.phone)
+
+    def test_supplier_can_be_omitted_on_create_and_cleared_on_edit(self):
+        data = self.seed()
+        result = self.post({k: v for k, v in data.items() if k != 'supplier_id'})
+        self.assertEqual(result['code'], 0, result)
+        self.assertIsNone(db.session.get(OrderORM, result['data']['id']).supplier_id)
+        result = self.post(data)
+        oid = result['data']['id']
+        response = self.client.put(f'/api/v1/order/{oid}', headers=self.headers,
+                                   json={'supplier_id': None, 'supplier_contact_person': '张工'}).json
+        self.assertEqual(response['code'], 0, response)
+        order = db.session.get(OrderORM, oid)
+        self.assertIsNone(order.supplier_id)
+        self.assertEqual(order.supplier_contact_person, '张工')
 
     def test_edit_rejects_unregistered_contact_and_updates_phone(self):
         data = self.seed(); result = self.post(data); oid = result['data']['id']

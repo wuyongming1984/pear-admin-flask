@@ -37,10 +37,16 @@ def _money(value):
 
 
 def _metadata(payment=False):
-    projects = [dict(id=p.id, project_name=p.project_name) for p in db.session.execute(
-        db.select(ProjectORM.id, ProjectORM.project_name).order_by(ProjectORM.id))]
-    # Keep sidebar choices independent; only document results use project filters.
-    contacts = db.select(OrderORM.supplier_contact_person)
+    # Each sidebar follows the OTHER selection, so alternatives remain selectable.
+    project_query = db.select(ProjectORM.id, ProjectORM.project_name).order_by(ProjectORM.id)
+    contact = request.args.get('supplier_contact_person', '')
+    if contact:
+        matching_projects = db.select(OrderORM.project_id).where(OrderORM.supplier_contact_person == contact)
+        if payment:
+            matching_projects = matching_projects.join(PayORM, PayORM.order_id == OrderORM.id)
+        project_query = project_query.where(ProjectORM.id.in_(matching_projects))
+    projects = [dict(id=p.id, project_name=p.project_name) for p in db.session.execute(project_query)]
+    contacts = db.select(OrderORM.supplier_contact_person).where(*_project_filters())
     if payment:
         contacts = contacts.join(PayORM, PayORM.order_id == OrderORM.id)
     contacts = contacts.where(OrderORM.supplier_contact_person.isnot(None),

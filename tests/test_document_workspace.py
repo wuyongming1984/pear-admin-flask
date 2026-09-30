@@ -77,22 +77,47 @@ class DocumentWorkspaceTest(unittest.TestCase):
         literal = self.client.get('/api/v1/workspace/orders?order_number=%25', headers=self.headers).json
         self.assertEqual(literal['count'], 0)
 
-    def test_filter_options_stay_available_for_empty_project_contact_combinations(self):
+    def test_filter_options_follow_the_other_column_without_filtering_themselves(self):
         self.seed(2)
         other = ProjectORM(project_name='项目乙')
-        db.session.add(other); db.session.commit()
+        empty = ProjectORM(project_name='空项目')
+        db.session.add_all([other, empty]); db.session.flush()
         other_id = other.id
+        for index, contact in enumerate(('联系人1', '联系人2')):
+            order = OrderORM(order_number=f'OTHER{index}', project_id=other_id, material_name='材料',
+                             supplier_contact_person=contact, order_amount=100)
+            db.session.add(order); db.session.flush()
+            db.session.add(PayORM(pay_number=f'OTHER{index}', order_id=order.id, current_payment_amount=10))
+        db.session.commit()
         for kind in ('orders', 'payments'):
             with self.subTest(kind=kind):
                 base = f'/api/v1/workspace/{kind}'
                 initial = self.client.get(base, headers=self.headers).json
+                self.assertEqual(set(initial['contacts']), {'联系人0', '联系人1', '联系人2'})
                 for project_filter in ({'project_id': other_id}, {'project_name': '项目乙'}):
+                    project_only = self.client.get(base, query_string=project_filter, headers=self.headers).json
+                    self.assertEqual(set(project_only['contacts']), {'联系人1', '联系人2'})
                     result = self.client.get(base, query_string={
                         **project_filter, 'supplier_contact_person': '联系人1',
                     }, headers=self.headers).json
+                    self.assertEqual(result['count'], 1)
+                    self.assertEqual({p['id'] for p in result['projects']}, {self.project_id, other_id})
+                    self.assertEqual(set(result['contacts']), {'联系人1', '联系人2'})
+                    # A stale/deep-linked incompatible combination must not erase the options.
+                    result = self.client.get(base, query_string={
+                        **project_filter, 'supplier_contact_person': '联系人0',
+                    }, headers=self.headers).json
                     self.assertEqual(result['count'], 0)
-                    self.assertEqual(result['projects'], initial['projects'])
-                    self.assertEqual(set(result['contacts']), {'联系人0', '联系人1'})
+                    self.assertEqual([p['id'] for p in result['projects']], [self.project_id])
+                    self.assertEqual(set(result['contacts']), {'联系人1', '联系人2'})
+                contact_only = self.client.get(base, query_string={
+                    'supplier_contact_person': '联系人2',
+                }, headers=self.headers).json
+                self.assertEqual([p['id'] for p in contact_only['projects']], [other_id])
+                self.assertEqual(set(contact_only['contacts']), {'联系人0', '联系人1', '联系人2'})
+                cleared = self.client.get(base, headers=self.headers).json
+                self.assertEqual(cleared['projects'], initial['projects'])
+                self.assertEqual(set(cleared['contacts']), set(initial['contacts']))
 
     def test_unlinked_payments_empty_pages_and_auth(self):
         db.session.add(PayORM(pay_number='unlinked', current_payment_amount=10)); db.session.commit()

@@ -59,6 +59,16 @@ class PayORM(BaseORM):
     
     # 经办人
     handler = db.Column(db.String(64), nullable=True, comment="经办人")
+
+    # Server-owned audit snapshots. NULL means the historical value is unknown.
+    generated_at = db.Column(db.DateTime, nullable=True, comment="实际生成时间")
+    created_by_id = db.Column(db.Integer, nullable=True, comment="创建账号ID")
+    created_by_username = db.Column(db.String(128), nullable=True, comment="创建登录名快照")
+    created_by_nickname = db.Column(db.String(128), nullable=True, comment="创建昵称快照")
+    updated_at = db.Column(db.DateTime, nullable=True, comment="最后修改时间")
+    updated_by_id = db.Column(db.Integer, nullable=True, comment="最后修改账号ID")
+    updated_by_username = db.Column(db.String(128), nullable=True, comment="最后修改登录名快照")
+    updated_by_nickname = db.Column(db.String(128), nullable=True, comment="最后修改昵称快照")
     
     # 附件
     attachments = db.Column(db.Text, nullable=True, comment="附件")
@@ -171,6 +181,14 @@ class PayORM(BaseORM):
             "invoice_amount": format_numeric(self.invoice_amount),
             "payment_status": self.payment_status,
             "handler": self.handler,
+            "generated_at": format_datetime(self.generated_at),
+            "created_by_id": self.created_by_id,
+            "created_by_username": self.created_by_username,
+            "created_by_nickname": self.created_by_nickname,
+            "updated_at": format_datetime(self.updated_at),
+            "updated_by_id": self.updated_by_id,
+            "updated_by_username": self.updated_by_username,
+            "updated_by_nickname": self.updated_by_nickname,
             "create_at": format_datetime(self.create_at),
             "attachments": self.attachments,
             "attachments_list": attachments_data,

@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from flask import Blueprint, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, current_user
 from flask_sqlalchemy.pagination import Pagination
 
 from pear_admin.extensions import db
@@ -12,6 +12,26 @@ from sqlalchemy.orm import joinedload, selectinload
 from pear_admin.invoice_links import payment_invoices
 
 pay_api = Blueprint("pay", __name__, url_prefix="/pay")
+
+# Audit metadata is never accepted from request payloads.
+PAYMENT_FIELDS = {
+    "pay_number", "order_id", "payer_supplier_id", "payee_supplier_id",
+    "payment_purpose", "current_payment_amount", "invoice_amount",
+    "payment_status", "handler", "create_at", "attachments",
+}
+
+
+def record_payment_actor(payment, creating=False):
+    now = datetime.now()
+    if creating:
+        payment.generated_at = now
+        payment.created_by_id = current_user.id
+        payment.created_by_username = current_user.username
+        payment.created_by_nickname = current_user.nickname
+    payment.updated_at = now
+    payment.updated_by_id = current_user.id
+    payment.updated_by_username = current_user.username
+    payment.updated_by_nickname = current_user.nickname
 
 
 def resolve_payment_payee(data, payment=None):
@@ -183,11 +203,7 @@ def create_pay():
         return {"code": -1, "msg": str(error)}
     
     # 定义允许的字段 (白名单)
-    valid_fields = [
-        "pay_number", "order_id", "payer_supplier_id", "payee_supplier_id",
-        "payment_purpose", "current_payment_amount", "invoice_amount",
-        "payment_status", "handler", "create_at", "attachments"
-    ]
+    valid_fields = PAYMENT_FIELDS
     
     clean_data = {}
     
@@ -225,7 +241,10 @@ def create_pay():
             clean_data[key] = value
 
     try:
+        if not clean_data.get("handler"):
+            clean_data["handler"] = current_user.nickname or current_user.username
         pay = PayORM(**clean_data)
+        record_payment_actor(pay, creating=True)
         db.session.add(pay)
         db.session.flush()  # 获取pay的ID
         
@@ -278,7 +297,7 @@ def change_pay(pid=None):
     
     # 更新字段
     for key, value in data.items():
-        if key == "id":
+        if key not in PAYMENT_FIELDS:
             continue
         if key == "create_at" and value:
             try:
@@ -298,6 +317,7 @@ def change_pay(pid=None):
     if invoice_ids is not None:
         pay_obj.invoices = invoices
     
+    record_payment_actor(pay_obj)
     pay_obj.save()
     return {"code": 0, "msg": "修改付款单信息成功"}
 

@@ -48,9 +48,17 @@ async function save() {
 </template>
 
 <style scoped>
-.order-attachments { margin-top: 16px; min-width: 0; }
-.order-attachments :deep(.attachment-editor) { margin: 0; font-size: 13px; }
-.order-attachments :deep(.attachment-row) { flex-wrap: wrap; }
+.order-attachments { margin-top: 12px; min-width: 0; }
+.order-attachments :deep(.attachment-editor) { margin: 0; padding: 12px 16px; font-size: 13px; }
+.order-attachments :deep(.toolbar) { margin: 0 0 8px; padding: 0; gap: 10px; border: 0; background: transparent; }
+.order-attachments :deep(.toolbar .el-button) { height: 30px; padding: 6px 12px; }
+.order-attachments :deep(.attachment-drop-hint),
+.order-attachments :deep(.attachment-editor > .muted) { margin: 4px 0; font-size: 12px; line-height: 1.5; }
+.order-attachments :deep(.el-empty) { padding: 8px 0 0; flex-direction: row; justify-content: flex-start; gap: 8px; }
+.order-attachments :deep(.el-empty__image) { width: 24px !important; }
+.order-attachments :deep(.el-empty__description) { margin: 0; }
+.order-attachments :deep(.el-empty__description p) { font-size: 12px; }
+.order-attachments :deep(.attachment-row) { flex-wrap: wrap; padding: 8px 0; }
 .order-attachments :deep(.attachment-row > a) { min-width: 0; overflow-wrap: anywhere; }
 .save-status { margin: 8px 0 0; color: #607569; font-size: 12px; }
 .attachment-error { margin: 8px 0; color: #a84232; font-size: 13px; line-height: 1.6; }

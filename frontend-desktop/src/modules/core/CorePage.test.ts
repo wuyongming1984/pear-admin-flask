@@ -544,3 +544,26 @@ describe('core form operation behavior',()=>{
 })
 
 
+
+it.each([['new',null,'当前用户昵称'],['edit',null,'当前用户昵称'],['edit','原经办人','原经办人']])('defaults empty payment handler and persists manual edits (%s, %s)',async(mode,handler,expected)=>{
+ vi.clearAllMocks()
+ const payment={id:7,pay_number:'FK7',handler,order_id:3,payer_supplier_id:4,payee_supplier_id:5,current_payment_amount:'10.00'}
+ mocks.request.mockResolvedValue({code:0,data:payment})
+ mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:3,supplier_id:5,supplier_contact_person:'张工'}]:path==='/supplier/'?[{id:5,name:'供应商',contact_person:'张工'}]:[])
+ const path=mode==='new'?'/payments/new':'/payments/7/edit'
+ const router=createRouter({history:createMemoryHistory(),routes:[{path,component:CorePage,meta:{coreKind:'payments',coreMode:mode}},{path:'/payments',component:{template:'<p>列表</p>'}}]})
+ await router.push(path);await router.isReady()
+ const wrapper=mount({template:'<router-view/>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}})
+ try{
+  await flushPromises()
+  expect(wrapper.get('[aria-label="经办人"]').element).toHaveProperty('value',expected)
+  const sheet=wrapper.getComponent(PaymentEntrySheet)
+  for(const [key,value] of Object.entries(payment))if(!['handler','id'].includes(key))sheet.vm.$emit('field',key,value)
+  await wrapper.get('[aria-label="经办人"]').setValue('手工指定经办人')
+  await wrapper.get('[aria-label="本次实付金额"]').setValue('20.00')
+  await wrapper.get('form').trigger('submit');await flushPromises()
+  const call=mocks.request.mock.calls.find(([,o])=>o?.method===(mode==='new'?'POST':'PUT'))
+  expect(call).toBeDefined()
+  expect(JSON.parse(call![1].body).handler).toBe('手工指定经办人')
+ }finally{wrapper.unmount()}
+})

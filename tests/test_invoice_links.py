@@ -148,7 +148,7 @@ class InvoiceLinksTest(unittest.TestCase):
         self.assertEqual({i.id for i in payment.invoices}, {self.invoices[0].id, self.invoices[2].id})
         result = self.client.put(endpoint, json={'handler': 'should not change', 'invoice_ids': [999]}, headers=self.headers).json
         self.assertNotEqual(result['code'], 0)
-        self.assertIsNone(payment.handler)
+        self.assertEqual(payment.handler, 'Admin')
         for invoice in (self.invoices[0], self.invoices[2]):
             linked = self.client.get(f'/api/v1/invoice-links/invoices/{invoice.id}/payments', headers=self.headers).json['data']['linked']
             self.assertIn(pid, [p['id'] for p in linked])

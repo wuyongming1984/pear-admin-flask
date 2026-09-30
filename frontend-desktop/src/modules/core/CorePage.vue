@@ -42,7 +42,7 @@ const originalPayment=ref<Row>()
 const rows=ref<Row[]>([]),record=ref<Row>({}),attachments=ref<Row[]>([]),invoiceIds=ref<any[]>([]),selection=ref<Row[]>([]),options=ref<Record<string,Row[]>>({}),filters=ref<Row>(Object.fromEntries(Object.entries(route.query).map(([k,v])=>[k,k.endsWith(`_id`)&&v?Number(v):v]))),page=ref(1),limit=ref(20),count=ref(0),busy=ref(false),saving=ref(false),uploading=ref(false),error=ref(''),ready=ref(false),baseline=ref(''),syncOrders=ref<Row[]>([]),syncVisible=ref(false),pendingPayload=ref<Row>({}),uploadReport=ref<Row|null>(null),portalLink=ref('')
 const snapshot=()=>JSON.stringify([record.value,attachments.value,invoiceIds.value]); const dirty=computed(()=>editing.value&&ready.value&&snapshot()!==baseline.value)
 const listColumns=computed<Field[]>(()=>[{key:'id',label:'ID'},...schema.value.fields.filter(x=>x.kind!=='textarea'),...(kind.value==='orders'?[{key:'paid_amount',label:'累计付款'},{key:'order_balance',label:'订单余额'}]:[]),{key:'create_at',label:'创建时间'}]);const selectedColumns=ref(listColumns.value.map(f=>f.key));const visibleColumns=computed(()=>listColumns.value.filter(f=>selectedColumns.value.includes(f.key)));const tablePrintVisible=ref(false);onDeactivated(()=>{tablePrintVisible.value=false})
-const freshRecord=():Row=>kind.value==='payments'?{pay_number:'FK'+Date.now(),order_id:route.query.order_id?Number(route.query.order_id):undefined}:kind.value==='orders'?{material_manager:session.nickname,project_id:route.query.project_id?Number(route.query.project_id):undefined}:kind.value==='payers'?{type_id:1}:{};
+const freshRecord=():Row=>kind.value==='payments'?{pay_number:'FK'+Date.now(),handler:session.nickname||session.userName,order_id:route.query.order_id?Number(route.query.order_id):undefined}:kind.value==='orders'?{material_manager:session.nickname,project_id:route.query.project_id?Number(route.query.project_id):undefined}:kind.value==='payers'?{type_id:1}:{};
 const invoiceEditKeys=['invoice_category','deductible','remarks']
 const fields=computed(()=>schema.value.fields.filter(f=>kind.value!=='invoices'||mode.value!=='edit'||invoiceEditKeys.includes(f.key)))
 const totals=computed(()=>({orders:sumMoney(rows.value.map(x=>x.order_amount)),paid:sumMoney(rows.value.map(x=>x.paid_amount)),balance:sumMoney(rows.value.map(x=>x.order_balance))}));
@@ -88,6 +88,7 @@ watch(()=>JSON.stringify(filters.value),()=>{
 onBeforeUnmount(stopInvoiceSearch);onDeactivated(stopInvoiceSearch)
 async function load(){if(invoiceList.value)return loadInvoiceList();busy.value=true;ready.value=false;error.value='';portalLink.value='';try{
  await Promise.all([loadOptions(),loadRecord()])
+ if(paperPayment.value&&!String(record.value.handler||'').trim())record.value.handler=session.nickname||session.userName
  if(kind.value==='payments'&&mode.value==='edit')originalPayment.value={order_id:record.value.order_id,current_payment_amount:record.value.current_payment_amount}
  if(kind.value==='payments'&&mode.value==='new'&&record.value.order_id)changed({key:'order_id',label:'关联订单'})
  baseline.value=snapshot();ready.value=true;await openRequestedInvoicePicker()

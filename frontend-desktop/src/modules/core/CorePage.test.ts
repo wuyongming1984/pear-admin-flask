@@ -3,6 +3,7 @@ import {describe,it,expect,vi,beforeEach,afterEach} from 'vitest'
 import {mount,flushPromises} from '@vue/test-utils'
 import {createRouter,createMemoryHistory} from 'vue-router'
 import CorePage from './CorePage.vue'
+import OrdersWorkspace from './OrdersWorkspace.vue'
 import PaymentEntrySheet from './PaymentEntrySheet.vue'
 import OrderEntrySheet from './OrderEntrySheet.vue'
 import SupplierContactSelect from './SupplierContactSelect.vue'
@@ -137,6 +138,65 @@ describe('invoice live search',()=>{
 async function setup(){const router=createRouter({history:createMemoryHistory(),routes:[{path:'/projects/new',component:CorePage,meta:{coreKind:'projects',coreMode:'new'}},{path:'/projects',component:{template:'<div>项目列表</div>'}},{path:'/system',component:{template:'<div>系统页面</div>'}}]});await router.push('/projects/new');await router.isReady();const wrapper=mount({template:'<router-view v-slot="{Component,route}"><keep-alive><component :is="Component" :key="route.path"/></keep-alive></router-view>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises();return{wrapper,router}}
 describe('core form operation behavior',()=>{
  beforeEach(()=>{vi.clearAllMocks();mocks.request.mockResolvedValue({code:0,data:{}});mocks.allRows.mockResolvedValue([]);mocks.confirm.mockResolvedValue('confirm')})
+ it.each(['new','edit'])('returns to the filtered orders workspace after saving a %s payment',async(mode)=>{
+  const payment={id:7,pay_number:'FK7',order_id:3,payer_supplier_id:4,payee_supplier_id:5,current_payment_amount:'10.00',payment_purpose:'采购'}
+  const order={id:3,order_number:'D003',project_id:10,project_name:'项目甲',supplier_id:5,supplier_contact_person:'张工',order_amount:'100.00',paid_amount:'10.00',pays_list:[payment]}
+  let completeSave!:(value:any)=>void
+  mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[order]:path==='/supplier/'?[{id:5,name:'销售公司',contact_person:'张工'}]:path==='/payer/'?[{id:4,name:'付款单位'}]:[])
+  mocks.request.mockImplementation(async(url:string,options:any)=>{
+   if(options?.method)return new Promise(resolve=>completeSave=resolve)
+   if(url.startsWith('/workspace/orders?'))return {code:0,data:[order],count:40,projects:[{id:10,project_name:'项目甲'}],contacts:['张工'],totals:{orders:'100',paid:order.paid_amount,balance:'90'}}
+   return {code:0,data:payment}
+  })
+  const router=createRouter({history:createMemoryHistory(),routes:[{path:'/orders',component:OrdersWorkspace},{path:'/payments/new',component:CorePage,meta:{coreKind:'payments',coreMode:'new'}},{path:'/payments/:id/edit',component:CorePage,meta:{coreKind:'payments',coreMode:'edit'}},{path:'/payments',component:{template:'<p>付款管理</p>'}},{path:'/:pathMatch(.*)*',component:{template:'<p />'}}]})
+  await router.push('/orders?project_id=10');await router.isReady()
+  const wrapper=mount({template:'<router-view v-slot="{Component,route}"><keep-alive><component :is="Component" :key="route.path"/></keep-alive></router-view>'},{global:{plugins:[router],stubs:{...stubs,TablePrint:true},directives:{loading:()=>{}}}})
+  try{
+   await flushPromises()
+   await wrapper.get('[data-contact="张工"]').trigger('click')
+   await wrapper.get('[aria-label="订单号搜索"]').setValue('D003')
+   await wrapper.get('[aria-label="筛选项目"]').setValue('甲')
+   await wrapper.get('[aria-label="筛选联系人"]').setValue('张')
+   await vi.waitFor(()=>expect(wrapper.findAll('article')).toHaveLength(1))
+   await wrapper.findAll('button').find(b=>b.text()==='下一页')!.trigger('click')
+   await vi.waitFor(()=>expect(wrapper.findAll('article')).toHaveLength(1))
+   const filterLists=wrapper.findAll('.filter-list').map(node=>node.element as HTMLElement)
+   filterLists[0]!.scrollTop=85;filterLists[1]!.scrollTop=120
+   await wrapper.get(mode==='new'?'.new-payment-button':'[aria-label="编辑付款单 FK7"]').trigger('click');await flushPromises()
+   // Browsers reset scroll offsets when KeepAlive detaches a DOM subtree.
+   filterLists.forEach(list=>{list.scrollTop=0})
+   expect(router.currentRoute.value.query.returnTo).toBe('/orders?project_id=10')
+   if(mode==='new')await wrapper.get('[aria-label="付款单位"]').setValue('4')
+   await wrapper.get('[aria-label="本次实付金额"]').setValue('20.00')
+   await wrapper.get('form').trigger('submit');await flushPromises()
+   expect(router.currentRoute.value.path).toBe(mode==='new'?'/payments/new':'/payments/7/edit')
+   order.paid_amount='20.00';completeSave({code:0,data:{id:7}});await flushPromises()
+   expect(router.currentRoute.value.fullPath).toBe('/orders?project_id=10')
+   expect(wrapper.get('[data-project="10"]').attributes('aria-pressed')).toBe('true')
+   expect(wrapper.get('[data-contact="张工"]').attributes('aria-pressed')).toBe('true')
+   expect(wrapper.get('[aria-label="订单号搜索"]').element).toHaveProperty('value','D003')
+   expect(wrapper.get('[aria-label="筛选项目"]').element).toHaveProperty('value','甲')
+   expect(wrapper.get('[aria-label="筛选联系人"]').element).toHaveProperty('value','张')
+   expect(wrapper.get('[aria-label="订单分页"]').text()).toContain('第 2 / 2 页')
+   expect(wrapper.get('.totals').text()).toContain('20.00')
+   expect(filterLists.map(list=>list.scrollTop)).toEqual([85,120])
+  }finally{wrapper.unmount()}
+ })
+ it('uses the current entry origin when reopening a cached payment editor',async()=>{
+  const payment={id:7,pay_number:'FK7',order_id:3,payer_supplier_id:4,payee_supplier_id:5,current_payment_amount:'10.00'}
+  mocks.request.mockResolvedValue({code:0,data:payment})
+  mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:3,supplier_id:5,supplier_contact_person:'张工'}]:path==='/supplier/'?[{id:5,contact_person:'张工'}]:[])
+  const router=createRouter({history:createMemoryHistory(),routes:[{path:'/payments/:id/edit',component:CorePage,meta:{coreKind:'payments',coreMode:'edit'}},{path:'/payments',component:{template:'<p>付款列表</p>'}},{path:'/orders',component:{template:'<p>订单列表</p>'}}]})
+  await router.push('/payments');await router.isReady()
+  const wrapper=mount({template:'<router-view v-slot="{Component,route}"><keep-alive><component :is="Component" :key="route.path"/></keep-alive></router-view>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}})
+  try{
+   for(const origin of ['', '/orders?project_id=10', '/orders?project_id=20', '', 'https://example.com', '//example.com']){
+    await router.push({path:'/payments/7/edit',query:origin?{returnTo:origin}:{}});await flushPromises()
+    await wrapper.get('form').trigger('submit');await flushPromises()
+    expect(router.currentRoute.value.fullPath).toBe(origin.startsWith('/orders?')?origin:'/payments')
+   }
+  }finally{wrapper.unmount()}
+ })
  it.each([['new',false],['edit',false],['new',true],['edit',true]])('uploads dropped invoices and saves their links with the %s payment (existing=%s)',async(mode,existing)=>{
   const old={id:8,invoice_number:'OLD-008',seller_name:'销售公司',total_amount:'10',tax_amount:'1.3'}
   const added={id:9,invoice_number:'NEW-009',seller_name:'销售公司',total_amount:'20',tax_amount:'2.6'}

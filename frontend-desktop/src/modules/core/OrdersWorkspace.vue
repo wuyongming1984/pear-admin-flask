@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import {computed, ref, watch, onDeactivated} from 'vue'
-import {useRoute} from 'vue-router'
+import {computed, ref, watch, nextTick, onActivated, onDeactivated} from 'vue'
+import {useRoute, onBeforeRouteLeave} from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {allRows, request, safeUrl} from '../../api'
 import PageHeader from '../../components/PageHeader.vue'
@@ -11,6 +11,14 @@ import {formatMoney, sumMoney} from './money'
 import {parseAttachments, schemas, type Row, type Field} from './model'
 
 const route = useRoute()
+const projectList = ref<HTMLElement>(), contactList = ref<HTMLElement>()
+let filterScroll = [0, 0]
+onBeforeRouteLeave(() => {filterScroll = [projectList.value?.scrollTop || 0, contactList.value?.scrollTop || 0]})
+onActivated(async () => {
+  await nextTick()
+  if (projectList.value) projectList.value.scrollTop = filterScroll[0]!
+  if (contactList.value) contactList.value.scrollTop = filterScroll[1]!
+})
 const cardColumns = useCardColumns('orders')
 const materials = ref<Row[]>([]), deleting = ref(false), exporting = ref(false)
 const project = ref(''), contact = ref(''), number = ref(''), projectSearch = ref(''), contactSearch = ref('')
@@ -36,6 +44,9 @@ const printColumns = schemas.orders!.fields.filter(f => ['order_number', 'projec
 function display(o: Row, f: Field) {return f.key === 'project_id' ? o.project_name : f.key === 'material_name' ? material(o) : f.kind === 'money' ? money(o[f.key]) : o[f.key] ?? '—'}
 function attachments(o: Row) {try {return parseAttachments(o)} catch {return []}}
 function chooseProject(id: string) {projectNameQuery.value = ''; project.value = id; contact.value = ''; contactSearch.value = ''}
+function paymentEditor(path: string, orderId?: number) {
+  return {path, query: {...(orderId == null ? {} : {order_id: orderId}), returnTo: route.fullPath}}
+}
 function applyQuery() {
   project.value = String(route.query.project_id || '')
   projectNameQuery.value = String(route.query.project_name || '')
@@ -77,7 +88,7 @@ async function exportCsv() {
     <div class="orders-workspace">
       <aside class="filter-column" aria-label="项目筛选">
         <div class="filter-search"><input v-model="projectSearch" aria-label="筛选项目" placeholder="筛选项目…" type="search" /></div>
-        <div class="filter-list">
+        <div ref="projectList" class="filter-list">
           <button :class="{active: !project}" :aria-pressed="!project" @click="chooseProject('')">全部项目</button>
           <button v-for="p in visibleProjects" :key="p.id" :data-project="p.id" :class="{active: project === p.id}" :aria-pressed="project === p.id" @click="chooseProject(p.id)">{{p.name}}</button>
           <p v-if="!visibleProjects.length" class="muted">没有匹配的项目</p>
@@ -85,7 +96,7 @@ async function exportCsv() {
       </aside>
       <aside class="filter-column" aria-label="联系人筛选">
         <div class="filter-search"><input v-model="contactSearch" aria-label="筛选联系人" placeholder="筛选联系人…" type="search" /></div>
-        <div class="filter-list">
+        <div ref="contactList" class="filter-list">
           <button :class="{active: !contact}" :aria-pressed="!contact" @click="contact = ''">全部联系人</button>
           <button v-for="c in visibleContacts" :key="c" :data-contact="c" :class="{active: contact === c}" :aria-pressed="contact === c" @click="contact = c">{{c}}</button>
           <p v-if="!visibleContacts.length" class="muted">没有匹配的联系人</p>
@@ -128,12 +139,12 @@ async function exportCsv() {
             <section v-if="show('payments')" class="related-payments" aria-label="关联付款单">
               <h3>关联付款单 <small>{{(o.pays_list || []).length}} 张</small></h3>
               <div class="payment-list"><div v-for="p in o.pays_list || []" :key="p.id" class="payment-item">
-                <RouterLink :to="`/payments/${p.id}/edit`" :aria-label="`编辑付款单 ${p.pay_number}`" class="payment-link"><span><strong>{{p.pay_number}}</strong><b>¥{{money(p.current_payment_amount)}}</b></span><small>{{p.payer_supplier_name || '—'}} → {{p.payee_supplier_name || '—'}}</small></RouterLink>
+                <RouterLink :to="paymentEditor(`/payments/${p.id}/edit`)" :aria-label="`编辑付款单 ${p.pay_number}`" class="payment-link"><span><strong>{{p.pay_number}}</strong><b>¥{{money(p.current_payment_amount)}}</b></span><small>{{p.payer_supplier_name || '—'}} → {{p.payee_supplier_name || '—'}}</small></RouterLink>
                 <RouterLink :to="`/payments/${p.id}/print`" :aria-label="`打印付款单 ${p.pay_number}`" class="payment-print">打印</RouterLink>
               </div><span v-if="!o.pays_list?.length" class="muted">暂无关联付款单</span></div>
             </section>
             <div v-if="attachments(o).length" class="sheet-attachments"><span>附件：</span><a v-for="(a,i) in attachments(o)" :key="i" :href="safeUrl(a.url || a.file_path)" target="_blank" rel="noopener">{{a.name || a.filename || '附件'}}</a></div>
-            <footer class="sheet-actions"><RouterLink :to="`/orders/${o.id}`">详情</RouterLink><RouterLink :to="`/orders/${o.id}/edit`">编辑订单</RouterLink><RouterLink class="new-payment-button" :to="`/payments/new?order_id=${o.id}`">新增付款单</RouterLink><RouterLink :to="`/orders/${o.id}/print`">打印订单</RouterLink><button class="delete-button" :disabled="deleting" @click="remove(o)">删除</button></footer>
+            <footer class="sheet-actions"><RouterLink :to="`/orders/${o.id}`">详情</RouterLink><RouterLink :to="`/orders/${o.id}/edit`">编辑订单</RouterLink><RouterLink class="new-payment-button" :to="paymentEditor('/payments/new', o.id)">新增付款单</RouterLink><RouterLink :to="`/orders/${o.id}/print`">打印订单</RouterLink><button class="delete-button" :disabled="deleting" @click="remove(o)">删除</button></footer>
           </article>
           <nav v-if="count" class="order-pagination" aria-label="订单分页"><span>共 {{count}} 条 · 第 {{page}} / {{pageCount}} 页</span><button :disabled="busy || page <= 1" @click="page--">上一页</button><button :disabled="busy || page >= pageCount" @click="page++">下一页</button></nav>
         </div>

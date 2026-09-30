@@ -8,7 +8,20 @@ values.value={'print-date':new Date().toLocaleDateString('sv-SE'),'order-number'
 void load();let activatedOnce=false;onActivated(()=>{if(activatedOnce)void load();activatedOnce=true})
 </script>
 <template><div class="print-page" v-loading="busy"><div class="no-print toolbar"><el-button @click="router.push('/'+route.meta.coreKind+'/'+route.params.id)">返回详情</el-button><el-button type="primary" :disabled="busy||!!error" @click="printDocument">打印单据</el-button></div><el-alert v-if="error" :title="error" type="error" :closable="false"/><el-button v-if="error" @click="load">重新加载</el-button><template v-else-if="!busy"><Printpay v-if="isPay()" :values="values" :qr="qr"/><Printorder v-else :values="values" :qr="qr"/></template></div></template>
-<style>@media print{body:has(.print-page) *{visibility:hidden}.print-page,.print-page *{visibility:visible}.print-page{position:absolute;left:0;top:0;width:100%;background:white}.print-page .no-print,.print-page .no-print *{display:none!important}.print-page .print-root{min-height:0!important}.print-page .print-canvas,.print-page .print-container{margin:0!important;box-shadow:none!important}}</style>
+<style>
+@media print{
+  body:has(.print-page) *{visibility:hidden}
+  /* Keep the paper more specific than the rule hiding the surrounding workspace. */
+  body:has(.print-page) .print-page,
+  body:has(.print-page) .print-page *{visibility:visible}
+  .print-page{position:absolute;left:0;top:0;width:100%;background:white}
+  .print-page .no-print,.print-page .no-print *{display:none!important}
+  .print-page .print-root{min-height:0!important}
+  .print-page .print-canvas,.print-page .print-container{margin:0!important;box-shadow:none!important}
+  /* Give the A5 flex layout a definite page height so its QR footer stays on the sheet. */
+  .print-page .print-canvas{min-height:0;height:148mm}
+}
+</style>
 
 
 

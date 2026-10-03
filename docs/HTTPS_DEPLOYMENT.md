@@ -1,6 +1,6 @@
 # sunfan88.com HTTPS 部署
 
-用于现有 Docker Compose 部署：申请 sunfan88.com 和 www.sunfan88.com 的 TLS 证书，配置 Nginx 443、HTTP 301 和自动续期。拉取这些文件不会自动启用 HTTPS；需要执行下面的部署脚本。
+用于现有 Docker Compose 部署：默认申请 www.sunfan88.com 的 TLS 证书，配置 Nginx 443、HTTP 301 和自动续期。拉取这些文件不会自动启用 HTTPS；需要执行下面的部署脚本。
 
 ## 1. 放行实例使用的安全组
 
@@ -39,7 +39,7 @@ git log -1 --oneline
 ## 3. 申请证书并启用 HTTPS
 
 将下面的邮箱替换为自己的证书联系邮箱。脚本的 Certbot 命令包含 `--agree-tos`，执行会同意 Let's Encrypt 的 ACME Subscriber Agreement，并将此邮箱用于 ACME 账户注册。
-`sunfan88.com` 和 `www.sunfan88.com` 都必须解析到这台服务器，且公网 80 可访问。
+默认只要求 `www.sunfan88.com` 解析到这台服务器，且公网 80 可访问。不带 www 的域名尚未配置解析时，不影响 www 的 HTTPS 部署。
 
 ```bash
 cd /root/pear-admin-flask
@@ -47,9 +47,17 @@ bash scripts/setup_https.sh '你的证书联系邮箱'
 sudo bash scripts/install_https_renewal.sh
 ```
 
-流程：保留 HTTP → 验证两个域名的 HTTP-01 路径 → 申请真实证书 → `nginx -t` → 启用 TLS → 校验本机及公网 HTTPS → 启用 301。
+流程：先检查申请域名的 DNS → 保留 HTTP → 验证 HTTP-01 路径 → 申请真实证书 → `nginx -t` → 启用 TLS → 校验本机及公网 HTTPS → 启用 301。
 脚本只重新创建或重新加载 nginx；web 与 MySQL 不重建。重新创建网关时会有短暂连接切换。
 如果已有自定义 docker-compose.override.yml，脚本会停止，须先合并该配置。
+
+需要同时支持不带 www 的 HTTPS 时，先给 `sunfan88.com` 配置指向该服务器的 A 记录（阿里云 DNS 的主机记录为 `@`），再显式申请两个名字：
+
+```bash
+HTTPS_INCLUDE_APEX=true bash scripts/setup_https.sh '你的证书联系邮箱'
+```
+
+证书目录名称仍为 `.https-state/letsencrypt/live/sunfan88.com/`，该名称不表示默认已经为裸域名签发证书。续期使用已签发证书保存的域名列表。
 
 自动生成的 docker-compose.override.yml 会合并 80/443 端口和证书挂载，普通 Docker Compose 命令及 server_update.sh 会继续使用 HTTPS。
 证书、ACME 账户、备份与活动配置均保存在 .https-state/，已由 Git 和 Docker 构建忽略。不要删除此目录或生成的 override 文件。
@@ -90,5 +98,5 @@ HSTS 默认不启用。公网访问与续期都验证通过后，可在 `.https-
 
 - Docker Compose 合并验证：同时发布 80/443，活动配置挂载正确替换同目标的默认配置，证书与 webroot 挂载只读。
 - Nginx 1.29.5 实测 7 项通过：HTTP 保持服务、ACME 内容、两个域名的证书校验/HTTPS 代理头、切换期间 HTTP 可用、上传文件/JSON 缓存、301 保留路径及参数、跳转后续期路径。
-- 隔离命令桩 8 项通过：成功切换、443 失败回滚、证书申请失败回滚、已有 HTTPS 恢复、自定义 override 保留、无需续期不重新加载、续期成功重新加载、重新加载失败保留重试标记。
+- 隔离命令桩 12 项通过：原有 8 项加上仅 www 可解析仍能上线、www DNS 失败时提前停止、显式加入裸域名、裸域名 DNS 失败时提前停止。
 - 本机 Docker 引擎未运行，因此没有完成 Linux 容器和生产 ACME 联调；以上不代表公网 HTTPS 已上线。

@@ -30,6 +30,9 @@ cat > "$test_root/bin/curl" <<'EOF'
 #!/usr/bin/env bash
 set -eu
 printf '%s\n' "$*" >> "$PWD/curl.log"
+if [[ "${TEST_MODE:-}" == apex-unresolved && "$*" == *http://sunfan88.com/* ]]; then
+  echo 'curl: (6) Could not resolve host: sunfan88.com' >&2; exit 6
+fi
 if [[ "$*" == *acme-challenge* ]]; then
   for arg in "$@"; do
     if [[ "$arg" == http://* ]]; then cat ".https-state/www/.well-known/acme-challenge/${arg##*/}"; exit; fi
@@ -45,6 +48,14 @@ if [[ "$*" == *'%{http_code}'* ]]; then
 fi
 EOF
 printf '#!/usr/bin/env bash\nexit 0\n' > "$test_root/bin/openssl"
+cat > "$test_root/bin/getent" <<'EOF'
+#!/usr/bin/env bash
+set -eu
+printf '%s\n' "$*" >> "$PWD/dns.log"
+if [[ "${TEST_MODE:-}" == www-unresolved ]]; then exit 2; fi
+if [[ "${TEST_MODE:-}" == apex-unresolved && "$*" == *' sunfan88.com' ]]; then exit 2; fi
+printf '8.159.138.234 STREAM %s\n' "${@: -1}"
+EOF
 chmod +x "$test_root/bin/"*
 export PATH="$test_root/bin:$PATH"
 export CERTBOT_IMAGE=certbot-test-only
@@ -63,6 +74,30 @@ cmp -s docker-compose.https.yml docker-compose.override.yml
 rg -q 'return 301' .https-state/nginx/http-mode.conf
 rg -q 'https://www.sunfan88.com/pc/' curl.log
 printf 'PASS: setup verifies TLS before enabling 301\n'
+
+prepare onlywww
+TEST_MODE=apex-unresolved bash scripts/setup_https.sh test@example.com >/dev/null
+cmp -s docker-compose.https.yml docker-compose.override.yml
+rg -q 'return 301' .https-state/nginx/http-mode.conf
+! rg -q -- '-d sunfan88.com' commands.log
+printf 'PASS: missing apex DNS does not block canonical www HTTPS\n'
+
+prepare unresolvedwww
+if TEST_MODE=www-unresolved bash scripts/setup_https.sh test@example.com >/dev/null 2>&1; then exit 1; fi
+[[ ! -d .https-state ]]
+! rg -q 'up -d' commands.log
+printf 'PASS: canonical DNS failure stops before changing the gateway\n'
+
+prepare optionalapex
+HTTPS_INCLUDE_APEX=true TEST_MODE=success bash scripts/setup_https.sh test@example.com >/dev/null
+rg -q -- '-d sunfan88.com' commands.log
+rg -q 'server_name www.sunfan88.com sunfan88.com;' .https-state/nginx/candidate.conf
+printf 'PASS: explicit apex option includes both certificate names\n'
+
+prepare unresolvedapex
+if HTTPS_INCLUDE_APEX=true TEST_MODE=apex-unresolved bash scripts/setup_https.sh test@example.com >/dev/null 2>&1; then exit 1; fi
+[[ ! -d .https-state ]]
+printf 'PASS: requested apex DNS failure stops before changing the gateway\n'
 
 prepare blocked443
 if TEST_MODE=public-tls-fails bash scripts/setup_https.sh test@example.com >/dev/null 2>&1; then exit 1; fi

@@ -8,7 +8,7 @@ if [[ $# != 1 || ! "$email" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]
   echo 'Usage: bash scripts/setup_https.sh certificate-contact@example.com' >&2
   exit 2
 fi
-for tool in docker curl openssl cmp; do
+for tool in docker curl openssl cmp getent; do
   command -v "$tool" >/dev/null || { echo "Required: $tool" >&2; exit 1; }
 done
 [[ -f .env && -f docker-compose.yml ]] || { echo 'Existing deployment and .env required.' >&2; exit 1; }
@@ -30,6 +30,20 @@ if [[ -n "${COMPOSE_FILE:-}" ]]; then
   echo 'Unset COMPOSE_FILE before setup; review custom Compose files separately.' >&2
   exit 1
 fi
+domains=(www.sunfan88.com)
+case "${HTTPS_INCLUDE_APEX:-false}" in
+  true) domains+=(sunfan88.com) ;;
+  false) ;;
+  *) echo 'HTTPS_INCLUDE_APEX must be true or false.' >&2; exit 2 ;;
+esac
+certbot_domains=()
+for domain in "${domains[@]}"; do
+  # Stop before touching the gateway when a requested name has no DNS address.
+  getent ahosts "$domain" >/dev/null || {
+    echo "No usable DNS address for $domain; the gateway was not changed." >&2; exit 1;
+  }
+  certbot_domains+=(-d "$domain")
+done
 "${base_compose[@]}" config --quiet
 for service in web nginx; do
   container_id="$("${base_compose[@]}" ps -q "$service")"
@@ -81,7 +95,7 @@ cp -- nginx/nginx.http.conf .https-state/nginx/default.conf
 # Confirm the challenge path publicly, with no redirects and no insecure TLS.
 token="pear-https-check-$(date +%s)-$$"
 printf '%s' "$token" > ".https-state/www/.well-known/acme-challenge/$token"
-for domain in www.sunfan88.com sunfan88.com; do
+for domain in "${domains[@]}"; do
   response="$(curl --noproxy '*' -fsS --retry 3 --retry-connrefused --connect-timeout 5 --max-time 15 "http://$domain/.well-known/acme-challenge/$token")"
   [[ "$response" == "$token" ]] || { echo "Public ACME path failed for $domain. Check DNS/port 80." >&2; exit 1; }
 done
@@ -93,22 +107,25 @@ docker run --rm \
   -v "$root_dir/.https-state/logs:/var/log/letsencrypt" \
   "$certbot_image" certonly --non-interactive --agree-tos --email "$email" \
   --webroot -w /var/www/certbot --cert-name sunfan88.com \
-  -d www.sunfan88.com -d sunfan88.com --keep-until-expiring
+  "${certbot_domains[@]}" --expand --keep-until-expiring
 cert_path=.https-state/letsencrypt/live/sunfan88.com/fullchain.pem
 [[ -s "$cert_path" && -s .https-state/letsencrypt/live/sunfan88.com/privkey.pem ]]
 openssl x509 -in "$cert_path" -noout -checkend 86400
-openssl x509 -in "$cert_path" -noout -checkhost www.sunfan88.com
-openssl x509 -in "$cert_path" -noout -checkhost sunfan88.com
+for domain in "${domains[@]}"; do
+  openssl x509 -in "$cert_path" -noout -checkhost "$domain"
+done
 
 # Test the candidate without stopping the gateway. CLI volume overrides the
 # Compose mount at the same target; application networks remain unchanged.
+sed "s/server_name www.sunfan88.com;/server_name ${domains[*]};/" \
+  nginx/nginx.https.conf > .https-state/nginx/candidate.conf
 "${active_compose[@]}" run --rm --no-deps -T \
-  -v "$root_dir/nginx/nginx.https.conf:/etc/nginx/conf.d/default.conf:ro" nginx nginx -t
+  -v "$root_dir/.https-state/nginx/candidate.conf:/etc/nginx/conf.d/default.conf:ro" nginx nginx -t
 # cp preserves the inode of the existing single-file bind mount.
-cp -- nginx/nginx.https.conf .https-state/nginx/default.conf
+cp -- .https-state/nginx/candidate.conf .https-state/nginx/default.conf
 "${active_compose[@]}" exec -T nginx nginx -t
 "${active_compose[@]}" exec -T nginx nginx -s reload
-for domain in www.sunfan88.com sunfan88.com; do
+for domain in "${domains[@]}"; do
   curl --noproxy '*' -fsS --retry 3 --retry-connrefused --connect-timeout 5 --max-time 15 \
     --resolve "$domain:443:127.0.0.1" "https://$domain/pc/" -o /dev/null
   curl --noproxy '*' -fsS --connect-timeout 5 --max-time 15 "https://$domain/pc/" -o /dev/null
@@ -118,7 +135,7 @@ done
 printf 'location / { return 301 https://www.sunfan88.com$request_uri; }\n' > .https-state/nginx/http-mode.conf
 "${active_compose[@]}" exec -T nginx nginx -t
 "${active_compose[@]}" exec -T nginx nginx -s reload
-for domain in www.sunfan88.com sunfan88.com; do
+for domain in "${domains[@]}"; do
   result="$(curl --noproxy '*' -sS --retry 3 --retry-delay 1 --connect-timeout 5 --max-time 15 \
     -o /dev/null -w '%{http_code} %{redirect_url}' "http://$domain/pc/?https-check=1")"
   # Allow Nginx workers a moment to switch configurations after reload.

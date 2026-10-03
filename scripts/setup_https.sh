@@ -125,10 +125,37 @@ sed "s/server_name www.sunfan88.com;/server_name ${domains[*]};/" \
 cp -- .https-state/nginx/candidate.conf .https-state/nginx/default.conf
 "${active_compose[@]}" exec -T nginx nginx -t
 "${active_compose[@]}" exec -T nginx nginx -s reload
+# Reload signals the master asynchronously. Docker may accept host port 443
+# before the new Nginx listener is ready, returning TLS EOF rather than refusal.
+verify_https() {
+  local scope="$1" domain="$2" attempt status
+  shift 2
+  printf 'Checking %s HTTPS for %s...\n' "$scope" "$domain"
+  for attempt in 1 2 3 4 5; do
+    if curl --noproxy '*' -fsS --connect-timeout 5 --max-time 15 \
+      "$@" "https://$domain/pc/" -o /dev/null; then
+      return 0
+    else
+      status=$?
+    fi
+    # Retry connection/handshake failures only. Trust and HTTP errors stop here.
+    case "$status" in
+      7|28|35|52|56) ;;
+      *) break ;;
+    esac
+    if [[ "$attempt" -lt 5 ]]; then
+      printf '%s HTTPS not ready for %s (curl %s, attempt %s/5); retrying...\n' \
+        "$scope" "$domain" "$status" "$attempt" >&2
+      sleep 1
+    fi
+  done
+  printf '%s HTTPS verification failed for %s (curl %s).\n' "$scope" "$domain" "$status" >&2
+  "${active_compose[@]}" logs --no-color --tail 40 nginx >&2 || true
+  return "$status"
+}
 for domain in "${domains[@]}"; do
-  curl --noproxy '*' -fsS --retry 3 --retry-connrefused --connect-timeout 5 --max-time 15 \
-    --resolve "$domain:443:127.0.0.1" "https://$domain/pc/" -o /dev/null
-  curl --noproxy '*' -fsS --connect-timeout 5 --max-time 15 "https://$domain/pc/" -o /dev/null
+  verify_https local "$domain" --resolve "$domain:443:127.0.0.1"
+  verify_https public "$domain"
 done
 
 # Enable the requested 301 only after working public HTTPS has been established.

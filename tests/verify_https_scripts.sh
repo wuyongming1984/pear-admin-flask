@@ -30,6 +30,20 @@ cat > "$test_root/bin/curl" <<'EOF'
 #!/usr/bin/env bash
 set -eu
 printf '%s\n' "$*" >> "$PWD/curl.log"
+if [[ "$*" == *https://* ]]; then
+  scope=public
+  [[ "$*" != *--resolve* ]] || scope=local
+  counter_file="$PWD/$scope-probes"
+  count=0
+  [[ ! -f "$counter_file" ]] || count="$(cat "$counter_file")"
+  count=$((count + 1))
+  printf '%s\n' "$count" > "$counter_file"
+  if [[ "${TEST_MODE:-}" == "$scope-tls-starting" && "$count" -le 2 ]] ||
+     [[ "${TEST_MODE:-}" == local-tls-eof && "$scope" == local ]]; then
+    echo 'curl: (35) unexpected eof while reading' >&2; exit 35
+  fi
+  if [[ "${TEST_MODE:-}" == untrusted-cert && "$scope" == local ]]; then exit 60; fi
+fi
 if [[ "${TEST_MODE:-}" == apex-unresolved && "$*" == *http://sunfan88.com/* ]]; then
   echo 'curl: (6) Could not resolve host: sunfan88.com' >&2; exit 6
 fi
@@ -98,6 +112,34 @@ prepare unresolvedapex
 if HTTPS_INCLUDE_APEX=true TEST_MODE=apex-unresolved bash scripts/setup_https.sh test@example.com >/dev/null 2>&1; then exit 1; fi
 [[ ! -d .https-state ]]
 printf 'PASS: requested apex DNS failure stops before changing the gateway\n'
+
+prepare localstarting
+TEST_MODE=local-tls-starting bash scripts/setup_https.sh test@example.com >setup.log 2>&1
+[[ "$(cat local-probes)" == 3 ]]
+rg -q 'return 301' .https-state/nginx/http-mode.conf
+printf 'PASS: transient local TLS EOF waits for the listener before enabling 301\n'
+
+prepare publicstarting
+TEST_MODE=public-tls-starting bash scripts/setup_https.sh test@example.com >setup.log 2>&1
+[[ "$(cat public-probes)" == 3 ]]
+rg -q 'return 301' .https-state/nginx/http-mode.conf
+printf 'PASS: transient public TLS failure is retried before enabling 301\n'
+
+prepare persistentlocaleof
+if TEST_MODE=local-tls-eof bash scripts/setup_https.sh test@example.com >setup.log 2>&1; then exit 1; fi
+[[ "$(cat local-probes)" == 5 ]]
+[[ ! -f public-probes && ! -e docker-compose.override.yml ]]
+! rg -q 'return 301' .https-state/nginx/http-mode.conf
+rg -q 'local.*www.sunfan88.com' setup.log
+rg -q 'logs --no-color --tail 40 nginx' commands.log
+printf 'PASS: persistent local TLS EOF stops after bounded retries and rolls back\n'
+
+prepare untrustedcert
+if TEST_MODE=untrusted-cert bash scripts/setup_https.sh test@example.com >setup.log 2>&1; then exit 1; fi
+[[ "$(cat local-probes)" == 1 ]]
+[[ ! -e docker-compose.override.yml ]]
+! rg -q 'return 301' .https-state/nginx/http-mode.conf
+printf 'PASS: certificate trust failure immediately rolls back without enabling 301\n'
 
 prepare blocked443
 if TEST_MODE=public-tls-fails bash scripts/setup_https.sh test@example.com >/dev/null 2>&1; then exit 1; fi

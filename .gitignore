@@ -102,3 +102,7 @@ node_modules/
 /db_backup_*.zip
 /sf_db_prod*.sql
 /旧数据库*.sql
+
+# HTTPS keys, ACME state, gateway backups and generated deployment override
+/.https-state/
+/docker-compose.override.yml

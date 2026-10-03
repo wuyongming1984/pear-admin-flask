@@ -1,0 +1,12 @@
+# setup_https.sh installs this as docker-compose.override.yml so subsequent
+# ordinary `docker compose` / server_update.sh runs keep HTTPS enabled.
+services:
+  nginx:
+    ports:
+      - "443:443"
+    volumes:
+      - ./.https-state/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./.https-state/nginx:/etc/nginx/https-state:ro
+      - ./nginx/app.locations.conf:/etc/nginx/pear/app.locations.conf:ro
+      - ./.https-state/letsencrypt:/etc/letsencrypt:ro
+      - ./.https-state/www:/var/www/certbot:ro

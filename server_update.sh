@@ -31,8 +31,10 @@ export BUILDKIT_PROGRESS="${BUILDKIT_PROGRESS:-plain}"
 "${compose[@]}" build web
 # The one-off containers use the same .env and /app bind mount as the web service.
 # Migration backs up ums_pay first and only adds the eight nullable audit fields.
-# Any backup, DDL or API failure stops the script before restarting web.
+# The mobile menu migration backs up menu settings and preserves existing grants.
+# Any backup, migration or API failure stops the script before restarting web.
 "${compose[@]}" run --rm --no-deps --entrypoint python web scripts/migrate_payment_audit.py --config prod
+"${compose[@]}" run --rm --no-deps --entrypoint python web scripts/configure_mobile_workbench.py --config prod
 "${compose[@]}" run --rm --no-deps --entrypoint python web scripts/profile_editor_queries.py --config prod --scope documents
 "${compose[@]}" up -d --no-deps web
 "${compose[@]}" ps web

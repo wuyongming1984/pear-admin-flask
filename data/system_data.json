@@ -383,6 +383,18 @@
       "sort": 6,
       "open_type": "_component",
       "pid": 100
+    },
+    {
+      "id": 155,
+      "name": "移动端工作台",
+      "code": "workspace:mobile",
+      "type": "path",
+      "url": "/m/",
+      "icon_sign": "layui-icon layui-icon-cellphone",
+      "status": true,
+      "sort": 3,
+      "open_type": "_blank",
+      "pid": 124
     }
   ],
   "ums_role": [
@@ -692,6 +704,11 @@
     {
       "id": 59,
       "rights_id": 136,
+      "role_id": 1
+    },
+    {
+      "id": 60,
+      "rights_id": 155,
       "role_id": 1
     }
   ],

@@ -37,3 +37,15 @@ it('groups only authorized application links for the mobile home',()=>{
  expect(groups.flatMap(group=>group.entries.map(entry=>entry.title))).not.toContain('供应商管理');
  expect(applicationGroups(menus,routes,'苗圃').map(group=>group.title)).toEqual(['苗圃管理']);
 });
+
+it('returns the mobile workbench menu to the home page instead of the placeholder',()=>{
+ const resolve=routeForMenu([],routes);
+ for(const href of [undefined,'','  ','/m','/m/']){
+  const menu={id:155,title:'移动端工作台',href};
+  expect(resolve(menu)).toBe('/');
+  expect(applicationGroups([menu],routes)).toMatchObject([
+   {key:'workspace',entries:[{id:155,path:'/'}]}
+  ]);
+ }
+ expect(applicationGroups([],routes)).toEqual([]);
+});

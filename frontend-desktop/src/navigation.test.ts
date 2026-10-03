@@ -3,3 +3,12 @@ it('maps aliases but never grants missing menu access',()=>{const menus=[{id:1,t
 it('unknown menus remain visible with explicit explanation route',()=>{const resolve=routeForMenu([],[{path:'/system/users',meta:{menuPath:'/system/user/index.html'}}]);expect(resolve({id:1,title:'用户',href:'/views/user.html'})).toBe('/system/users');expect(resolve({id:2,title:'未知模块',href:'/old/custom'})).toContain('/unsupported?menu=')});
 
 it('maps own profile menu independently of role grants',()=>{const resolve=routeForMenu([],[{path:'/profile',meta:{menuPath:'',legacyMenuPath:'/view/system/person.html'}}]);expect(resolve({id:1,title:'个人中心',href:'/view/system/person.html'})).toBe('/profile');expect(allowedMenu('',[])).toBe(true)});
+
+it('opens the mobile workbench even when its old menu address is empty',()=>{
+ const resolve=routeForMenu([],[]);
+ for(const href of [undefined,'','  ','/m','/m/']){
+  expect(resolve({id:155,title:'移动端工作台',href})).toBe('/m/');
+ }
+ expect(resolve({id:156,title:'未配置的其他菜单'})).toContain('/unsupported?menu=');
+ expect(allowedMenu('/system/user/index.html',[{id:155,title:'移动端工作台'}])).toBe(false);
+});

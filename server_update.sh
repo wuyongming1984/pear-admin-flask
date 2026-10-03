@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Update an existing deployment without initializing or migrating its database.
+# Update an existing deployment, backing up and adding missing payment audit fields.
 set -euo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
@@ -28,7 +28,13 @@ export DESKTOP_DEFAULT="${DESKTOP_DEFAULT:-true}"
 # 保留完整构建日志，让依赖下载超时等错误立即可见。
 export BUILDKIT_PROGRESS="${BUILDKIT_PROGRESS:-plain}"
 "${compose[@]}" config --quiet
-"${compose[@]}" up -d --no-deps --build web
+"${compose[@]}" build web
+# The one-off containers use the same .env and /app bind mount as the web service.
+# Migration backs up ums_pay first and only adds the eight nullable audit fields.
+# Any backup, DDL or API failure stops the script before restarting web.
+"${compose[@]}" run --rm --no-deps --entrypoint python web scripts/migrate_payment_audit.py --config prod
+"${compose[@]}" run --rm --no-deps --entrypoint python web scripts/profile_editor_queries.py --config prod --scope documents
+"${compose[@]}" up -d --no-deps web
 "${compose[@]}" ps web
 printf '\nApplication update started. Check readiness with: docker logs --tail 50 pear_admin_web\n'
 printf 'New desktop: http://www.sunfan88.com/pc/\nLegacy: http://www.sunfan88.com/legacy/\n'

@@ -4,6 +4,7 @@ Run inside the web container:
   python scripts/profile_editor_queries.py --config prod
 Optional: --order-id 123 --payment-id 456 --repeat 2
 System list audit: --scope system (first 20 rows of each paginated list)
+Order/payment deployment check: --scope documents (desktop and mobile lists)
 
 No app factory, scheduler, migrations, write endpoints, record contents or
 credentials. Timings exclude browser/network, nginx and Gunicorn queuing.
@@ -77,7 +78,7 @@ def profile_request(app, path, headers):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', choices=['dev', 'prod'], default='prod')
-    parser.add_argument('--scope', choices=['editor', 'system'], default='editor')
+    parser.add_argument('--scope', choices=['editor', 'system', 'documents'], default='editor')
     parser.add_argument('--order-id', type=int)
     parser.add_argument('--payment-id', type=int)
     parser.add_argument('--repeat', type=int, choices=range(1, 4), default=1)
@@ -118,10 +119,15 @@ def main():
                      '/material/dashboard/stats', '/nursery/dashboard/stats']
             # /nursery/orders returns full history; deliberately exclude it from
             # the production default to avoid an unbounded diagnostic response.
+        elif args.scope == 'documents':
+            paths = ['/workspace/orders?page=1&limit=20', '/workspace/payments?page=1&limit=20',
+                     '/order/?page=1&limit=3', '/pay/?page=1&limit=3']
         for run in range(args.repeat):
             for path in paths:
                 result = profile_request(app, path, headers)
                 print(json.dumps({'run': run + 1, **result}, ensure_ascii=False), flush=True)
+                if result['status'] != 200 or result['code'] != 0:
+                    raise RuntimeError(f'API check failed: {path}')
 
 
 if __name__ == '__main__':

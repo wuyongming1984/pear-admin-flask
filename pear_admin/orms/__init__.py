@@ -29,11 +29,12 @@ from .payer import PayerORM
 from .nursery import NurseryPlantORM, NurseryTransactionORM
 from .material import MaterialPlanningORM, MaterialInboundORM, MaterialInventoryORM, MaterialOutboundORM, MaterialInvoiceORM, MaterialInvoiceDetailORM
 from .sys_config import SysConfigORM
+from .payment_receipt import PaymentReceiptORM
 
 __all__ = [
     "DepartmentORM", "RightsORM", "RoleORM", "UserORM", "SupplierORM", "ProjectORM", 
     "AttachmentORM", "OrderORM", "PayORM", "PayerORM", "DictionaryORM", "DictionaryDetailORM", 
     "NurseryPlantORM", "NurseryTransactionORM",
     "MaterialPlanningORM", "MaterialInboundORM", "MaterialInventoryORM", "MaterialOutboundORM", "MaterialInvoiceORM", "MaterialInvoiceDetailORM",
-    "SysConfigORM"
+    "SysConfigORM", "PaymentReceiptORM"
 ]

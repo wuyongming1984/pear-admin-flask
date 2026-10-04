@@ -1,7 +1,11 @@
-from flask import Blueprint, render_template, request, abort
+from flask import Blueprint, render_template, request, abort, redirect
 from pear_admin.orms import MaterialPlanningORM, MaterialInboundORM, MaterialInventoryORM, MaterialOutboundORM, MaterialInvoiceORM, ProjectORM
 
 material_bp = Blueprint("material", __name__)
+
+@material_bp.route('/view/payment-receipts')
+def payment_receipts():
+    return redirect('/pc/#/payment-receipts')
 
 @material_bp.route("/view/material/dashboard")
 def dashboard():

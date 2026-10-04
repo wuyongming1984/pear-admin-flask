@@ -50,6 +50,7 @@ uploads/*.jpeg
 uploads/*.gif
 uploads/*.pdf
 uploads/*.zip
+/uploads/payment_receipts/
 # 保留 uploads 目录本身
 !uploads/.gitkeep
 

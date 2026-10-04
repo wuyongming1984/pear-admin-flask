@@ -35,6 +35,7 @@ export BUILDKIT_PROGRESS="${BUILDKIT_PROGRESS:-plain}"
 # Any backup, migration or API failure stops the script before restarting web.
 "${compose[@]}" run --rm --no-deps --entrypoint python web scripts/migrate_payment_audit.py --config prod
 "${compose[@]}" run --rm --no-deps --entrypoint python web scripts/configure_mobile_workbench.py --config prod
+"${compose[@]}" run --rm --no-deps --entrypoint python web scripts/migrate_payment_receipts.py --config prod
 "${compose[@]}" run --rm --no-deps --entrypoint python web scripts/profile_editor_queries.py --config prod --scope documents
 "${compose[@]}" up -d --no-deps web
 "${compose[@]}" ps web

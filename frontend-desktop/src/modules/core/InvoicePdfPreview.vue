@@ -2,7 +2,7 @@
 import {onBeforeUnmount, ref, watch} from 'vue'
 import {request} from '../../api'
 
-const props=defineProps<{invoiceId:string|number}>()
+const props=withDefaults(defineProps<{invoiceId:string|number; endpoint?:string; documentLabel?:string}>(), {documentLabel:'发票'})
 type Preview={image:string;page:number;page_count:number}
 const page=ref(1),count=ref(0),image=ref(''),busy=ref(false),error=ref('')
 const cache=new Map<number,Preview>()
@@ -17,7 +17,7 @@ async function load(target:number){
   if(!data){
    controller=new AbortController()
    timer=setTimeout(()=>controller?.abort(),30000)
-   const response=await request<Preview>(`/material/invoice/${encodeURIComponent(props.invoiceId)}/preview-page?page=${target}`,{signal:controller.signal})
+   const response=await request<Preview>(`${props.endpoint || `/material/invoice/${encodeURIComponent(props.invoiceId)}/preview-page`}?page=${target}`,{signal:controller.signal})
    if(current!==revision)return
    data=response.data
    if(!data?.image?.startsWith('data:image/png;base64,')||data.page!==target||!Number.isInteger(data.page_count)||data.page_count<target)throw new Error('原文件预览返回异常，请重试。')
@@ -28,7 +28,7 @@ async function load(target:number){
  }catch(e){if(current===revision)error.value=e instanceof Error?e.message:'原文件加载失败，请重试。'}
  finally{if(current===revision){busy.value=false;clearTimeout(timer)}}
 }
-watch(()=>props.invoiceId,()=>{cache.clear();count.value=0;void load(1)},{immediate:true})
+watch(()=>[props.invoiceId,props.endpoint],()=>{cache.clear();count.value=0;void load(1)},{immediate:true})
 onBeforeUnmount(cancel)
 </script>
 
@@ -41,7 +41,7 @@ onBeforeUnmount(cancel)
   </div>
   <p v-if="busy" class="pdf-status" role="status">正在加载原文件…</p>
   <div v-else-if="error" class="pdf-status"><p role="alert">{{error}}</p><el-button @click="load(page)">重试加载</el-button></div>
-  <img v-else-if="image" class="pdf-page" :src="image" :alt="`发票 PDF 原文件，第 ${page} 页`" @error="error='预览图片加载失败，请重试。';cache.delete(page)" />
+  <img v-else-if="image" class="pdf-page" :src="image" :alt="`${documentLabel} PDF 原文件，第 ${page} 页`" @error="error='预览图片加载失败，请重试。';cache.delete(page)" />
  </div>
 </template>
 

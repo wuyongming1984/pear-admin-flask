@@ -10,7 +10,7 @@ import SupplierPortalLink from './SupplierPortalLink.vue'
 import {useCardColumns} from './useCardColumns'
 import {useDocumentWorkspace} from './useDocumentWorkspace'
 import {formatMoney, uppercaseMoney} from './money'
-import {parseAttachments, type Row, type Field} from './model'
+import {invoiceAmounts, parseAttachments, type Row, type Field} from './model'
 
 const route = useRoute()
 const receiptPicker = ref<InstanceType<typeof PaymentReceiptPicker>>()
@@ -125,7 +125,7 @@ async function exportCsv() {
             <div v-if="show('handler')" class="payment-handler">经办人：{{p.handler || '—'}}</div>
             <section class="related-payments" aria-label="关联订单"><h3>关联订单</h3><div class="payment-list"><RouterLink v-if="p.order_id" class="payment-item payment-link" :to="`/orders/${p.order_id}/edit`" :aria-label="`查看关联订单 ${order(p).order_number || p.order_number}`"><strong>{{order(p).order_number || p.order_number || '查看订单'}}</strong><small>{{projectName(p) || '—'}} · {{contactName(p) || '—'}}</small></RouterLink><span v-else class="muted">未关联订单</span><RouterLink v-if="p.order_id" class="payment-print" :to="`/orders/${p.order_id}/print`">打印订单</RouterLink></div></section>
             <section v-if="show('invoices')" class="related-payments" aria-label="关联发票"><h3>关联发票 <small>{{(p.invoices_list || []).length}} 张</small></h3><div class="payment-list">
-              <RouterLink v-for="inv in p.invoices_list || []" :key="inv.id" class="payment-item payment-link" :to="`/invoices/${inv.id}`" :aria-label="`查看发票 ${inv.invoice_number || inv.id}`"><span><strong>{{inv.invoice_number || '无发票号码'}}</strong><b>金额：¥{{money(inv.total_amount ?? 0)}}</b></span><small>{{inv.seller_name || '—'}} · {{inv.invoice_date || '—'}}</small></RouterLink>
+              <RouterLink v-for="inv in p.invoices_list || []" :key="inv.id" class="payment-item payment-link" :to="`/invoices/${inv.id}`" :aria-label="`查看发票 ${inv.invoice_number || inv.id}`"><span><strong>{{inv.invoice_number || '无发票号码'}}</strong><b>价税合计：{{invoiceAmounts(inv).total}}</b></span><small>不含税金额：{{invoiceAmounts(inv).untaxed}} · 税额：{{invoiceAmounts(inv).tax}}</small><small>{{inv.seller_name || '—'}} · {{inv.invoice_date || '—'}}</small></RouterLink>
               <span v-if="!p.invoices_list?.length" class="muted">暂无关联发票</span>
             </div></section>
             <div v-if="show('attachments') && attachments(p).length" class="sheet-attachments"><span>附件：</span><a v-for="(a,i) in attachments(p)" :key="i" :href="safeUrl(a.url || a.file_path)" target="_blank" rel="noopener">{{a.name || a.filename || '附件'}}</a></div>

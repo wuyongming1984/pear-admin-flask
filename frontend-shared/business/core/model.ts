@@ -1,3 +1,5 @@
+// Invoice API total_amount is tax-exclusive; reuse the display helpers for inclusive totals.
+export * from './invoiceAmounts'
 export type Row = Record<string, any>
 export function ocrStatusLabel(status:unknown):string{return ({pending:'待识别',processing:'识别中',success:'识别成功',completed:'识别完成',failed:'识别失败'} as Record<string,string>)[String(status)]||String(status||'未识别')}
 export function orderOptionLabel(order:Row,materials:Row[]=[]):string{return [order.order_number,order.project_name,materials.find(m=>String(m.code??m.value)===String(order.material_name))?.label||materials.find(m=>String(m.code??m.value)===String(order.material_name))?.value||order.material_name].filter(Boolean).join(' · ')}

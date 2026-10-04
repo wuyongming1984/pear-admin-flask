@@ -11,6 +11,16 @@ vi.mock('vue-router',()=>({onBeforeRouteLeave:vi.fn(),onBeforeRouteUpdate:vi.fn(
 const mountPage=(component:any,view:string)=>mount(component,{props:{view},global:{plugins:[ElementPlus],stubs:{RouterLink:{template:'<a><slot/></a>'}}}})
 beforeEach(()=>{api.request.mockReset();api.allRows.mockReset();api.allRows.mockResolvedValue([]);api.request.mockImplementation(async(path:string)=>({code:0,data:path==='/material/options'?{projects:[],suppliers:[]}:[],success:true,msg:'完成'}));localStorage.clear()})
 describe('native inventory workflows',()=>{
+ it.each([
+  ['100','13','¥113.00','¥100.00','¥13.00'],
+  ['100',0,'¥100.00','¥100.00','¥0.00'],
+  ['-100','-13','¥-113.00','¥-100.00','¥-13.00'],
+  ['1.005','0.005','¥1.01','¥1.01','¥0.01'],
+  ['100',null,'待核实','¥100.00','待核实'],
+  ['NaN','13','待核实','待核实','¥13.00'],
+ ])('labels all three invoice amounts in the material invoice picker (%s, %s)',async(untaxed,tax,totalText,untaxedText,taxText)=>{
+  const invoice={id:88,invoice_number:'LOCAL-INV88',seller_name:'本地测试单位',total_amount:untaxed,tax_amount:tax};api.allRows.mockImplementation(async(path:string)=>path==='/material/invoice'?[invoice]:[]);const wrapper=mountPage(Material,'inbound');await flushPromises();const vm=wrapper.vm as any;vm.selected=[{id:4}];await vm.batch('invoice');await flushPromises();const name=vm.options.invoice_id[0].name;expect(name).toContain(`价税合计 ${totalText}`);expect(name).toContain(`不含税金额 ${untaxedText}`);expect(name).toContain(`税额 ${taxText}`);expect(name).not.toContain('NaN');expect(invoice).toMatchObject({total_amount:untaxed,tax_amount:tax});expect(api.request.mock.calls.every(call=>!call[1]?.method||call[1].method==='GET')).toBe(true);wrapper.unmount()
+ })
  it('retains mobile card row checkbox selection and opens generate-inbound',async()=>{
   api.allRows.mockResolvedValue([{id:7,project_id:1,material_name:'红砖',planned_remaining_quantity:'12.50'}]);const wrapper=mount(Material,{attachTo:document.body,props:{view:'planning'},global:{plugins:[ElementPlus],stubs:{RouterLink:{template:'<a><slot/></a>'}}}});await flushPromises();const input=wrapper.find('.m-select-row input[type="checkbox"]');expect(input.exists()).toBe(true);(input.element as HTMLInputElement).click();await flushPromises();expect((wrapper.vm as any).selected.map((r:any)=>r.id)).toEqual([7]);const generate=wrapper.findAll('button').find(b=>b.text()==='生成入库计划')!;await generate.trigger('click');await flushPromises();expect((wrapper.vm as any).dialog).toBe('generate');expect((wrapper.vm as any).items[0].id).toBe(7);wrapper.unmount()
  })

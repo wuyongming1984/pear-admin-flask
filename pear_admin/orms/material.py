@@ -403,8 +403,8 @@ class MaterialInvoiceORM(BaseORM):
             "deductible": self.deductible,
 
             "tax_rate": str(self.tax_rate) if self.tax_rate else "0",
-            "tax_amount": str(self.tax_amount) if self.tax_amount else "0",
-            "total_amount": str(self.total_amount) if self.total_amount else "0",
+            "tax_amount": None if self.tax_amount is None else str(self.tax_amount or 0),
+            "total_amount": None if self.total_amount is None else str(self.total_amount or 0),
             "amount_in_words": self.amount_in_words,
             "details": details_list,
             # 兼容旧逻辑，同时也返回JSON字符串

@@ -5,8 +5,7 @@ import {safeUrl} from '../../api'
 import InvoicePaper from './InvoicePaper.vue'
 import InvoiceSourcePreview from './InvoiceSourcePreview.vue'
 import InvoicePaymentLinks from './InvoicePaymentLinks.vue'
-import {formatMoney, sumMoney} from './money'
-import {ocrStatusLabel, type Row} from './model'
+import {invoiceAmounts, ocrStatusLabel, type Row} from './model'
 
 const props = defineProps<{rows: Row[]; count: number; busy: boolean; searching?: boolean; selection: Row[]}>()
 const emit = defineEmits<{selection: [rows: Row[]]; remove: [rows: Row[]]; ocr: [rows: Row[]]; upload: []; linkBusy: [value: boolean]}>()
@@ -24,7 +23,6 @@ watch(() => props.rows, rows => {
 function toggle(row: Row, checked: unknown) {
   emit('selection', checked ? [...props.selection.filter(item => item.id !== row.id), row] : props.selection.filter(item => item.id !== row.id))
 }
-const amount = (row: Row) => formatMoney(sumMoney([row.total_amount, row.tax_amount]))
 </script>
 
 <template>
@@ -47,7 +45,9 @@ const amount = (row: Row) => formatMoney(sumMoney([row.total_amount, row.tax_amo
             <strong>{{row.buyer_name || '未识别购买方'}}</strong>
             <span class="invoice-number">{{row.invoice_number || '暂无发票号码'}}</span>
             <span>{{row.seller_name || '未识别销售方'}}</span>
-            <span class="invoice-card-bottom"><time>{{row.invoice_date || '日期待识别'}}</time><b>¥{{amount(row)}}</b></span>
+            <span class="invoice-card-bottom"><time>{{row.invoice_date || '日期待识别'}}</time></span>
+            <b class="invoice-main-amount">价税合计：{{invoiceAmounts(row).total}}</b>
+            <span>不含税金额：{{invoiceAmounts(row).untaxed}} · 税额：{{invoiceAmounts(row).tax}}</span>
           </button>
         </div>
         <el-empty v-if="!rows.length && !searching" description="暂无符合条件的发票" :image-size="60" />
@@ -87,6 +87,7 @@ const amount = (row: Row) => formatMoney(sumMoney([row.total_amount, row.tax_amo
 </template>
 
 <style scoped>
+.invoice-main-amount{color:var(--el-color-primary);font-size:13px;overflow-wrap:anywhere}
 .invoice-library{display:flex;flex-direction:column;gap:16px;height:calc(100dvh - 228px);min-height:560px}
 .invoice-workspace{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;flex:1;min-height:0}
 .invoice-sidebar,.invoice-content{min-width:0;border:1px solid var(--el-border-color);border-radius:8px;background:var(--el-bg-color);display:flex;flex-direction:column;overflow:hidden}

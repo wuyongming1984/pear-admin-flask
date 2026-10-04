@@ -2,9 +2,8 @@
 import {computed, onDeactivated, ref} from 'vue'
 import {UploadFilled} from '@element-plus/icons-vue'
 import {request} from '../../api'
-import {formatMoney, sumMoney} from './money'
 import {supplierCompanyName} from './companyMatch'
-import type {Row} from './model'
+import {invoiceAmounts, invoiceTotalSum, formatInvoiceMoney, type Row} from './model'
 const props = defineProps<{modelValue: any[]; invoices: Row[]; supplierName?: string; supplierContact?: string; projectId?: number | string; disabled?: boolean; loading?: boolean; error?: string}>()
 const supplierName = computed(() => supplierCompanyName(props.supplierName, props.supplierContact))
 const emit = defineEmits<{'update:modelValue': [ids: any[]]; load: []; busy: [value: boolean]; uploaded: [invoices: Row[]]}>()
@@ -59,6 +58,7 @@ const matches = (invoice: Row) => !!supplierName.value && invoice.seller_name ==
 const selected = (id: any) => props.modelValue.some(value => String(value) === String(id))
 const candidates = computed(() => props.invoices.filter(matches))
 const selectedRows = computed(() => props.invoices.filter(invoice => selected(invoice.id)))
+const selectedTotal = computed(() => formatInvoiceMoney(props.modelValue.every(id => selectedRows.value.some(invoice => String(invoice.id) === String(id))) ? invoiceTotalSum(selectedRows.value) : null))
 const unmatchedSelected = computed(() => selectedRows.value.filter(invoice => !matches(invoice)).length)
 const visible = ref(false), search = ref(''), draft = ref<any[]>([])
 const filtered = computed(() => candidates.value.filter(invoice => !key(search.value) || key([invoice.invoice_number, invoice.seller_name, invoice.buyer_name].join(' ')).includes(key(search.value))))
@@ -79,7 +79,7 @@ function toggle(invoice: Row, event: Event) {
 <template>
   <section class="payment-invoice-picker" :class="{dragging: dragDepth > 0 && !locked}" aria-label="关联发票" :aria-busy="uploading"
     @dragenter.prevent="!locked && dragDepth++" @dragleave.prevent="dragDepth = Math.max(0, dragDepth - 1)" @dragover.prevent @drop.prevent.stop="drop">
-    <header><strong>关联发票</strong><span>已选 {{modelValue.length}} 张 · 价税合计 ¥{{sumMoney(selectedRows.map(i => sumMoney([i.total_amount, i.tax_amount])))}}</span></header>
+    <header><strong>关联发票</strong><span>已选 {{modelValue.length}} 张 · 价税合计 {{selectedTotal}}</span></header>
     <p>选择已有发票，或拖拽上传；已存在的发票会自动选中，随付款单一起保存关联。</p>
     <el-button data-testid="choose-invoices" :disabled="locked" @click="open">选择关联发票</el-button>
     <input ref="picker" class="invoice-file-picker" type="file" multiple accept=".pdf,.png,.jpg,.jpeg" aria-label="上传并关联发票" :disabled="locked" @change="chooseFiles" />
@@ -93,7 +93,7 @@ function toggle(invoice: Row, event: Event) {
     <div v-if="selectedRows.length" class="invoice-choices" aria-label="已选择的发票">
       <div v-for="invoice in selectedRows" :key="invoice.id" class="invoice-choice selected">
         <span><strong>{{invoice.invoice_number || invoice.file_name || '无发票号码'}}</strong><small>{{invoice.seller_name || '销售方待识别'}}</small><small v-if="supplierName && invoice.seller_name && !matches(invoice)" class="seller-warning">销售方与收款单位名称不匹配，请核对</small></span>
-        <b>¥{{formatMoney(sumMoney([invoice.total_amount, invoice.tax_amount]))}}</b>
+        <span class="invoice-amounts"><b>价税合计：{{invoiceAmounts(invoice).total}}</b><small>不含税金额：{{invoiceAmounts(invoice).untaxed}}</small><small>税额：{{invoiceAmounts(invoice).tax}}</small></span>
         <el-button link :disabled="locked" :aria-label="`移除发票 ${invoice.invoice_number || invoice.id}`" @click="remove(invoice.id)">移除</el-button>
       </div>
     </div>
@@ -109,7 +109,7 @@ function toggle(invoice: Row, event: Event) {
       <label v-for="invoice in filtered" :key="invoice.id" class="invoice-choice" :class="{selected: draftSelected(invoice.id)}">
         <input type="checkbox" :aria-label="`关联发票 ${invoice.invoice_number || invoice.id}`" :checked="draftSelected(invoice.id)" :disabled="disabled" @change="toggle(invoice, $event)" />
         <span><strong>{{invoice.invoice_number || '无发票号码'}}</strong><small>{{invoice.seller_name || '销售方待识别'}} · {{invoice.invoice_date || '日期待识别'}}</small><small class="match-label">供应商名称与销售方名称一致</small></span>
-        <b>¥{{formatMoney(sumMoney([invoice.total_amount, invoice.tax_amount]))}}</b>
+        <span class="invoice-amounts"><b>价税合计：{{invoiceAmounts(invoice).total}}</b><small>不含税金额：{{invoiceAmounts(invoice).untaxed}}</small><small>税额：{{invoiceAmounts(invoice).tax}}</small></span>
       </label>
     </div>
     <p v-else-if="!loading && !error" class="muted">{{!supplierName ? '选择收款单位后自动筛选发票。' : !candidates.length ? `暂无销售方名称为「${supplierName}」的发票。请核对供应商名称或上传对应发票。` : '匹配发票中没有找到符合搜索条件的单据。'}}</p>
@@ -119,6 +119,7 @@ function toggle(invoice: Row, event: Event) {
 </template>
 
 <style scoped>
+.invoice-choice>.invoice-amounts{flex:0 1 auto;max-width:55%;text-align:right;gap:6px}.invoice-amounts b{font-size:13px;white-space:normal;overflow-wrap:anywhere}.invoice-amounts small{font-size:12px}
 .invoice-file-picker{display:none}.payment-invoice-dropzone{margin-top:12px;width:100%;padding:18px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;border:1px dashed var(--el-border-color-darker);border-radius:6px;background:var(--el-fill-color-lighter);color:var(--el-text-color-regular);font:inherit;cursor:pointer}.payment-invoice-dropzone svg{width:28px;height:28px;color:var(--el-color-primary)}.payment-invoice-dropzone strong{font-size:14px}.payment-invoice-dropzone small{font-size:12px;color:var(--el-text-color-secondary)}.payment-invoice-dropzone:hover,.payment-invoice-dropzone:focus-visible,.dragging .payment-invoice-dropzone{border-color:var(--el-color-primary);background:var(--el-color-primary-light-9)}.payment-invoice-dropzone:focus-visible{outline:2px solid var(--el-color-primary);outline-offset:2px}.payment-invoice-dropzone:disabled{cursor:wait;opacity:.65}.payment-invoice-picker.dragging{border-color:var(--el-color-primary)}.payment-invoice-picker .upload-notice{color:var(--el-color-success-dark-2)}.payment-invoice-picker .upload-error,.invoice-choice .seller-warning{color:var(--el-color-warning-dark-2);white-space:pre-line;overflow-wrap:anywhere}
 .payment-invoice-picker{margin:10px 0 20px;padding:16px;border:1px solid var(--el-border-color);border-radius:8px}.payment-invoice-picker header{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.payment-invoice-picker header span,.payment-invoice-picker p,.save-hint{font-size:12px;color:var(--el-text-color-secondary);line-height:1.6}.invoice-choices{max-height:300px;overflow:auto;margin:12px 0}.invoice-choice{display:flex;gap:10px;padding:12px;border:1px solid var(--el-border-color-lighter);border-radius:6px;margin-bottom:8px;align-items:flex-start;cursor:pointer}.invoice-choice.selected{border-color:var(--el-color-primary);background:var(--el-color-primary-light-9)}.invoice-choice input{margin-top:3px;accent-color:var(--el-color-primary)}.invoice-choice>span{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;overflow-wrap:anywhere}.invoice-choice small{color:var(--el-text-color-secondary)}.invoice-choice b{white-space:nowrap;font-family:monospace}.invoice-choice .match-label{color:var(--el-color-success-dark-2)}.muted{padding:8px 0}
 </style>

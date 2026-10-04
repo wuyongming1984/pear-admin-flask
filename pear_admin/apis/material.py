@@ -1242,7 +1242,8 @@ def get_invoice():
             data = [dict(id=row.id, invoice_number=row.invoice_number,
                 seller_name=row.seller_name, buyer_name=row.buyer_name,
                 invoice_date=row.invoice_date.isoformat() if row.invoice_date else None,
-                total_amount=str(row.total_amount or 0), tax_amount=str(row.tax_amount or 0))
+                total_amount=None if row.total_amount is None else str(row.total_amount or 0),
+                tax_amount=None if row.tax_amount is None else str(row.tax_amount or 0))
                 for row in pagination.items]
             return jsonify(code=0, count=pagination.total, data=data)
         
@@ -1543,8 +1544,8 @@ def upload_invoice():
                                 "seller_name": exists.seller_name,
                                 "buyer_name": exists.buyer_name,
                                 "invoice_date": str(exists.invoice_date) if exists.invoice_date else None,
-                                "total_amount": format(exists.total_amount or 0, '.2f'),
-                                "tax_amount": format(exists.tax_amount or 0, '.2f'),
+                                "total_amount": None if exists.total_amount is None else format(exists.total_amount, '.2f'),
+                                "tax_amount": None if exists.tax_amount is None else format(exists.tax_amount, '.2f'),
                                 "ocr_status": exists.ocr_status,
                             })
                         else:

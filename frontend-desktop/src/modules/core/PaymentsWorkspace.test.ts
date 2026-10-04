@@ -12,7 +12,14 @@ const orders = [
   {id: 2, project_id: 10, project_name: '项目甲', supplier_contact_person: '李四', order_number: 'D002', order_amount: '200.00', paid_amount: '60.00', order_balance: '140.00'},
 ]
 const payments = [
-  {id: 7, pay_number: 'F007', order_id: 1, project_name: '项目甲', supplier_contact_person: '张三', current_payment_amount: '100.00', invoice_amount: '0.00', payment_status: 'paid', invoices_list: [{id: 9, invoice_number: 'INV009', total_amount: '100.00'}]},
+  {id: 7, pay_number: 'F007', order_id: 1, project_name: '项目甲', supplier_contact_person: '张三', current_payment_amount: '100.00', invoice_amount: '0.00', payment_status: 'paid', invoices_list: [
+    {id:9,invoice_number:'INV009',total_amount:'100.00',tax_amount:'13.00'},
+    {id:10,invoice_number:'ZERO',total_amount:100,tax_amount:0},
+    {id:11,invoice_number:'RED',total_amount:'-100',tax_amount:'-13'},
+    {id:12,invoice_number:'PRECISION',total_amount:'0.004',tax_amount:'0.004'},
+    {id:13,invoice_number:'MISSING',total_amount:null,tax_amount:'13'},
+    {id:14,invoice_number:'INVALID',total_amount:'100',tax_amount:'bad'},
+  ]},
   {id: 8, pay_number: 'F008', order_id: 2, project_name: '项目甲', supplier_contact_person: '李四', current_payment_amount: '60.00', invoice_amount: '0.00', payment_status: 'pending', invoices_list: []},
   {id: 9, pay_number: 'F009', order_id: null, current_payment_amount: '0.00', payment_status: 'pending', invoices_list: []},
 ]
@@ -82,4 +89,23 @@ it('keeps related order/invoice links below the paper and handles an unlinked pa
   expect(unlinked.text()).toContain('未关联订单')
   expect(unlinked.find('a[aria-label^="查看关联订单"]').exists()).toBe(false)
   wrapper.unmount()
+})
+it('shows tax-inclusive invoice totals and breakdown without changing paid or order amounts',async()=>{
+ const {wrapper}=await setup()
+ const card=wrapper.findAll('article').find(c=>c.text().includes('F007'))!
+ for(const [number,total,untaxed,tax] of [
+  ['INV009','¥113.00','¥100.00','¥13.00'],['ZERO','¥100.00','¥100.00','¥0.00'],
+  ['RED','¥-113.00','¥-100.00','¥-13.00'],['PRECISION','¥0.01','¥0.00','¥0.00'],
+  ['MISSING','待核实','待核实','¥13.00'],['INVALID','待核实','¥100.00','待核实'],
+ ]){
+  const link=card.get(`a[aria-label="查看发票 ${number}"]`)
+  expect(link.text()).toContain(`价税合计：${total}`)
+  expect(link.text()).toContain(`不含税金额：${untaxed}`)
+  expect(link.text()).toContain(`税额：${tax}`)
+ }
+ expect(card.get('.order-sheet-grid').text()).toContain('100.00')
+ expect(payments[0]!.current_payment_amount).toBe('100.00')
+ expect(payments[0]!.invoice_amount).toBe('0.00')
+ expect(wrapper.text()).not.toContain('NaN')
+ wrapper.unmount()
 })

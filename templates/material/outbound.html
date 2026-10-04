@@ -676,7 +676,12 @@
                             { field: 'invoice_date', title: '开票日期', minWidth: 110 },
                             { field: 'buyer_name', title: '购买方', minWidth: 180 },
                             { field: 'seller_name', title: '销售方', minWidth: 180 },
-                            { field: 'total_amount', title: '价税合计', minWidth: 100, templet: function (d) { return parseFloat(d.total_amount).toFixed(2); } },
+                            { field: 'total_amount', title: '不含税金额', minWidth: 100, templet: function (d) {
+                                var value = d.total_amount;
+                                if ((typeof value !== 'string' && typeof value !== 'number') || String(value).trim() === '') return '待核实';
+                                var amount = Number(value);
+                                return Number.isFinite(amount) ? amount.toFixed(2) : '待核实';
+                            } },
                             { field: 'invoice_category', title: '类型', minWidth: 80 }
                         ]],
                         height: '350px',

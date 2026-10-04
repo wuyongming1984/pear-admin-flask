@@ -29,6 +29,55 @@ class InvoiceSearchTest(unittest.TestCase):
         self.assertEqual(result.json['code'], 0, result.json)
         return result.json
 
+    def seed_amount_cases(self):
+        supplier = SupplierORM(name='金额口径测试公司', type_id=1,
+            contact_person='测试联系人', phone='', bank_name='', account_number='')
+        db.session.add(supplier)
+        db.session.flush()
+        cases = [
+            ('NORMAL', 100, 13, '100.00', '13.00'),
+            ('ZERO', 0, 0, '0', '0'),
+            ('RED', -100, -13, '-100.00', '-13.00'),
+            ('MISSING-NET', None, 13, None, '13.00'),
+            ('MISSING-TAX', 100, None, '100.00', None),
+            ('MISSING-BOTH', None, None, None, None),
+        ]
+        invoice_ids, expected = {}, {}
+        for number, net, tax, expected_net, expected_tax in cases:
+            invoice = MaterialInvoiceORM(invoice_number=number, seller_name=supplier.name)
+            db.session.add(invoice)
+            db.session.flush()
+            # Explicit SQL NULL avoids ORM insertion defaults in this isolated test DB.
+            db.session.execute(db.update(MaterialInvoiceORM).where(MaterialInvoiceORM.id == invoice.id)
+                .values(total_amount=net, tax_amount=tax))
+            invoice_ids[number] = invoice.id
+            expected[number] = (expected_net, expected_tax)
+        db.session.commit()
+        supplier_id = supplier.id
+        db.session.remove()
+        return supplier_id, invoice_ids, expected
+
+    def test_invoice_list_preserves_missing_amounts_instead_of_displaying_zero(self):
+        _, _, expected = self.seed_amount_cases()
+        result = self.get(limit=20)
+        actual = {row['invoice_number']: (row['total_amount'], row['tax_amount']) for row in result['data']}
+        self.assertEqual(actual, expected)
+
+    def test_invoice_detail_filter_preserves_missing_amounts_and_real_zero(self):
+        _, invoice_ids, expected = self.seed_amount_cases()
+        for number in ('MISSING-NET', 'MISSING-TAX', 'MISSING-BOTH', 'ZERO'):
+            with self.subTest(invoice_number=number):
+                result = self.get(id=invoice_ids[number])
+                self.assertEqual(len(result['data']), 1)
+                row = result['data'][0]
+                self.assertEqual((row['total_amount'], row['tax_amount']), expected[number])
+
+    def test_payment_options_preserve_missing_amounts_instead_of_displaying_zero(self):
+        supplier_id, _, expected = self.seed_amount_cases()
+        result = self.get(mode='payment_options', payee_supplier_id=supplier_id, limit=20)
+        actual = {row['invoice_number']: (row['total_amount'], row['tax_amount']) for row in result['data']}
+        self.assertEqual(actual, expected)
+
     def test_category_and_partial_names_filter_before_paging(self):
         self.seed()
         first = self.get(invoice_category='plants', buyer_name=' 园林 ', seller_name='苗', page=1, limit=5)

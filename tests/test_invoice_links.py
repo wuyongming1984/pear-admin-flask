@@ -94,6 +94,35 @@ class InvoiceLinksTest(unittest.TestCase):
         self.assertEqual(result['invoices'], [])
         self.assertIn('已存在', result['errors'][0]['reason'])
 
+    def test_payment_upload_reuse_preserves_missing_amounts_and_real_zero(self):
+        self.seed()
+        invoice_id = self.invoices[0].id
+        cases = [
+            (None, 13, None, '13.00'),
+            (100, None, '100.00', None),
+            (None, None, None, None),
+            (0, 0, '0.00', '0.00'),
+        ]
+        with patch('pear_admin.ocr_utils.get_ocr_instance') as ocr:
+            ocr.return_value.recognize_invoice.return_value = {'invoice_number': 'I0'}
+            for net, tax, expected_net, expected_tax in cases:
+                with self.subTest(net=net, tax=tax):
+                    db.session.execute(db.update(MaterialInvoiceORM).where(MaterialInvoiceORM.id == invoice_id)
+                        .values(total_amount=net, tax_amount=tax))
+                    db.session.commit()
+                    response = self.client.post('/api/v1/material/invoice/upload', headers=self.headers, data={
+                        'files': (BytesIO(b'fake invoice'), 'existing.pdf'), 'reuse_existing': '1',
+                    })
+                    self.assertEqual(response.status_code, 200)
+                    result = response.json['data']
+                    self.assertEqual(result['existing'], 1)
+                    reused = result['invoices'][0]
+                    self.assertEqual((reused['total_amount'], reused['tax_amount']), (expected_net, expected_tax))
+                    db.session.expire_all()
+                    stored = db.session.get(MaterialInvoiceORM, invoice_id)
+                    self.assertEqual((stored.total_amount, stored.tax_amount), (net, tax))
+                    self.assertEqual(db.session.query(MaterialInvoiceORM).count(), 4)
+
     def test_candidates_match_normalized_name_but_not_unrelated_company(self):
         self.seed()
         response = self.client.get(self.url, headers=self.headers)

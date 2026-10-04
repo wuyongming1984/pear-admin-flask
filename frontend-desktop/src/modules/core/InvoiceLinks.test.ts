@@ -9,6 +9,32 @@ const global={stubs:{'el-dialog':{props:['modelValue','title'],template:'<sectio
 
 describe('seller matched invoice/payment selections',()=>{
  beforeEach(()=>vi.resetAllMocks())
+ it.each([
+  ['100','13','¥113.00','¥100.00','¥13.00'],
+  ['100','0','¥100.00','¥100.00','¥0.00'],
+  ['-100','-13','¥-113.00','¥-100.00','¥-13.00'],
+  ['0.004','0.004','¥0.01','¥0.00','¥0.00'],
+  [null,'13','待核实','待核实','¥13.00'],
+  ['100','invalid','待核实','¥100.00','待核实'],
+ ])('shows labeled amounts in selected rows and candidates (%s, %s)',async(total_amount,tax_amount,total,untaxed,tax)=>{
+  const wrapper=mount(PaymentInvoicePicker,{props:{modelValue:[1],supplierName:'甲公司',invoices:[{id:1,invoice_number:'AMOUNT',seller_name:'甲公司',total_amount,tax_amount}]},global})
+  await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
+  expect(wrapper.findAll('.invoice-choice')).toHaveLength(2)
+  for(const choice of wrapper.findAll('.invoice-choice')){
+   expect(choice.text()).toContain(`价税合计`);expect(choice.text()).toContain(total)
+   expect(choice.text()).toContain(`不含税金额`);expect(choice.text()).toContain(untaxed)
+   expect(choice.text()).toContain(`税额`);expect(choice.text()).toContain(tax)
+  }
+  expect(wrapper.get('header').text()).toContain(total)
+  expect(wrapper.text()).not.toContain('NaN')
+  expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+  wrapper.unmount()
+ })
+ it('marks an unavailable selected invoice as unverified in the selected total',()=>{
+  const wrapper=mount(PaymentInvoicePicker,{props:{modelValue:[1,2],invoices:[{id:1,total_amount:'100',tax_amount:'13'}]},global})
+  expect(wrapper.get('header').text()).toContain('待核实')
+  wrapper.unmount()
+ })
  it('reuses existing invoices once alongside new uploads and keeps genuine failures visible',async()=>{
   mocks.request.mockResolvedValue({code:0,data:{uploaded:1,existing:2,failed:1,invoices:[{id:9,invoice_number:'NEW',ocr_status:'success'},{id:8,invoice_number:'OLD',ocr_status:'completed',existing:true},{id:8,invoice_number:'OLD',ocr_status:'completed',existing:true}],errors:[{name:'失败.pdf',reason:'文件损坏'}]}})
   const wrapper=mount(PaymentInvoicePicker,{props:{modelValue:[8],invoices:[{id:8,invoice_number:'OLD'}]},global})

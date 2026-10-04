@@ -19,6 +19,25 @@ async function open(rows:any[]){
 }
 describe('invoice original displayed below the ticket',()=>{
  beforeEach(()=>{vi.resetAllMocks();mocks.request.mockResolvedValue(preview)})
+ it.each([
+  ['100','13','¥113.00','¥100.00','¥13.00'],
+  [100,0,'¥100.00','¥100.00','¥0.00'],
+  ['-100','-13','¥-113.00','¥-100.00','¥-13.00'],
+  ['0.004','0.004','¥0.01','¥0.00','¥0.00'],
+  [null,'13','待核实','待核实','¥13.00'],
+  ['100',undefined,'待核实','¥100.00','待核实'],
+  ['bad','13','待核实','待核实','¥13.00'],
+ ])('labels the same three invoice amounts in cards and paper (%s, %s)',async(total_amount,tax_amount,total,untaxed,tax)=>{
+  const wrapper=await open([{id:1,invoice_number:'AMOUNT-001',total_amount,tax_amount}])
+  for(const area of ['.invoice-card','.invoice-paper']){
+   const text=wrapper.get(area).text()
+   expect(text).toContain(`价税合计`);expect(text).toContain(total)
+   expect(text).toContain(`不含税金额`);expect(text).toContain(untaxed)
+   expect(text).toContain(`税额`);expect(text).toContain(tax)
+   expect(text).not.toContain('NaN')
+  }
+  wrapper.unmount()
+ })
  it('renders PDF pixels below the data without a browser PDF object or automatic download',async()=>{
   const wrapper=await open([pdf])
   await flushPromises()

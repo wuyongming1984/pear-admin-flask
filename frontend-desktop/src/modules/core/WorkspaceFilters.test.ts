@@ -37,7 +37,7 @@ it.each([
     {path: '/' + kind, component}, {path: '/:pathMatch(.*)*', component: {template: '<div />'}},
   ]})
   await router.push('/' + kind); await router.isReady()
-  const wrapper = mount({template: '<router-view />'}, {global: {plugins: [router], stubs: {TablePrint: true, OrderAttachments: true}, directives: {loading: () => {}}}})
+  const wrapper = mount({template: '<router-view />'}, {global: {plugins: [router], stubs: {TablePrint: true, OrderAttachments: true, PaymentReceiptPicker: true}, directives: {loading: () => {}}}})
   try {
     await settle()
     await wrapper.get('input[aria-label="筛选项目"]').setValue('项目')

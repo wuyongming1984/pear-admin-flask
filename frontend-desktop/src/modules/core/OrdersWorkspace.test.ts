@@ -4,7 +4,7 @@ import {createMemoryHistory, createRouter} from 'vue-router'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import routes from './routes'
 
-const mocks = vi.hoisted(() => ({allRows: vi.fn(), request: vi.fn()}))
+const mocks = vi.hoisted(() => ({allRows: vi.fn(), request: vi.fn(), openReceipts: vi.fn()}))
 vi.mock('../../api', () => ({...mocks, query: (p: any) => new URLSearchParams(p).toString(), safeUrl: (s: string) => s || ''}))
 vi.mock('element-plus', () => ({ElMessage: {error: vi.fn(), success: vi.fn()}, ElMessageBox: {confirm: vi.fn()}}))
 const orders = [
@@ -27,7 +27,7 @@ async function settle() {await vi.advanceTimersByTimeAsync(250); await flushProm
 async function setup(url = '/orders') {
   const router = createRouter({history: createMemoryHistory(), routes})
   await router.push(url); await router.isReady()
-  const wrapper = mount({template: '<router-view v-slot="{Component,route}"><keep-alive><component :is="Component" :key="route.path" /></keep-alive></router-view>'}, {global: {plugins: [router], stubs: {TablePrint: true, 'el-table': true, 'el-table-column': true}, directives: {loading: () => {}}, config: {warnHandler: () => {}}}})
+  const wrapper = mount({template: '<router-view v-slot="{Component,route}"><keep-alive><component :is="Component" :key="route.path" /></keep-alive></router-view>'}, {global: {plugins: [router], stubs: {PaymentReceiptPicker: {setup(_, {expose}) {expose({open:mocks.openReceipts});return {}},template:'<div/>'}, TablePrint: true, 'el-table': true, 'el-table-column': true}, directives: {loading: () => {}}, config: {warnHandler: () => {}}}})
   await flushPromises()
   await settle()
   expect(mocks.allRows.mock.calls.every(([path]) => path === '/dictionary/detail/list')).toBe(true)
@@ -59,6 +59,22 @@ it('serves the three-column workspace at the real /orders route and combines pro
   await router.push('/orders'); await flushPromises()
   expect(wrapper.get('input[aria-label="订单号搜索"]').element).toHaveProperty('value', 'D001')
   expect(wrapper.findAll('article')).toHaveLength(1)
+  wrapper.unmount()
+})
+it('opens receipt association for only the payments belonging to the clicked order', async () => {
+  const {wrapper, router} = await setup('/orders?project_id=10')
+  await wrapper.get('button[aria-label="关联付款回单 D001"]').trigger('click')
+  expect(mocks.openReceipts).toHaveBeenCalledWith(orders[0]!.pays_list)
+  expect(router.currentRoute.value.fullPath).toBe('/orders?project_id=10')
+  await wrapper.get('button[aria-label="关联付款回单 F007"]').trigger('click')
+  expect(mocks.openReceipts).toHaveBeenLastCalledWith(orders[0]!.pays_list, 7)
+  wrapper.unmount()
+})
+it('opens the empty-order guidance without making up a payment', async () => {
+  const {wrapper} = await setup()
+  await wrapper.get('button[aria-label="关联付款回单 D002"]').trigger('click')
+  expect(mocks.openReceipts).toHaveBeenCalledWith([])
+  expect(mocks.request.mock.calls.every(([,options]) => !options?.method)).toBe(true)
   wrapper.unmount()
 })
 it('places related payment actions below the order sheet and preserves project deep links', async () => {

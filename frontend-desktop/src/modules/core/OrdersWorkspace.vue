@@ -4,6 +4,7 @@ import {useRoute, onBeforeRouteLeave} from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {allRows, request} from '../../api'
 import OrderAttachments from './OrderAttachments.vue'
+import PaymentReceiptPicker from './PaymentReceiptPicker.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import TablePrint from './TablePrint.vue'
 import {useCardColumns} from './useCardColumns'
@@ -12,6 +13,13 @@ import {formatMoney, sumMoney} from './money'
 import {schemas, type Row, type Field} from './model'
 
 const route = useRoute()
+const receiptPicker = ref<InstanceType<typeof PaymentReceiptPicker>>()
+const receiptOrder = ref<Row>()
+function linkReceipts(order:Row, paymentId?:number) {
+  receiptOrder.value = order
+  if(paymentId == null) void receiptPicker.value?.open(order.pays_list || [])
+  else void receiptPicker.value?.open(order.pays_list || [], paymentId)
+}
 const projectList = ref<HTMLElement>(), contactList = ref<HTMLElement>()
 let filterScroll = [0, 0]
 onBeforeRouteLeave(() => {filterScroll = [projectList.value?.scrollTop || 0, contactList.value?.scrollTop || 0]})
@@ -143,15 +151,17 @@ async function exportCsv() {
               <div class="payment-list"><div v-for="p in o.pays_list || []" :key="p.id" class="payment-item">
                 <RouterLink :to="paymentEditor(`/payments/${p.id}/edit`)" :aria-label="`编辑付款单 ${p.pay_number}`" class="payment-link"><span><strong>{{p.pay_number}}</strong><b>¥{{money(p.current_payment_amount)}}</b></span><small>{{p.payer_supplier_name || '—'}} → {{p.payee_supplier_name || '—'}}</small></RouterLink>
                 <RouterLink :to="`/payments/${p.id}/print`" :aria-label="`打印付款单 ${p.pay_number}`" class="payment-print">打印</RouterLink>
+                <button class="payment-receipt" :aria-label="`关联付款回单 ${p.pay_number}`" @click="linkReceipts(o, p.id)">关联回单</button>
               </div><span v-if="!o.pays_list?.length" class="muted">暂无关联付款单</span></div>
             </section>
-            <footer class="sheet-actions"><RouterLink :to="`/orders/${o.id}`">详情</RouterLink><RouterLink :to="`/orders/${o.id}/edit`">编辑订单</RouterLink><RouterLink class="new-payment-button" :to="paymentEditor('/payments/new', o.id)">新增付款单</RouterLink><RouterLink :to="`/orders/${o.id}/print`">打印订单</RouterLink><button class="delete-button" :disabled="deleting" @click="remove(o)">删除</button></footer>
+            <footer class="sheet-actions"><RouterLink :to="`/orders/${o.id}`">详情</RouterLink><RouterLink :to="`/orders/${o.id}/edit`">编辑订单</RouterLink><button class="receipt-button" :aria-label="`关联付款回单 ${o.order_number}`" @click="linkReceipts(o)">关联付款回单</button><RouterLink class="new-payment-button" :to="paymentEditor('/payments/new', o.id)">新增付款单</RouterLink><RouterLink :to="`/orders/${o.id}/print`">打印订单</RouterLink><button class="delete-button" :disabled="deleting" @click="remove(o)">删除</button></footer>
           </article>
           <nav v-if="count" class="order-pagination" aria-label="订单分页"><span>共 {{count}} 条 · 第 {{page}} / {{pageCount}} 页</span><button :disabled="busy || page <= 1" @click="page--">上一页</button><button :disabled="busy || page >= pageCount" @click="page++">下一页</button></nav>
         </div>
       </main>
     </div>
     <TablePrint v-model="tablePrint" title="采购订单" :columns="printColumns" :rows="pageOrders" :page="page" :total="count" :display="display" />
+    <PaymentReceiptPicker ref="receiptPicker"><template #empty><p class="muted">订单尚无付款单，请先新增付款单。</p><RouterLink v-if="receiptOrder" :to="paymentEditor('/payments/new', receiptOrder.id)">新增付款单</RouterLink></template></PaymentReceiptPicker>
   </section>
 </template>
 

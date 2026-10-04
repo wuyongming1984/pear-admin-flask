@@ -12,12 +12,14 @@ from flask_jwt_extended import jwt_required
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm.attributes import set_committed_value
 from werkzeug.exceptions import HTTPException
 
 from pear_admin.extensions import db, oss
 from pear_admin.invoice_links import selected_ids, same_company
 from pear_admin.invoice_preview import render_pdf_page, MAX_FILE_BYTES
 from pear_admin.orms import PaymentReceiptORM, PayORM, OrderORM, ProjectORM, SupplierORM, PayerORM
+from pear_admin.orms.payment_receipt import pay_receipt_relation
 from ._system_validation import validated, payload
 
 payment_receipts_api = Blueprint('payment_receipts', __name__, url_prefix='/payment-receipts')
@@ -102,15 +104,20 @@ def metadata(data):
     return result
 
 
+def filter_receipts(query, keyword):
+    if keyword:
+        query = query.where(or_(*(getattr(PaymentReceiptORM, key).contains(keyword, autoescape=True)
+                                 for key in ('receipt_number', 'payer_name', 'payee_name', 'bank_name', 'file_name', 'remarks'))))
+    return query
+
+
 @payment_receipts_api.get('')
 @jwt_required()
 @validated
 def list_receipts():
     query = receipts_query().order_by(PaymentReceiptORM.id.desc())
     keyword = (request.args.get('q') or '').strip()[:100]
-    if keyword:
-        query = query.where(or_(*(getattr(PaymentReceiptORM, key).contains(keyword, autoescape=True)
-                                 for key in ('receipt_number', 'payer_name', 'payee_name', 'bank_name', 'file_name', 'remarks'))))
+    query = filter_receipts(query, keyword)
     payment_id = request.args.get('payment_id', type=int)
     if payment_id:
         query = query.where(PaymentReceiptORM.payments.any(id=payment_id))
@@ -216,15 +223,56 @@ def payments_query(keyword):
     return query
 
 
+def lock_receipt_payments(row):
+    # Both linking directions serialize on the same receipt row.
+    db.session.execute(db.select(PaymentReceiptORM.id).where(PaymentReceiptORM.id == row.id).with_for_update())
+    # A locking read sees committed links even under MySQL REPEATABLE READ;
+    # expiring the relationship alone could reload the transaction's old snapshot.
+    linked_ids = list(db.session.scalars(db.select(pay_receipt_relation.c.pay_id)
+                      .where(pay_receipt_relation.c.receipt_id == row.id).with_for_update()))
+    payments = list(db.session.scalars(payments_query('').where(PayORM.id.in_(linked_ids)))) if linked_ids else []
+    set_committed_value(row, 'payments', payments)
+
+
+@payment_receipts_api.route('/for-payment/<int:payment_id>', methods=['GET', 'POST'])
+@jwt_required()
+@validated
+def payment_receipts(payment_id):
+    pay = db.session.scalar(payments_query('').where(PayORM.id == payment_id))
+    if pay is None:
+        raise ValueError('付款单不存在或已删除，请刷新列表')
+    if request.method == 'POST':
+        ids = selected_ids(payload().get('receipt_ids'))
+        rows = list(db.session.scalars(receipts_query().where(PaymentReceiptORM.id.in_(ids))
+                    .order_by(PaymentReceiptORM.id))) if ids else []
+        if len(rows) != len(ids):
+            raise ValueError('所选回单不存在，请刷新后重试')
+        # Every batch takes receipt locks in ascending ID order to avoid cycles.
+        for row in rows:
+            lock_receipt_payments(row)
+            if payment_id not in {linked.id for linked in row.payments}:
+                row.payments.append(pay)
+        db.session.commit()
+    linked = list(db.session.scalars(receipts_query().where(PaymentReceiptORM.payments.any(id=payment_id))
+                  .order_by(PaymentReceiptORM.id.desc())))
+    keyword = (request.args.get('q') or '').strip()[:100]
+    query = filter_receipts(receipts_query(), keyword).where(~PaymentReceiptORM.payments.any(id=payment_id))
+    batch = db.paginate(query.order_by(PaymentReceiptORM.id.desc()),
+                        page=max(1, request.args.get('page', 1, type=int)), per_page=20, error_out=False)
+    candidates = [dict(receipt_json(row), recommended=same_company(
+        row.payee_name, pay.payee_supplier.name if pay.payee_supplier else '')) for row in batch.items]
+    return {'code': 0, 'msg': '关联成功' if request.method == 'POST' else '',
+            'data': {'payment': payment_json(pay), 'linked': [receipt_json(row) for row in linked],
+                     'candidates': candidates, 'count': batch.total}}
+
+
 @payment_receipts_api.route('/<int:identity>/payments', methods=['GET', 'POST'])
 @jwt_required()
 @validated
 def receipt_payments(identity):
     row = receipt(identity)
     if request.method == 'POST':
-        # Serialize association changes for the same receipt in MySQL.
-        db.session.execute(db.select(PaymentReceiptORM.id).where(PaymentReceiptORM.id == identity).with_for_update())
-        db.session.expire(row, ['payments'])
+        lock_receipt_payments(row)
         ids = selected_ids(payload().get('payment_ids'))
         payments = list(db.session.scalars(payments_query('').where(PayORM.id.in_(ids)))) if ids else []
         if len(payments) != len(ids):

@@ -29,12 +29,13 @@ const amount = (row: Row) => formatMoney(sumMoney([row.total_amount, row.tax_amo
 
 <template>
   <div class="invoice-library">
+    <section class="invoice-search" aria-label="发票查询与上传">
+      <div class="invoice-search-heading"><strong>发票清单</strong><span class="invoice-count">{{count}}</span></div>
+      <el-button type="primary" class="invoice-add" @click="emit('upload')">新增发票 / 上传识别</el-button>
+      <div class="invoice-filters"><slot name="search" /></div>
+    </section>
+    <div class="invoice-workspace">
     <aside class="invoice-sidebar" aria-label="发票清单">
-      <header><strong>发票清单</strong><span class="invoice-count">{{count}}</span></header>
-      <div class="invoice-search">
-        <el-button type="primary" class="invoice-add" @click="emit('upload')">新增发票 / 上传识别</el-button>
-        <slot name="search" />
-      </div>
       <div class="invoice-batch">
         <el-checkbox :model-value="!!rows.length && selection.length === rows.length" :indeterminate="selection.length > 0 && selection.length < rows.length" @change="emit('selection', $event ? [...rows] : [])">本页全选</el-checkbox>
         <span role="status" aria-live="polite">{{searching ? '正在查找…' : `找到 ${count} 张 · 已选 ${selection.length} 张`}}</span>
@@ -81,29 +82,29 @@ const amount = (row: Row) => formatMoney(sumMoney([row.total_amount, row.tax_amo
         <el-empty v-else description="请选择或上传发票，查看票面详情" />
       </div>
     </main>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.invoice-library{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;height:calc(100dvh - 228px);min-height:560px}
+.invoice-library{display:flex;flex-direction:column;gap:16px;height:calc(100dvh - 228px);min-height:560px}
+.invoice-workspace{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;flex:1;min-height:0}
 .invoice-sidebar,.invoice-content{min-width:0;border:1px solid var(--el-border-color);border-radius:8px;background:var(--el-bg-color);display:flex;flex-direction:column;overflow:hidden}
-.invoice-sidebar>header,.invoice-content-header{padding:15px 18px;border-bottom:1px solid var(--el-border-color);display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:65px}
-.invoice-sidebar>header{flex-shrink:0;color:var(--el-color-primary)}.invoice-count{background:var(--el-color-primary-light-9);padding:2px 9px;border-radius:12px;font-size:12px}
-.invoice-search{padding:14px;border-bottom:1px solid var(--el-border-color);flex-shrink:0;overflow:auto}.invoice-add{width:100%;margin-bottom:12px}
-.invoice-search :deep(.search-grid){display:grid;grid-template-columns:1fr;gap:0;padding:0;margin:0;border:0;background:transparent;box-shadow:none}.invoice-search :deep(.el-form-item){margin-bottom:10px}.invoice-search :deep(.el-form-item__label){font-size:12px;padding:0;height:auto;line-height:22px}.invoice-search :deep(.el-select){width:100%}.invoice-search :deep(.actions){justify-content:flex-start;gap:6px}.invoice-search :deep(.actions .el-button+.el-button){margin-left:0}
+.invoice-content-header{padding:15px 18px;border-bottom:1px solid var(--el-border-color);display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:65px}
+.invoice-search-heading{display:flex;align-items:center;gap:10px;white-space:nowrap;color:var(--el-color-primary)}.invoice-count{background:var(--el-color-primary-light-9);padding:2px 9px;border-radius:12px;font-size:12px}
+.invoice-search{display:flex;align-items:center;flex-wrap:wrap;gap:14px;padding:14px;border:1px solid var(--el-border-color);border-radius:8px;background:var(--el-bg-color);flex-shrink:0;min-width:0}.invoice-add{flex-shrink:0;margin:0}.invoice-filters{flex:1 1 560px;min-width:0}
+.invoice-search .invoice-filters :deep(.search-grid){display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:0;margin:0;border:0;background:transparent;box-shadow:none}.invoice-search :deep(.el-form-item){margin:0;min-width:0}.invoice-search :deep(.el-form-item__label){font-size:12px;padding:0;height:auto;line-height:22px}.invoice-search :deep(.el-select){width:100%;min-width:0}.invoice-search :deep(.actions){justify-content:flex-start;gap:6px}.invoice-search :deep(.actions .el-button+.el-button){margin-left:0}
 .invoice-batch{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:5px 14px;font-size:12px;color:var(--el-text-color-secondary)}
 .invoice-cards{flex:1;min-height:0;overflow:auto;padding:0 10px 10px}.invoice-card{display:flex;align-items:flex-start;border:1px solid transparent;border-radius:6px;margin-bottom:8px;padding:10px 8px;background:var(--el-fill-color-light)}.invoice-card.active{border-color:var(--el-color-primary);background:var(--el-color-primary-light-9);box-shadow:inset 3px 0 var(--el-color-primary)}.invoice-check{height:22px;margin-right:7px}.invoice-select{padding:0;text-align:left;border:0;background:none;color:var(--el-text-color-primary);cursor:pointer;display:flex;flex-direction:column;gap:7px;min-width:0;width:100%;font-size:12px}.invoice-select>strong{font-size:14px}.invoice-select>span,.invoice-select>strong{max-width:100%;overflow-wrap:anywhere}.invoice-number{font-family:monospace;color:var(--el-color-primary)}.invoice-card-bottom{display:flex;justify-content:space-between;gap:8px;width:100%;color:var(--el-text-color-secondary)}.invoice-card-bottom b{color:var(--el-color-primary);white-space:nowrap}
 .invoice-pagination{flex-shrink:0;border-top:1px solid var(--el-border-color);padding:8px}.invoice-pagination :deep(.el-pagination){margin:0;justify-content:center;gap:3px}.invoice-pagination :deep(.el-pagination__sizes){margin-right:0}
 .invoice-actions{display:flex;flex-wrap:wrap;gap:8px}.invoice-actions :deep(.el-button+.el-button){margin-left:0}.invoice-content-header>strong{white-space:nowrap}.invoice-preview{background:#e6e6e6;padding:20px;flex:1;min-height:0;overflow:auto}.invoice-preview :deep(.invoice-paper){max-width:1100px;margin:0 auto;min-height:600px;border-radius:0;padding:36px;box-shadow:0 5px 20px #0002}.invoice-detail-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;max-width:1100px;margin:0 auto 12px;color:#536b63;font-size:12px}.invoice-extra{padding:14px;max-height:320px;overflow:auto;border-bottom:1px solid var(--el-border-color)}.invoice-extra :deep(.panel){margin:0;padding:0;border:0}.invoice-extra :deep(.upload-panel){display:flex;flex-wrap:wrap;gap:12px}.invoice-extra :deep(.el-select),.invoice-extra :deep(.el-input){max-width:230px}
-.invoice-library .invoice-sidebar .invoice-search :deep(.search-grid){margin:0}
 .invoice-library .invoice-pagination :deep(.el-pagination){margin:0;padding:0;border-top:0}
 @media(min-width:761px) and (max-height:850px){
  .invoice-search{padding:10px 14px}
- .invoice-search :deep(.el-form-item){margin-bottom:7px}
  .invoice-search :deep(.el-input__wrapper),.invoice-search :deep(.el-select__wrapper){min-height:32px;height:32px}
  .invoice-search :deep(.el-button){min-height:32px;height:32px}
- .invoice-library .invoice-sidebar .invoice-search :deep(.search-grid){padding:0}
 }
-@media(max-width:1100px){.invoice-library{grid-template-columns:260px minmax(0,1fr)}.invoice-content-header{align-items:flex-start;flex-direction:column}.invoice-preview{padding:12px}}
-@media(max-width:760px){.invoice-library{height:auto;min-height:0;grid-template-columns:1fr}.invoice-sidebar{max-height:600px}.invoice-search{max-height:260px}.invoice-cards{max-height:260px}.invoice-preview{max-height:850px}.invoice-preview :deep(.invoice-paper){padding:20px}.invoice-content-header{flex-direction:row;flex-wrap:wrap}}
+@media(max-width:1100px){.invoice-workspace{grid-template-columns:260px minmax(0,1fr)}.invoice-content-header{align-items:flex-start;flex-direction:column}.invoice-preview{padding:12px}}
+@media(max-width:760px){.invoice-library{height:auto;min-height:0}.invoice-workspace{grid-template-columns:1fr}.invoice-search{align-items:stretch;gap:12px}.invoice-add{width:100%}.invoice-filters{flex-basis:100%}.invoice-search .invoice-filters :deep(.search-grid){grid-template-columns:repeat(2,minmax(0,1fr))}.invoice-sidebar{max-height:600px}.invoice-cards{max-height:260px}.invoice-preview{max-height:850px}.invoice-preview :deep(.invoice-paper){padding:20px}.invoice-content-header{flex-direction:row;flex-wrap:wrap}}
+@media(max-width:480px){.invoice-search .invoice-filters :deep(.search-grid){grid-template-columns:1fr}}
 </style>

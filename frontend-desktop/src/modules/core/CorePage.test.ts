@@ -16,6 +16,7 @@ vi.mock('../../components/AttachmentEditor.vue',()=>({default:{props:['modelValu
 vi.mock('./PaymentReceiptsForPayment.vue',()=>({default:{props:['paymentId'],template:'<div />'}}))
 const input={props:['modelValue'],emits:['update:modelValue'],template:'<input :value="modelValue" @input="$emit(\'update:modelValue\',$event.target.value)" />'}
 const stubs:any={'el-form':{template:'<form><slot/></form>'},'el-form-item':{props:['label'],template:'<label>{{label}}<slot/></label>'},'el-input':input,'el-select':input,'el-select-v2':input,'el-option':true,'el-date-picker':input,'el-button':{props:['nativeType','disabled','loading'],template:'<button :type="nativeType||\'button\'" :disabled="disabled||loading"><slot/></button>'},'el-alert':{props:['title'],template:'<div role="alert">{{title}}</div>'},'el-dialog':{props:['modelValue','title'],template:'<section v-if="modelValue" role="dialog" :aria-label="title"><slot/><slot name="footer"/></section>'},'el-table':true,'el-table-column':true,'el-pagination':true,'el-descriptions':true,'el-descriptions-item':true,'el-popover':true,'el-checkbox-group':true,'el-checkbox':true,'el-empty':{props:['description'],template:'<p>{{description}}</p>'}}
+const invoiceRecommendations=(candidates:any[])=>({code:0,data:{context:{target_amount:'100.00',amount_basis:'current_payment_amount',selected_gross:'0.00',remaining:'100.00'},candidates,combinations:[],total_count:candidates.length,truncated:false,combination_limit:30}})
 it.each(['new','edit'])('saves an order with a registered contact and a cleared optional supplier (%s)',async(mode)=>{
  vi.clearAllMocks()
  const order={id:2,project_id:7,material_name:'stone',order_amount:'123.45',supplier_id:3,supplier_contact_person:'张工'}
@@ -230,7 +231,7 @@ describe('core form operation behavior',()=>{
   const added={id:9,invoice_number:'NEW-009',seller_name:'销售公司',total_amount:'20',tax_amount:'2.6'}
   const payment={id:2,pay_number:'FK2',order_id:3,payer_supplier_id:4,payee_supplier_id:5,current_payment_amount:'10.00',payment_purpose:'原用途',invoices_list:[old]}
   let finishUpload!:(value:any)=>void
-  mocks.request.mockImplementation(async(url:string,options:any)=>url==='/material/invoice/upload'?new Promise(resolve=>finishUpload=resolve):{code:0,data:options?.method?{}:payment})
+  mocks.request.mockImplementation(async(url:string,options:any)=>url==='/material/invoice/upload'?new Promise(resolve=>finishUpload=resolve):url==='/invoice-links/payments/recommendations'?invoiceRecommendations([old,added]):{code:0,data:options?.method?{}:payment})
   mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:3,project_id:7,supplier_id:5,supplier_contact_person:'张工',material_details:'原用途'}]:path==='/supplier/'?[{id:5,name:'销售公司',contact_person:'张工'}]:path==='/material/invoice'?[old,added]:[])
   const path=mode==='new'?'/payments/new':'/payments/2/edit'
   const router=createRouter({history:createMemoryHistory(),routes:[{path,component:CorePage,meta:{coreKind:'payments',coreMode:mode}},{path:'/payments',component:{template:'<p>付款单列表</p>'}}]})
@@ -281,7 +282,7 @@ describe('core form operation behavior',()=>{
   const existing={id:8,invoice_number:'OLD-008',seller_name:'销售公司'}
   const added={id:9,invoice_number:'NEW-009',seller_name:'销售公司'}
   const payment={id:2,pay_number:'FK2',order_id:3,payer_supplier_id:4,payee_supplier_id:5,current_payment_amount:'10.00',payment_purpose:'原用途',invoices_list:[existing]}
-  mocks.request.mockResolvedValue({code:0,data:payment})
+  mocks.request.mockImplementation(async(url:string)=>url==='/invoice-links/payments/recommendations'?invoiceRecommendations([existing,added]):{code:0,data:payment})
   mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:3,supplier_id:5,supplier_contact_person:'张工'}]:path==='/supplier/'?[{id:5,name:'销售公司',contact_person:'张工'}]:path==='/material/invoice'?[existing,added]:[])
   const router=createRouter({history:createMemoryHistory(),routes:[{path:'/payments/:id/edit',component:CorePage,meta:{coreKind:'payments',coreMode:'edit'}},{path:'/payments',component:{template:'<p>列表</p>'}}]})
   await router.push('/payments/2/edit');await router.isReady()
@@ -311,11 +312,11 @@ describe('core form operation behavior',()=>{
   expect(mocks.allRows.mock.calls.some(([url])=>url==='/material/invoice')).toBe(false)
   expect(wrapper.get('.payment-invoice-picker').text()).toContain('LINKED-008')
   expect(wrapper.get('.payment-invoice-picker').text()).toContain('11.30')
-  mocks.allRows.mockRejectedValueOnce(new Error('发票加载失败'))
+  mocks.request.mockRejectedValueOnce(new Error('发票加载失败'))
   await wrapper.get('[data-testid="choose-invoices"]').trigger('click');await flushPromises()
   expect(wrapper.get('[role="dialog"]').text()).toContain('发票加载失败')
   expect(wrapper.get('[data-testid="confirm-invoice-selection"]').attributes('disabled')).toBeDefined()
-  mocks.allRows.mockResolvedValueOnce([invoice])
+  mocks.request.mockResolvedValueOnce(invoiceRecommendations([invoice]))
   await wrapper.get('[data-testid="retry-invoice-options"]').trigger('click');await flushPromises()
   expect(wrapper.get('[data-testid="confirm-invoice-selection"]').attributes('disabled')).toBeUndefined()
   await wrapper.get('[data-testid="cancel-invoice-selection"]').trigger('click')
@@ -325,6 +326,10 @@ describe('core form operation behavior',()=>{
   wrapper.unmount()
  })
  it('automatically filters by payee and saves only the manually selected matching invoice',async()=>{
+  mocks.request.mockImplementation(async(url:string)=>url==='/invoice-links/payments/recommendations'?invoiceRecommendations([
+   {id:8,invoice_number:'MATCH-008',seller_name:'销售公司',total_amount:'10',tax_amount:'1.3'},
+   {id:9,invoice_number:'OTHER-009',seller_name:'另一家公司'},
+  ]):{code:0,data:{}})
   mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:2,supplier_id:3,supplier_contact_person:'张工',order_amount:'100'}]:path==='/supplier/'?[{id:3,name:'销售公司',contact_person:'张工'}]:path==='/payer/'?[{id:4,name:'付款单位'}]:path==='/material/invoice'?[
    {id:8,invoice_number:'MATCH-008',seller_name:'销售公司',total_amount:'10',tax_amount:'1.3'},
    {id:9,invoice_number:'OTHER-009',seller_name:'另一家公司'},
@@ -333,7 +338,8 @@ describe('core form operation behavior',()=>{
   await router.push('/payments/new?order_id=2');await router.isReady()
   const wrapper=mount({template:'<router-view/>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises()
   await wrapper.get('[data-testid="choose-invoices"]').trigger('click');await flushPromises()
-  expect(mocks.allRows.mock.calls.find(([url])=>url==='/material/invoice')?.[1]).toEqual({mode:'payment_options',payee_supplier_id:3})
+  const recommendations=mocks.request.mock.calls.find(([url])=>url==='/invoice-links/payments/recommendations')!
+  expect(JSON.parse(recommendations[1].body)).toMatchObject({payee_supplier_id:3,order_id:2,selected_invoice_ids:[]})
   expect(wrapper.get('.payment-invoice-picker').text()).toContain('MATCH-008')
   expect(wrapper.get('.payment-invoice-picker').text()).not.toContain('OTHER-009')
   await wrapper.get('[aria-label="关联发票 MATCH-008"]').setValue(true)
@@ -346,13 +352,15 @@ describe('core form operation behavior',()=>{
   wrapper.unmount()
  })
  it('reloads invoices when the supplier changes and ignores the previous supplier response',async()=>{
-  let finishOld!:(rows:any[])=>void
+  let finishOld!:(data:any)=>void
   const old={id:8,invoice_number:'EXISTING',seller_name:'原供应商'}
-  mocks.request.mockResolvedValue({code:0,data:{id:2,order_id:3,payee_supplier_id:5,invoices_list:[old]}})
+  mocks.request.mockImplementation(async(url:string,options:any)=>{
+   if(url==='/invoice-links/payments/recommendations')return JSON.parse(options.body).payee_supplier_id===5?new Promise(resolve=>finishOld=resolve):invoiceRecommendations([{id:9,invoice_number:'NEW-SUPPLIER',seller_name:'新供应商'}])
+   return {code:0,data:{id:2,order_id:3,payee_supplier_id:5,invoices_list:[old]}}
+  })
   mocks.allRows.mockImplementation(async(path:string,params:any)=>{
    if(path==='/order/')return [{id:3,supplier_id:5,supplier_contact_person:'张工'}]
    if(path==='/supplier/')return [{id:5,name:'原供应商',contact_person:'张工',label:'原供应商（张工）'},{id:6,name:'新供应商',contact_person:'张工'}]
-   if(path==='/material/invoice')return params?.payee_supplier_id===5?new Promise(resolve=>finishOld=resolve):[{id:9,invoice_number:'NEW-SUPPLIER',seller_name:'新供应商'}]
    return []
   })
   const router=createRouter({history:createMemoryHistory(),routes:[{path:'/payments/:id/edit',component:CorePage,meta:{coreKind:'payments',coreMode:'edit'}}]})
@@ -362,14 +370,17 @@ describe('core form operation behavior',()=>{
   wrapper.getComponent(PaymentEntrySheet).vm.$emit('field','payee_supplier_id',6);await flushPromises()
   expect(wrapper.get('[role="dialog"]').text()).toContain('NEW-SUPPLIER')
   expect(wrapper.get('[role="dialog"]').text()).not.toContain('原供应商（张工）')
-  finishOld([{id:10,invoice_number:'STALE',seller_name:'原供应商'}]);await flushPromises()
+  finishOld(invoiceRecommendations([{id:10,invoice_number:'STALE',seller_name:'原供应商'}]));await flushPromises()
   expect(wrapper.get('[role="dialog"]').text()).toContain('NEW-SUPPLIER')
   expect(wrapper.get('[role="dialog"]').text()).not.toContain('STALE')
   expect(wrapper.get('[aria-label="已选择的发票"]').text()).toContain('EXISTING')
   wrapper.unmount()
  })
  it('uses the company name without the stored contact suffix in the invoice dialog',async()=>{
-  mocks.request.mockResolvedValue({code:0,data:{id:2,order_id:3,payee_supplier_id:5,invoices_list:[]}})
+  mocks.request.mockImplementation(async(url:string)=>url==='/invoice-links/payments/recommendations'?invoiceRecommendations([
+   {id:8,invoice_number:'MATCH-008',seller_name:'杭州雅鸿装饰工程有限公司'},
+   {id:9,invoice_number:'NEAR-009',seller_name:'杭州雅鸿装饰工程有限公司分公司'},
+  ]):{code:0,data:{id:2,order_id:3,payee_supplier_id:5,invoices_list:[]}})
   mocks.allRows.mockImplementation(async(path:string)=>path==='/order/'?[{id:3,supplier_id:5,supplier_contact_person:'钱顺怡'}]:path==='/supplier/'?[{id:5,name:'杭州雅鸿装饰工程有限公司（钱顺怡）',contact_person:'钱顺怡'}]:path==='/material/invoice'?[
    {id:8,invoice_number:'MATCH-008',seller_name:'杭州雅鸿装饰工程有限公司'},
    {id:9,invoice_number:'WRONG-009',seller_name:'杭州雅鸿装饰工程有限公司分公司'},
@@ -380,7 +391,8 @@ describe('core form operation behavior',()=>{
   const dialog=wrapper.get('[role="dialog"]')
   expect(dialog.text()).toContain('供应商名称：杭州雅鸿装饰工程有限公司。')
   expect(dialog.text()).not.toContain('钱顺怡')
-  expect(dialog.findAll('input[type="checkbox"]')).toHaveLength(1)
+  expect(dialog.findAll('input[type="checkbox"]')).toHaveLength(2)
+  expect(dialog.get('[aria-label="关联发票 NEAR-009"]').element).toHaveProperty('checked',false)
   await wrapper.get('[aria-label="关联发票 MATCH-008"]').setValue(true)
   await wrapper.get('[data-testid="confirm-invoice-selection"]').trigger('click')
   expect(wrapper.get('[aria-label="已选择的发票"]').text()).toContain('MATCH-008')

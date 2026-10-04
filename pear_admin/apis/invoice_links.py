@@ -1,11 +1,12 @@
 """Append invoice/payment links without replacing other linked invoices."""
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import load_only, selectinload
 
 from pear_admin.extensions import db
 from pear_admin.orms import MaterialInvoiceORM, PayORM, SupplierORM, OrderORM
 from pear_admin.invoice_links import same_company, selected_ids
+from pear_admin.invoice_recommendations import invoice_payment_recommendations, payment_recommendations
 
 invoice_links_api = Blueprint('invoice_links', __name__, url_prefix='/invoice-links')
 
@@ -27,18 +28,26 @@ def payments_query():
 
 
 def link_data(invoice):
-    # Read only names first; fetch details solely for matching payees and linked IDs.
-    suppliers = db.session.execute(db.select(SupplierORM.id, SupplierORM.name)).all()
-    matching = [sid for sid, name in suppliers if same_company(invoice.seller_name, name)]
-    matched = list(db.session.scalars(payments_query().where(PayORM.payee_supplier_id.in_(matching)).order_by(PayORM.id.desc()))) if matching else []
-    linked = list(db.session.scalars(payments_query().where(PayORM.invoices.any(id=invoice.id)).order_by(PayORM.id.desc())))
-    return {'seller_name': invoice.seller_name or '', 'linked': [payment_summary(p) for p in linked], 'matched': [payment_summary(p) for p in matched]}
+    return invoice_payment_recommendations(invoice)
+
+
+@invoice_links_api.post('/payments/recommendations')
+@jwt_required()
+def recommend_payment_invoices():
+    try:
+        data = payment_recommendations(request.get_json(silent=True))
+    except ValueError as error:
+        return {'code': -1, 'msg': str(error)}, 400
+    return {'code': 0, 'msg': '获取智能关联建议成功', 'data': data}
 
 
 @invoice_links_api.route('/invoices/<int:invoice_id>/payments', methods=['GET', 'POST'])
 @jwt_required()
 def invoice_payments(invoice_id):
-    query = db.select(MaterialInvoiceORM).where(MaterialInvoiceORM.id == invoice_id)
+    query = db.select(MaterialInvoiceORM).where(MaterialInvoiceORM.id == invoice_id).options(load_only(
+        MaterialInvoiceORM.id, MaterialInvoiceORM.seller_name, MaterialInvoiceORM.buyer_name,
+        MaterialInvoiceORM.invoice_date, MaterialInvoiceORM.total_amount, MaterialInvoiceORM.tax_amount,
+        MaterialInvoiceORM.project_id, MaterialInvoiceORM.invoice_type, MaterialInvoiceORM.invoice_name))
     if request.method == 'POST':
         query = query.with_for_update()
     invoice = db.session.scalar(query)

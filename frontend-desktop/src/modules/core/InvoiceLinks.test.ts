@@ -82,17 +82,19 @@ describe('seller matched invoice/payment selections',()=>{
   expect(mocks.request).toHaveBeenCalledTimes(1)
   wrapper.unmount()
  })
- it('matches only the raw supplier and seller names and waits for the user to choose',async()=>{
+ it('matches normalized and similar seller names and waits for the user to choose',async()=>{
   const wrapper=mount(PaymentInvoicePicker,{props:{modelValue:[],supplierName:'杭州雅鸿装饰工程有限公司',invoices:[{id:1,invoice_number:'MATCH-001',seller_name:'杭州雅鸿装饰工程有限公司'},{id:2,invoice_number:'COMBINED',seller_name:'杭州雅鸿装饰工程有限公司（钱顺怡）'},{id:3,invoice_number:'PARTIAL',seller_name:'杭州雅鸿装饰工程有限公司分公司'},{id:4,invoice_number:'CONTACT',seller_name:'钱顺怡'},{id:5,invoice_number:'BUYER',seller_name:'无关公司',buyer_name:'杭州雅鸿装饰工程有限公司'}]},global})
   await wrapper.get('[data-testid="choose-invoices"]').trigger('click')
-  expect(wrapper.get('[role="dialog"]').findAll('input[type="checkbox"]')).toHaveLength(1)
+  expect(wrapper.get('[role="dialog"]').findAll('input[type="checkbox"]')).toHaveLength(3)
+  expect(wrapper.find('[aria-label="关联发票 CONTACT"]').exists()).toBe(false)
+  expect(wrapper.find('[aria-label="关联发票 BUYER"]').exists()).toBe(false)
   expect((wrapper.get('[aria-label="关联发票 MATCH-001"]').element as HTMLInputElement).checked).toBe(false)
   await wrapper.get('[aria-label="关联发票 MATCH-001"]').setValue(true)
   await wrapper.get('[data-testid="confirm-invoice-selection"]').trigger('click')
   expect(wrapper.emitted('update:modelValue')).toEqual([[[1]]])
   wrapper.unmount()
  })
- it('filters exact seller matches without automatically selecting or deleting existing links',async()=>{
+ it('filters seller matches without automatically selecting or deleting existing links',async()=>{
   const wrapper=mount(PaymentInvoicePicker,{props:{modelValue:[3],supplierName:'上海（甲）公司',invoices:[
    {id:1,seller_name:'上海（甲）公司',invoice_number:'MATCH',total_amount:'100',tax_amount:'13'},
    {id:2,seller_name:'上海（乙）公司',invoice_number:'OTHER'},

@@ -101,33 +101,42 @@ async function loadRecord(){
  else if(mode.value==='new'){record.value=freshRecord();attachments.value=[];invoiceIds.value=[]}
  else{let data:Row|undefined;if(kind.value==='payers')data=(await allRows('/payer/')).find(x=>String(x.id)===String(route.params.id));else if(kind.value==='invoices')data=(await request(`/material/invoice?${query({id:route.params.id})}`)).data?.[0];else data=(await request(schema.value.api+route.params.id)).data;if(!data)throw new Error('记录不存在');record.value={...data};attachments.value=schema.value.attachments?parseAttachments(data):[];invoiceIds.value=(data.invoices_list||[]).map((x:Row)=>x.id);if(kind.value==='payments')options.value.invoices=data.invoices_list||[]}
 }
-const invoiceLoading=ref(false),invoiceLoadError=ref('')
+const invoiceLoading=ref(false),invoiceLoadError=ref(''),paymentInvoiceRecommendation=ref<Row>()
 let paymentInvoiceRevision=0,paymentInvoicesRequested=false
-watch(()=>selectedSupplier.value?.id,()=>{
- paymentInvoiceRevision++;invoiceLoading.value=false;invoiceLoadError.value=''
+watch(()=>JSON.stringify([selectedSupplier.value?.id,record.value.payer_supplier_id,record.value.order_id,record.value.current_payment_amount,record.value.invoice_amount,record.value.create_at,invoiceIds.value]),()=>{
+ paymentInvoiceRevision++;invoiceLoading.value=false;invoiceLoadError.value='';paymentInvoiceRecommendation.value=undefined
  options.value.invoices=(options.value.invoices||[]).filter(x=>invoiceIds.value.some(id=>String(id)===String(x.id)))
- if(paymentInvoicesRequested)void loadPaymentInvoices()
-})
+ if(paperPayment.value&&ready.value&&paymentInvoicesRequested)void loadPaymentInvoices()
+},{flush:'sync'})
+onBeforeUnmount(()=>{paymentInvoiceRevision++})
+onDeactivated(()=>{paymentInvoiceRevision++;invoiceLoading.value=false;paymentInvoiceRecommendation.value=undefined})
 function addUploadedPaymentInvoices(invoices:Row[]){
  const merged=new Map((options.value.invoices||[]).map(x=>[String(x.id),x]))
  for(const invoice of invoices)merged.set(String(invoice.id),{...merged.get(String(invoice.id)),...invoice})
  options.value.invoices=[...merged.values()]
- void loadPaymentInvoices()
+ void nextTick(()=>{if(!invoiceLoading.value)void loadPaymentInvoices()})
 }
-async function loadPaymentInvoices(){
- if(invoiceLoading.value)return
+async function loadPaymentInvoices(selectedIds:any[]=invoiceIds.value){
  paymentInvoicesRequested=true
  const supplierId=selectedSupplier.value?.id
- if(!supplierId)return
  const revision=++paymentInvoiceRevision
+ paymentInvoiceRecommendation.value=undefined
+ if(!supplierId){invoiceLoading.value=false;invoiceLoadError.value='';return}
  invoiceLoading.value=true;invoiceLoadError.value=''
  try{
-  const invoices=await allRows('/material/invoice',{mode:'payment_options',payee_supplier_id:supplierId})
+  const response=await request('/invoice-links/payments/recommendations',{method:'POST',body:JSON.stringify({
+   pay_id:record.value.id,payee_supplier_id:supplierId,payer_supplier_id:record.value.payer_supplier_id,
+   order_id:record.value.order_id,current_payment_amount:record.value.current_payment_amount,
+   invoice_amount:record.value.invoice_amount,create_at:record.value.create_at,selected_invoice_ids:[...selectedIds]
+  })})
   if(revision!==paymentInvoiceRevision)return
   // Keep existing links even when a catalog response no longer includes them.
   const merged=new Map((options.value.invoices||[]).map(x=>[String(x.id),x]))
-  for(const invoice of invoices)merged.set(String(invoice.id),invoice)
+  for(const invoice of response.data?.candidates||[])merged.set(String(invoice.id),invoice)
   options.value.invoices=[...merged.values()]
+  // A new payment-field response may still reflect the saved selection while
+  // this dialog has an unconfirmed draft; retain the request IDs to detect it.
+  paymentInvoiceRecommendation.value={...response.data,selected_invoice_ids:[...selectedIds]}
  }catch(e){if(revision===paymentInvoiceRevision)invoiceLoadError.value=(e as Error).message||'发票加载失败，请重试'}
  finally{if(revision===paymentInvoiceRevision)invoiceLoading.value=false}
 }
@@ -169,7 +178,7 @@ async function exportCsv(){if(saving.value)return;saving.value=true;try{let data
 <el-pagination v-model:current-page="page" v-model:page-size="limit" :page-sizes="[20,50,100]" :total="count" layout="total,sizes,prev,pager,next" @change="load"/></template>
 <template v-else-if="ready"><el-form v-if="editing" :class="paperPayment || paperOrder ? 'document-paper-form' : 'panel'" label-position="top" @submit.prevent="save">
 <PaymentEntrySheet v-if="paperPayment" :record="record" :original="originalPayment" :order="selectedOrder" :supplier="selectedSupplier" :options="options" :disabled="saving||uploading" @field="setEntryField">
-<template #invoices><PaymentInvoicePicker ref="paymentInvoicePicker" v-model="invoiceIds" :invoices="options.invoices || []" :supplier-name="selectedSupplier?.name" :supplier-contact="selectedSupplier?.contact_person" :project-id="selectedOrder?.project_id" :disabled="saving||uploading" :loading="invoiceLoading" :error="invoiceLoadError" @load="loadPaymentInvoices" @busy="uploading=$event" @uploaded="addUploadedPaymentInvoices"/></template>
+<template #invoices><PaymentInvoicePicker ref="paymentInvoicePicker" v-model="invoiceIds" :invoices="options.invoices || []" :supplier-name="selectedSupplier?.name" :supplier-contact="selectedSupplier?.contact_person" :project-id="selectedOrder?.project_id" :disabled="saving||uploading" :loading="invoiceLoading" :error="invoiceLoadError" :recommendation="paymentInvoiceRecommendation" @load="loadPaymentInvoices" @busy="uploading=$event" @uploaded="addUploadedPaymentInvoices"/></template>
 <template #attachments><AttachmentEditor v-model="attachments" kind="payments" drag :readonly="saving||uploading" @busy="uploading=$event"/></template>
 <template #actions><el-button type="primary" :loading="saving" :disabled="uploading" native-type="submit">保存付款单</el-button><el-button :disabled="saving||uploading" @click="router.push('/payments')">取消</el-button></template>
 </PaymentEntrySheet>

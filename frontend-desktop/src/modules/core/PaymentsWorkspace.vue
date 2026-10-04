@@ -6,6 +6,7 @@ import {allRows, request, safeUrl} from '../../api'
 import PageHeader from '../../components/PageHeader.vue'
 import TablePrint from './TablePrint.vue'
 import PaymentReceiptPicker from './PaymentReceiptPicker.vue'
+import SupplierPortalLink from './SupplierPortalLink.vue'
 import {useCardColumns} from './useCardColumns'
 import {useDocumentWorkspace} from './useDocumentWorkspace'
 import {formatMoney, uppercaseMoney} from './money'
@@ -82,7 +83,10 @@ async function exportCsv() {
       </div></aside>
       <aside class="filter-column" aria-label="联系人筛选"><div class="filter-search"><input v-model="contactSearch" aria-label="筛选联系人" placeholder="筛选联系人…" type="search" /></div><div class="filter-list">
         <button :class="{active:!contact}" :aria-pressed="!contact" @click="contact = ''">全部联系人</button>
-        <button v-for="c in visibleContacts" :key="c" :data-contact="c" :class="{active:contact === c}" :aria-pressed="contact === c" @click="contact = c">{{c}}</button>
+        <div v-for="c in visibleContacts" :key="c" class="contact-row" :class="{active:contact === c}">
+          <button :data-contact="c" :class="{active:contact === c}" :aria-pressed="contact === c" @click="contact = c">{{c}}</button>
+          <SupplierPortalLink :contact="c" />
+        </div>
         <p v-if="!visibleContacts.length" class="muted">没有匹配的联系人</p>
       </div></aside>
       <main class="orders-content" aria-label="付款明细" v-loading="busy">

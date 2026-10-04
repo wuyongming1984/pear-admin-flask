@@ -39,6 +39,7 @@ async function setup(url = '/payments') {
 }
 it('restores three columns at /payments and retains combined filters after viewing an edit page', async () => {
   const {wrapper, router} = await setup()
+  expect(wrapper.find('button[aria-label="获取张三的电子对账链接"]').exists()).toBe(true)
   expect(wrapper.find('aside[aria-label="项目筛选"]').exists()).toBe(true)
   expect(wrapper.findAll('article')).toHaveLength(3)
   await wrapper.get('button[data-project="10"]').trigger('click')

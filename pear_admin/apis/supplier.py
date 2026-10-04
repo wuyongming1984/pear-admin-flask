@@ -15,15 +15,18 @@ supplier_api = Blueprint("supplier", __name__, url_prefix="/supplier")
 @supplier_api.post("/<int:sid>/token")
 @jwt_required()
 def generate_supplier_token(sid):
-    """生成或重置供应商访问令牌"""
-    supplier = SupplierORM.query.get(sid)
+    """获取可复用的供应商访问令牌，默认仍生成或重置。"""
+    supplier = db.session.get(SupplierORM, sid)
     if not supplier:
         return {"code": -1, "msg": "供应商不存在"}
     
-    # Generate secure token
-    token = secrets.token_urlsafe(32)
-    supplier.access_token = token
-    supplier.save()
+    payload = request.get_json(silent=True)
+    reuse_existing = isinstance(payload, dict) and payload.get("reuse_existing") is True
+    token = supplier.access_token if reuse_existing else None
+    if not token:
+        token = secrets.token_urlsafe(32)
+        supplier.access_token = token
+        supplier.save()
     
     return {
         "code": 0, 

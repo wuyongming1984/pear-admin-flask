@@ -98,3 +98,10 @@ it('places related payment actions below the order sheet and preserves project d
   await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/payments/7/edit'))
   wrapper.unmount()
 })
+it('offers an electronic reconciliation link beside each contact without changing the selected filters', async () => {
+  const {wrapper} = await setup('/orders?project_id=10&supplier_contact_person=李四')
+  expect(wrapper.find('button[aria-label="获取张三的电子对账链接"]').exists()).toBe(true)
+  expect(wrapper.find('button[aria-label="获取李四的电子对账链接"]').exists()).toBe(true)
+  expect(wrapper.get('button[data-contact="李四"]').attributes('aria-pressed')).toBe('true')
+  wrapper.unmount()
+})

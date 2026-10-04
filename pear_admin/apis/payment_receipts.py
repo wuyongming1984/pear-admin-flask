@@ -11,7 +11,7 @@ from flask import Blueprint, current_app, jsonify, request
 from flask_jwt_extended import jwt_required
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload, selectinload, lazyload
 from sqlalchemy.orm.attributes import set_committed_value
 from werkzeug.exceptions import HTTPException
 
@@ -20,6 +20,7 @@ from pear_admin.invoice_links import selected_ids, same_company
 from pear_admin.invoice_preview import render_pdf_page, MAX_FILE_BYTES
 from pear_admin.orms import PaymentReceiptORM, PayORM, OrderORM, ProjectORM, SupplierORM, PayerORM
 from pear_admin.orms.payment_receipt import pay_receipt_relation
+from pear_admin.receipt_matching import receipt_payment_match, rank_candidates, matching_hint
 from ._system_validation import validated, payload
 
 payment_receipts_api = Blueprint('payment_receipts', __name__, url_prefix='/payment-receipts')
@@ -256,14 +257,27 @@ def payment_receipts(payment_id):
     linked = list(db.session.scalars(receipts_query().where(PaymentReceiptORM.payments.any(id=payment_id))
                   .order_by(PaymentReceiptORM.id.desc())))
     keyword = (request.args.get('q') or '').strip()[:100]
-    query = filter_receipts(receipts_query(), keyword).where(~PaymentReceiptORM.payments.any(id=payment_id))
-    batch = db.paginate(query.order_by(PaymentReceiptORM.id.desc()),
-                        page=max(1, request.args.get('page', 1, type=int)), per_page=20, error_out=False)
-    candidates = [dict(receipt_json(row), recommended=same_company(
-        row.payee_name, pay.payee_supplier.name if pay.payee_supplier else '')) for row in batch.items]
+    page = max(1, request.args.get('page', 1, type=int))
+    smart = request.method == 'GET' and request.args.get('mode') == 'smart'
+    # Global scoring needs receipt metadata, not every candidate's linked orders.
+    source = db.select(PaymentReceiptORM).options(lazyload(PaymentReceiptORM.payments)) if smart else receipts_query()
+    query = filter_receipts(source, keyword).where(~PaymentReceiptORM.payments.any(id=payment_id))
+    if smart:
+        ranked, count = rank_candidates(db.session.scalars(query), lambda row: receipt_payment_match(row, pay), page)
+        selected = {row.id: row for row in db.session.scalars(receipts_query().where(
+            PaymentReceiptORM.id.in_([item.id for item, _ in ranked])))} if ranked else {}
+        candidates = [dict(receipt_json(selected[row.id]), **evidence) for row, evidence in ranked]
+    else:
+        batch = db.paginate(query.order_by(PaymentReceiptORM.id.desc()), page=page, per_page=20, error_out=False)
+        count = batch.total
+        candidates = [dict(receipt_json(row), recommended=same_company(
+            row.payee_name, pay.payee_supplier.name if pay.payee_supplier else '')) for row in batch.items]
+    data = {'payment': payment_json(pay), 'linked': [receipt_json(row) for row in linked],
+            'candidates': candidates, 'count': count}
+    if smart:
+        data['match_hint'] = matching_hint(payment=pay)
     return {'code': 0, 'msg': '关联成功' if request.method == 'POST' else '',
-            'data': {'payment': payment_json(pay), 'linked': [receipt_json(row) for row in linked],
-                     'candidates': candidates, 'count': batch.total}}
+            'data': data}
 
 
 @payment_receipts_api.route('/<int:identity>/payments', methods=['GET', 'POST'])
@@ -282,10 +296,19 @@ def receipt_payments(identity):
         db.session.commit()
     keyword = (request.args.get('q') or '').strip()[:100]
     query = payments_query(keyword).where(~PayORM.payment_receipts.any(id=identity))
-    batch = db.paginate(query, page=max(1, request.args.get('page', 1, type=int)), per_page=20, error_out=False)
-    candidates = [dict(payment_json(pay), recommended=same_company(row.payee_name, pay.payee_supplier.name if pay.payee_supplier else '')) for pay in batch.items]
-    return {'code': 0, 'data': {'linked': [payment_json(pay) for pay in row.payments],
-                               'candidates': candidates, 'count': batch.total}}
+    page = max(1, request.args.get('page', 1, type=int))
+    smart = request.method == 'GET' and request.args.get('mode') == 'smart'
+    if smart:
+        ranked, count = rank_candidates(db.session.scalars(query), lambda pay: receipt_payment_match(row, pay), page)
+        candidates = [dict(payment_json(pay), **evidence) for pay, evidence in ranked]
+    else:
+        batch = db.paginate(query, page=page, per_page=20, error_out=False)
+        count = batch.total
+        candidates = [dict(payment_json(pay), recommended=same_company(row.payee_name, pay.payee_supplier.name if pay.payee_supplier else '')) for pay in batch.items]
+    data = {'linked': [payment_json(pay) for pay in row.payments], 'candidates': candidates, 'count': count}
+    if smart:
+        data['match_hint'] = matching_hint(receipt=row)
+    return {'code': 0, 'data': data}
 
 
 @payment_receipts_api.delete('/<int:identity>/payments/<int:payment_id>')
@@ -315,3 +338,29 @@ def preview_receipt(identity):
         response.status_code = error.code
     response.headers['Cache-Control'] = 'private, no-store'
     return response
+
+
+@payment_receipts_api.get('/<int:identity>/recognize')
+@jwt_required()
+@validated
+def recognize_receipt_info(identity):
+    """Return editable suggestions only; saving still uses explicit PUT."""
+    from flask import after_this_request
+    from pear_admin.receipt_recognition import recognize_receipt
+
+    @after_this_request
+    def prevent_recognition_cache(response):
+        response.headers['Cache-Control'] = 'private, no-store'
+        return response
+
+    row = receipt(identity)
+    try:
+        result = recognize_receipt(row.file_path, row.file_type)
+    except HTTPException as error:
+        return jsonify(code=-1, msg=error.description), error.code
+    result['fields'] = metadata(result.get('fields') or {})
+    if result['fields'].get('payment_date'):
+        result['fields']['payment_date'] = result['fields']['payment_date'].isoformat()
+    if result['fields'].get('amount') is not None:
+        result['fields']['amount'] = str(result['fields']['amount'])
+    return {'code': 0, 'data': result}

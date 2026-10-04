@@ -14,9 +14,11 @@ const rows = ref<Row[]>([]), active = ref<Row>(), count = ref(0), page = ref(1),
 const keyword = ref(''), status = ref(''), loading = ref(false), error = ref('')
 const uploadVisible = ref(false), files = ref<UploadUserFile[]>([]), uploading = ref(false), reports = ref<string[]>([])
 const editVisible = ref(false), draft = ref<Row>({}), editSaving = ref(false), editError = ref(''), baseline = ref('')
+const recognizing = ref(false), recognitionNote = ref(''), recognitionWarnings = ref<string[]>([])
+const editReceiptId = ref<number>()
 const deleting = ref(false), linking = ref(false), imageError = ref(false), previewVersion = ref(0)
 const paymentLinks = ref<InstanceType<typeof ReceiptPaymentLinks>>()
-const busy = computed(() => loading.value || uploading.value || editSaving.value || deleting.value || linking.value)
+const busy = computed(() => loading.value || uploading.value || editSaving.value || recognizing.value || deleting.value || linking.value)
 const dirty = computed(() => editVisible.value && JSON.stringify(draft.value) !== baseline.value)
 const fileUrl = computed(() => safeUrl(active.value?.file_url || active.value?.file_path))
 let revision = 0, searchTimer:ReturnType<typeof setTimeout>|undefined, activated = false
@@ -44,29 +46,51 @@ function pick(row:Row) {if(!busy.value) {active.value = row; imageError.value = 
 async function refreshPreview() {if(!busy.value && active.value) {await load(active.value.id); imageError.value = false; previewVersion.value++}}
 function edit() {
  if(!active.value || busy.value) return
+ clearTimeout(searchTimer); editReceiptId.value = active.value.id
  draft.value = Object.fromEntries(['receipt_number','payment_date','payer_name','payee_name','amount','bank_name','remarks'].map(key => [key,active.value?.[key] ?? '']))
- baseline.value = JSON.stringify(draft.value); editError.value = ''; editVisible.value = true
+ baseline.value = JSON.stringify(draft.value); editError.value = ''; recognitionNote.value = ''; recognitionWarnings.value = []; editVisible.value = true
+}
+async function recognize() {
+ if(!active.value || busy.value) return
+ const id = active.value.id, current = revision
+ edit(); recognizing.value = true
+ try {
+  const result = await request(`/payment-receipts/${id}/recognize`)
+  if(current !== revision || active.value?.id !== id) return
+  const fields = result.data?.fields || {}
+  let filled = 0
+  for(const key of ['receipt_number','payment_date','payer_name','payee_name','amount','bank_name']) {
+   if((draft.value[key] == null || draft.value[key] === '') && fields[key] != null && fields[key] !== '') {
+    draft.value[key] = fields[key]; filled++
+   }
+  }
+  recognitionNote.value = filled ? `已识别并填入 ${filled} 项空白信息，请核对原件后保存。已有信息已保留。` : '未补充空白信息，请对照原件核对并手工填写。已有信息已保留。'
+  recognitionWarnings.value = Array.isArray(result.data?.warnings) ? result.data.warnings : []
+ } catch(e) {if(current === revision) editError.value = e instanceof Error ? e.message : '回单识别失败，可手工填写'}
+ finally {recognizing.value = false}
 }
 async function saveInfo() {
- if(!active.value || editSaving.value) return
+ if(!active.value || editSaving.value || recognizing.value) return
+ if(!editReceiptId.value || active.value.id !== editReceiptId.value) {editError.value = '当前回单已切换，请关闭表单后重新编辑，避免保存到其他回单'; return}
+ const id = editReceiptId.value
  editSaving.value = true; editError.value = ''
  try {
-  const result = await request(`/payment-receipts/${active.value.id}`, {method:'PUT',body:JSON.stringify(draft.value)})
+  const result = await request(`/payment-receipts/${id}`, {method:'PUT',body:JSON.stringify(draft.value)})
   active.value = result.data; rows.value = rows.value.map(row => row.id === result.data.id ? result.data : row)
-  editVisible.value = false; ElMessage.success('回单信息已保存')
+  editVisible.value = false; editReceiptId.value = undefined; ElMessage.success('回单信息已保存')
  } catch(e) {editError.value = e instanceof Error ? e.message : '保存失败'}
  finally {editSaving.value = false}
 }
 async function closeEdit(done?:()=>void) {
- if(editSaving.value) return
+ if(editSaving.value || recognizing.value) return
  if(dirty.value) {try {await ElMessageBox.confirm('回单信息尚未保存，放弃修改？','未保存的修改',{type:'warning'})} catch {return}}
- editVisible.value = false; done?.()
+ editVisible.value = false; editReceiptId.value = undefined; done?.()
 }
 function closeUpload(done:()=>void) {if(!uploading.value) done()}
 async function canLeave() {
- if(uploading.value || editSaving.value || linking.value || deleting.value) return false
+ if(uploading.value || editSaving.value || recognizing.value || linking.value || deleting.value) return false
  if(dirty.value) {try {await ElMessageBox.confirm('回单信息尚未保存，放弃修改并离开？','未保存的修改',{type:'warning'})} catch {return false}}
- editVisible.value = false
+ editVisible.value = false; editReceiptId.value = undefined
  return true
 }
 onBeforeRouteLeave(canLeave)
@@ -129,7 +153,7 @@ async function upload() {
     <div class="receipt-pagination"><el-pagination v-model:current-page="page" :page-size="limit" :total="count" :pager-count="3" size="small" layout="prev,pager,next" :disabled="busy" @current-change="load()" /></div>
    </aside>
    <main class="receipt-content">
-    <header class="receipt-content-header"><strong>付款回单详情</strong><div class="receipt-actions"><el-button v-if="active" :disabled="busy" @click="paymentLinks?.scrollToLinks()">关联付款单</el-button><el-button v-if="active" :disabled="busy" @click="edit">编辑回单信息</el-button><el-button v-if="active" type="danger" plain :disabled="busy" @click="remove">删除</el-button></div></header>
+    <header class="receipt-content-header"><strong>付款回单详情</strong><div class="receipt-actions"><el-button v-if="active" :disabled="busy" @click="paymentLinks?.scrollToLinks()">关联付款单</el-button><el-button v-if="active" data-testid="recognize-receipt" :loading="recognizing" :disabled="busy" @click="recognize">识别回单信息</el-button><el-button v-if="active" :disabled="busy" @click="edit">编辑回单信息</el-button><el-button v-if="active" type="danger" plain :disabled="busy" @click="remove">删除</el-button></div></header>
     <div v-if="active" class="receipt-details">
      <section class="receipt-info" aria-label="回单信息">
       <header><div><h2>{{active.payee_name || '付款回单'}}</h2><p>{{active.receipt_number || active.file_name}}</p></div><span class="receipt-amount">{{active.amount == null ? '金额待填写' : `¥${formatMoney(active.amount)}`}}</span></header>
@@ -142,7 +166,7 @@ async function upload() {
       <img v-else-if="fileUrl" class="receipt-image" :src="fileUrl" :alt="active.file_name" @error="imageError=true" />
       <el-empty v-else description="原文件暂时不可用" />
      </section>
-     <ReceiptPaymentLinks ref="paymentLinks" :key="`${active.id}:${active.payee_name}`" :receipt-id="active.id" :disabled="uploading || editSaving || deleting" @busy="linking=$event" @changed="load()" />
+     <ReceiptPaymentLinks ref="paymentLinks" :key="JSON.stringify([active.id,active.payee_name,active.payer_name,active.amount,active.payment_date])" :receipt-id="active.id" :disabled="uploading || editSaving || recognizing || deleting" @busy="linking=$event" @changed="load()" />
     </div>
     <el-empty v-else description="上传或选择付款回单，查看原文件并关联付款单" />
    </main>
@@ -153,18 +177,21 @@ async function upload() {
    <ul v-if="reports.length" class="upload-reports" aria-live="polite"><li v-for="(report,index) in reports" :key="index">{{report}}</li></ul>
    <template #footer><el-button :disabled="uploading" @click="uploadVisible=false">{{files.length ? '关闭' : '完成'}}</el-button><el-button type="primary" :loading="uploading" :disabled="!files.length || uploading" @click="upload">开始上传{{files.length ? `（${files.length} 份）` : ''}}</el-button></template>
   </el-dialog>
-  <el-dialog v-model="editVisible" title="编辑回单信息" width="620px" :close-on-click-modal="false" :close-on-press-escape="!editSaving" :show-close="!editSaving" :before-close="closeEdit">
+  <el-dialog v-model="editVisible" title="编辑回单信息" width="620px" :close-on-click-modal="false" :close-on-press-escape="!editSaving && !recognizing" :show-close="!editSaving && !recognizing" :before-close="closeEdit">
+   <p v-if="recognizing" role="status" class="muted">正在识别回单信息…</p>
+   <p v-if="recognitionNote" role="status" class="muted">{{recognitionNote}}</p>
+   <p v-for="(warning,index) in recognitionWarnings" :key="index" class="page-error">{{warning}}</p>
    <p v-if="editError" role="alert" class="page-error">{{editError}}</p>
    <form class="receipt-form" @submit.prevent="saveInfo">
-    <label>银行流水号 / 回单编号<input v-model="draft.receipt_number" maxlength="128" aria-label="回单编号" :disabled="editSaving" /></label>
-    <label>付款日期<input v-model="draft.payment_date" type="date" aria-label="回单付款日期" :disabled="editSaving" /></label>
-    <label>付款单位<input v-model="draft.payer_name" maxlength="255" aria-label="回单付款单位" :disabled="editSaving" /></label>
-    <label>收款单位<input v-model="draft.payee_name" maxlength="255" aria-label="回单收款单位" :disabled="editSaving" /></label>
-    <label>付款金额（元）<input v-model="draft.amount" inputmode="decimal" aria-label="回单金额" :disabled="editSaving" placeholder="保留两位小数" /></label>
-    <label>银行<input v-model="draft.bank_name" maxlength="255" aria-label="回单银行" :disabled="editSaving" /></label>
-    <label class="wide">备注<textarea v-model="draft.remarks" rows="3" maxlength="4000" aria-label="回单备注" :disabled="editSaving" /></label>
+    <label>银行流水号 / 回单编号<input v-model="draft.receipt_number" maxlength="128" aria-label="回单编号" :disabled="editSaving || recognizing" /></label>
+    <label>付款日期<input v-model="draft.payment_date" type="date" aria-label="回单付款日期" :disabled="editSaving || recognizing" /></label>
+    <label>付款单位<input v-model="draft.payer_name" maxlength="255" aria-label="回单付款单位" :disabled="editSaving || recognizing" /></label>
+    <label>收款单位<input v-model="draft.payee_name" maxlength="255" aria-label="回单收款单位" :disabled="editSaving || recognizing" /></label>
+    <label>付款金额（元）<input v-model="draft.amount" inputmode="decimal" aria-label="回单金额" :disabled="editSaving || recognizing" placeholder="保留两位小数" /></label>
+    <label>银行<input v-model="draft.bank_name" maxlength="255" aria-label="回单银行" :disabled="editSaving || recognizing" /></label>
+    <label class="wide">备注<textarea v-model="draft.remarks" rows="3" maxlength="4000" aria-label="回单备注" :disabled="editSaving || recognizing" /></label>
    </form>
-   <template #footer><el-button :disabled="editSaving" @click="closeEdit()">取消</el-button><el-button type="primary" :loading="editSaving" @click="saveInfo">保存回单信息</el-button></template>
+   <template #footer><el-button :disabled="editSaving || recognizing" @click="closeEdit()">取消</el-button><el-button type="primary" :loading="editSaving" :disabled="recognizing" @click="saveInfo">保存回单信息</el-button></template>
   </el-dialog>
  </section>
 </template>

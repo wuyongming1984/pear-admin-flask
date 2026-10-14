@@ -6,6 +6,7 @@ from pear_admin.orms import MaterialPlanningORM, MaterialInboundORM, MaterialInv
 from datetime import datetime
 from math import isfinite
 from pear_admin.utils import authorize
+from pear_admin.invoice_originals import find_existing_original_target, validate_original_target, attach_original, transfer_pending_original
 
 material_api = Blueprint("material_api", __name__, url_prefix="/material")
 
@@ -1415,10 +1416,8 @@ def preview_invoice_file(invoice_id):
                 data = r.content
         else:
             # 本地文件
-            import os
-            local_path = os.path.join(os.getcwd(), file_path.lstrip('/'))
-            with open(local_path, 'rb') as f:
-                data = f.read()
+            from pear_admin.invoice_preview import read_original
+            data = read_original(file_path)
 
         from flask import Response
         from urllib.parse import quote
@@ -1478,6 +1477,7 @@ def upload_invoice():
                 return 0
         
         uploaded = []
+        attached_invoices = []
         existing_invoices = []
         failed = []
         
@@ -1529,11 +1529,15 @@ def upload_invoice():
 
                 # 3. 查重逻辑
 
+                attach_target = None
                 if ocr_result and ocr_result.get('invoice_number'):
                     inv_num = ocr_result.get('invoice_number')
-                    exists = MaterialInvoiceORM.query.filter_by(invoice_number=inv_num).first()
+                    exists = find_existing_original_target(ocr_result)
                     if exists:
-                        if reuse_existing:
+                        if not (exists.file_path or '').strip():
+                            validate_original_target(exists, ocr_result)
+                            attach_target = exists
+                        elif reuse_existing:
                             # Return the stored invoice for the payment's draft selection.
                             # Do not replace its file, project, OCR fields or saved links.
                             existing_invoices.append({
@@ -1550,7 +1554,8 @@ def upload_invoice():
                             })
                         else:
                             failed.append({"name": file.filename, "reason": f"发票号 {inv_num} 已存在 (ID: {exists.id})"})
-                        continue # 跳过此文件，不上传
+                        if attach_target is None:
+                            continue
 
                 # 4. 执行上传 (OSS 或 本地)
                 file_path = ""
@@ -1568,12 +1573,28 @@ def upload_invoice():
                 else:
                     # --- 本地存储模式 ---
                     year_month = datetime.now().strftime('%Y/%m')
-                    upload_dir = os.path.join('static', 'uploads', custom_path, year_month)
+                    upload_root = current_app.config.get('UPLOAD_FOLDER') or os.path.join(current_app.static_folder, 'uploads')
+                    upload_dir = os.path.join(upload_root, custom_path, year_month)
                     os.makedirs(upload_dir, exist_ok=True)
                     local_path = os.path.join(upload_dir, new_filename)
                     with open(local_path, 'wb') as f:
                         f.write(file_content)
-                    file_path = local_path
+                    prefix = 'uploads' if current_app.config.get('UPLOAD_FOLDER') else 'static/uploads'
+                    file_path = f'/{prefix}/{custom_path}/{year_month}/{new_filename}'
+
+                if attach_target is not None:
+                    attach_original(attach_target, file_path, file.filename, ext)
+                    db.session.commit()
+                    attached_invoices.append({
+                        'id': attach_target.id, 'attached': True, 'existing': True,
+                        'file_name': file.filename, 'invoice_number': attach_target.invoice_number,
+                        'seller_name': attach_target.seller_name, 'buyer_name': attach_target.buyer_name,
+                        'invoice_date': str(attach_target.invoice_date) if attach_target.invoice_date else None,
+                        'total_amount': None if attach_target.total_amount is None else format(attach_target.total_amount, '.2f'),
+                        'tax_amount': None if attach_target.tax_amount is None else format(attach_target.tax_amount, '.2f'),
+                        'ocr_status': attach_target.ocr_status, 'url': attach_target._get_signed_url(),
+                    })
+                    continue
 
                 # 5. 创建数据库记录 (填充 OCR 数据)
                 # 生成展示用发票号
@@ -1669,12 +1690,13 @@ def upload_invoice():
         
         return jsonify({
             "code": 0,
-            "msg": f"上传完成，成功{len(uploaded)}个，失败{len(failed)}个" + (f"，已存在{len(existing_invoices)}个" if existing_invoices else ""),
+            "msg": f"上传完成，新增{len(uploaded)}个，补充原件{len(attached_invoices)}个，失败{len(failed)}个" + (f"，已存在{len(existing_invoices)}个" if existing_invoices else ""),
             "data": {
                 "uploaded": len(uploaded),
+                "attached": len(attached_invoices),
                 "existing": len(existing_invoices),
                 "failed": len(failed),
-                "invoices": uploaded + existing_invoices,
+                "invoices": uploaded + attached_invoices + existing_invoices,
                 "errors": failed
             }
         })
@@ -1748,20 +1770,15 @@ def ocr_invoice():
                 if ocr_result.get('invoice_number'):
                     inv_num = ocr_result.get('invoice_number')
                     # 检查是否重复 (排除自身)
-                    existing = MaterialInvoiceORM.query.filter_by(invoice_number=inv_num).filter(MaterialInvoiceORM.id != invoice_id).first()
+                    existing = find_existing_original_target(ocr_result, exclude_id=invoice.id)
                     if existing:
-                        # 严格排重：删除文件和记录
-                        try:
-                            import os
-                            if invoice.file_path and os.path.exists(invoice.file_path):
-                                os.remove(invoice.file_path)
-                            print(f"Duplicate found, deleted file: {invoice.file_path}")
-                        except Exception as del_err:
-                            print(f"Error deleting duplicate file: {del_err}")
-                        
-                        db.session.delete(invoice)
+                        validate_original_target(existing, ocr_result)
+                        transfer_pending_original(existing, invoice)
                         db.session.commit()
-                        raise Exception(f"DUPLICATE_FOUND: 发票号码 {inv_num} 已存在，系统已自动清理")
+                        success_count += 1
+                        results.append({'id': invoice_id, 'status': 'completed', 'attached': True,
+                                        'invoice_id': existing.id, 'message': '已补充到已有发票原件'})
+                        continue
                     invoice.invoice_number = inv_num
                 
                 invoice.invoice_code = ocr_result.get('invoice_code')
@@ -1884,6 +1901,7 @@ def ocr_invoice():
                 print(f"发票 {invoice_id} 识别失败: {str(e)}")
                 import traceback
                 traceback.print_exc()
+                db.session.rollback()
                 invoice.ocr_status = 'failed'
                 invoice.ocr_error = str(e)
                 db.session.commit()

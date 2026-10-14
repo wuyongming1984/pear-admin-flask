@@ -18,7 +18,7 @@ function linkBusy(id: number | string, value: boolean) {
   linking.value = linking.value.filter(item => item !== id)
   if (value) linking.value.push(id)
 }
-const report = ref<{uploaded: number; failed: number; invoices: Row[]; errors: Row[]} | null>(null)
+const report = ref<{uploaded: number; attached?: number; failed: number; invoices: Row[]; errors: Row[]} | null>(null)
 const locked = computed(() => activeBusy.value || props.disabled)
 watch(() => props.modelValue, () => { dragDepth.value = 0 })
 const fileKey = (file: File) => `${file.name}:${file.size}:${file.lastModified}`
@@ -67,7 +67,7 @@ async function upload() {
   <el-dialog :model-value="modelValue" title="新增发票 / 上传识别" width="640px" class="invoice-upload-dialog" append-to-body
     :close-on-click-modal="false" :close-on-press-escape="!activeBusy" :show-close="!activeBusy" :before-close="close" @update:model-value="close">
     <div class="invoice-upload-body" @dragover.prevent @drop.prevent>
-      <p class="upload-intro">上传发票后自动识别票面信息，并加入发票清单。</p>
+      <p class="upload-intro">上传发票后自动识别票面信息。库中已有发票缺少原件时，自动补充原件；已有原件会保留。</p>
       <el-form label-position="top">
         <el-form-item label="所属项目（选填）">
           <el-select v-model="project" aria-label="所属项目" clearable filterable placeholder="选择发票所属项目" :disabled="locked">
@@ -96,10 +96,10 @@ async function upload() {
       <div v-if="uploading" class="upload-progress" role="status" aria-live="polite">正在上传并识别 {{files.length}} 张发票，请稍候…</div>
       <p v-if="error" class="upload-error" role="alert">{{error}}</p>
       <section v-if="report" class="upload-results" aria-label="上传结果" aria-live="polite">
-        <h3>上传成功 {{report.uploaded}} 张<span v-if="report.failed"> · 未导入 {{report.failed}} 张</span></h3>
+        <h3>新增发票 {{report.uploaded}} 张<span v-if="report.attached"> · 补充原件 {{report.attached}} 张</span><span v-if="report.failed"> · 未导入 {{report.failed}} 张</span></h3>
         <ul>
-          <li v-for="item in report.invoices" :key="item.id" :class="item.ocr_status === 'success' ? 'result-success' : 'result-warning'">
-            <strong>{{item.file_name}}</strong><span>{{item.ocr_status === 'success' ? '识别成功，已加入发票清单' : '已上传，识别未完成，请在详情中重新识别'}}</span>
+          <li v-for="item in report.invoices" :key="item.id" :class="item.attached || item.ocr_status === 'success' ? 'result-success' : 'result-warning'">
+            <strong>{{item.file_name}}</strong><span>{{item.attached ? '已补充原件，保留已有发票信息及关联' : item.ocr_status === 'success' ? '识别成功，已加入发票清单' : '已上传，识别未完成，请在详情中重新识别'}}</span>
             <InvoicePaymentLinks :invoice-id="item.id" :disabled="locked" @busy="linkBusy(item.id, $event)" @changed="emit('uploaded')" />
           </li>
           <li v-for="(item, index) in report.errors" :key="index" class="result-warning"><strong>{{item.name}}</strong><span>{{item.reason}}</span></li>

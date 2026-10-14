@@ -84,6 +84,8 @@ class InvoiceLinksTest(unittest.TestCase):
 
     def test_library_upload_keeps_duplicate_warning_without_reuse_option(self):
         self.seed()
+        self.invoices[0].file_path = '/uploads/original.pdf'
+        db.session.commit()
         with patch('pear_admin.ocr_utils.get_ocr_instance') as ocr:
             ocr.return_value.recognize_invoice.return_value = {'invoice_number': self.invoices[0].invoice_number}
             result = self.client.post('/api/v1/material/invoice/upload', headers=self.headers, data={
@@ -96,6 +98,8 @@ class InvoiceLinksTest(unittest.TestCase):
 
     def test_payment_upload_reuse_preserves_missing_amounts_and_real_zero(self):
         self.seed()
+        self.invoices[0].file_path = '/uploads/original.pdf'
+        db.session.commit()
         invoice_id = self.invoices[0].id
         cases = [
             (None, 13, None, '13.00'),

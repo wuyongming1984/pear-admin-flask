@@ -135,7 +135,7 @@ describe('invoice live search',()=>{
   expect(dialog.get('[data-testid="invoice-upload-close"]').attributes('disabled')).toBeDefined()
   complete({code:0,data:{uploaded:1,failed:1,invoices:[{id:231,file_name:'新发票.pdf',ocr_status:'success',invoice_number:'NEW'}],errors:[{name:'重复发票.jpg',reason:'发票号 OLD 已存在 (ID: 230)'}]}})
   await flushPromises()
-  expect(dialog.text()).toContain('成功 1 张');expect(dialog.text()).toContain('未导入 1 张')
+  expect(dialog.text()).toContain('新增发票 1 张');expect(dialog.text()).toContain('未导入 1 张')
   expect(dialog.text()).toContain('已存在 (ID: 230)');expect(dialog.find('pre').exists()).toBe(false)
   expect(wrapper.get('.invoice-cards').text()).toContain('UPLOADED')
   expect(dialog.get('[data-testid="invoice-upload-submit"]').attributes('disabled')).toBeDefined()
@@ -162,6 +162,20 @@ describe('invoice live search',()=>{
   expect(dialog.get('[role="alert"]').text()).toContain('连接中断')
   expect(dialog.text()).toContain('发票.png')
   expect(dialog.get('[data-testid="invoice-upload-close"]').attributes('disabled')).toBeUndefined()
+ })
+ it('shows original completion as a success for an imported invoice and refreshes its existing record',async()=>{
+  await open();await wrapper.get('.invoice-add').trigger('click')
+  const dialog=wrapper.get('[role="dialog"]'),input=dialog.get('input[type="file"]')
+  Object.defineProperty(input.element,'files',{value:[new File(['pdf'],'补原件.pdf',{type:'application/pdf'})],configurable:true})
+  await input.trigger('change')
+  mocks.request.mockImplementation((url:string)=>Promise.resolve(url==='/material/invoice/upload'
+   ? {code:0,data:{uploaded:0,attached:1,failed:0,invoices:[{id:1,file_name:'补原件.pdf',ocr_status:'imported',attached:true,existing:true}],errors:[]}}
+   : url.startsWith('/invoice-links/invoices/') ? {code:0,data:{seller_name:'销售单位',matched:[],linked:[]}} : result('ORIGINAL-ATTACHED')))
+  await dialog.get('[data-testid="invoice-upload-submit"]').trigger('click');await flushPromises()
+  expect(dialog.text()).toContain('补充原件 1 张')
+  expect(dialog.get('.result-success').text()).toContain('已补充原件')
+  expect(dialog.text()).not.toContain('识别未完成')
+  expect(wrapper.get('.invoice-cards').text()).toContain('ORIGINAL-ATTACHED')
  })
 })
 async function setup(){const router=createRouter({history:createMemoryHistory(),routes:[{path:'/projects/new',component:CorePage,meta:{coreKind:'projects',coreMode:'new'}},{path:'/projects',component:{template:'<div>项目列表</div>'}},{path:'/system',component:{template:'<div>系统页面</div>'}}]});await router.push('/projects/new');await router.isReady();const wrapper=mount({template:'<router-view v-slot="{Component,route}"><keep-alive><component :is="Component" :key="route.path"/></keep-alive></router-view>'},{global:{plugins:[router],stubs,directives:{loading:()=>{}}}});await flushPromises();return{wrapper,router}}
